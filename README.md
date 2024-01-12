@@ -1,3 +1,8 @@
+[![Pylint](https://github.com/gaspardpetit/verbatim/actions/workflows/pylint.yml/badge.svg)](https://github.com/gaspardpetit/verbatims/actions/workflows/pylint.yml)
+[![Python package](https://github.com/gaspardpetit/verbatims/actions/workflows/python-package.yml/badge.svg)](https://github.com/gaspardpetit/verbatims/actions/workflows/python-package.yml)
+[![PyPI version](https://badge.fury.io/py/verbatims.svg)](https://pypi.python.org/pypi/verbatims/)
+[![Python versions](https://img.shields.io/pypi/pyversions/verbatims.svg)](https://pypi.org/project/verbatims/)
+
 # Verbatim
 
 For high quality multi-lingual speech to text.
