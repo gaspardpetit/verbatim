@@ -45,7 +45,10 @@ class DiarizeSpeakersSpeechBrain(DiarizeSpeakers):
 
         # Add speaker segments to the diarization annotation
         for i in range(0, len(boundaries), 2):
-            diarization[Segment(boundaries[i][0], boundaries[i + 1][1])] = "speaker"
+            if i+1 < len(boundaries):
+                diarization[Segment(float(boundaries[i][0]), float(boundaries[i + 1][1]))] = "speaker"
+            else:
+                diarization[Segment(float(boundaries[i][0]), float(len(audio_file)/16000))] = "speaker"
 
         # Upsample boundaries and save the VAD result as a new audio file
         upsampled_boundaries = vad_model.upsample_boundaries(boundaries=boundaries, audio_file=audio_file)
