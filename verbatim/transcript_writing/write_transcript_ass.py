@@ -447,8 +447,12 @@ class WriteTranscriptAss(WriteTranscript):
         result_to_ass({"segments": [{
             "start": u.start,
             "end": u.end,
-            "text": ''.join([w.text for w in u.words]),
+            "text": f"{u.speaker}: {''.join([w.text for w in u.words])}",
             "words": [{
+                "start": u.start,
+                "end": u.start,
+                "word": f"{u.speaker}: "
+            }] + [{
                 "start": w.start,
                 "end": w.end,
                 "word": w.text
