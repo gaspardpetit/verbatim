@@ -49,17 +49,7 @@ The output includes
 
 ## Processing Pipeline
 
-<style>
-  img {
-    border-radius: 4px;
-  }
-</style>
-
-<div style="float: right; margin: 0 0 10px 10px;">
-
 ![doc/architecture.svg](doc/img/Architecture.svg)
-
-</div>
 
 ### 1. Injestion 🔊
 Audio Files are converted ◌⃯ to raw audio using [ffmpeg](https://ffmpeg.org/). 
@@ -92,32 +82,165 @@ The output document is a Microsoft Word document which reflects many decisions o
 
 Consider the following audio file obtained from [universal-soundbank](https://universal-soundbank.com/sounds/12374.mp3) including a mixture of French and English:
 
-https://github.com//gaspardpetit/verbatim/doc/data/12374.mp3
 
-First, the voice and background are separated:
+
+https://github.com/gaspardpetit/verbatim/assets/9883156/23bc86d2-567e-4be3-8d79-ba625be8c614
+
+
+
+First, we extract the background audio and remove it from the analysis:
 
 **Background noise:**
-https://github.com//gaspardpetit/verbatim/doc/data/12374-bg.mp3
 
-**Voices:**
-https://github.com//gaspardpetit/verbatim/doc/data/12374-voice.mp3
+https://github.com/gaspardpetit/verbatim/assets/9883156/42fad911-3c15-45c2-a40a-7f923fdd4533
 
 Then we perform diarization and language detection. We correctly detect one speaker speaking in French and another one speaking in English:
 
 **Speaker 0 | English:**
-https://github.com//gaspardpetit/verbatim/doc/data/12374-voice-00-en.mp3
+
+https://github.com/gaspardpetit/verbatim/assets/9883156/cecec5aa-cb09-473e-bf9b-c5fd82352dab
 
 **Speaker 1 | French:**
-https://github.com//gaspardpetit/verbatim/doc/data/12374-voice-01-fr.mp3
 
-Here are, in waveform, (1) the original track (2) the discarded background audio, (3) the English Speaker 0 track and (4) the French Speaker 1 track:
-
-![doc/architecture.svg](doc/img/sample_audio_results.png)
+https://github.com/gaspardpetit/verbatim/assets/9883156/8074c064-f4d2-4ec4-8fc0-c985f7c276e8
 
 The output consists of a word document highlighting words with low certainty (low certainty are underlined and highlighted in yello, while medium certainty are simply underlined):
 
 ![Microsoft Word Output](doc/img/word_output.png)
 
-A subtitle file is also provided to 
-https://github.com//gaspardpetit/verbatim/doc/data/12374-sub.mp4
+A subtitle file is also provided and can be attached to the original audio:
 
+https://github.com/gaspardpetit/verbatim/assets/9883156/9bcc2553-f183-4def-a9c4-bb0c337d4c82
+
+A direct use of whisper on an audio clip like this one results in many errors. Several utterances end up being translated instead of being transcribed, and others are simply unrecognized and missing:
+
+<table>
+<tr><td><b>Naive Whisper Transcription</b></td>
+<td><b>Verbatim Transcription</b></td></tr>
+
+<tr><td>Madame, Monsieur, bonjour et bienvenue à bord. </td>
+<td>Madame, Monsieur, bonjour et bienvenue à bord.</td></tr>
+
+<tr><td>Bienvenue à bord, Mesdames et Messieurs.</td>
+<td>Welcome aboard, ladies and gentlemen.</td></tr>
+
+<tr><td>Pour votre sécurité et votre confort, prenez un moment pour regarder la vidéo de sécurité suivante. </td>
+<td>For your safety and comfort, please take a moment to watch the following safety video.</td></tr>
+
+<tr><td>Ce film concerne votre sécurité à bord. Merci de nous accorder votre attention.</td>
+<td>Ce film concerne votre sécurité à bord. Merci de nous accorder votre attention.</td></tr>
+
+<tr><td>Chaque fois que ce signal est allumé, vous devez attacher votre ceinture pour votre sécurité. </td>
+<td>Chaque fois que ce signal est allumé, vous devez attacher votre ceinture pour votre sécurité.</td></tr>
+
+<tr><td>Nous vous recommandons de la maintenir attachée de façon visible lorsque vous êtes à votre siège. </td>
+<td>Nous vous recommandons de la maintenir attachée, de façon visible, lorsque vous êtes à votre siège.</td></tr>
+
+<tr><td>Lorsque le signe de la selle est en place, votre selle doit être assise en sécurité. Pour votre sécurité, nous recommandons que vous gardiez votre selle assise et visible à tous les temps en selle.</td>
+<td>Whenever the seatbelt sign is on, your seatbelt must be securely fastened. For your safety, we recommend that you keep your seatbelt fastened and visible at all times while seated.</td></tr>
+
+<tr><td>Pour détacher votre selleure, soulevez la partie supérieure de la boucle. </td>
+<td>To release the seatbelt, just lift the buckle.</td></tr>
+
+<tr><td>Il est strictement interdit de fumer dans l'avion, y compris dans les toilettes. </td>
+<td>Pour détacher votre ceinture, soulevez la partie supérieure de la boucle.</td></tr>
+
+<tr><td></td>
+<td>Il est strictement interdit de fumer dans l'avion, y compris dans les toilettes.</td></tr>
+
+<tr><td></td>
+<td>This is a no-smoking flight, and it is strictly prohibited to smoke in the toilets.</td></tr>
+
+<tr><td>En cas de dépressurisation, un masque à oxygène tombera automatiquement à votre portée. </td>
+<td>En cas de dépressurisation, un masque à oxygène tombera automatiquement à votre portée.</td></tr>
+
+<tr><td></td>
+<td>If there is a sudden decrease in cabin pressure, your oxygen mask will drop automatically in front of you.</td></tr>
+
+<tr><td>Tirez sur le masque pour libérer l'oxygène, placez-le sur votre visage. </td>
+<td>Tirer sur le masque pour libérer l'oxygène, placez-le sur votre visage.</td></tr>
+
+<tr><td></td>
+<td>Pull the mask toward you to start the flow of oxygen. Place the mask over your nose and mouth. Make sure your own mask is well adjusted before helping others.</td></tr>
+
+<tr><td>Une fois votre masque ajusté, il vous sera possible d'aider d'autres personnes. En cas d'évacuation, des panneaux lumineux EXIT vous permettent de localiser les issues de secours. Repérez maintenant le panneau EXIT le plus proche de votre siège. Il peut se trouver derrière vous.</td>
+<td>Une fois votre masque ajusté, il vous sera possible d'aider d'autres personnes. En cas d'évacuation, des panneaux lumineux EXIT vous permettent de localiser les issues de secours. Repérez maintenant le panneau EXIT le plus proche de votre siège. Il peut se trouver derrière vous.</td></tr>
+
+<tr><td>En cas d'urgence, les signes d'exit illuminés vous aideront à locater les portes d'exit.</td>
+<td>In case of an emergency, the illuminated exit signs will help you locate the exit doors.</td></tr>
+
+<tr><td>S'il vous plaît, prenez un moment pour locater l'exit le plus proche de vous. L'exit le plus proche peut être derrière vous.</td>
+<td>Please take a moment now to locate the exit nearest you. The nearest exit may be behind you.</td></tr>
+
+<tr><td>Les issues de secours sont situées de chaque côté de la cabine, à l'avant, au centre, à l'arrière. à l'avant, au centre, à l'arrière.</td>
+<td>Les issues de secours sont situées de chaque côté de la cabine, à l'avant, au centre, à l'arrière.</td></tr>
+
+<tr><td></td>
+<td>Emergency exits on each side of the cabin are located at the front, in the center, and at the rear.</td></tr>
+
+<tr><td>Pour évacuer l'avion, suivez le marquage lumineux.</td>
+<td>Pour évacuer l'avion, suivez le marquage lumineux.</td></tr>
+
+<tr><td></td>
+<td>In the event of an evacuation, pathway lighting on the floor will guide you to the exits.</td></tr>
+
+<tr><td>Les portes seront ouvertes par l'équipage.</td>
+<td>Les portes seront ouvertes par l'équipage.</td></tr>
+
+<tr><td></td>
+<td>Doors will be opened by the cabin crew.</td></tr>
+
+<tr><td>Les toboggans se déploient automatiquement.</td>
+<td>Les toboggans se déploient automatiquement.</td></tr>
+
+<tr><td></td>
+<td>The emergency slides will automatically inflate.</td></tr>
+
+<tr><td>Le gilet de sauvetage est situé sous votre siège ou dans la coudoir centrale.</td>
+<td>Le gilet de sauvetage est situé sous votre siège ou dans la coudoir centrale.</td></tr>
+
+<tr><td></td>
+<td>Your life jacket is under your seat or in the central armrest.</td></tr>
+
+<tr><td>Passez la tête dans l'encolure, attachez et serrez les sangles.</td>
+<td>Passez la tête dans l'encolure, attachez et serrez les sangles.</td></tr>
+
+<tr><td></td>
+<td>Place it over your head and pull the straps tightly around your waist. Inflate your life jacket by pulling the red toggles.</td></tr>
+
+<tr><td>Une fois à l'extérieur de l'avion, gonflez votre gilet en tirant sur les poignées rouges.</td>
+<td>Une fois à l'extérieur de l'avion, gonflez votre gilet en tirant sur les poignées rouges.</td></tr>
+
+<tr><td>Faites-le seulement quand vous êtes à l'extérieur de l'avion.</td>
+<td>Do this only when you are outside the aircraft.</td></tr>
+
+<tr><td>Nous allons bientôt décoller. La tablette doit être rangée et votre dossier redressé.</td>
+<td>Nous allons bientôt décoller. La tablette doit être rangée et votre dossier redressé.</td></tr>
+
+<tr><td></td>
+<td>In preparation for takeoff, please make sure your tray table is stowed and secure and that your seat back is in the upright position.</td></tr>
+
+<tr><td>L'usage des appareils électroniques est interite pendant le décollage et l'atterrissage.</td>
+<td>L'usage des appareils électroniques est interdit pendant le décollage et l'atterrissage.</td></tr>
+
+<tr><td></td>
+<td>The use of electronic devices is prohibited during takeoff and landing.</td></tr>
+
+<tr><td>Les téléphones portables doivent rester éteints pendant tout le vol.</td>
+<td>Les téléphones portables doivent rester éteints pendant tout le vol.</td></tr>
+
+<tr><td></td>
+<td>Mobile phones must remain switched off for the duration of the flight.</td></tr>
+
+<tr><td>Une notice de sécurité placée devant vous est à votre disposition.</td>
+<td>Une notice de sécurité placée devant vous est à votre disposition.</td></tr>
+
+<tr><td>Merci encourage everyone to read the safety information leaflet located in the seat back pocket.</td>
+<td>We encourage everyone to read the safety information leaflet located in the seat back pocket.</td></tr>
+
+<tr>
+<td>Merci pour votre attention. Nous vous souhaitons un bon vol.</td>
+<td>Merci pour votre attention. Nous vous souhaitons un bon vol.</td></tr>
+
+<tr><td>Thank you for your attention. We wish you a very pleasant flight.
+<td>Thank you for your attention. We wish you a very pleasant flight.</td></tr></table>
