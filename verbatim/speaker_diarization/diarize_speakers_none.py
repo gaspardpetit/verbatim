@@ -1,6 +1,8 @@
 from .diarize_speakers import DiarizeSpeakers
 from pyannote.core import Annotation, Segment
 from pydub import AudioSegment
+import logging
+LOG = logging.getLogger(__name__)
 
 
 class DiarizeSpeakersNone(DiarizeSpeakers):
