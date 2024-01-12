@@ -1,7 +1,7 @@
 from ..wav_conversion.convert_to_wav import ConvertToWav
 from ..transcription import Transcription, Word, Utterance
 from .transcribe_speech import TranscribeSpeech
-from ..models.fasterwhisper_model import FasterWhisperModel
+from ..models.model_fasterwhisper import FasterWhisperModel
 
 import numpy as np
 from numpy import ndarray

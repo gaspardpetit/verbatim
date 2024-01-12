@@ -1,6 +1,6 @@
 from ..transcription import Transcription, Utterance
 from .detect_language import DetectLanguage
-from ..models.fasterwhisper_model import FasterWhisperModel
+from ..models.model_fasterwhisper import FasterWhisperModel
 
 from numpy import ndarray
 import logging

@@ -1,5 +1,5 @@
 from .detect_language import DetectLanguage
-from ..models.whisper_model import WhisperModel
+from ..models.model_whisper import WhisperModel
 from ..transcription import Transcription, Utterance
 
 from numpy import ndarray

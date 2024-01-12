@@ -1,6 +1,6 @@
 from ..transcription import Transcription, Word, Utterance
 from .transcribe_speech import TranscribeSpeech
-from ..models.whisper_model import WhisperModel
+from ..models.model_whisper import WhisperModel
 
 import numpy as np
 from numpy import ndarray
