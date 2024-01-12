@@ -49,17 +49,7 @@ The output includes
 
 ## Processing Pipeline
 
-<style>
-  img {
-    border-radius: 4px;
-  }
-</style>
-
-<div style="float: right; margin: 0 0 10px 10px;">
-
 ![doc/architecture.svg](doc/img/Architecture.svg)
-
-</div>
 
 ### 1. Injestion 🔊
 Audio Files are converted ◌⃯ to raw audio using [ffmpeg](https://ffmpeg.org/). 
