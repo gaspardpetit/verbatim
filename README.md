@@ -119,5 +119,7 @@ The output consists of a word document highlighting words with low certainty (lo
 ![Microsoft Word Output](doc/img/word_output.png)
 
 A subtitle file is also provided to 
-https://github.com//gaspardpetit/verbatim/doc/data/12374-sub.mp4
+
+https://github.com/gaspardpetit/verbatim/raw/main/doc/data/12374-sub.mp4
+
 
