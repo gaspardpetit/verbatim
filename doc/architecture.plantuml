@@ -1,0 +1,24 @@
+@startuml Architecture
+skinparam classFontName Calibri
+skinparam backgroundColor #D0D0D080
+
+rectangle "🔊 Audio File" as AudioFile
+rectangle "◌⃯ ffmpeg" as Conversion
+rectangle "🗩 MDX-Net" as VoiceIsolation
+rectangle "🖹 pyannote" as Diarization
+rectangle "✎ faster_whisper" as SpeechToText
+rectangle "🔊 .wav" as WaveFile
+rectangle "🔊 Voice" as VoiceFile
+rectangle "🖹 .rttm" as RTTMFile
+rectangle "🗎 Transcription" as TranscriptionFile
+
+AudioFile =ri=> Conversion
+Conversion .ri.> WaveFile
+Conversion ==> VoiceIsolation
+VoiceIsolation ==> Diarization
+VoiceIsolation .ri.> VoiceFile
+Diarization .ri.> RTTMFile
+Diarization ==> SpeechToText
+SpeechToText .ri.> TranscriptionFile
+
+@enduml
