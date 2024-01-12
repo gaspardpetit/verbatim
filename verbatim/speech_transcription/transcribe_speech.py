@@ -80,10 +80,10 @@ class TranscribeSpeech(ABC):
                 last_sample, last = index_seq[len(index_seq) - 1]
                 prev_sample, prev = index_seq[len(index_seq) - 2]
                 if last['language'] == "none" and prev['language'] != "none":
-                    last['language'] = last['language']
+                    last['language'] = prev['language']
                     changed = True
                 if last['speaker'] == "none" and prev['speaker'] != "none":
-                    last['speaker'] = last['speaker']
+                    last['speaker'] = prev['speaker']
                     changed = True
 
                 for i in range(1, len(index_seq) - 1):
@@ -320,3 +320,4 @@ class TranscribeSpeech(ABC):
         full_transcription = full_transcription.regroup_by_words()
         full_transcription.save(transcription_file)
         LOG.info(full_transcription.get_colour_text())
+        return full_transcription
