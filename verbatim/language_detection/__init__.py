@@ -1,0 +1,4 @@
+from .detect_language import DetectLanguage
+from .detect_language_whisper import DetectLanguageWhisper
+from .detect_language_fasterwhisper import DetectLanguageFasterWhisper
+from .detect_language_file import DetectLanguageFile
