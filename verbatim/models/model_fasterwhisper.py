@@ -1,3 +1,7 @@
+"""
+model_fasterwhisper.py
+"""
+
 from faster_whisper import WhisperModel
 
 class FasterWhisperModel:
@@ -11,7 +15,8 @@ class FasterWhisperModel:
 
     def __new__(cls):
         """
-        Create a new instance of the class if it doesn't exist, otherwise, return the existing instance.
+        Create a new instance of the class if it doesn't exist, otherwise, return the existing 
+        instance.
 
         Returns:
             FasterWhisperModel: The FasterWhisperModel instance.
@@ -21,6 +26,7 @@ class FasterWhisperModel:
             cls._instance._init_once()
         return cls._instance
 
+    # pylint: disable=attribute-defined-outside-init
     def _init_once(self):
         """
         Initialize the FasterWhisperModel instance.

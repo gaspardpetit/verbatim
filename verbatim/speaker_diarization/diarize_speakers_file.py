@@ -1,21 +1,21 @@
-from .diarize_speakers import DiarizeSpeakers
 from pyannote.core import Annotation
 from pyannote.database.util import load_rttm
+from .diarize_speakers import DiarizeSpeakers
 
 
 class DiarizeSpeakersFile(DiarizeSpeakers):
     """
     Diarization implementation that loads speaker information from an existing RTTM file.
 
-    This class inherits from DiarizeSpeakers and implements diarization by loading speaker information from a pre-existing
-    RTTM (Rich Transcription Time Marked) file.
+    This class inherits from DiarizeSpeakers and implements diarization by loading speaker 
+    information from a pre-existing RTTM (Rich Transcription Time Marked) file.
 
     Attributes:
         None
     """
 
     def execute(self, audio_file: str, rttm_file: str, min_speakers: int = 1, max_speakers: int = None,
-                TOKEN_HUGGINGFACE: str = None, **kwargs: dict) -> Annotation:
+                **kwargs: dict) -> Annotation:
         """
         Execute the diarization process by loading speaker information from an RTTM file.
 

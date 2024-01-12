@@ -1,10 +1,10 @@
-from ..transcription import Transcription, Word, Utterance
-from .transcribe_speech import TranscribeSpeech
-from ..models.model_whisper import WhisperModel
-
+import logging
 import numpy as np
 from numpy import ndarray
-import logging
+
+from ..transcription import Transcription, Word, Utterance
+from ..models.model_whisper import WhisperModel
+from .transcribe_speech import TranscribeSpeech
 
 LOG = logging.getLogger(__name__)
 
@@ -29,15 +29,9 @@ class TranscribeSpeechWhisper(TranscribeSpeech):
         Returns:
             Utterance: Utterance object created from the segment.
         """
-        id = seg['id']
-        seek = seg['seek']
         start = seg['start']
         end = seg['end']
-        text = seg['text']
-        tokens = seg['tokens']
-        temperature = seg['temperature']
         avg_logprob = seg['avg_logprob']
-        compression_ratio = seg['compression_ratio']
         no_speech_prob = seg['no_speech_prob']
         utterance = Utterance(
             start=speech_offset + start,

@@ -1,9 +1,10 @@
-from ..transcription import Transcription, Utterance
-from .detect_language import DetectLanguage
-from ..models.model_fasterwhisper import FasterWhisperModel
-
-from numpy import ndarray
 import logging
+from numpy import ndarray
+
+from ..transcription import Transcription, Utterance
+from ..models.model_fasterwhisper import FasterWhisperModel
+from .detect_language import DetectLanguage
+
 
 LOG = logging.getLogger(__name__)
 
@@ -50,7 +51,7 @@ class DetectLanguageFasterWhisper(DetectLanguage):
 
         # Parse language names to strip out markers
         all_language_probs = [(token[2:-2], prob) for (token, prob) in results]
-        detected_languages = {l: p for l, p in all_language_probs}
+        detected_languages = dict(all_language_probs)
 
         # Determine the best language based on user-specified languages or the maximum probability
         best_language, best_language_prob = self.determine_best_language(detected_languages, languages)

@@ -1,9 +1,9 @@
-import os
 from abc import ABC, abstractmethod
 from numpy import ndarray
 from pyannote.core import Annotation
 
 from ..transcription import Transcription, Utterance
+
 
 class DetectLanguage(ABC):
     """
@@ -29,7 +29,6 @@ class DetectLanguage(ABC):
         Returns:
             Transcription: Transcription object containing the detected language information.
         """
-        ...
 
     @staticmethod
     def get_speech_segment(speech_segment_float32_16khz: ndarray, start: float, end: float) -> ndarray:
@@ -48,24 +47,14 @@ class DetectLanguage(ABC):
         end_index = int(end * 16000)
         return speech_segment_float32_16khz[start_index:end_index]
 
-    def execute(self, diarization: Annotation, speech_segment_float32_16khz: ndarray,
-                language_file: str, languages=None, **kwargs: dict) -> Transcription:
-        """
-        Executes language detection on the entire audio based on speaker diarization.
-
-        Args:
-            diarization (Annotation): Speaker diarization information.
-            speech_segment_float32_16khz (ndarray): Speech segment data in float32 format at 16kHz.
-            language_file (str): File path to save the detected language information.
-            languages (Optional[List[str]]): List of target languages for detection.
-            **kwargs (dict): Additional keyword arguments for customization.
-
-        Returns:
-            Transcription: Transcription object containing the detected language information.
-        """
-
-        transcription = Transcription()
+    def identify_diarization_silences(self,
+                                      speech_segment_float32_16khz: ndarray,
+                                      diarization:Annotation,
+                                      languages:[str],
+                                      **kwargs:dict) -> Transcription:
         last_time: float = 0
+        transcription = Transcription()
+
         for turn, _, speaker in diarization.itertracks(yield_label=True):
             skip_time = turn.start - last_time
             if skip_time > 0.25:
@@ -74,7 +63,8 @@ class DetectLanguage(ABC):
                     speech_offset=last_time,
                     speech_segment_float32_16khz=DetectLanguage.get_speech_segment(speech_segment_float32_16khz,
                                                                                    last_time, turn.start),
-                    languages=languages)
+                    languages=languages,
+                    **kwargs)
                 for utterance in segment_transcription.utterances:
                     transcription.append(utterance)
             last_time = turn.end
@@ -84,7 +74,8 @@ class DetectLanguage(ABC):
                 speech_offset=turn.start,
                 speech_segment_float32_16khz=DetectLanguage.get_speech_segment(speech_segment_float32_16khz, turn.start,
                                                                                turn.end),
-                languages=languages)
+                languages=languages,
+                **kwargs)
 
             for utterance in segment_transcription.utterances:
                 transcription.append(utterance)
@@ -97,16 +88,16 @@ class DetectLanguage(ABC):
                 speech_offset=last_time,
                 speech_segment_float32_16khz=DetectLanguage.get_speech_segment(speech_segment_float32_16khz, last_time,
                                                                                audio_end),
-                languages=languages)
+                languages=languages,
+                **kwargs)
             for utterance in segment_transcription.utterances:
                 transcription.append(utterance)
 
-        """
-        as a second pass, identify short segments with low confidence, and attempt to
-        merge with high confidence neighbors
-        """
+        return transcription
 
+    def get_utterances_as_triplets(self, transcription:Transcription) -> [[Utterance]]:
         triplets: list[list[Utterance]] = []
+        utterance = None
         for utterance in transcription.utterances:
             if len(triplets) == 0:
                 triplets.append([utterance])
@@ -119,11 +110,15 @@ class DetectLanguage(ABC):
         triplets[len(triplets) - 2].append(utterance)
         triplets[len(triplets) - 1].append(utterance)
         triplets[len(triplets) - 1].append(utterance)
+        return triplets
 
+    def detect_unknown_languages(self,
+                                 speech_segment_float32_16khz:ndarray,
+                                 triplets:[[Utterance]],
+                                 languages:[str],
+                                 **kwargs:dict):
         for triplet in triplets:
-            left = triplet[0]
             center = triplet[1]
-            right = triplet[2]
 
             if center.confidence < 0.8 or center.end - center.start < 1:
                 votes = {}
@@ -137,7 +132,8 @@ class DetectLanguage(ABC):
                         speech_offset=start,
                         speech_segment_float32_16khz=DetectLanguage.get_speech_segment(speech_segment_float32_16khz,
                                                                                        start, end),
-                        languages=languages)
+                        languages=languages,
+                        **kwargs)
                     confidence = 1
                     lang = set()
                     for utterance in segment_transcription.utterances:
@@ -157,7 +153,13 @@ class DetectLanguage(ABC):
                         center.language = max_lang
                     center.confidence = max_confidence
 
+    def fill_language_gaps(self,
+                           triplets:[[Utterance]],
+                           speech_segment_float32_16khz:ndarray,
+                           languages:[str],
+                           **kwargs:dict):
         changed = True
+
         i = 0
         while changed:
             changed = False
@@ -178,7 +180,8 @@ class DetectLanguage(ABC):
                             speech_offset=start,
                             speech_segment_float32_16khz=DetectLanguage.get_speech_segment(speech_segment_float32_16khz,
                                                                                            start, end),
-                            languages=languages)
+                            languages=languages,
+                            **kwargs)
                         confidence = 1
                         lang = set()
                         for utterance in segment_transcription.utterances:
@@ -200,7 +203,8 @@ class DetectLanguage(ABC):
                             speech_offset=start,
                             speech_segment_float32_16khz=DetectLanguage.get_speech_segment(speech_segment_float32_16khz,
                                                                                            start, end),
-                            languages=languages)
+                            languages=languages,
+                            **kwargs)
                         confidence = 1
                         lang = set()
                         for utterance in segment_transcription.utterances:
@@ -222,7 +226,8 @@ class DetectLanguage(ABC):
                             speech_offset=start,
                             speech_segment_float32_16khz=DetectLanguage.get_speech_segment(speech_segment_float32_16khz,
                                                                                            start, end),
-                            languages=languages)
+                            languages=languages,
+                            **kwargs)
                         confidence = 1
                         lang = set()
                         for utterance in segment_transcription.utterances:
@@ -234,6 +239,45 @@ class DetectLanguage(ABC):
                                 center.language = next(iter(lang))
                                 changed = True
                             center.confidence = confidence
+
+    def execute(self, diarization: Annotation, speech_segment_float32_16khz: ndarray,
+                language_file: str, languages=None, **kwargs: dict) -> Transcription:
+        """
+        Executes language detection on the entire audio based on speaker diarization.
+
+        Args:
+            diarization (Annotation): Speaker diarization information.
+            speech_segment_float32_16khz (ndarray): Speech segment data in float32 format at 16kHz.
+            language_file (str): File path to save the detected language information.
+            languages (Optional[List[str]]): List of target languages for detection.
+            **kwargs (dict): Additional keyword arguments for customization.
+
+        Returns:
+            Transcription: Transcription object containing the detected language information.
+        """
+
+        transcription = self.identify_diarization_silences(
+            speech_segment_float32_16khz=speech_segment_float32_16khz,
+            diarization=diarization,
+            languages=languages,
+            **kwargs)
+
+        # as a second pass, identify short segments with low confidence, and attempt to
+        # merge with high confidence neighbors
+
+        triplets: [[Utterance]] = self.get_utterances_as_triplets(transcription)
+
+        self.detect_unknown_languages(
+            speech_segment_float32_16khz=speech_segment_float32_16khz,
+            triplets=triplets,
+            languages=languages,
+            **kwargs)
+
+        self.fill_language_gaps(
+            speech_segment_float32_16khz=speech_segment_float32_16khz,
+            triplets=triplets,
+            languages=languages,
+            **kwargs)
 
         transcription.save(language_file)
         return transcription

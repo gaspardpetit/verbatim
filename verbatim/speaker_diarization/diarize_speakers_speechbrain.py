@@ -1,8 +1,10 @@
-from speechbrain.pretrained import VAD
-from .diarize_speakers import DiarizeSpeakers
 import logging
-from pyannote.core import Annotation, Segment
 import torchaudio
+
+from speechbrain.pretrained import VAD
+from pyannote.core import Annotation, Segment
+
+from .diarize_speakers import DiarizeSpeakers
 
 LOG = logging.getLogger(__name__)
 
