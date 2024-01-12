@@ -120,6 +120,5 @@ The output consists of a word document highlighting words with low certainty (lo
 
 A subtitle file is also provided to 
 
-https://github.com/gaspardpetit/verbatim/raw/main/doc/data/12374-sub.mp4
-
+https://github.com/gaspardpetit/verbatim/releases/download/v1.0.0/12374-sub.mp4
 
