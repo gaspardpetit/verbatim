@@ -101,8 +101,7 @@ class Utterance(DataClassJsonMixin):
         return f"[{self.start:.2f}->{self.end:.2f} {self.end - self.start:.2f}][{self.language}][{self.confidence:.2%}] {self.speaker}: {transcription}"
 
     def get_text(self):
-        transcription = ''.join(word.text for word in self.words)
-        return f"[{self.start:.2f}] {self.speaker}: {transcription}"
+        return ''.join(word.text for word in self.words)
 
     def append(self, word: Word):
         self.words.append(word)
