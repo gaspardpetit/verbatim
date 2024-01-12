@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from verbatim.transcription import Transcription
+from ..transcription import Transcription
 
 
 class WriteTranscript(ABC):
@@ -31,4 +31,3 @@ class WriteTranscript(ABC):
         Raises:
             NotImplementedError: This method must be implemented by the derived class.
         """
-        pass

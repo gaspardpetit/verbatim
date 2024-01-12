@@ -1,9 +1,11 @@
+import logging
 from abc import ABC, abstractmethod
-from verbatim.transcription import Transcription
 import numpy as np
 from numpy import ndarray
 from pyannote.core import Annotation
-import logging
+
+from ..transcription import Transcription
+from ..speaker_diarization import DiarizeSpeakersSpeechBrain
 from ..wav_conversion import ConvertToWav
 
 LOG = logging.getLogger(__name__)
@@ -36,7 +38,6 @@ class TranscribeSpeech(ABC):
             Transcription: Transcription object containing the transcribed information.
         """
 
-    ...
 
     def _optimize_sequence(self, sequence: dict, full_duration: float) -> dict:
         """
@@ -67,9 +68,9 @@ class TranscribeSpeech(ABC):
             changed = True
             while changed:
                 changed = False
-                index_seq = [s for s in sequence.items()]
-                first_sample, first = index_seq[0]
-                next_sample, after = index_seq[1]
+                index_seq = sorted(sequence.items())
+                _, first = index_seq[0]
+                _, after = index_seq[1]
                 if first['language'] == "none" and after['language'] != "none":
                     first['language'] = after['language']
                     changed = True
@@ -77,8 +78,8 @@ class TranscribeSpeech(ABC):
                     first['speaker'] = after['speaker']
                     changed = True
 
-                last_sample, last = index_seq[len(index_seq) - 1]
-                prev_sample, prev = index_seq[len(index_seq) - 2]
+                _, last = index_seq[len(index_seq) - 1]
+                _, prev = index_seq[len(index_seq) - 2]
                 if last['language'] == "none" and prev['language'] != "none":
                     last['language'] = prev['language']
                     changed = True
@@ -87,9 +88,9 @@ class TranscribeSpeech(ABC):
                     changed = True
 
                 for i in range(1, len(index_seq) - 1):
-                    prev_sample, prev = index_seq[i - 1]
-                    next_sample, after = index_seq[i + 1]
-                    cur_sample, cur = index_seq[i]
+                    _, prev = index_seq[i - 1]
+                    _, after = index_seq[i + 1]
+                    _, cur = index_seq[i]
 
                     if cur['language'] == "none":
                         if prev['language'] == after['language'] and cur['language'] != prev['language']:
@@ -239,7 +240,6 @@ class TranscribeSpeech(ABC):
         mute_seq = {}
         mute_start = None
         mute_end = None
-        last_index = 0
         for index, info in sequence.items():
             if info['speaker'] != speaker or (
                     (language is None or info['language'] != language) and info['language'] != "none"):
@@ -268,7 +268,6 @@ class TranscribeSpeech(ABC):
             )
         ConvertToWav.save_float32_16khz_mono_audio(audio_lang, f"out/{speaker}-{language}.wav")
 
-        from ..speaker_diarization import DiarizeSpeakersSpeechBrain
         segments = DiarizeSpeakersSpeechBrain().diarize_on_silences(f"out/{speaker}-{language}.wav")
         prompt = "Hello, welcome to my presentation."
         whole_transcription = Transcription()
@@ -286,6 +285,7 @@ class TranscribeSpeech(ABC):
                 whole_transcription.append(u)
         return whole_transcription
 
+    # pylint: disable=unused-argument
     def execute(self, speech_segment_float32_16khz: ndarray, detected_languages: Transcription,
                 transcription_file: str, diarization: Annotation, languages: list, **kwargs: dict) -> Transcription:
         """

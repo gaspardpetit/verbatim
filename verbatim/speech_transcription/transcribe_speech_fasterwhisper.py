@@ -1,11 +1,11 @@
-from ..wav_conversion.convert_to_wav import ConvertToWav
-from ..transcription import Transcription, Word, Utterance
-from .transcribe_speech import TranscribeSpeech
-from ..models.model_fasterwhisper import FasterWhisperModel
-
+import logging
 import numpy as np
 from numpy import ndarray
-import logging
+
+from ..transcription import Transcription, Word, Utterance
+from ..models.model_fasterwhisper import FasterWhisperModel
+from .transcribe_speech import TranscribeSpeech
+
 
 LOG = logging.getLogger(__name__)
 
@@ -78,11 +78,14 @@ class TranscribeSpeechFasterWhisper(TranscribeSpeech):
         for segment in segments:
             utterance = self._get_utterance_from_segment(segment, info, speaker, speech_offset)
             transcription.append(utterance)
-            LOG.info(f"[silent={segment.no_speech_prob:.2%};temp={segment.temperature:.2f};comp={segment.compression_ratio:.2%}]{utterance.get_colour_text()}")
+            LOG.info(f"[silent={segment.no_speech_prob:.2%};" +
+                     f"temp={segment.temperature:.2f};" + 
+                     f"comp={segment.compression_ratio:.2%}]" + 
+                     f"{utterance.get_colour_text()}")
         return transcription
 
     def detect_language(self, speaker: str, speech_offset: float, speech_segment_float32_16khz: ndarray,
-                        language_file: str, languages=None, **kwargs: dict) -> Transcription:
+                        languages=None) -> Transcription:
         """
         Detects language in a speech segment using FasterWhisper model.
 
@@ -137,3 +140,4 @@ class TranscribeSpeechFasterWhisper(TranscribeSpeech):
         transcription.append(utterance)
         LOG.info(utterance.get_colour_text())
         return transcription
+    

@@ -21,6 +21,7 @@ class WhisperModel:
             cls._instance._init_once()
         return cls._instance
 
+    # pylint: disable=attribute-defined-outside-init
     def _init_once(self):
         """
         Initialize the WhisperModel instance.

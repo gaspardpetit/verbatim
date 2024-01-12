@@ -25,4 +25,3 @@ class IsolateVoices(ABC):
         Returns:
             ndarray: NumPy array representing the isolated voice audio.
         """
-        pass

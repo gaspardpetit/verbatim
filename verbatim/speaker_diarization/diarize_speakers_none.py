@@ -1,7 +1,9 @@
-from .diarize_speakers import DiarizeSpeakers
+import logging
 from pyannote.core import Annotation, Segment
 from pydub import AudioSegment
-import logging
+
+from .diarize_speakers import DiarizeSpeakers
+
 LOG = logging.getLogger(__name__)
 
 

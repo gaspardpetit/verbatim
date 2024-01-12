@@ -1,9 +1,12 @@
-from .detect_language import DetectLanguage
+import logging
+import torch
+from numpy import ndarray
+from whisper.audio import pad_or_trim, N_FRAMES, N_SAMPLES, log_mel_spectrogram
+
 from ..models.model_whisper import WhisperModel
 from ..transcription import Transcription, Utterance
+from .detect_language import DetectLanguage
 
-from numpy import ndarray
-import logging
 
 LOG = logging.getLogger(__name__)
 
@@ -16,7 +19,7 @@ class DetectLanguageWhisper(DetectLanguage):
     """
 
     def execute_segment(self, speaker: str, speech_offset: float, speech_segment_float32_16khz: ndarray,
-                        language_file: str, languages=None, **kwargs: dict) -> Transcription:
+                        languages=None, **kwargs: dict) -> Transcription:
         """
         Executes language detection on a speech segment using the Whisper model.
 
@@ -35,10 +38,6 @@ class DetectLanguageWhisper(DetectLanguage):
 
         # Load Whisper model
         model = WhisperModel().model
-
-        # Import necessary functions from Whisper
-        from whisper.audio import pad_or_trim, N_FRAMES, N_SAMPLES, log_mel_spectrogram
-        import torch
 
         # Generate mel spectrogram from the speech segment
         mel = log_mel_spectrogram(speech_segment_float32_16khz, model.dims.n_mels, padding=N_SAMPLES)
