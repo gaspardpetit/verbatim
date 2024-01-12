@@ -268,13 +268,23 @@ class TranscribeSpeech(ABC):
             )
         ConvertToWav.save_float32_16khz_mono_audio(audio_lang, f"out/{speaker}-{language}.wav")
 
-        transcription: Transcription = self.execute_segment(
-            speaker=speaker,
-            speech_offset=last_index / 16000,
-            speech_segment_float32_16khz=audio_lang,
-            prompt="Hello, welcome to my presentation.",
-            language=language)
-        return transcription
+        from ..speaker_diarization import DiarizeSpeakersSpeechBrain
+        segments = DiarizeSpeakersSpeechBrain().diarize_on_silences(f"out/{speaker}-{language}.wav")
+        prompt = "Hello, welcome to my presentation."
+        whole_transcription = Transcription()
+        for turn, _, _ in segments.itertracks(yield_label=True):
+            sample_start = int(turn.start * 16000)
+            sample_end = int(turn.end * 16000)
+            transcription: Transcription = self.execute_segment(
+                speaker=speaker,
+                speech_offset=turn.start,
+                speech_segment_float32_16khz=audio_lang[sample_start:sample_end],
+                prompt=prompt,
+                language=language)
+            prompt = transcription.get_text()
+            for u in transcription.utterances:
+                whole_transcription.append(u)
+        return whole_transcription
 
     def execute(self, speech_segment_float32_16khz: ndarray, detected_languages: Transcription,
                 transcription_file: str, diarization: Annotation, languages: list, **kwargs: dict) -> Transcription:
