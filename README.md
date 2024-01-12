@@ -92,33 +92,33 @@ The output document is a Microsoft Word document which reflects many decisions o
 
 Consider the following audio file obtained from [universal-soundbank](https://universal-soundbank.com/sounds/12374.mp3) including a mixture of French and English:
 
-https://github.com//gaspardpetit/verbatim/doc/data/12374.mp3
 
-First, the voice and background are separated:
+
+https://github.com/gaspardpetit/verbatim/assets/9883156/23bc86d2-567e-4be3-8d79-ba625be8c614
+
+
+
+First, we extract the background audio and remove it from the analysis:
 
 **Background noise:**
-https://github.com//gaspardpetit/verbatim/doc/data/12374-bg.mp3
 
-**Voices:**
-https://github.com//gaspardpetit/verbatim/doc/data/12374-voice.mp3
+https://github.com/gaspardpetit/verbatim/assets/9883156/42fad911-3c15-45c2-a40a-7f923fdd4533
 
 Then we perform diarization and language detection. We correctly detect one speaker speaking in French and another one speaking in English:
 
 **Speaker 0 | English:**
-https://github.com//gaspardpetit/verbatim/doc/data/12374-voice-00-en.mp3
+
+https://github.com/gaspardpetit/verbatim/assets/9883156/cecec5aa-cb09-473e-bf9b-c5fd82352dab
 
 **Speaker 1 | French:**
-https://github.com//gaspardpetit/verbatim/doc/data/12374-voice-01-fr.mp3
 
-Here are, in waveform, (1) the original track (2) the discarded background audio, (3) the English Speaker 0 track and (4) the French Speaker 1 track:
-
-![doc/architecture.svg](doc/img/sample_audio_results.png)
+https://github.com/gaspardpetit/verbatim/assets/9883156/8074c064-f4d2-4ec4-8fc0-c985f7c276e8
 
 The output consists of a word document highlighting words with low certainty (low certainty are underlined and highlighted in yello, while medium certainty are simply underlined):
 
 ![Microsoft Word Output](doc/img/word_output.png)
 
-A subtitle file is also provided to 
+A subtitle file is also provided and can be attached to the original audio:
 
-https://github.com/gaspardpetit/verbatim/releases/download/v1.0.0/12374-sub.mp4
+https://github.com/gaspardpetit/verbatim/assets/9883156/9bcc2553-f183-4def-a9c4-bb0c337d4c82
 
