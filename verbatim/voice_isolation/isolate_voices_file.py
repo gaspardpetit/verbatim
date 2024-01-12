@@ -19,14 +19,14 @@ class IsolateVoicesFile(IsolateVoices):
         Execute the voice isolation process using an existing audio file.
 
         Args:
-            source_path (str): Path to the existing audio file for voice isolation.
-            destination_path (str): Path to save the isolated voice audio file (not used in this method).
+            source_path (str): Path to the existing audio file for voice isolation (not used in this method)..
+            destination_path (str): Path to save the isolated voice audio file.
             **kwargs: Additional parameters (not used in this method).
 
         Returns:
             ndarray: NumPy array representing the isolated voice audio.
         """
         # Load the existing audio file as a NumPy array
-        waveform: ndarray = ConvertToWav.load_float32_16khz_mono_audio(source_path)
+        waveform: ndarray = ConvertToWav.load_float32_16khz_mono_audio(destination_path)
 
         return waveform
