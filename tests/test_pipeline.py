@@ -5,6 +5,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from verbatim.pipeline import Pipeline
 from verbatim.context import Context
 
+def test_verbatim():
+    assert True
 
 if __name__ == '__main__':
     import logging
