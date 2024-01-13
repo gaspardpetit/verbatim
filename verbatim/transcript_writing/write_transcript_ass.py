@@ -246,7 +246,8 @@ def _preprocess_args(result: (dict, list),
                      word_level: bool,
                      min_dur: float,
                      reverse_text: Union[bool, tuple] = False):
-    assert segment_level or word_level, '`segment_level` or `word_level` must be True'
+    if not segment_level and not word_level:
+        raise ValueError('`segment_level` or `word_level` must be True')
     segments = _get_segments(result, min_dur, reverse_text=reverse_text)
     if word_level:
         word_level = _confirm_word_level(segments)
@@ -346,8 +347,9 @@ def result_to_tsv(result: (dict, list),
                   reverse_text: Union[bool, tuple] = False):
     if segment_level is None and word_level is None:
         segment_level = True
-    assert word_level is not segment_level, '[word_level] and [segment_level] cannot be the same ' \
-                                            'since [tag] is not support for this format'
+    if word_level is segment_level:
+        raise ValueError('[word_level] and [segment_level] cannot be the same ' \
+                                    'since [tag] is not support for this format')
 
     def segments2blocks(segments):
         return '\n\n'.join(segment2tsvblock(s, strip=strip) for i, s in enumerate(segments))
