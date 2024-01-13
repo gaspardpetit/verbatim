@@ -156,7 +156,7 @@ https://github.com/gaspardpetit/verbatim/assets/9883156/cecec5aa-cb09-473e-bf9b-
 
 https://github.com/gaspardpetit/verbatim/assets/9883156/8074c064-f4d2-4ec4-8fc0-c985f7c276e8
 
-The output consists of a word document highlighting words with low certainty (low certainty are underlined and highlighted in yello, while medium certainty are simply underlined):
+The output consists of a word document highlighting words with low certainty (low certainty are underlined and highlighted in yellow, while medium certainty are simply underlined):
 
 ![Microsoft Word Output](doc/img/word_output.png)
 
