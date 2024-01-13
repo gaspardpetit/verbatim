@@ -1,5 +1,6 @@
 import logging
 import torchaudio
+import numpy as np
 
 from speechbrain.pretrained import VAD
 from pyannote.core import Annotation, Segment
@@ -50,13 +51,29 @@ class DiarizeSpeakersSpeechBrain(DiarizeSpeakers):
             if i+1 < len(boundaries):
                 diarization[Segment(float(boundaries[i][0]), float(boundaries[i + 1][1]))] = "speaker"
             else:
-                diarization[Segment(float(boundaries[i][0]), float(len(audio_file)/16000))] = "speaker"
+                diarization[Segment(float(boundaries[i][0]), float(boundaries.data[0][1]))] = "speaker"
 
         # Upsample boundaries and save the VAD result as a new audio file
         upsampled_boundaries = vad_model.upsample_boundaries(boundaries=boundaries, audio_file=audio_file)
         torchaudio.save(f"{audio_file}_vad.wav", upsampled_boundaries.cpu(), 16000)
 
         return diarization
+
+    @staticmethod
+    def pad_audio_to_duration(audio_samples, target_duration_seconds, sampling_rate=16000):
+        # Calculate the target length in samples
+        target_length_samples = int(target_duration_seconds * sampling_rate)
+
+        # Calculate the current length of the audio
+        current_length_samples = len(audio_samples)
+
+        # Calculate the amount of padding needed
+        padding_needed = target_length_samples - current_length_samples
+
+        # Pad the audio samples with zeros (silence)
+        padded_audio = np.pad(audio_samples, (0, padding_needed), mode='constant', constant_values=0)
+
+        return padded_audio
 
     def execute(self, audio_file: str, rttm_file: str, min_speakers: int = 1, max_speakers: int = None,
                 **kwargs: dict) -> Annotation:

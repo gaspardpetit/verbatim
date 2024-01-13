@@ -266,6 +266,10 @@ class TranscribeSpeech(ABC):
                 start=int(mute_start - fade_start / 2),
                 end=int(mute_end + fade_end / 2),
             )
+
+        # speechbrain throws an exception when processing audio shorter than 30s
+        # https://github.com/speechbrain/speechbrain/issues/2334
+        audio_lang = DiarizeSpeakersSpeechBrain.pad_audio_to_duration(audio_lang, 31, 16000)
         ConvertToWav.save_float32_16khz_mono_audio(audio_lang, f"out/{speaker}-{language}.wav")
 
         segments = DiarizeSpeakersSpeechBrain().diarize_on_silences(f"out/{speaker}-{language}.wav")
