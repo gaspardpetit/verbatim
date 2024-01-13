@@ -18,14 +18,14 @@ class DiarizeSpeakersNone(DiarizeSpeakers):
         None
     """
 
-    def execute(self, audio_file: str, rttm_file: str, min_speakers: int = 1, max_speakers: int = None,
+    def execute(self, voice_file_path: str, diarization_file: str, min_speakers: int = 1, max_speakers: int = None,
                 **kwargs: dict) -> Annotation:
         """
         Execute the diarization process by considering the entire audio as a single diarization segment.
 
         Args:
-            audio_file (str): Path to the input audio file.
-            rttm_file (str): Path to the output RTTM (Rich Transcription Time Marked) file.
+            voice_file_path (str): Path to the input audio file.
+            diarization_file (str): Path to the output RTTM (Rich Transcription Time Marked) file.
             min_speakers (int, optional): Minimum number of expected speakers. Default is 1.
             max_speakers (int, optional): Maximum number of expected speakers. Default is None (unbounded).
             **kwargs (dict): Additional parameters (not used in this method).
@@ -37,13 +37,13 @@ class DiarizeSpeakersNone(DiarizeSpeakers):
         diarization: Annotation = Annotation()
 
         # Load the audio as a Pydub AudioSegment
-        sound: AudioSegment = AudioSegment.from_file(audio_file)
+        sound: AudioSegment = AudioSegment.from_file(voice_file_path)
 
         # Create a diarization segment covering the entire audio with a default speaker label
         diarization[Segment(0, sound.duration_seconds)] = "Speaker"
 
         # Write the diarization to the provided RTTM file
-        with open(rttm_file, "w", encoding="utf-8") as f:
+        with open(diarization_file, "w", encoding="utf-8") as f:
             diarization.write_rttm(f)
 
         # Log the diarization for information

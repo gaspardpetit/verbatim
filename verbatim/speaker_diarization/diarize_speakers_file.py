@@ -14,14 +14,14 @@ class DiarizeSpeakersFile(DiarizeSpeakers):
         None
     """
 
-    def execute(self, audio_file: str, rttm_file: str, min_speakers: int = 1, max_speakers: int = None,
+    def execute(self, voice_file_path: str, diarization_file: str, min_speakers: int = 1, max_speakers: int = None,
                 **kwargs: dict) -> Annotation:
         """
         Execute the diarization process by loading speaker information from an RTTM file.
 
         Args:
-            audio_file (str): Path to the input audio file (not used in this method).
-            rttm_file (str): Path to the RTTM file containing speaker information.
+            voice_file_path (str): Path to the input audio file (not used in this method).
+            diarization_file (str): Path to the RTTM file containing speaker information.
             min_speakers (int, optional): Minimum number of expected speakers. Default is 1.
             max_speakers (int, optional): Maximum number of expected speakers. Default is None (unbounded).
             TOKEN_HUGGINGFACE (str, optional): Hugging Face token for customization. Default is None.
@@ -31,7 +31,7 @@ class DiarizeSpeakersFile(DiarizeSpeakers):
             Annotation: Pyannote Annotation object containing information about speaker diarization.
         """
         # Load speaker information from the provided RTTM file
-        rttms = load_rttm(rttm_file)
+        rttms = load_rttm(diarization_file)
 
         # Return the first speaker information available
         return next(iter(rttms.values()))
