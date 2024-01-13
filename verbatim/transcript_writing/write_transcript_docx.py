@@ -2,10 +2,11 @@ from typing import List
 from docx import Document
 from docx.shared import RGBColor
 from docx.enum.text import WD_COLOR_INDEX
+from docx.oxml import OxmlElement
 from langcodes import standardize_tag
+
 from ..transcription import Utterance, Transcription
 from .write_transcript import WriteTranscript  # Assuming WriteTranscript is in the same directory.
-from docx.oxml import OxmlElement
 
 def format_seconds(seconds: float) -> str:
     """

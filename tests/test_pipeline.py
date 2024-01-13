@@ -2,6 +2,7 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+# pylint: disable=(wrong-import-position
 from verbatim.pipeline import Pipeline
 from verbatim.context import Context
 
