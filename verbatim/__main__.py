@@ -1,6 +1,7 @@
 import argparse
 import os
 import logging
+import torch
 from .__init__ import __version__
 from .pipeline import Pipeline
 from .context import Context
@@ -25,6 +26,7 @@ def main():
     parser.add_argument("-v", "--verbose", action="count", default=0,
                         help="Increase verbosity (specify multiple times for more verbosity)")
     parser.add_argument("--version", action="version", version=f"{package_name} {__version__}")
+    parser.add_argument("--cpu", action="store_true", help="Toggle CPU usage")
 
     args = parser.parse_args()
 
@@ -54,12 +56,25 @@ def main():
         print(f"Error: Output directory '{args.output}' not found.")
         return
 
+    # Create output directory if it does not exist
+    if not os.path.exists(args.output):
+        os.makedirs(args.output)
+
+    if args.cpu or not torch.cuda.is_available():
+        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
+        print("Using CPU")
+        device = "cpu"
+    else:
+        print("Using GPU")
+        device = "cuda"
+
     # Use the provided values or default values for languages and nb_speakers
     languages = args.languages if args.languages else ["en", "fr"]
     nb_speakers = args.nb_speakers
 
     context: Context = Context(
-        languages=languages, nb_speakers=nb_speakers, source_file=args.input, out_dir=args.output, log_level=log_level)
+        languages=languages, nb_speakers=nb_speakers, source_file=args.input,
+        out_dir=args.output, log_level=log_level, device=device)
     pipeline: Pipeline = Pipeline(context=context)
     pipeline.execute()
 
