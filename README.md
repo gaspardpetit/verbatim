@@ -46,6 +46,27 @@ Save file in a specific directory
 verbatim audio_file.mp3 -o ./output/
 ```
 
+
+## Usage (from Docker)
+The tool can also be used within a docker container. This can be particularly convenient, in the context where the audio and transcription is confidential, to ensure that the tool is completely offline since docker using `--network none`
+
+With GPU support
+```bash
+docker run --network none --shm-size 8G --gpus all \
+    -v "/local/path/to/out/:/data/out/" \
+    -v "/local/path/to/audio.mp3:/data/audio.mp3" verbatim \
+    verbatim /data/audio.mp3 -o /data/out --language en fr"
+```
+
+Without GPU support
+```bash
+docker run --network none \
+    -v "/local/path/to/out/:/data/out/" \
+    -v "/local/path/to/audio.mp3:/data/audio.mp3" verbatim \
+    verbatim /data/audio.mp3 -o /data/out --language en fr"
+```
+
+
 ## Usage (from python)
 
 ```python 
