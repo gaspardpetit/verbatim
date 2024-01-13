@@ -1,7 +1,8 @@
-[![Pylint](https://github.com/gaspardpetit/verbatim/actions/workflows/pylint.yml/badge.svg)](https://github.com/gaspardpetit/verbatim/actions/workflows/pylint.yml)
-[![Python package](https://github.com/gaspardpetit/verbatim/actions/workflows/python-package.yml/badge.svg)](https://github.com/gaspardpetit/verbatim/actions/workflows/python-package.yml)
 [![PyPI version](https://badge.fury.io/py/verbatim.svg?)](https://pypi.python.org/pypi/verbatim/)
 [![Python versions](https://img.shields.io/pypi/pyversions/verbatim.svg)](https://pypi.org/project/verbatim/)
+[![Bandit](https://github.com/gaspardpetit/verbatim/actions/workflows/bandit.yml/badge.svg)](https://github.com/gaspardpetit/verbatim/actions/workflows/bandit.yml)
+[![Pylint](https://github.com/gaspardpetit/verbatim/actions/workflows/pylint.yml/badge.svg)](https://github.com/gaspardpetit/verbatim/actions/workflows/pylint.yml)
+[![Python package](https://github.com/gaspardpetit/verbatim/actions/workflows/python-package.yml/badge.svg)](https://github.com/gaspardpetit/verbatim/actions/workflows/python-package.yml)
 
 # Verbatim
 
