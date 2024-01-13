@@ -44,8 +44,10 @@ class TranscribeSpeechWhisper(TranscribeSpeech):
         )
         return utterance
 
-    def execute_segment(self, speaker: str, speech_offset: float, speech_segment_float32_16khz: ndarray, language=None,
-                        prompt: str = "", beams: int = 8, **kwargs: dict) -> Transcription:
+    def execute_segment(self, speech_segment_float32_16khz: ndarray,
+                        speaker: str = "speaker", speech_offset: float = 0,
+                        language: str = None, prompt: str = "",
+                        beams: int = 5, **kwargs: dict) -> Transcription:
         """
         Execute transcription on a speech segment using the OpenAI Whisper ASR model.
 
