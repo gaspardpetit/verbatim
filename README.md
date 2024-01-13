@@ -7,6 +7,53 @@
 
 For high quality multi-lingual speech to text.
 
+## Installation
+
+Install from PyPI:
+```
+pip install verbatim
+```
+
+Install the latest from git:
+```
+pip install git+https://github.com/gaspardpetit/verbatim.git
+```
+
+## Usage (from terminal)
+
+Simple usage
+```bash
+verbatim audio_file.mp3
+```
+
+Verbose
+```bash
+verbatim audio_file.mp3 -v
+```
+
+Very Verbose
+```bash
+verbatim audio_file.mp3 -vv
+```
+
+Force CPU only
+```bash
+verbatim audio_file.mp3 --cpu
+```
+
+Save file in a specific directory
+```bash
+verbatim audio_file.mp3 -o ./output/
+```
+
+## Usage (from python)
+
+```python 
+>>> from verbatim import Context, Pipeline
+
+```
+
+
 ## Objectives
 
 ### High Quality
