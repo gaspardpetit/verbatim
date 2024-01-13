@@ -30,6 +30,11 @@ setup(
     name=PACKAGE_NAME,
     version=version,
     description='high quality multi-lingual speech to text',
+    entry_points={
+            'console_scripts': [
+                'verbatim = verbatim.__main__:main',
+            ],
+        },
     packages=find_packages(),
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -42,7 +47,7 @@ setup(
     author_email='gaspardpetit@gmail.com',
 
     # Choose your license
-    license='CC0 1.0 Universal (CC0 1.0) Public Domain Dedication',
+    license='MIT',
 
     # https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
