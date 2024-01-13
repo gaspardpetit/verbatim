@@ -1,26 +1,30 @@
 """
 pipeline
 """
+#pylint: disable=unused-import
 from numpy import ndarray
 from pyannote.core import Annotation
 
 from .context import Context
 from .wav_conversion import ConvertToWav, ConvertToWavFFMpeg
 from .voice_isolation import IsolateVoices, IsolateVoicesNone, IsolateVoicesFile, IsolateVoicesDemucs, IsolateVoicesMDX
-from .speaker_diarization import DiarizeSpeakers, DiarizeSpeakersNone, DiarizeSpeakersPyannote, DiarizeSpeakersFile, DiarizeSpeakersSpeechBrain
+from .speaker_diarization import DiarizeSpeakers, DiarizeSpeakersNone, DiarizeSpeakersPyannote
+from .speaker_diarization import DiarizeSpeakersFile, DiarizeSpeakersSpeechBrain
 from .language_detection import DetectLanguage, DetectLanguageFasterWhisper, DetectLanguageWhisper, DetectLanguageFile
-from .speech_transcription import TranscribeSpeech, TranscribeSpeechFasterWhisper, TranscribeSpeechWhisper, TranscribeSpeechFile
+from .speech_transcription import TranscribeSpeechWhisper, TranscribeSpeechFile
+from .speech_transcription import TranscribeSpeech, TranscribeSpeechFasterWhisper
 from .transcript_writing import WriteTranscript, WriteTranscriptDocx, WriteTranscriptAss
 from .transcription import Transcription
 
 class Pipeline:
+    #pylint: disable=dangerous-default-value
     def __init__(self,
                  context: Context,
                  convert_to_wav: ConvertToWav = ConvertToWavFFMpeg(),
                  isolate_voices: IsolateVoices = IsolateVoicesMDX(),
                  diarize_speakers: DiarizeSpeakers = DiarizeSpeakersPyannote(),
                  detect_languages: DetectLanguage = DetectLanguageFasterWhisper(),
-                 speech_transcription: TranscribeSpeech = TranscribeSpeechFasterWhisper(),
+                 speech_transcription: TranscribeSpeech = TranscribeSpeechWhisper(),
                  transcripte_writing: [WriteTranscript] = [ WriteTranscriptDocx(), WriteTranscriptAss() ],
                  ):
         self.context: Context = context
@@ -49,7 +53,7 @@ class Pipeline:
             min_speakers=self.context.nb_speakers,
             max_speakers=self.context.nb_speakers,
             kwargs=self.context.to_dict())
- 
+
         detected_languages:Transcription = self.detect_languages.execute(
             diarization=diarization,
             speech_segment_float32_16khz=waveform,
@@ -64,6 +68,6 @@ class Pipeline:
             transcription_file=self.context.transcription_path,
             diarization=diarization,
             kwargs=self.context.to_dict())
-    
+
         for writer in self.transcripte_writing:
             writer.execute(transcript=transcript, output_file=self.context.output_file, kwargs=self.context.to_dict())

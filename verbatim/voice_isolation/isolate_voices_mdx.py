@@ -1,8 +1,9 @@
-from audio_separator.separator import Separator
-from .isolate_voices import IsolateVoices
-from ..wav_conversion import ConvertToWav
-from numpy import ndarray
 import shutil
+from numpy import ndarray
+from audio_separator.separator import Separator
+
+from ..wav_conversion import ConvertToWav
+from .isolate_voices import IsolateVoices
 
 class IsolateVoicesMDX(IsolateVoices):
     """

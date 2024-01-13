@@ -1,8 +1,9 @@
 import os
+from numpy import ndarray
 import demucs.separate
+
 from ..wav_conversion import ConvertToWav
 from .isolate_voices import IsolateVoices
-from numpy import ndarray
 
 
 class IsolateVoicesDemucs(IsolateVoices):

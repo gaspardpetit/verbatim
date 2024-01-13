@@ -1,6 +1,7 @@
-from .isolate_voices import IsolateVoices
 from numpy import ndarray
-from verbatim.wav_conversion import ConvertToWav
+
+from ..wav_conversion import ConvertToWav
+from .isolate_voices import IsolateVoices
 
 
 class IsolateVoicesNone(IsolateVoices):

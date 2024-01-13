@@ -1,8 +1,9 @@
-from .transcribe_speech import TranscribeSpeech
-from ..transcription import Transcription
 import logging
 from numpy import ndarray
 from pyannote.core import Annotation
+
+from .transcribe_speech import TranscribeSpeech
+from ..transcription import Transcription
 
 LOG = logging.getLogger(__name__)
 

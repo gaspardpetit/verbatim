@@ -1,8 +1,7 @@
-from os.path import abspath
 import os
 import logging
 from ffmpeg import FFmpeg, Progress
-from verbatim.wav_conversion.convert_to_wav import ConvertToWav
+from ..wav_conversion.convert_to_wav import ConvertToWav
 
 LOG = logging.getLogger(__name__)
 
@@ -27,6 +26,7 @@ class FFMpegInstance:
             cls.__instance._init_once()
         return cls.__instance
 
+    # pylint: disable=attribute-defined-outside-init
     def _init_once(self):
         """
         Initialize the singleton instance with an instance of FFmpeg and set up event listeners.
@@ -84,8 +84,6 @@ class FFMpegInstance:
 
 
 class ConvertToWavFFMpeg(ConvertToWav):
-    def __init__(self):
-        pass
 
     def execute(self, input_file: str, output_file: str, **kwargs: dict):
         """

@@ -1,44 +1,67 @@
-# Originally from https://github.com/jianfch/stable-ts/blob/main/stable_whisper/text_output.py
-
-from . import WriteTranscript
-from verbatim.transcription import Transcription
+"""
+Originally from https://github.com/jianfch/stable-ts/blob/main/stable_whisper/text_output.py
+"""
+# pylint: disable=logging-fstring-interpolation
 import os
 import warnings
-from typing import List, Tuple, Union, Callable
+from typing import List, Tuple, Union, Callable, Optional
 from itertools import chain
-
 import logging
+
+from ..transcription import Transcription
+from .write_transcript import WriteTranscript
+
+
 LOG = logging.getLogger(__name__)
 
 
-def is_ascending_sequence(
-        seq: List[Union[int, float]],
-        verbose=True
-) -> bool:
-    is_ascending = True
-    for idx, (i, j) in enumerate(zip(seq[:-1], seq[1:])):
-        if i > j:
-            is_ascending = False
-            if verbose:
-                LOG.info(f'[Index{idx}]:{i} > [Index{idx + 1}]:{j}')
-            else:
-                break
+
+def is_ascending_sequence(seq: List[Union[int, float]], verbose: bool = True) -> bool:
+    """
+    Check if a sequence is in ascending order.
+
+    Args:
+        seq (List[Union[int, float]]): The input sequence to check.
+        verbose (bool, optional): If True, log details of the first descending pair. 
+            Defaults to True.
+
+    Returns:
+        bool: True if the sequence is in ascending order, False otherwise.
+    """
+    is_ascending = all(i <= j for i, j in zip(seq, seq[1:]))
+
+    if not is_ascending and verbose:
+        first_descending_idx = next((idx for idx, (i, j)
+                                     in enumerate(zip(seq[:-1], seq[1:])) if i > j), None)
+        LOG.info(f"[Index{first_descending_idx}]:{seq[first_descending_idx]} > " +
+                 f"[Index{first_descending_idx + 1}]:{seq[first_descending_idx + 1]}")
 
     return is_ascending
 
 
-def valid_ts(
-        ts: List[dict],
-        warn=True
-) -> bool:
-    valid = is_ascending_sequence(list(chain.from_iterable([s['start'], s['end']] for s in ts)), False)
+def valid_ts(ts: List[dict], warn: bool = True) -> bool:
+    """
+    Check if a list of timestamp dictionaries represents a valid time sequence.
+
+    Args:
+        ts (List[dict]): List of timestamp dictionaries, each containing 'start' and 'end'.
+        warn (bool, optional): If True, issue a warning for backward timestamp jumps.
+            Defaults to True.
+
+    Returns:
+        bool: True if the timestamps form a valid ascending sequence, False otherwise.
+    """
+    time_points = list(chain.from_iterable([s['start'], s['end']] for s in ts))
+    valid = is_ascending_sequence(time_points, False)
+
     if warn and not valid:
-        warnings.warn(message='Found timestamp(s) jumping backwards in time. '
-                              'Use word_timestamps=True to avoid the issue.')
+        warnings.warn("Found timestamp(s) jumping backwards in time. "
+                      "Use word_timestamps=True to avoid the issue.")
+
     return valid
 
 
-__all__ = ['result_to_srt_vtt', 'result_to_ass', 'result_to_tsv', 'result_to_txt' ]
+__all__ = ['result_to_srt_vtt', 'result_to_ass', 'result_to_tsv', 'result_to_txt']
 SUPPORTED_FORMATS = ('srt', 'vtt', 'ass', 'tsv', 'txt')
 
 
@@ -129,17 +152,20 @@ def words2segments(words: List[dict], tag: Tuple[str, str], reverse_text: bool =
     filled_words = []
     for i, word in enumerate(words):
         curr_end = round(word['end'], 3)
-        filled_words.append(dict(word=word['word'], start=round(word['start'], 3), end=curr_end))
+        filled_words.append({"word": word['word'], "start": round(word['start'], 3), "end": curr_end })
         if word != words[-1]:
             next_start = round(words[i + 1]['start'], 3)
             if next_start - curr_end != 0:
-                filled_words.append(dict(word='', start=curr_end, end=next_start))
+                filled_words.append({ "word": '', "start": curr_end, "end": next_start })
     idx_filled_words = list(enumerate(filled_words))
     if reverse_text:
         idx_filled_words = list(reversed(idx_filled_words))
 
-    segments = [dict(text=add_tag(i), start=filled_words[i]['start'], end=filled_words[i]['end'])
-                for i in range(len(filled_words))]
+    segments = [{
+        "text": add_tag(i),
+        "start": filled_words[i]['start'],
+        "end": filled_words[i]['end']
+        } for i in range(len(filled_words))]
     return segments
 
 
@@ -152,7 +178,7 @@ def to_word_level_segments(segments: List[dict], tag: Tuple[str, str]) -> List[d
     )
 
 
-def to_vtt_word_level_segments(segments: List[dict], tag: Tuple[str, str] = None) -> List[dict]:
+def to_vtt_word_level_segments(segments: List[dict]) -> List[dict]:
     def to_segment_string(segment: dict):
         segment_string = ''
         prev_end = 0
@@ -171,20 +197,17 @@ def to_vtt_word_level_segments(segments: List[dict], tag: Tuple[str, str] = None
             prev_end = word['end']
         return segment_string
 
-    return [
-        dict(
-            text=to_segment_string(s),
-            start=s['start'],
-            end=s['end']
-        )
-        for s in segments
-    ]
+    return [{
+            "text": to_segment_string(s),
+            "start": s['start'],
+            "end": s['end']
+        } for s in segments]
 
 
-def to_ass_word_level_segments(segments: List[dict], tag: Tuple[str, str], karaoke: bool = False) -> List[dict]:
+def to_ass_word_level_segments(segments: List[dict], karaoke: bool = False) -> List[dict]:
     def to_segment_string(segment: dict):
         segment_string = ''
-        for i, word in enumerate(segment['words']):
+        for _, word in enumerate(segment['words']):
             curr_word, space = (word['word'][1:], " ") if word['word'].startswith(" ") else (word['word'], "")
             segment_string += (
                     space +
@@ -197,17 +220,17 @@ def to_ass_word_level_segments(segments: List[dict], tag: Tuple[str, str], karao
         return segment_string
 
     return [
-        dict(
-            text=to_segment_string(s),
-            start=s['start'],
-            end=s['end']
-        )
-        for s in segments
+        {
+            "text": to_segment_string(s),
+            "start": s['start'],
+            "end": s['end'] 
+        } for s in segments
     ]
 
 
 def to_word_level(segments: List[dict]) -> List[dict]:
-    return [dict(text=w['word'], start=w['start'], end=w['end']) for s in segments for w in s['words']]
+    return [{"text": w['word'], "start": w['start'], "end": w['end']} for s in segments for w in s['words']]
+
 
 
 def _confirm_word_level(segments: List[dict]) -> bool:
@@ -223,7 +246,8 @@ def _preprocess_args(result: (dict, list),
                      word_level: bool,
                      min_dur: float,
                      reverse_text: Union[bool, tuple] = False):
-    assert segment_level or word_level, '`segment_level` or `word_level` must be True'
+    if not segment_level and not word_level:
+        raise ValueError('`segment_level` or `word_level` must be True')
     segments = _get_segments(result, min_dur, reverse_text=reverse_text)
     if word_level:
         word_level = _confirm_word_level(segments)
@@ -242,6 +266,7 @@ def result_to_any(result: (dict, list),
                   strip=True,
                   reverse_text: Union[bool, tuple] = False,
                   to_word_level_string_callback: Callable = None):
+
     segments, segment_level, word_level = _preprocess_args(
         result, segment_level, word_level, min_dur, reverse_text=reverse_text
     )
@@ -274,6 +299,7 @@ def result_to_any(result: (dict, list),
 
     if filepath:
         _save_as_file(sub_str, filepath)
+        return None
     else:
         return sub_str
 
@@ -321,8 +347,9 @@ def result_to_tsv(result: (dict, list),
                   reverse_text: Union[bool, tuple] = False):
     if segment_level is None and word_level is None:
         segment_level = True
-    assert word_level is not segment_level, '[word_level] and [segment_level] cannot be the same ' \
-                                            'since [tag] is not support for this format'
+    if word_level is segment_level:
+        raise ValueError('[word_level] and [segment_level] cannot be the same ' \
+                                    'since [tag] is not support for this format')
 
     def segments2blocks(segments):
         return '\n\n'.join(segment2tsvblock(s, strip=strip) for i, s in enumerate(segments))
@@ -392,7 +419,7 @@ def result_to_ass(result: (dict, list),
         return sub_str
 
     if tag is not None and karaoke:
-        warnings.warn(f'[tag] is not support for [karaoke]=True; [tag] will be ignored.')
+        warnings.warn('[tag] is not support for [karaoke]=True; [tag] will be ignored.')
 
     return result_to_any(
         result=result,
@@ -407,7 +434,7 @@ def result_to_ass(result: (dict, list),
         strip=strip,
         reverse_text=reverse_text,
         to_word_level_string_callback=(
-            (lambda s, t: to_ass_word_level_segments(s, t, karaoke=karaoke))
+            (lambda s, _: to_ass_word_level_segments(segments=s, karaoke=karaoke))
             if karaoke or (word_level and segment_level and tag is None)
             else None
         )
@@ -438,11 +465,27 @@ def result_to_txt(
 
 
 class WriteTranscriptAss(WriteTranscript):
+    no_timestamps:bool = False
+    no_speakers:bool = False
+    with_confidence:bool = True
+    with_language:bool = True
+
+    def __init__(self,
+                 no_timestamps:Optional[bool] = None,
+                 no_speakers:Optional[bool] = None,
+                 with_confidence:Optional[bool] = None,
+                 with_language:Optional[bool] = None):
+
+        if no_timestamps is not None:
+            self.no_timestamps = no_timestamps
+        if no_speakers is not None:
+            self.no_speakers = no_timestamps
+        if with_confidence is not None:
+            self.with_confidence = no_timestamps
+        if with_language is not None:
+            self.with_language = no_timestamps
+
     def execute(self, transcript: Transcription, output_file: str, **kwargs: dict):
-        no_timestamps = False
-        no_speakers = False
-        with_confidence = True
-        with_language = True
         output_file = f"{output_file}.ass"
         result_to_ass({"segments": [{
             "start": u.start,
@@ -461,4 +504,6 @@ class WriteTranscriptAss(WriteTranscript):
         original_file = kwargs['kwargs']['source_file_path']
         LOG.info("To combine the subtitles with the original file:")
         LOG.info(
-            f"""ffmpeg -f lavfi -i color=size=720x120:rate=25:color=black -i "{original_file}" -vf "subtitles={output_file}:force_style='Fontsize=70'" -shortest "{output_file}.mp4" """)
+            f"""ffmpeg -f lavfi -i color=size=720x120:rate=25:color=black -i "{original_file}" """ + 
+                f"""-vf "subtitles={output_file}:force_style='Fontsize=70'" """ + 
+                f"""-shortest "{output_file}.mp4" """)

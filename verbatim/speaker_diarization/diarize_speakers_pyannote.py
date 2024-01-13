@@ -1,12 +1,15 @@
-from .diarize_speakers import DiarizeSpeakers
+import logging
+import os
+import torchaudio
+import torch
+
 from pyannote.core import Annotation
 from pyannote.audio import Model
 from pyannote.audio.pipelines import VoiceActivityDetection
 from pyannote.audio import Pipeline
-import torchaudio
-import torch
-import logging
-import os
+from pyannote.audio.pipelines.utils.hook import ProgressHook
+
+from .diarize_speakers import DiarizeSpeakers
 
 LOG = logging.getLogger(__name__)
 
@@ -36,13 +39,13 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
         pipeline = VoiceActivityDetection(segmentation=model)
         pipeline.to(torch.device("cuda"))
 
-        HYPER_PARAMETERS = {
+        hyper_parameters = {
             # remove speech regions shorter than that many seconds.
             "min_duration_on": 0.0,
             # fill non-speech regions shorter than that many seconds.
             "min_duration_off": 0.5
         }
-        pipeline.instantiate(HYPER_PARAMETERS)
+        pipeline.instantiate(hyper_parameters)
         vad: Annotation = pipeline(audio_file)
         vad.uri = "waveform"
         return vad
@@ -108,7 +111,6 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
         """
         device: torch.device = DiarizeSpeakersPyannote._get_device()
         pipeline: Pipeline = DiarizeSpeakersPyannote._load_pipeline(device, huggingface_token)
-        from pyannote.audio.pipelines.utils.hook import ProgressHook
         waveform, sample_rate = DiarizeSpeakersPyannote._load_audio(audio_file)
         with ProgressHook() as hook:
             diarization: Annotation = pipeline({

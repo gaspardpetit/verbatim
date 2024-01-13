@@ -1,23 +1,28 @@
-from . import WriteTranscript
-from verbatim.transcription import Utterance, Transcription
+from typing import List
 from docx import Document
 from docx.shared import RGBColor
 from docx.enum.text import WD_COLOR_INDEX
+from docx.oxml import OxmlElement
 from langcodes import standardize_tag
 
+from ..transcription import Utterance, Transcription
+from .write_transcript import WriteTranscript  # Assuming WriteTranscript is in the same directory.
 
-def format_seconds(seconds):
-    # Calculate hours, minutes, and remaining seconds
+def format_seconds(seconds: float) -> str:
+    """
+    Format seconds into HH:MM:SS.
+
+    Parameters:
+        seconds (float): The time in seconds.
+
+    Returns:
+        str: The formatted time.
+    """
     hours, remainder = divmod(seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
+    return f'{int(hours):02}:{int(minutes):02}:{int(seconds):02}'
 
-    # Format the result as hh:mm:ss.mmm
-    formatted_time = "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
-
-    return formatted_time
-
-
-def short_code_to_bcp47(short_code):
+def short_code_to_bcp47(short_code: str) -> str:
     """
     Convert a language code from a short format to BCP47.
 
@@ -25,15 +30,14 @@ def short_code_to_bcp47(short_code):
         short_code (str): The input language code in a short format.
 
     Returns:
-        str or None: The BCP47 language code or None if conversion fails.
+        str: The BCP47 language code.
     """
-
     try:
-        bcp47_code = standardize_tag(short_code)
-        return bcp47_code
+        return standardize_tag(short_code)
     except ValueError as e:
         print(f"Error converting language code: {e}")
-        return None
+        return short_code  # Returning the original code might be a good fallback.
+
 
 
 def format_word(paragraph, word, formatting, lang):
@@ -49,11 +53,10 @@ def format_word(paragraph, word, formatting, lang):
     Returns:
         None
     """
-    from docx.oxml import OxmlElement
-
     run = paragraph.add_run(word)
 
     if lang:
+        #pylint: disable=protected-access
         lang_element = OxmlElement('w:lang')
         language_code = short_code_to_bcp47(lang)
         lang_element.set('{http://www.w3.org/XML/1998/namespace}lang', language_code)
@@ -61,13 +64,8 @@ def format_word(paragraph, word, formatting, lang):
 
     if formatting['color'] is not None:
         run.font.color.rgb = RGBColor(*formatting['color'])
-    else:
-        pass
 
-    if formatting['underline']:
-        run.underline = True
-    else:
-        run.underline = False
+    run.underline = formatting['underline']
 
     if formatting['highlight'] is not None:
         run.font.highlight_color = formatting['highlight']
@@ -75,12 +73,14 @@ def format_word(paragraph, word, formatting, lang):
         run.font.highlight_color = WD_COLOR_INDEX.AUTO
 
 
-def write_docx(utterances: [Utterance], no_timestamps, no_speakers, with_confidence, with_language, output_file):
+
+def write_docx(utterances: List[Utterance], no_timestamps: bool, no_speakers: bool,
+               with_confidence: bool, with_language: bool, output_file: str) -> None:
     """
     Write a list of utterances to a Microsoft Word (docx) file.
 
     Parameters:
-        utterances (list): List of Utterance objects to be written.
+        utterances (List[Utterance]): List of Utterance objects to be written.
         no_timestamps (bool): If True, exclude timestamps from the output.
         no_speakers (bool): If True, exclude speaker information from the output.
         with_confidence (bool): If True, include confidence-related formatting.
@@ -100,7 +100,7 @@ def write_docx(utterances: [Utterance], no_timestamps, no_speakers, with_confide
             header += f"[{format_seconds(utterance.start)}]"
         if not no_speakers:
             header += f" {utterance.speaker}"
-        if len(header) > 0:
+        if header:
             header += ":"
             run = paragraph.add_run(header)
             run.bold = True
@@ -108,20 +108,18 @@ def write_docx(utterances: [Utterance], no_timestamps, no_speakers, with_confide
         for word in utterance.words:
             formatting = {'color': None, 'underline': False, 'highlight': None}
 
-            if with_confidence:
-                if word.confidence < 0.80:
-                    formatting['underline'] = True
-                if word.confidence < 0.50:
-                    formatting['highlight'] = WD_COLOR_INDEX.YELLOW
+            if with_confidence and word.confidence < 0.80:
+                formatting['underline'] = True
 
-            if with_language:
-                lang = utterance.language
-            else:
-                lang = None
+            if with_confidence and word.confidence < 0.50:
+                formatting['highlight'] = WD_COLOR_INDEX.YELLOW
 
-            format_word(paragraph, word.text, formatting, utterance.language)
+            lang = utterance.language if with_language else None
+
+            format_word(paragraph, word.text, formatting, lang)
 
     doc.save(output_file)
+
 
 
 class WriteTranscriptDocx(WriteTranscript):

@@ -1,12 +1,15 @@
 import os
 import sys
+import unittest
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+# pylint: disable=(wrong-import-position
 from verbatim.pipeline import Pipeline
 from verbatim.context import Context
 
-def test_verbatim():
-    assert True
+class TestStringMethods(unittest.TestCase):
+    def test_verbatim(self):
+        pass
 
 if __name__ == '__main__':
     import logging

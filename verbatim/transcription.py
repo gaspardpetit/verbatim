@@ -1,39 +1,40 @@
-from dataclasses import dataclass, field
+import json
+from typing import Optional
+from dataclasses import dataclass
 from dataclasses_json import dataclass_json, LetterCase, DataClassJsonMixin
 
-import json
 
 
-def red(str):
-    return f"\033[91m{str}\033[00m"
+def red(text):
+    return f"\033[91m{text}\033[00m"
 
 
-def green(str):
-    return f"\033[92m{str}\033[00m"
+def green(text):
+    return f"\033[92m{text}\033[00m"
 
 
-def yellow(str):
-    return f"\033[93m{str}\033[00m"
+def yellow(text):
+    return f"\033[93m{text}\033[00m"
 
 
-def light_purple(str):
-    return f"\033[94m{str}\033[00m"
+def light_purple(text):
+    return f"\033[94m{text}\033[00m"
 
 
-def purple(str):
-    return f"\033[95m{str}\033[00m"
+def purple(text):
+    return f"\033[95m{text}\033[00m"
 
 
-def cyan(str):
-    return f"\033[96m{str}\033[00m"
+def cyan(text):
+    return f"\033[96m{text}\033[00m"
 
 
-def light_gray(str):
-    return f"\033[97m{str}\033[00m"
+def light_gray(text):
+    return f"\033[97m{text}\033[00m"
 
 
-def black(str):
-    return f"\033[0m{str}\033[00m"
+def black(text):
+    return f"\033[0m{text}\033[00m"
 
 
 def colorize(text, confidence):
@@ -98,7 +99,8 @@ class Utterance(DataClassJsonMixin):
 
     def get_colour_text(self):
         transcription = ''.join(word.get_colour_text() for word in self.words)
-        return f"[{self.start:.2f}->{self.end:.2f} {self.end - self.start:.2f}][{self.language}][{self.confidence:.2%}] {self.speaker}: {transcription}"
+        return (f"[{self.start:.2f}->{self.end:.2f} {self.end - self.start:.2f}]" +
+                f"[{self.language}][{self.confidence:.2%}] {self.speaker}: {transcription}")
 
     def get_text(self):
         return ''.join(word.text for word in self.words)
@@ -133,11 +135,6 @@ class Transcription(DataClassJsonMixin):
         self.confidence = min(self.confidence or utterance.confidence, utterance.confidence)
 
     @staticmethod
-    def from_json(jsonstr: str):
-        parsed: dict = json.loads(jsonstr)
-        return Transcription.from_dict(parsed)
-
-    @staticmethod
     def load(json_file_path: str):
         with open(json_file_path, "r", encoding="utf-8") as f:
             parsed = json.load(f)
@@ -164,10 +161,12 @@ class Transcription(DataClassJsonMixin):
         uttered_words = sorted(uttered_words, key=lambda u: u.start)
 
         grouped: Transcription = Transcription()
-        state: Utterance = None
+        state: Optional[Utterance] = None
         for uttered_word in uttered_words:
             if state is not None:
-                if state.language == uttered_word.language and state.speaker == uttered_word.speaker and uttered_word.start - state.end < 0.75:
+                if (state.language == uttered_word.language
+                    and state.speaker == uttered_word.speaker
+                    and uttered_word.start - state.end < 0.75):
                     state.append(uttered_word.words[0])
                 else:
                     grouped.append(state)

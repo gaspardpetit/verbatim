@@ -28,4 +28,3 @@ class DiarizeSpeakers(ABC):
         Returns:
             Annotation: Pyannote Annotation object containing information about speaker diarization.
         """
-
