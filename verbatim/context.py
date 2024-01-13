@@ -19,9 +19,10 @@ class Context:
     languages: [str]
     nb_speakers: int
     log_level: int
+    device: str
 
     def __init__(self, source_file: str, out_dir: str = "out", languages: [str] = None,
-                  nb_speakers=1, log_level=logging.WARNING):
+                  nb_speakers=1, log_level=logging.WARNING, device:str="cuda"):
         super().__init__()
         self.source_file_path = os.path.abspath(source_file)
         self.work_directory_path = os.path.abspath(out_dir)
@@ -36,6 +37,7 @@ class Context:
         self.min_speakers = nb_speakers
         self.max_speakers = nb_speakers
         self.log_level = log_level
+        self.device = device
 
     def __str__(self):
         return yaml.dump(self)

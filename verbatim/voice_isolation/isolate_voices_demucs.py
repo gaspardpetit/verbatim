@@ -36,7 +36,7 @@ class IsolateVoicesDemucs(IsolateVoices):
         source_path_separated = f"separated/htdemucs_ft/{filename_noext}/vocals.wav"
 
         # Load the separated vocals as a NumPy array
-        waveform: ndarray = ConvertToWav.load_float32_16khz_mono_audio(source_path_separated)
+        waveform: ndarray = ConvertToWav.load_float32_16khz_mono_audio(source_path_separated, kwargs['device'])
 
         # Save the isolated vocals to the destination path
         ConvertToWav.save_float32_16khz_mono_audio(waveform, voice_file_path)

@@ -63,6 +63,7 @@ class TranscribeSpeechFasterWhisper(TranscribeSpeech):
             Transcription: Transcription object containing the transcribed information.
         """
         transcription = Transcription()
+        FasterWhisperModel.device = kwargs['device']
         model = FasterWhisperModel().model
 
         segments, info = model.transcribe(
@@ -85,7 +86,7 @@ class TranscribeSpeechFasterWhisper(TranscribeSpeech):
         return transcription
 
     def detect_language(self, speaker: str, speech_offset: float, speech_segment_float32_16khz: ndarray,
-                        languages=None) -> Transcription:
+                        languages=None, **kwargs: dict) -> Transcription:
         """
         Detects language in a speech segment using FasterWhisper model.
 
@@ -102,6 +103,7 @@ class TranscribeSpeechFasterWhisper(TranscribeSpeech):
         """
         transcription = Transcription()
 
+        FasterWhisperModel.device = kwargs['device']
         model = FasterWhisperModel().model
 
         features = model.feature_extractor(speech_segment_float32_16khz)

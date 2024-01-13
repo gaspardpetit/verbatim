@@ -20,7 +20,7 @@ class DiarizeSpeakersSpeechBrain(DiarizeSpeakers):
         None
     """
 
-    def diarize_on_silences(self, audio_file: str) -> Annotation:
+    def diarize_on_silences(self, audio_file: str, **kwargs:dict) -> Annotation:
         """
         Diarize speakers based on silences using SpeechBrain.
 
@@ -37,7 +37,7 @@ class DiarizeSpeakersSpeechBrain(DiarizeSpeakers):
         vad_model = VAD.from_hparams(
             source="speechbrain/vad-crdnn-libriparty",
             savedir=tmpdir,
-            run_opts={"device": "cuda"}
+            run_opts={"device": kwargs['device']}
         )
 
         # Perform VAD

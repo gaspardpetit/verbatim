@@ -28,6 +28,6 @@ class IsolateVoicesFile(IsolateVoices):
             ndarray: NumPy array representing the isolated voice audio.
         """
         # Load the existing audio file as a NumPy array
-        waveform: ndarray = ConvertToWav.load_float32_16khz_mono_audio(voice_file_path)
+        waveform: ndarray = ConvertToWav.load_float32_16khz_mono_audio(voice_file_path, kwargs['device'])
 
         return waveform
