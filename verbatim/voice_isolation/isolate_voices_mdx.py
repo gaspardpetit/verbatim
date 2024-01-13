@@ -42,7 +42,8 @@ class IsolateVoicesMDX(IsolateVoices):
         shutil.move(voice_audio, f"{voice_file_path}-voice.wav")
 
         # Load the separated vocals as a NumPy array
-        waveform: ndarray = ConvertToWav.load_float32_16khz_mono_audio(f"{voice_file_path}-voice.wav")
+        waveform: ndarray = ConvertToWav.load_float32_16khz_mono_audio(
+            f"{voice_file_path}-voice.wav", kwargs['device'])
 
         # Save the isolated vocals to the destination path
         ConvertToWav.save_float32_16khz_mono_audio(waveform, voice_file_path)

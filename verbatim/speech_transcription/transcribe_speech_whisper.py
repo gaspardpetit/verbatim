@@ -63,6 +63,7 @@ class TranscribeSpeechWhisper(TranscribeSpeech):
         """
         transcription = Transcription()
 
+        WhisperModel.device = kwargs['device']
         model = WhisperModel().model
         whisper_transcription = model.transcribe(
             word_timestamps=True,

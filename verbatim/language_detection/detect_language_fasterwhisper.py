@@ -35,6 +35,7 @@ class DetectLanguageFasterWhisper(DetectLanguage):
         transcription = Transcription()
 
         # Load FasterWhisper model
+        FasterWhisperModel.device = kwargs['device']
         model = FasterWhisperModel().model
 
         # Extract features from the speech segment

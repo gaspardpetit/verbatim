@@ -222,7 +222,8 @@ class TranscribeSpeech(ABC):
         # Mute the audio in between fade-in and fade-out
         samples[start + fade_start:end - fade_end] = 0.0
 
-    def execute_for_speaker_and_language(self, speech_segment_float32_16khz, sequence, speaker: str, language: str):
+    def execute_for_speaker_and_language(self, speech_segment_float32_16khz, sequence,
+                                         speaker: str, language: str, **kwargs: dict):
         """
         Executes transcription for a specific speaker and language.
 
@@ -272,7 +273,7 @@ class TranscribeSpeech(ABC):
         audio_lang = DiarizeSpeakersSpeechBrain.pad_audio_to_duration(audio_lang, 31, 16000)
         ConvertToWav.save_float32_16khz_mono_audio(audio_lang, f"out/{speaker}-{language}.wav")
 
-        segments = DiarizeSpeakersSpeechBrain().diarize_on_silences(f"out/{speaker}-{language}.wav")
+        segments = DiarizeSpeakersSpeechBrain().diarize_on_silences(f"out/{speaker}-{language}.wav", **kwargs)
         prompt = "Hello, welcome to my presentation."
         whole_transcription = Transcription()
         for turn, _, _ in segments.itertracks(yield_label=True):
@@ -283,7 +284,8 @@ class TranscribeSpeech(ABC):
                 speech_offset=turn.start,
                 speech_segment_float32_16khz=audio_lang[sample_start:sample_end],
                 prompt=prompt,
-                language=language)
+                language=language,
+                **kwargs)
             prompt = transcription.get_text()
             for u in transcription.utterances:
                 whole_transcription.append(u)
@@ -319,7 +321,8 @@ class TranscribeSpeech(ABC):
             for speaker in speakers:
                 transcription: Transcription = self.execute_for_speaker_and_language(
                     speech_segment_float32_16khz=speech_segment_float32_16khz, sequence=sequence, speaker=speaker,
-                    language=None)
+                    language=None,
+                    **kwargs)
                 for utterance in transcription.utterances:
                     full_transcription.append(utterance)
         else:
@@ -327,7 +330,8 @@ class TranscribeSpeech(ABC):
                 for speaker in speakers:
                     transcription: Transcription = self.execute_for_speaker_and_language(
                         speech_segment_float32_16khz=speech_segment_float32_16khz, sequence=sequence, speaker=speaker,
-                        language=language)
+                        language=language,
+                        **kwargs)
                     for utterance in transcription.utterances:
                         full_transcription.append(utterance)
 

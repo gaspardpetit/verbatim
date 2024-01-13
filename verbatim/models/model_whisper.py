@@ -8,6 +8,7 @@ class WhisperModel:
         model (whisper.Whisper): The OpenAI Whisper model instance.
     """
     _instance = None
+    device: str = "cuda"
 
     def __new__(cls):
         """
@@ -18,15 +19,15 @@ class WhisperModel:
         """
         if not cls._instance:
             cls._instance = super(WhisperModel, cls).__new__(cls)
-            cls._instance._init_once()
+            cls._instance._init_once(WhisperModel.device)
         return cls._instance
 
     # pylint: disable=attribute-defined-outside-init
-    def _init_once(self):
+    def _init_once(self, device:str):
         """
         Initialize the WhisperModel instance.
         """
-        self.model = whisper.load_model("large")
+        self.model = whisper.load_model("large", device=device)
 
     def unload(self):
         """

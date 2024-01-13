@@ -3,9 +3,9 @@ import torch
 from numpy import ndarray
 from whisper.audio import pad_or_trim, N_FRAMES, N_SAMPLES, log_mel_spectrogram
 
+from .detect_language import DetectLanguage
 from ..models.model_whisper import WhisperModel
 from ..transcription import Transcription, Utterance
-from .detect_language import DetectLanguage
 
 
 LOG = logging.getLogger(__name__)
@@ -37,11 +37,16 @@ class DetectLanguageWhisper(DetectLanguage):
         transcription = Transcription()
 
         # Load Whisper model
+        WhisperModel.device = kwargs['device']
         model = WhisperModel().model
+        if kwargs['device'] == "cpu":
+            float_type: torch.dtype = torch.float32
+        else:
+            float_type: torch.dtype = torch.float16
 
         # Generate mel spectrogram from the speech segment
         mel = log_mel_spectrogram(speech_segment_float32_16khz, model.dims.n_mels, padding=N_SAMPLES)
-        mel_segment = pad_or_trim(mel, N_FRAMES).to(model.device).to(torch.float16)
+        mel_segment = pad_or_trim(mel, N_FRAMES).to(model.device).to(float_type)
 
         # Perform language detection using the Whisper model
         whisper_transcription = model.detect_language(mel=mel_segment)
