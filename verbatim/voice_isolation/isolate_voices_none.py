@@ -15,22 +15,22 @@ class IsolateVoicesNone(IsolateVoices):
         None
     """
 
-    def execute(self, source_path: str, destination_path: str, **kwargs) -> ndarray:
+    def execute(self, audio_file_path: str, voice_file_path: str, **kwargs) -> ndarray:
         """
         Execute the passthrough voice isolation.
 
         Args:
-            source_path (str): Path to the input audio file.
-            destination_path (str): Path to save the output audio file.
+            audio_file_path (str): Path to the input audio file.
+            voice_file_path (str): Path to save the output audio file.
             **kwargs: Additional parameters (not used in this method).
 
         Returns:
             ndarray: NumPy array representing the input audio.
         """
         # Load the input audio as a NumPy array
-        waveform: ndarray = ConvertToWav.load_float32_16khz_mono_audio(source_path)
+        waveform: ndarray = ConvertToWav.load_float32_16khz_mono_audio(audio_file_path)
 
         # Save the input audio to the destination path
-        ConvertToWav.save_float32_16khz_mono_audio(waveform, destination_path)
+        ConvertToWav.save_float32_16khz_mono_audio(waveform, voice_file_path)
 
         return waveform

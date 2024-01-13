@@ -127,14 +127,14 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
             )
 
         return diarization
-    def execute(self, audio_file: str, rttm_file: str, min_speakers: int = 1, max_speakers: int = None,
+    def execute(self, voice_file_path: str, diarization_file: str, min_speakers: int = 1, max_speakers: int = None,
                 TOKEN_HUGGINGFACE: str = None, **kwargs: dict) -> Annotation:
         """
         Execute the diarization process using PyAnnote.
 
         Args:
-            audio_file (str): Path to the input audio file.
-            rttm_file (str): Path to the output RTTM (Rich Transcription Time Marked) file.
+            voice_file_path (str): Path to the input audio file.
+            diarization_file (str): Path to the output RTTM (Rich Transcription Time Marked) file.
             min_speakers (int, optional): Minimum number of expected speakers. Default is 1.
             max_speakers (int, optional): Maximum number of expected speakers. Default is None (unbounded).
             TOKEN_HUGGINGFACE (str, optional): Hugging Face token for customization. Default is None.
@@ -148,11 +148,11 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
         if huggingface_token is None:
             LOG.warning("No HuggingFace token was provided (TOKEN_HUGGINGFACE)")
         if min_speakers == 1 and max_speakers == 1:
-            diarization = self.diarize_on_silences(audio_file, huggingface_token)
+            diarization = self.diarize_on_silences(voice_file_path, huggingface_token)
         else:
-            diarization = self.diarize_on_speakers(audio_file, max_speakers, huggingface_token)
+            diarization = self.diarize_on_speakers(voice_file_path, max_speakers, huggingface_token)
 
-        with open(rttm_file, "w", encoding="utf-8") as f:
+        with open(diarization_file, "w", encoding="utf-8") as f:
             diarization.write_rttm(f)
         LOG.info(diarization)
         return diarization

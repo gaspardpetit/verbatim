@@ -85,21 +85,21 @@ class FFMpegInstance:
 
 class ConvertToWavFFMpeg(ConvertToWav):
 
-    def execute(self, input_file: str, output_file: str, **kwargs: dict):
+    def execute(self, source_file_path: str, audio_file_path: str, **kwargs: dict):
         """
         Convert audio file to WAV format using ffmpeg.
 
         Args:
-            input_file (str): Path to the input audio file.
-            output_file (str): Path to save the output WAV file.
+            source_file_path (str): Path to the input audio file.
+            audio_file_path (str): Path to save the output WAV file.
             **kwargs (dict): Additional parameters (not used in this method).
         """
-        LOG.info(f"Converting {input_file} to {output_file}")
+        LOG.info(f"Converting {source_file_path} to {audio_file_path}")
 
         # Use ffmpeg from the singleton instance to convert input file to raw PCM
-        output_directory = os.path.dirname(output_file)
+        output_directory = os.path.dirname(audio_file_path)
         os.makedirs(output_directory, exist_ok=True)
 
         ffmpeg = FFMpegInstance().ffmpeg
-        ffmpeg_command = ffmpeg.input(input_file).output(output_file, ac='1', acodec='pcm_s32le')
+        ffmpeg_command = ffmpeg.input(source_file_path).output(audio_file_path, ac='1', acodec='pcm_s32le')
         ffmpeg_command.execute()

@@ -18,5 +18,7 @@ if __name__ == '__main__':
                         datefmt='%Y-%m-%dT%H:%M:%SZ')
 
     print(os.getcwd())
-    context: Context = Context(source_file="tests/data/test.mp3", languages=["en", "fr", "es", "it"], nb_speakers=2)
+    #context: Context = Context(source_file="tests/data/test.mp3", languages=["en", "fr", "es", "it"], nb_speakers=2)
+    context: Context = Context(
+        source_file="tests/data/init.mp3", languages=["en"], nb_speakers=2, log_level=logging.DEBUG)
     Pipeline(context).execute()

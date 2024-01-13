@@ -291,14 +291,14 @@ class TranscribeSpeech(ABC):
 
     # pylint: disable=unused-argument
     def execute(self, speech_segment_float32_16khz: ndarray, detected_languages: Transcription,
-                transcription_file: str, diarization: Annotation, languages: list, **kwargs: dict) -> Transcription:
+                transcription_path: str, diarization: Annotation, languages: list, **kwargs: dict) -> Transcription:
         """
         Executes the transcription process for multiple speakers and languages.
 
         Args:
             speech_segment_float32_16khz (ndarray): Speech segment data in float32 format at 16kHz.
             detected_languages (Transcription): Transcription containing detected language information.
-            transcription_file (str): File path to save the final transcription result.
+            transcription_path (str): File path to save the final transcription result.
             diarization (Annotation): Speaker diarization information.
             languages (list): List of target languages.
             **kwargs (dict): Additional keyword arguments for customization.
@@ -332,6 +332,6 @@ class TranscribeSpeech(ABC):
                         full_transcription.append(utterance)
 
         full_transcription = full_transcription.regroup_by_words()
-        full_transcription.save(transcription_file)
+        full_transcription.save(transcription_path)
         LOG.info(full_transcription.get_colour_text())
         return full_transcription

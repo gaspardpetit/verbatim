@@ -501,7 +501,7 @@ class WriteTranscriptAss(WriteTranscript):
                 "word": w.text
             } for w in u.words]}
             for u in transcript.utterances]}, output_file)
-        original_file = kwargs['kwargs']['source_file_path']
+        original_file = kwargs['source_file_path']
         LOG.info("To combine the subtitles with the original file:")
         LOG.info(
             f"""ffmpeg -f lavfi -i color=size=720x120:rate=25:color=black -i "{original_file}" """ + 

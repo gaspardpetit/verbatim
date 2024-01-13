@@ -169,7 +169,6 @@ class DetectLanguage(ABC):
                 center = triplet[1]
                 right = triplet[2]
 
-                print(f"[{i}] at: {center.start}")
                 if center.confidence < 0.5 or center.end - center.start < 2:
                     if left.language == right.language and left.language != center.language:
                         start = left.start

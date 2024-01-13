@@ -10,13 +10,13 @@ from pydub import AudioSegment
 
 class ConvertToWav(ABC):
     @abstractmethod
-    def execute(self, input_file: str, output_file: str, **kwargs: dict) -> None:
+    def execute(self, source_file_path: str, audio_file_path: str, **kwargs: dict) -> None:
         """
         Abstract method for converting audio files to WAV format.
 
         Args:
-            input_file (str): Path to the input audio file.
-            output_file (str): Path to save the output WAV file.
+            source_file_path (str): Path to the input audio file.
+            audio_file_path (str): Path to save the output WAV file.
             **kwargs (dict): Additional parameters for the conversion process.
         """
 

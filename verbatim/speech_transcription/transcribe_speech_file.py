@@ -40,7 +40,7 @@ class TranscribeSpeechFile(TranscribeSpeech):
     def execute(self,
                 speech_segment_float32_16khz: ndarray,
                 detected_languages: Transcription,
-                transcription_file: str,
+                transcription_path: str,
                 diarization: Annotation,
                 languages: list,
                 **kwargs: dict) -> Transcription:
@@ -50,7 +50,7 @@ class TranscribeSpeechFile(TranscribeSpeech):
         Args:
             speech_segment_float32_16khz (ndarray): Speech segment data in float32 format at 16kHz.
             detected_languages (Transcription): Transcription containing detected languages.
-            transcription_file (str): File path for loading transcriptions.
+            transcription_path (str): File path for loading transcriptions.
             diarization (Annotation): Diarization information.
             languages (list): List of target languages.
             **kwargs (dict): Additional keyword arguments for customization.
@@ -58,5 +58,5 @@ class TranscribeSpeechFile(TranscribeSpeech):
         Returns:
             Transcription: Transcription loaded from the specified file.
         """
-        transcription = Transcription.load(transcription_file)
+        transcription = Transcription.load(transcription_path)
         return transcription

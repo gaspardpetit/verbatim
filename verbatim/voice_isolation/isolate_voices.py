@@ -13,13 +13,13 @@ class IsolateVoices(ABC):
     """
 
     @abstractmethod
-    def execute(self, source_path: str, destination_path: str, **kwargs) -> ndarray:
+    def execute(self, audio_file_path: str, voice_file_path: str, **kwargs) -> ndarray:
         """
         Execute the voice isolation process.
 
         Args:
-            source_path (str): Path to the source audio file.
-            destination_path (str): Path to save the isolated voice audio file.
+            audio_file_path (str): Path to the source audio file.
+            voice_file_path (str): Path to save the isolated voice audio file.
             **kwargs: Additional parameters for customization.
 
         Returns:

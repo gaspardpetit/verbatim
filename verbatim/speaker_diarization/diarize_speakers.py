@@ -13,14 +13,14 @@ class DiarizeSpeakers(ABC):
     """
 
     @abstractmethod
-    def execute(self, audio_file: str, rttm_file: str, min_speakers: int = 1, max_speakers: int = None,
+    def execute(self, voice_file_path: str, diarization_file: str, min_speakers: int = 1, max_speakers: int = None,
                 **kwargs: dict) -> Annotation:
         """
         Execute the diarization process.
 
         Args:
-            audio_file (str): Path to the input audio file.
-            rttm_file (str): Path to the output RTTM (Rich Transcription Time Marked) file.
+            voice_file_path (str): Path to the input audio file.
+            diarization_file (str): Path to the output RTTM (Rich Transcription Time Marked) file.
             min_speakers (int, optional): Minimum number of expected speakers. Default is 1.
             max_speakers (int, optional): Maximum number of expected speakers. Default is None (unbounded).
             **kwargs (dict): Additional parameters for customization.
