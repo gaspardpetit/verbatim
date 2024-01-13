@@ -49,10 +49,113 @@ verbatim audio_file.mp3 -o ./output/
 ## Usage (from python)
 
 ```python 
->>> from verbatim import Context, Pipeline
-
+from verbatim import Context, Pipeline
+context: Context = Context(
+    languages=["en", "fr"],
+    nb_speakers=2,
+    source_file="audio.mp3",
+    out_dir="out")
+pipeline: Pipeline = Pipeline(context=context)
+pipeline.execute()
 ```
 
+The project is organized to be modular, such that individual components can be used outside of the full pipeline, and the pipeline can be customized to use custom stages. For example, to use a custom diarization stage:
+
+
+```python
+from verbatim.speaker_diarization import DiarizeSpeakers
+from verbatim import Context, Pipeline
+my_cursom_diarization: DiarizeSpeakers = get_custom_diarization_stage()  
+
+context: Context = Context(
+    languages=["en", "fr"],
+    nb_speakers=2,
+    source_file="audio.mp3",
+    out_dir="out")
+pipeline: Pipeline = Pipeline(
+    context=context, 
+    diarize_speakers=my_cursom_diarization)
+pipeline.execute()
+```
+
+This project aims at finding the best implementation for each stage and glue them together. Contributions with new implementations are welcome.
+
+Each component may also be used independently, for example:
+
+#### Separating Voice from Noise
+
+Using MDX:
+```python
+from verbatim.voice_isolation import IsolateVoicesMDX
+IsolateVoicesMDX().execute(
+    audio_file_path="original.mp3" 
+    voice_file_path="voice.wav")
+```
+
+Using Demucs:
+```python
+from verbatim.voice_isolation import IsolateVoicesDemucs
+IsolateVoicesDemucs().execute(
+    audio_file_path="original.mp3" 
+    voice_file_path="voice.wav")
+```
+
+#### Diarization
+Using Pyannote:
+```python
+from verbatim.speaker_diarization import DiarizeSpeakersPyannote
+DiarizeSpeakersPyannote().execute(
+    voice_file_path="voice.wav", 
+    diarization_file="dia.rttm",
+    max_speakers=4)
+```
+
+Using SpeechBrain:
+```python
+from verbatim.speaker_diarization import DiarizeSpeakersSpeechBrain
+DiarizeSpeakersSpeechBrain().execute(
+    voice_file_path="voice.wav", 
+    diarization_file="dia.rttm",
+    max_speakers=4)
+```
+
+#### Speech to Text
+
+Using FasterWhisper:
+```python
+from verbatim.wav_conversion import ConvertToWav
+from verbatim.speech_transcription import TranscribeSpeechFasterWhisper
+TranscribeSpeechFasterWhisper().execute_segment(
+        speech_segment_float32_16khz=ConvertToWav.load_float32_16khz_mono_audio("audio.mp3"),
+        language="fr")
+```
+
+Using OpenAI Whisper:
+```python
+from verbatim.wav_conversion import ConvertToWav
+from verbatim.speech_transcription import TranscribeSpeechWhisper
+transcript = TranscribeSpeechWhisper().execute_segment(
+    speech_segment_float32_16khz=ConvertToWav.load_float32_16khz_mono_audio("audio.mp3"),
+    language="fr")
+```
+
+#### Transcription to Document
+
+Saving to .docx:
+```python
+from verbatim.transcript_writing import WriteTranscriptDocx
+WriteTranscriptDocx().execute(
+    transcript=transcript,
+    output_file="out.docx")
+```
+
+Saving to .ass:
+```python
+from verbatim.transcript_writing import WriteTranscriptAss
+WriteTranscriptAss().execute(
+    transcript=transcript,
+    output_file="out.ass")
+```
 
 ## Objectives
 
