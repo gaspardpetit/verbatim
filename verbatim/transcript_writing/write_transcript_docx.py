@@ -6,10 +6,10 @@ from docx.enum.text import WD_COLOR_INDEX
 from docx.oxml import OxmlElement
 from langcodes import standardize_tag
 
-LOG = logging.getLogger(__name__)
-
 from ..transcription import Utterance, Transcription
 from .write_transcript import WriteTranscript  # Assuming WriteTranscript is in the same directory.
+
+LOG = logging.getLogger(__name__)
 
 def format_seconds(seconds: float) -> str:
     """
