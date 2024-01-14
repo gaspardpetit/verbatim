@@ -69,6 +69,8 @@ class DiarizeSpeakersSpeechBrain(DiarizeSpeakers):
 
         # Calculate the amount of padding needed
         padding_needed = target_length_samples - current_length_samples
+        if padding_needed <= 0:
+            return audio_samples
 
         # Pad the audio samples with zeros (silence)
         padded_audio = np.pad(audio_samples, (0, padding_needed), mode='constant', constant_values=0)
