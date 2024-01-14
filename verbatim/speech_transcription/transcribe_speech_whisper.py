@@ -66,6 +66,7 @@ class TranscribeSpeechWhisper(TranscribeSpeech):
         transcription = Transcription()
 
         WhisperModel.device = kwargs['device']
+        verbose = (kwargs['log_level'] or logging.WARNING) >= logging.INFO
         model = WhisperModel().model
         whisper_transcription = model.transcribe(
             word_timestamps=True,
@@ -74,7 +75,7 @@ class TranscribeSpeechWhisper(TranscribeSpeech):
             language=language,
             beam_size=beams,
             best_of=beams,
-            verbose=True
+            verbose=verbose
         )
         language = whisper_transcription['language']
         for segment in whisper_transcription['segments']:

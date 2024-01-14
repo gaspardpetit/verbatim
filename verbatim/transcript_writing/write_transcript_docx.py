@@ -1,3 +1,4 @@
+import logging
 from typing import List
 from docx import Document
 from docx.shared import RGBColor
@@ -7,6 +8,8 @@ from langcodes import standardize_tag
 
 from ..transcription import Utterance, Transcription
 from .write_transcript import WriteTranscript  # Assuming WriteTranscript is in the same directory.
+
+LOG = logging.getLogger(__name__)
 
 def format_seconds(seconds: float) -> str:
     """
@@ -35,7 +38,7 @@ def short_code_to_bcp47(short_code: str) -> str:
     try:
         return standardize_tag(short_code)
     except ValueError as e:
-        print(f"Error converting language code: {e}")
+        LOG.error(f"Error converting language code: {e}")
         return short_code  # Returning the original code might be a good fallback.
 
 
