@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 import logging
 import torch
 from .__init__ import __version__
@@ -33,7 +34,8 @@ def main():
     # Set logging level based on verbosity
     log_levels = [logging.WARNING, logging.INFO, logging.DEBUG]
     log_level = log_levels[min(args.verbose, len(log_levels) - 1)]
-    logging.basicConfig(level=log_level,
+    logging.basicConfig(stream=sys.stderr,
+                        level=log_level,
                         format='%(asctime)s [%(levelname)s][%(filename)s:%(lineno)d][%(funcName)s] %(message)s',
                         datefmt='%Y-%m-%dT%H:%M:%SZ')
 

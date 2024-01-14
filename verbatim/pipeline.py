@@ -13,7 +13,7 @@ from .speaker_diarization import DiarizeSpeakersFile, DiarizeSpeakersSpeechBrain
 from .language_detection import DetectLanguage, DetectLanguageFasterWhisper, DetectLanguageWhisper, DetectLanguageFile
 from .speech_transcription import TranscribeSpeechWhisper, TranscribeSpeechFile
 from .speech_transcription import TranscribeSpeech, TranscribeSpeechFasterWhisper
-from .transcript_writing import WriteTranscript, WriteTranscriptDocx, WriteTranscriptAss
+from .transcript_writing import WriteTranscript, WriteTranscriptDocx, WriteTranscriptAss, WriteTranscriptStdout
 from .transcription import Transcription
 
 class Pipeline:
@@ -25,7 +25,9 @@ class Pipeline:
                  diarize_speakers: DiarizeSpeakers = DiarizeSpeakersPyannote(),
                  detect_languages: DetectLanguage = DetectLanguageFasterWhisper(),
                  speech_transcription: TranscribeSpeech = TranscribeSpeechWhisper(),
-                 transcripte_writing: [WriteTranscript] = [ WriteTranscriptDocx(), WriteTranscriptAss() ],
+                 transcripte_writing: [WriteTranscript] = [
+                     WriteTranscriptDocx(), WriteTranscriptAss(), WriteTranscriptStdout()
+                     ],
                  ):
         self.context: Context = context
         self.convert_to_wav: ConvertToWav = convert_to_wav
