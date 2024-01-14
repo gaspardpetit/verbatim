@@ -22,7 +22,8 @@ long_description = (this_directory / "README.md").read_text()
 requirements = []
 try:
     with open('requirements.txt', encoding="utf-8") as f:
-        requirements = f.read().splitlines()
+        requirements = [line.strip() for line in f.readlines() if not line.startswith('#')]
+
 except FileNotFoundError:
     pass
 
