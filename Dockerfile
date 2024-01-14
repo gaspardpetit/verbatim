@@ -14,14 +14,14 @@ RUN pip install cython wheel
 RUN pip install --upgrade pip
 
 ADD requirements.txt requirements.txt
+ADD setup.py setup.py
+ADD verbatim verbatim
+ADD README.md README.md
 RUN pip install -r requirements.txt
 
-ADD verbatim verbatim
 RUN pip install pyclean
 RUN pyclean verbatim
 
-ADD setup.py setup.py
-ADD README.md README.md
 ADD tests/data/init.mp3 init.mp3
 
 RUN python -m pip install --upgrade build
