@@ -1,7 +1,8 @@
+[![PyPI version](https://badge.fury.io/py/verbatim.svg?)](https://pypi.python.org/pypi/verbatim/)
+[![Python versions](https://img.shields.io/pypi/pyversions/verbatim.svg)](https://pypi.org/project/verbatim/)
+[![Bandit](https://github.com/gaspardpetit/verbatim/actions/workflows/bandit.yml/badge.svg)](https://github.com/gaspardpetit/verbatim/actions/workflows/bandit.yml)
 [![Pylint](https://github.com/gaspardpetit/verbatim/actions/workflows/pylint.yml/badge.svg)](https://github.com/gaspardpetit/verbatim/actions/workflows/pylint.yml)
 [![Python package](https://github.com/gaspardpetit/verbatim/actions/workflows/python-package.yml/badge.svg)](https://github.com/gaspardpetit/verbatim/actions/workflows/python-package.yml)
-[![PyPI version](https://badge.fury.io/py/verbatim.svg)](https://pypi.python.org/pypi/verbatim/)
-[![Python versions](https://img.shields.io/pypi/pyversions/verbatim.svg)](https://pypi.org/project/verbatim/)
 
 # Verbatim
 
@@ -45,6 +46,27 @@ Save file in a specific directory
 ```bash
 verbatim audio_file.mp3 -o ./output/
 ```
+
+
+## Usage (from Docker)
+The tool can also be used within a docker container. This can be particularly convenient, in the context where the audio and transcription is confidential, to ensure that the tool is completely offline since docker using `--network none`
+
+With GPU support
+```bash
+docker run --network none --shm-size 8G --gpus all \
+    -v "/local/path/to/out/:/data/out/" \
+    -v "/local/path/to/audio.mp3:/data/audio.mp3" ghcr.io/gaspardpetit/verbatim:latest \
+    verbatim /data/audio.mp3 -o /data/out --language en fr"
+```
+
+Without GPU support
+```bash
+docker run --network none \
+    -v "/local/path/to/out/:/data/out/" \
+    -v "/local/path/to/audio.mp3:/data/audio.mp3" ghcr.io/gaspardpetit/verbatim:latest \
+    verbatim /data/audio.mp3 -o /data/out --language en fr"
+```
+
 
 ## Usage (from python)
 

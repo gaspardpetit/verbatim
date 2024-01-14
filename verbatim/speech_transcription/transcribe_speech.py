@@ -1,3 +1,4 @@
+import os
 import logging
 from abc import ABC, abstractmethod
 import numpy as np
@@ -272,9 +273,12 @@ class TranscribeSpeech(ABC):
         # speechbrain throws an exception when processing audio shorter than 30s
         # https://github.com/speechbrain/speechbrain/issues/2334
         audio_lang = DiarizeSpeakersSpeechBrain.pad_audio_to_duration(audio_lang, 31, 16000)
-        ConvertToWav.save_float32_16khz_mono_audio(audio_lang, f"out/{speaker}-{language}.wav")
 
-        segments = DiarizeSpeakersSpeechBrain().diarize_on_silences(f"out/{speaker}-{language}.wav", **kwargs)
+        work_directory_path = kwargs['work_directory_path'] or "."
+        speaker_lang_audio_path = os.path.join(work_directory_path, f"{speaker}-{language}.wav")
+        ConvertToWav.save_float32_16khz_mono_audio(audio_lang, speaker_lang_audio_path)
+
+        segments = DiarizeSpeakersSpeechBrain().diarize_on_silences(speaker_lang_audio_path, **kwargs)
         prompt = "Hello, welcome to my presentation."
         whole_transcription = Transcription()
         for turn, _, _ in segments.itertracks(yield_label=True):

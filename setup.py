@@ -7,6 +7,35 @@ from setuptools import setup, find_packages
 
 PACKAGE_NAME = "verbatim"
 INIT_FILE = Path(f"{PACKAGE_NAME}/__init__.py").absolute()
+REQUIREMENTS = """
+    wheel
+    onnxruntime-gpu==1.16.0
+    onnxruntime
+    numpy
+
+    pyannote.core
+    pyannote.audio
+
+    torch
+    torchaudio
+
+    faster_whisper
+    openai-whisper
+
+    soundfile
+    demucs
+
+    dataclasses_json
+
+    python-ffmpeg
+    pydub
+
+    audio_separator
+
+    python-docx
+    langcodes
+""".split()
+
 
 # Load version from __init__.py
 print(INIT_FILE)
@@ -18,13 +47,7 @@ with open(INIT_FILE, encoding="utf-8") as f:
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
-# Load requirements (if any) from requirements.txt
-requirements = []
-try:
-    with open('requirements.txt', encoding="utf-8") as f:
-        requirements = f.read().splitlines()
-except FileNotFoundError:
-    pass
+
 
 setup(
     name=PACKAGE_NAME,
@@ -38,7 +61,7 @@ setup(
     packages=find_packages(),
     long_description=long_description,
     long_description_content_type='text/markdown',
-    install_requires=requirements,
+    install_requires=REQUIREMENTS,
 
     url='https://github.com/gaspardpetit/verbatim',
 
