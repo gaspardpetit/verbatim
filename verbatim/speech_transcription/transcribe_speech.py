@@ -279,7 +279,7 @@ class TranscribeSpeech(ABC):
         ConvertToWav.save_float32_16khz_mono_audio(audio_lang, speaker_lang_audio_path)
 
         segments = DiarizeSpeakersSpeechBrain().diarize_on_silences(speaker_lang_audio_path, **kwargs)
-        prompt = "Hello, welcome to my presentation."
+        prompt = "Hello and welcome. This is my presentation."
         whole_transcription = Transcription()
         for turn, _, _ in segments.itertracks(yield_label=True):
             sample_start = int(turn.start * 16000)
