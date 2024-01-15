@@ -24,7 +24,7 @@ class Pipeline:
                  isolate_voices: IsolateVoices = IsolateVoicesMDX(),
                  diarize_speakers: DiarizeSpeakers = DiarizeSpeakersPyannote(),
                  detect_languages: DetectLanguage = DetectLanguageFasterWhisper(),
-                 speech_transcription: TranscribeSpeech = TranscribeSpeechWhisper(),
+                 speech_transcription: TranscribeSpeech = TranscribeSpeechFasterWhisper(),
                  transcripte_writing: [WriteTranscript] = [
                      WriteTranscriptDocx(), WriteTranscriptAss(), WriteTranscriptStdout()
                      ],
