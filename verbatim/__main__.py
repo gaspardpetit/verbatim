@@ -2,10 +2,14 @@ import argparse
 import os
 import sys
 import logging
+import warnings
 import torch
 from .__init__ import __version__
 from .pipeline import Pipeline
 from .context import Context
+
+warnings.filterwarnings("ignore", category=UserWarning, module=r"pyannote\.audio\.core\.io")
+warnings.filterwarnings("ignore", category=UserWarning, module=r"torch_audiomentations\.utils\.io")
 
 LOG = logging.getLogger(__name__)
 
