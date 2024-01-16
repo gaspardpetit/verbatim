@@ -48,7 +48,7 @@ class TranscribeSpeechFasterWhisper(TranscribeSpeech):
     def execute_segment(self, speech_segment_float32_16khz: ndarray,
                         speaker: str = "speaker", speech_offset: float = 0,
                         language: str = None, prompt: str = "",
-                        beams: int = 5, **kwargs: dict) -> Transcription:
+                        beams: int = 9, **kwargs: dict) -> Transcription:
         """
         Executes transcription on a speech segment using FasterWhisper model.
 
