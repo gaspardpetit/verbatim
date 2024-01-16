@@ -20,6 +20,15 @@ Install the latest from git:
 pip install git+https://github.com/gaspardpetit/verbatim.git
 ```
 
+## HuggingFace Token
+This project requires access to the pyannote models which are gated:
+1. Create an account on [Hugging Face](https://huggingface.co/)
+2. Request access to the model at https://huggingface.co/pyannote/speaker-diarization-3.1
+3. Request access to the model at https://huggingface.co/pyannote/segmentation-3.0
+4. From your `Settings` > `Access Tokens`, generate an access token
+5. When running verbatim for the first time, set the `TOKEN_HUGGINGFACE` environment variable to your Hugging Face token. Once the model is downloaded, this is no longer necessary.
+
+
 ## Usage (from terminal)
 
 Simple usage
