@@ -24,7 +24,8 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
         None
     """
 
-    def diarize_on_silences(self, audio_file: str, huggingface_token: str, **kwargs: dict) -> Annotation:
+    def diarize_on_silences(self, voice_file_path: str, model_pyannote_segmentation:str,
+                            huggingface_token: str, **kwargs: dict) -> Annotation:
         """
         Diarize speakers based on silences using PyAnnote.
 
@@ -35,7 +36,7 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
         Returns:
             Annotation: Pyannote Annotation object containing information about speaker diarization.
         """
-        model = Model.from_pretrained("pyannote/segmentation-3.0", use_auth_token=huggingface_token)
+        model = Model.from_pretrained(model_pyannote_segmentation, use_auth_token=huggingface_token)
         pipeline = VoiceActivityDetection(segmentation=model)
         pipeline.to(torch.device(kwargs['device']))
 
@@ -46,7 +47,7 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
             "min_duration_off": 0.5
         }
         pipeline.instantiate(hyper_parameters)
-        vad: Annotation = pipeline(audio_file)
+        vad: Annotation = pipeline(voice_file_path)
         vad.uri = "waveform"
         return vad
 
@@ -80,7 +81,7 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
         return device
 
     @staticmethod
-    def _load_pipeline(device: torch.device, huggingface_token: str) -> Pipeline:
+    def _load_pipeline(device: torch.device, model_pyannote_diarization:str, huggingface_token: str) -> Pipeline:
         """
         Loads the diarization pipeline.
 
@@ -92,13 +93,13 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
             Pipeline: PyAnnote diarization pipeline.
         """
         pipeline = Pipeline.from_pretrained(
-            "pyannote/speaker-diarization-3.1",
+            model_pyannote_diarization,
             use_auth_token=huggingface_token
         ).to(device)
         return pipeline
 
     def diarize_on_speakers(self, audio_file: str, num_speakers: int,
-                             huggingface_token: str, **kwargs:dict) -> Annotation:
+                             huggingface_token: str, model_pyannote_diarization:str, **kwargs:dict) -> Annotation:
         """
         Diarize speakers based on speaker count using PyAnnote.
 
@@ -111,7 +112,10 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
             Annotation: Pyannote Annotation object containing information about speaker diarization.
         """
         device: torch.device = DiarizeSpeakersPyannote._get_device(**kwargs)
-        pipeline: Pipeline = DiarizeSpeakersPyannote._load_pipeline(device, huggingface_token)
+        pipeline: Pipeline = DiarizeSpeakersPyannote._load_pipeline(
+            device=device,
+            model_pyannote_diarization=model_pyannote_diarization,
+            huggingface_token=huggingface_token)
         waveform, sample_rate = DiarizeSpeakersPyannote._load_audio(audio_file)
         with ProgressHook() as hook:
             diarization: Annotation = pipeline({
@@ -149,7 +153,8 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
         if huggingface_token is None:
             LOG.warning("No HuggingFace token was provided (TOKEN_HUGGINGFACE)")
         if min_speakers == 1 and max_speakers == 1:
-            diarization = self.diarize_on_silences(voice_file_path, huggingface_token, **kwargs)
+            diarization = self.diarize_on_silences(voice_file_path=voice_file_path,
+                                                   huggingface_token=huggingface_token, **kwargs)
         else:
             diarization = self.diarize_on_speakers(voice_file_path, max_speakers, huggingface_token, **kwargs)
 

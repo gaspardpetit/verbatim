@@ -2,18 +2,11 @@ import argparse
 import os
 import sys
 import logging
-import warnings
 import torch
 from .__init__ import __version__
 from .pipeline import Pipeline
 from .context import Context
 
-
-# see https://github.com/pyannote/pyannote-audio/issues/1576
-warnings.filterwarnings("ignore", category=UserWarning, module=r"pyannote\.audio\.core\.io")
-
-# see https://github.com/asteroid-team/torch-audiomentations/issues/172
-warnings.filterwarnings("ignore", category=UserWarning, module=r"torch_audiomentations\.utils\.io")
 
 LOG = logging.getLogger(__name__)
 
@@ -36,6 +29,10 @@ def main():
                         help="Increase verbosity (specify multiple times for more verbosity)")
     parser.add_argument("--version", action="version", version=f"{package_name} {__version__}")
     parser.add_argument("--cpu", action="store_true", help="Toggle CPU usage")
+    parser.add_argument("--write-config",
+                        help="Write the config file so it can be edited", default=None)
+    parser.add_argument("--read-config",
+                        help="Read a config file", default=None)
 
     args = parser.parse_args()
 
@@ -82,9 +79,22 @@ def main():
     languages = args.languages if args.languages else ["en", "fr"]
     nb_speakers = args.nb_speakers
 
-    context: Context = Context(
-        languages=languages, nb_speakers=nb_speakers, source_file=args.input,
-        out_dir=args.output, log_level=log_level, device=device)
+    if args.read_config:
+        with open(args.read_config, "r", encoding="utf-8") as f:
+            text = f.read()
+            context: Context = Context.from_yaml(source_file=args.input, out_dir=args.output, text=text)
+    else:
+        context: Context = Context(source_file=args.input, out_dir=args.output)
+
+    context.languages=languages
+    context.nb_speakers=nb_speakers
+    context.log_level=log_level
+    context.device=device
+
+    if args.write_config:
+        with open(args.write_config, "w", encoding="utf-8") as f:
+            f.write(context.to_yaml())
+
     pipeline: Pipeline = Pipeline(context=context)
     pipeline.execute()
 

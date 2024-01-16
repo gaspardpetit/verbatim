@@ -20,7 +20,7 @@ class DiarizeSpeakersSpeechBrain(DiarizeSpeakers):
         None
     """
 
-    def diarize_on_silences(self, audio_file: str, **kwargs:dict) -> Annotation:
+    def diarize_on_silences(self, voice_file_path: str, model_speechbrain_vad:str, **kwargs:dict) -> Annotation:
         """
         Diarize speakers based on silences using SpeechBrain.
 
@@ -35,13 +35,13 @@ class DiarizeSpeakersSpeechBrain(DiarizeSpeakers):
 
         # Load VAD model from SpeechBrain
         vad_model = VAD.from_hparams(
-            source="speechbrain/vad-crdnn-libriparty",
+            source=model_speechbrain_vad,
             savedir=tmpdir,
             run_opts={"device": kwargs['device']}
         )
 
         # Perform VAD
-        boundaries = vad_model.get_speech_segments(audio_file)
+        boundaries = vad_model.get_speech_segments(voice_file_path)
 
         # Create a Pyannote Annotation object for diarization
         diarization = Annotation()
@@ -54,8 +54,8 @@ class DiarizeSpeakersSpeechBrain(DiarizeSpeakers):
                 diarization[Segment(float(boundaries[i][0]), float(boundaries.data[0][1]))] = "speaker"
 
         # Upsample boundaries and save the VAD result as a new audio file
-        upsampled_boundaries = vad_model.upsample_boundaries(boundaries=boundaries, audio_file=audio_file)
-        torchaudio.save(f"{audio_file}_vad.wav", upsampled_boundaries.cpu(), 16000)
+        upsampled_boundaries = vad_model.upsample_boundaries(boundaries=boundaries, audio_file=voice_file_path)
+        torchaudio.save(f"{voice_file_path}_vad.wav", upsampled_boundaries.cpu(), 16000)
 
         return diarization
 
@@ -77,8 +77,9 @@ class DiarizeSpeakersSpeechBrain(DiarizeSpeakers):
 
         return padded_audio
 
-    def execute(self, voice_file_path: str, diarization_file: str, min_speakers: int = 1, max_speakers: int = None,
-                **kwargs: dict) -> Annotation:
+    def execute(self, voice_file_path: str, diarization_file: str,
+                min_speakers: int = 1, max_speakers: int = None,
+                model_speechbrain_vad:str  = None, **kwargs: dict) -> Annotation:
         """
         Execute the diarization process using SpeechBrain.
 
@@ -93,7 +94,8 @@ class DiarizeSpeakersSpeechBrain(DiarizeSpeakers):
             Annotation: Pyannote Annotation object containing information about speaker diarization.
         """
         # Perform diarization based on silences using SpeechBrain
-        diarization: Annotation = self.diarize_on_silences(voice_file_path)
+        diarization: Annotation = self.diarize_on_silences(voice_file_path=voice_file_path,
+                                                           model_speechbrain_vad=model_speechbrain_vad)
 
         # Write the diarization result to the output RTTM file
         with open(diarization_file, "w", encoding="utf-8") as f:

@@ -65,9 +65,13 @@ class TranscribeSpeechWhisper(TranscribeSpeech):
         """
         transcription = Transcription()
 
-        WhisperModel.device = kwargs['device']
-        verbose = (kwargs['log_level'] or logging.WARNING) >= logging.INFO
+        if 'device' in kwargs:
+            WhisperModel.device = kwargs['device']
+        if 'model_whisper' in kwargs:
+            WhisperModel.model = kwargs['model_whisper']
         model = WhisperModel().model
+
+        verbose = (kwargs['log_level'] or logging.WARNING) >= logging.INFO
         whisper_transcription = model.transcribe(
             word_timestamps=True,
             audio=speech_segment_float32_16khz,

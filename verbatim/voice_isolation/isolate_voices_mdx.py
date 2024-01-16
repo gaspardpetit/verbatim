@@ -16,7 +16,8 @@ class IsolateVoicesMDX(IsolateVoices):
         None
     """
 
-    def execute(self, audio_file_path: str, voice_file_path: str, **kwargs) -> ndarray:
+    # pylint: disable=arguments-differ
+    def execute(self, audio_file_path: str, model_mdx:str, voice_file_path: str, **kwargs) -> ndarray:
         """
         Execute the voice isolation process using the MDX algorithm.
 
@@ -30,7 +31,7 @@ class IsolateVoicesMDX(IsolateVoices):
         """
         # Initialize the MDX separator
         separator = Separator(log_level=kwargs['log_level'] or logging.WARNING)
-        separator.load_model('Kim_Vocal_2')
+        separator.load_model(model_mdx)
 
         # Use MDX to separate vocals from the source audio
         output_file_paths = separator.separate(audio_file_path)

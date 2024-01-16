@@ -12,7 +12,8 @@ class FasterWhisperModel:
         model (WhisperModel): The FasterWhisper model instance.
     """
     _instance = None
-    device = "cuda"
+    device:str = "auto"
+    model:str = "large-v3"
 
     def __new__(cls):
         """
@@ -24,18 +25,20 @@ class FasterWhisperModel:
         """
         if not cls._instance:
             cls._instance = super(FasterWhisperModel, cls).__new__(cls)
-            cls._instance._init_once(FasterWhisperModel.device)
+            cls._instance._init_once(device=FasterWhisperModel.device, model=FasterWhisperModel.model)
         return cls._instance
 
     # pylint: disable=attribute-defined-outside-init
-    def _init_once(self, device:str = False):
+    def _init_once(self, model:str, device:str):
         """
         Initialize the FasterWhisperModel instance.
         """
         if device == "cpu":
-            self.model = WhisperModel("large-v3", device=device, compute_type="float32")
+            self.model = WhisperModel(model_size_or_path=model, device=device, compute_type="float32")
+        elif device == "cuda":
+            self.model = WhisperModel(model_size_or_path=model, device=device, compute_type="float16")
         else:
-            self.model = WhisperModel("large-v3", device=device, compute_type="float16")
+            self.model = WhisperModel(model_size_or_path=model)
 
     def unload(self):
         """

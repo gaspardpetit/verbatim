@@ -37,8 +37,12 @@ class DetectLanguageWhisper(DetectLanguage):
         transcription = Transcription()
 
         # Load Whisper model
-        WhisperModel.device = kwargs['device']
+        if 'device' in kwargs:
+            WhisperModel.device = kwargs['device']
+        if 'model_whisper' in kwargs:
+            WhisperModel.model = kwargs['model_whisper']
         model = WhisperModel().model
+
         if kwargs['device'] == "cpu":
             float_type: torch.dtype = torch.float32
         else:
