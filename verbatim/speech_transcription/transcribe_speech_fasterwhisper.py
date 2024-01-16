@@ -65,7 +65,10 @@ class TranscribeSpeechFasterWhisper(TranscribeSpeech):
             Transcription: Transcription object containing the transcribed information.
         """
         transcription = Transcription()
-        FasterWhisperModel.device = kwargs['device']
+        if 'device' in kwargs:
+            FasterWhisperModel.device = kwargs['device']
+        if 'model_fasterwhisper' in kwargs:
+            FasterWhisperModel.model = kwargs['model_fasterwhisper']
         model = FasterWhisperModel().model
 
         segments, info = model.transcribe(
@@ -105,7 +108,10 @@ class TranscribeSpeechFasterWhisper(TranscribeSpeech):
         """
         transcription = Transcription()
 
-        FasterWhisperModel.device = kwargs['device']
+        if 'device' in kwargs:
+            FasterWhisperModel.device = kwargs['device']
+        if 'model_fasterwhisper' in kwargs:
+            FasterWhisperModel.model = kwargs['model_fasterwhisper']
         model = FasterWhisperModel().model
 
         features = model.feature_extractor(speech_segment_float32_16khz)
