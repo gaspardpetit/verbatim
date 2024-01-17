@@ -263,7 +263,11 @@ class DetectLanguage(ABC):
         if languages is not None and len(languages) == 1:
             transcription = Transcription()
             for turn, _, speaker in diarization.itertracks(yield_label=True):
-                transcription.append(Utterance(speaker=speaker, words=[], language=languages[0], start=turn.start, end=turn.end, confidence=1.0, silence_prob=0.0))
+                transcription.append(
+                    Utterance(speaker=speaker, words=[],
+                              language=languages[0],
+                              start=turn.start, end=turn.end,
+                              confidence=1.0, silence_prob=0.0))
         else:
             speech_segment_float32_16khz = ConvertToWav.load_float32_16khz_mono_audio(voice_file_path)
 
