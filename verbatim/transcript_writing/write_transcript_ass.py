@@ -485,7 +485,8 @@ class WriteTranscriptAss(WriteTranscript):
         if with_language is not None:
             self.with_language = no_timestamps
 
-    def execute(self, transcript: Transcription, output_file: str, **kwargs: dict):
+    def execute(self, transcription_path: str, output_file: str, **kwargs: dict):
+        transcript:Transcription = Transcription.load(transcription_path)
         output_file = f"{output_file}.ass"
         result_to_ass({"segments": [{
             "start": u.start,

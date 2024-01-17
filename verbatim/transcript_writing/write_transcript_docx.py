@@ -141,7 +141,7 @@ class WriteTranscriptDocx(WriteTranscript):
         self.with_confidence = with_confidence
         self.with_language = with_language
 
-    def execute(self, transcript: Transcription, output_file: str, **kwargs: dict):
+    def execute(self, transcription_path: str, output_file: str, **kwargs: dict):
         """
         Execute the transcription writing process to a Microsoft Word (docx) file.
 
@@ -153,6 +153,7 @@ class WriteTranscriptDocx(WriteTranscript):
         Returns:
             None
         """
+        transcript:Transcription = Transcription.load(transcription_path)
         output_file = f"{output_file}.docx"
         write_docx(
             utterances=transcript.utterances,

@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from numpy import ndarray
 from pyannote.core import Annotation
+from pyannote.database.util import load_rttm
 
 from ..transcription import Transcription
 from ..speaker_diarization import DiarizeSpeakersSpeechBrain
@@ -278,7 +279,8 @@ class TranscribeSpeech(ABC):
         speaker_lang_audio_path = os.path.join(work_directory_path, f"{speaker}-{language}.wav")
         ConvertToWav.save_float32_16khz_mono_audio(audio_lang, speaker_lang_audio_path)
 
-        segments = DiarizeSpeakersSpeechBrain().diarize_on_silences(speaker_lang_audio_path, **kwargs)
+        segments = DiarizeSpeakersSpeechBrain().diarize_on_silences(
+            audio_path=speaker_lang_audio_path, **kwargs)
         prompt = "Hello and welcome. This is my presentation."
         whole_transcription = Transcription()
         for turn, _, _ in segments.itertracks(yield_label=True):
@@ -297,8 +299,8 @@ class TranscribeSpeech(ABC):
         return whole_transcription
 
     # pylint: disable=unused-argument
-    def execute(self, speech_segment_float32_16khz: ndarray, detected_languages: Transcription,
-                transcription_path: str, diarization: Annotation, languages: list, **kwargs: dict) -> Transcription:
+    def execute(self, voice_file_path:str, language_file:str,
+                transcription_path: str, diarization_file:str, languages: list, **kwargs: dict) -> Transcription:
         """
         Executes the transcription process for multiple speakers and languages.
 
@@ -313,6 +315,11 @@ class TranscribeSpeech(ABC):
         Returns:
             Transcription: Transcription object containing the final result.
         """
+
+        speech_segment_float32_16khz = ConvertToWav.load_float32_16khz_mono_audio(voice_file_path)
+        detected_languages: Transcription = Transcription.load(language_file)
+        rttms = load_rttm(diarization_file)
+        diarization = next(iter(rttms.values()))
 
         full_transcription = Transcription()
         sequence = self._prepare_second_pass_diarization(diarization=diarization, detected_languages=detected_languages)

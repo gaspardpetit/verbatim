@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from ..transcription import Transcription
 
 
 class WriteTranscript(ABC):
@@ -16,7 +15,7 @@ class WriteTranscript(ABC):
     """
 
     @abstractmethod
-    def execute(self, transcript: Transcription, output_file: str, **kwargs: dict) -> None:
+    def execute(self, transcription_path: str, output_file: str, **kwargs: dict) -> None:
         """
         Execute the transcription writing process.
 

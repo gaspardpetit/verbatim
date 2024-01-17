@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from numpy import ndarray
 from pyannote.core import Annotation
+from pyannote.database.util import load_rttm
+from ..wav_conversion import ConvertToWav
 
 from ..transcription import Transcription, Utterance
 
@@ -239,7 +241,7 @@ class DetectLanguage(ABC):
                                 changed = True
                             center.confidence = confidence
 
-    def execute(self, diarization: Annotation, speech_segment_float32_16khz: ndarray,
+    def execute(self, diarization_file: str, voice_file_path:str,
                 language_file: str, languages=None, **kwargs: dict) -> Transcription:
         """
         Executes language detection on the entire audio based on speaker diarization.
@@ -254,6 +256,11 @@ class DetectLanguage(ABC):
         Returns:
             Transcription: Transcription object containing the detected language information.
         """
+
+        rttms = load_rttm(diarization_file)
+        diarization = next(iter(rttms.values()))
+
+        speech_segment_float32_16khz = ConvertToWav.load_float32_16khz_mono_audio(voice_file_path)
 
         transcription = self.identify_diarization_silences(
             speech_segment_float32_16khz=speech_segment_float32_16khz,

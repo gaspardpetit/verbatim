@@ -40,20 +40,10 @@ class Pipeline:
     def execute(self):
 
         self.convert_to_wav.execute(**self.context.to_dict())
-
-        waveform: ndarray = self.isolate_voices.execute(**self.context.to_dict())
-        diarization: Annotation = self.diarize_speakers.execute(**self.context.to_dict())
-
-        detected_languages:Transcription = self.detect_languages.execute(
-            diarization=diarization,
-            speech_segment_float32_16khz=waveform,
-            **self.context.to_dict())
-
-        transcript = self.transcript_speech.execute(
-            detected_languages=detected_languages,
-            speech_segment_float32_16khz=waveform,
-            diarization=diarization,
-            **self.context.to_dict())
+        self.isolate_voices.execute(**self.context.to_dict())
+        self.diarize_speakers.execute(**self.context.to_dict())
+        self.detect_languages.execute(**self.context.to_dict())
+        self.transcript_speech.execute(**self.context.to_dict())
 
         for writer in self.transcripte_writing:
-            writer.execute(transcript=transcript, **self.context.to_dict())
+            writer.execute(**self.context.to_dict())
