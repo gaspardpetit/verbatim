@@ -39,11 +39,13 @@ class Pipeline:
 
     def execute(self):
 
-        self.convert_to_wav.execute(**self.context.to_dict())
-        self.isolate_voices.execute(**self.context.to_dict())
-        self.diarize_speakers.execute(**self.context.to_dict())
-        self.detect_languages.execute(**self.context.to_dict())
-        self.transcript_speech.execute(**self.context.to_dict())
+        filters: [] = [
+            self.convert_to_wav,
+            self.isolate_voices,
+            self.diarize_speakers,
+            self.detect_languages,
+            self.transcript_speech
+        ] + self.transcripte_writing
 
-        for writer in self.transcripte_writing:
-            writer.execute(**self.context.to_dict())
+        for f in filters:
+            f.execute(**self.context.to_dict())

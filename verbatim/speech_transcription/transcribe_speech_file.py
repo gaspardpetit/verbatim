@@ -1,6 +1,5 @@
 import logging
 from numpy import ndarray
-from pyannote.core import Annotation
 
 from .transcribe_speech import TranscribeSpeech
 from ..transcription import Transcription
@@ -38,13 +37,8 @@ class TranscribeSpeechFile(TranscribeSpeech):
         """
         raise NotImplementedError("execute_segment method is not implemented for loading from a file.")
 
-    def execute(self,
-                speech_segment_float32_16khz: ndarray,
-                detected_languages: Transcription,
-                transcription_path: str,
-                diarization: Annotation,
-                languages: list,
-                **kwargs: dict) -> Transcription:
+    # pylint: disable=arguments-differ
+    def execute(self, transcription_path: str, **kwargs: dict) -> Transcription:
         """
         Load transcriptions from a file.
 
