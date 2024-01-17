@@ -1,6 +1,5 @@
 import logging
 from numpy import ndarray
-from pyannote.core import Annotation
 
 from ..transcription import Transcription
 from .detect_language import DetectLanguage
@@ -36,8 +35,8 @@ class DetectLanguageFile(DetectLanguage):
         """
         raise NotImplementedError
 
-    def execute(self, diarization: Annotation, speech_segment_float32_16khz: ndarray,
-                language_file: str, languages=None, **kwargs: dict) -> Transcription:
+    # pylint: disable=arguments-differ
+    def execute(self, language_file: str, **kwargs: dict) -> Transcription:
         """
         Loads language detection results from a file.
 

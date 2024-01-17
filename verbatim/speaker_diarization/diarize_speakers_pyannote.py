@@ -3,12 +3,13 @@ import os
 import torchaudio
 import torch
 
-from pyannote.core import Annotation
+from pyannote.core import Annotation, Segment
 from pyannote.audio import Model
 from pyannote.audio.pipelines import VoiceActivityDetection
 from pyannote.audio import Pipeline
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 
+from ..wav_conversion import ConvertToWav
 from .diarize_speakers import DiarizeSpeakers
 
 LOG = logging.getLogger(__name__)
@@ -37,6 +38,10 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
             Annotation: Pyannote Annotation object containing information about speaker diarization.
         """
         model = Model.from_pretrained(model_pyannote_segmentation, use_auth_token=huggingface_token)
+        if model is None:
+            LOG.error(f"Failed to retrieve model {model_pyannote_segmentation}")
+            raise FileNotFoundError
+
         pipeline = VoiceActivityDetection(segmentation=model)
         pipeline.to(torch.device(kwargs['device']))
 
@@ -153,8 +158,15 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
         if huggingface_token is None:
             LOG.warning("No HuggingFace token was provided (TOKEN_HUGGINGFACE)")
         if min_speakers == 1 and max_speakers == 1:
-            diarization = self.diarize_on_silences(voice_file_path=voice_file_path,
-                                                   huggingface_token=huggingface_token, **kwargs)
+            try:
+                diarization = self.diarize_on_silences(voice_file_path=voice_file_path,
+                                                    huggingface_token=huggingface_token, **kwargs)
+            except FileNotFoundError:
+                # could not log model, default on full length diarization
+                LOG.warning("Failed to compute diarization, defaulting on full length audio")
+                diarization  = Annotation("waveform")
+                audio = ConvertToWav.load_float32_16khz_mono_audio(voice_file_path)
+                diarization[Segment(0, len(audio)/16000)] = "speaker"
         else:
             diarization = self.diarize_on_speakers(voice_file_path, max_speakers, huggingface_token, **kwargs)
 

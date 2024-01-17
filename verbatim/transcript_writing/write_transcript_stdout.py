@@ -6,7 +6,8 @@ class WriteTranscriptStdout(WriteTranscript):
     def __init__(self, with_colours=True):
         self.with_colours = with_colours
 
-    def execute(self, transcript: Transcription, output_file: str, **kwargs: dict):
+    def execute(self, transcription_path: str, output_file: str, **kwargs: dict):
+        transcript:Transcription = Transcription.load(transcription_path)
         if self.with_colours:
             text:str = transcript.get_colour_text()
         else:
