@@ -260,30 +260,39 @@ class DetectLanguage(ABC):
         rttms = load_rttm(diarization_file)
         diarization = next(iter(rttms.values()))
 
-        speech_segment_float32_16khz = ConvertToWav.load_float32_16khz_mono_audio(voice_file_path)
+        if languages is not None and len(languages) == 1:
+            transcription = Transcription()
+            for turn, _, speaker in diarization.itertracks(yield_label=True):
+                transcription.append(
+                    Utterance(speaker=speaker, words=[],
+                              language=languages[0],
+                              start=turn.start, end=turn.end,
+                              confidence=1.0, silence_prob=0.0))
+        else:
+            speech_segment_float32_16khz = ConvertToWav.load_float32_16khz_mono_audio(voice_file_path)
 
-        transcription = self.identify_diarization_silences(
-            speech_segment_float32_16khz=speech_segment_float32_16khz,
-            diarization=diarization,
-            languages=languages,
-            **kwargs)
+            transcription = self.identify_diarization_silences(
+                speech_segment_float32_16khz=speech_segment_float32_16khz,
+                diarization=diarization,
+                languages=languages,
+                **kwargs)
 
-        # as a second pass, identify short segments with low confidence, and attempt to
-        # merge with high confidence neighbors
+            # as a second pass, identify short segments with low confidence, and attempt to
+            # merge with high confidence neighbors
 
-        triplets: [[Utterance]] = self.get_utterances_as_triplets(transcription)
+            triplets: [[Utterance]] = self.get_utterances_as_triplets(transcription)
 
-        self.detect_unknown_languages(
-            speech_segment_float32_16khz=speech_segment_float32_16khz,
-            triplets=triplets,
-            languages=languages,
-            **kwargs)
+            self.detect_unknown_languages(
+                speech_segment_float32_16khz=speech_segment_float32_16khz,
+                triplets=triplets,
+                languages=languages,
+                **kwargs)
 
-        self.fill_language_gaps(
-            speech_segment_float32_16khz=speech_segment_float32_16khz,
-            triplets=triplets,
-            languages=languages,
-            **kwargs)
+            self.fill_language_gaps(
+                speech_segment_float32_16khz=speech_segment_float32_16khz,
+                triplets=triplets,
+                languages=languages,
+                **kwargs)
 
         transcription.save(language_file)
         return transcription
