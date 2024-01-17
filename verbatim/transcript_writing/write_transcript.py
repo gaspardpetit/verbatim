@@ -1,7 +1,7 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+from ..filter import Filter
 
-
-class WriteTranscript(ABC):
+class WriteTranscript(Filter):
     """
     Abstract base class for writing transcriptions to a file.
 
@@ -15,6 +15,7 @@ class WriteTranscript(ABC):
     """
 
     @abstractmethod
+    # pylint: disable=arguments-differ
     def execute(self, transcription_path: str, output_file: str, **kwargs: dict) -> None:
         """
         Execute the transcription writing process.

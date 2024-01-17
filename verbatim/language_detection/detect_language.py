@@ -1,13 +1,13 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from numpy import ndarray
 from pyannote.core import Annotation
 from pyannote.database.util import load_rttm
 from ..wav_conversion import ConvertToWav
 
 from ..transcription import Transcription, Utterance
+from ..filter import Filter
 
-
-class DetectLanguage(ABC):
+class DetectLanguage(Filter):
     """
     Abstract base class for language detection.
 
@@ -241,6 +241,7 @@ class DetectLanguage(ABC):
                                 changed = True
                             center.confidence = confidence
 
+    # pylint: disable=arguments-differ
     def execute(self, diarization_file: str, voice_file_path:str,
                 language_file: str, languages=None, **kwargs: dict) -> Transcription:
         """

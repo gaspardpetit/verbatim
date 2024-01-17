@@ -48,4 +48,6 @@ class Pipeline:
         ] + self.transcripte_writing
 
         for f in filters:
+            f.load(**self.context.to_dict())
             f.execute(**self.context.to_dict())
+            f.unload(**self.context.to_dict())

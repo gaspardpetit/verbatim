@@ -37,6 +37,7 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
         Returns:
             Annotation: Pyannote Annotation object containing information about speaker diarization.
         """
+        LOG.info(f"Loading model {model_pyannote_segmentation}")
         model = Model.from_pretrained(model_pyannote_segmentation, use_auth_token=huggingface_token)
         if model is None:
             LOG.error(f"Failed to retrieve model {model_pyannote_segmentation}")
@@ -54,6 +55,9 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
         pipeline.instantiate(hyper_parameters)
         vad: Annotation = pipeline(voice_file_path)
         vad.uri = "waveform"
+
+        LOG.info(f"Unloading model {model_pyannote_segmentation}")
+        del model
         return vad
 
     @staticmethod

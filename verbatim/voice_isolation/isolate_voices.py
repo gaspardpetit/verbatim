@@ -1,8 +1,10 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from numpy import ndarray
 
+from ..filter import Filter
 
-class IsolateVoices(ABC):
+
+class IsolateVoices(Filter):
     """
     Abstract base class for voice isolation methods.
 
@@ -13,6 +15,7 @@ class IsolateVoices(ABC):
     """
 
     @abstractmethod
+    # pylint: disable=arguments-differ
     def execute(self, audio_file_path: str, voice_file_path: str, **kwargs) -> ndarray:
         """
         Execute the voice isolation process.
