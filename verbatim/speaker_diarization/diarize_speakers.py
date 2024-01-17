@@ -1,8 +1,10 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from pyannote.core import Annotation
 
+from ..filter  import Filter
 
-class DiarizeSpeakers(ABC):
+
+class DiarizeSpeakers(Filter):
     """
     Abstract class for diarization of speakers in an audio file.
 
@@ -13,6 +15,7 @@ class DiarizeSpeakers(ABC):
     """
 
     @abstractmethod
+    # pylint: disable=arguments-differ
     def execute(self, voice_file_path: str, diarization_file: str, min_speakers: int = 1, max_speakers: int = None,
                 **kwargs: dict) -> Annotation:
         """

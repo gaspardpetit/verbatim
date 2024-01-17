@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 import numpy as np
 from numpy import ndarray
 import torch
@@ -7,9 +7,12 @@ import soundfile as sf
 import torchaudio
 from pydub import AudioSegment
 
+from ..filter import Filter
 
-class ConvertToWav(ABC):
+
+class ConvertToWav(Filter):
     @abstractmethod
+    # pylint: disable=arguments-differ
     def execute(self, source_file_path: str, audio_file_path: str, **kwargs: dict) -> None:
         """
         Abstract method for converting audio files to WAV format.

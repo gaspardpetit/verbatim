@@ -1,6 +1,6 @@
 import os
 import logging
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 import numpy as np
 from numpy import ndarray
 from pyannote.core import Annotation
@@ -9,11 +9,12 @@ from pyannote.database.util import load_rttm
 from ..transcription import Transcription
 from ..speaker_diarization import DiarizeSpeakersSpeechBrain
 from ..wav_conversion import ConvertToWav
+from ..filter import Filter
 
 LOG = logging.getLogger(__name__)
 
 
-class TranscribeSpeech(ABC):
+class TranscribeSpeech(Filter):
     """
     Abstract class for transcribing audio.
 
@@ -299,6 +300,7 @@ class TranscribeSpeech(ABC):
         return whole_transcription
 
     # pylint: disable=unused-argument
+    # pylint: disable=arguments-differ
     def execute(self, voice_file_path:str, language_file:str,
                 transcription_path: str, diarization_file:str, languages: list, **kwargs: dict) -> Transcription:
         """
