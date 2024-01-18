@@ -1,2 +1,4 @@
 # all requirements are in setup.py
+wheel
+setuptools
 .
