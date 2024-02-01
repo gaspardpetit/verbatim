@@ -26,6 +26,7 @@ class Context:
     model_pyannote_diarization:str
     model_mdx:str
     model_speechbrain_vad:str
+    has_ffmpeg: bool
 
     def __init__(self, source_file: str, out_dir: str = "out", languages: [str] = None,
                   nb_speakers=1, log_level=logging.WARNING, device:str="cuda",
@@ -55,6 +56,7 @@ class Context:
 
         self.model_mdx = model_mdx
         self.model_speechbrain_vad = model_speechbrain_vad
+        self.has_ffmpeg = True
 
     def __str__(self):
         return self.to_yaml()

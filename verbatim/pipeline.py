@@ -2,11 +2,9 @@
 pipeline
 """
 #pylint: disable=unused-import
-from numpy import ndarray
-from pyannote.core import Annotation
-
+import logging
 from .context import Context
-from .wav_conversion import ConvertToWav, ConvertToWavFFMpeg
+from .wav_conversion import ConvertToWav, ConvertToWavFFMpeg, ConvertToWavSoundfile
 from .voice_isolation import IsolateVoices, IsolateVoicesNone, IsolateVoicesFile, IsolateVoicesDemucs, IsolateVoicesMDX
 from .speaker_diarization import DiarizeSpeakers, DiarizeSpeakersNone, DiarizeSpeakersPyannote
 from .speaker_diarization import DiarizeSpeakersFile, DiarizeSpeakersSpeechBrain
@@ -16,11 +14,13 @@ from .speech_transcription import TranscribeSpeech, TranscribeSpeechFasterWhispe
 from .transcript_writing import WriteTranscript, WriteTranscriptDocx, WriteTranscriptAss, WriteTranscriptStdout
 from .transcription import Transcription
 
+LOG = logging.getLogger(__name__)
+
 class Pipeline:
     #pylint: disable=dangerous-default-value
     def __init__(self,
                  context: Context,
-                 convert_to_wav: ConvertToWav = ConvertToWavFFMpeg(),
+                 convert_to_wav: ConvertToWav = None,
                  isolate_voices: IsolateVoices = IsolateVoicesMDX(),
                  diarize_speakers: DiarizeSpeakers = DiarizeSpeakersPyannote(),
                  detect_languages: DetectLanguage = DetectLanguageFasterWhisper(),
@@ -29,6 +29,14 @@ class Pipeline:
                      WriteTranscriptDocx(), WriteTranscriptAss(), WriteTranscriptStdout()
                      ],
                  ):
+
+        if convert_to_wav is None:
+            if context.has_ffmpeg:
+                convert_to_wav = ConvertToWavFFMpeg()
+            else:
+                LOG.warning("ffmpeg was not detected, will only handle .wav audio files")
+                convert_to_wav = ConvertToWavSoundfile()
+
         self.context: Context = context
         self.convert_to_wav: ConvertToWav = convert_to_wav
         self.isolate_voices: IsolateVoices = isolate_voices
