@@ -169,7 +169,7 @@ class DiarizeSpeakersPyannote(DiarizeSpeakers):
                 # could not log model, default on full length diarization
                 LOG.warning("Failed to compute diarization, defaulting on full length audio")
                 diarization  = Annotation("waveform")
-                audio = ConvertToWav.load_float32_16khz_mono_audio(voice_file_path)
+                audio = ConvertToWav.load_float32_16khz_mono_audio(input_file=voice_file_path, device=kwargs['device'])
                 diarization[Segment(0, len(audio)/16000)] = "speaker"
         else:
             diarization = self.diarize_on_speakers(voice_file_path, max_speakers, huggingface_token, **kwargs)

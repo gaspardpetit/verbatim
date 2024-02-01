@@ -270,7 +270,8 @@ class DetectLanguage(Filter):
                               start=turn.start, end=turn.end,
                               confidence=1.0, silence_prob=0.0))
         else:
-            speech_segment_float32_16khz = ConvertToWav.load_float32_16khz_mono_audio(voice_file_path)
+            speech_segment_float32_16khz = ConvertToWav.load_float32_16khz_mono_audio(
+                input_file=voice_file_path, device=kwargs['device'])
 
             transcription = self.identify_diarization_silences(
                 speech_segment_float32_16khz=speech_segment_float32_16khz,
