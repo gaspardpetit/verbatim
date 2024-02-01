@@ -1,3 +1,4 @@
+import sys
 import logging
 import torchaudio
 import numpy as np
@@ -5,7 +6,9 @@ import numpy as np
 from speechbrain.pretrained import VAD
 from pyannote.core import Annotation, Segment
 
+from ..wav_conversion import ConvertToWav
 from .diarize_speakers import DiarizeSpeakers
+
 
 LOG = logging.getLogger(__name__)
 
@@ -41,15 +44,18 @@ class DiarizeSpeakersSpeechBrain(DiarizeSpeakers):
                 run_opts={"device": kwargs['device']}
             )
         except OSError as e:
-            if e.winerror == 1314:
-                LOG.exception(f"Not enough priviledges to install the model. Audio will not be segmented on silences: {str(e)}")
-                waveform = ConvertToWav.load_float32_16khz_mono_audio(input_file=audio_path, device=kwargs['device'])
-                diarization = Annotation("waveform")
-                diarization[Segment(0, len(waveform)/16000)] = "speaker"
-                return diarization
-            else:
-                raise
-
+            if sys.platform == "win32":
+                # pylint: disable=no-member
+                if e.winerror == 1314:
+                    LOG.exception( "Not enough priviledges to install the model. " +
+                                  f"Audio will not be segmented on silences: {str(e)}")
+                    waveform = ConvertToWav.load_float32_16khz_mono_audio(
+                        input_file=audio_path,
+                        device=kwargs['device'])
+                    diarization = Annotation("waveform")
+                    diarization[Segment(0, len(waveform)/16000)] = "speaker"
+                    return diarization
+            raise
 
         # Perform VAD
         boundaries = vad_model.get_speech_segments(audio_path)
