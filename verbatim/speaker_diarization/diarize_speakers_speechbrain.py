@@ -6,7 +6,6 @@ import numpy as np
 from speechbrain.pretrained import VAD
 from pyannote.core import Annotation, Segment
 
-from ..wav_conversion import ConvertToWav
 from .diarize_speakers import DiarizeSpeakers
 
 LOG = logging.getLogger(__name__)
