@@ -302,7 +302,8 @@ class TranscribeSpeech(Filter):
     # pylint: disable=unused-argument
     # pylint: disable=arguments-differ
     def execute(self, voice_file_path:str, language_file:str,
-                transcription_path: str, diarization_file:str, languages: list, **kwargs: dict) -> Transcription:
+                transcription_path: str, diarization_file:str, languages: list,
+                **kwargs: dict) -> Transcription:
         """
         Executes the transcription process for multiple speakers and languages.
 
@@ -318,7 +319,8 @@ class TranscribeSpeech(Filter):
             Transcription: Transcription object containing the final result.
         """
 
-        speech_segment_float32_16khz = ConvertToWav.load_float32_16khz_mono_audio(voice_file_path)
+        speech_segment_float32_16khz = ConvertToWav.load_float32_16khz_mono_audio(
+            input_file=voice_file_path, device=kwargs['device'])
         detected_languages: Transcription = Transcription.load(language_file)
         rttms = load_rttm(diarization_file)
         diarization = next(iter(rttms.values()))
