@@ -1,3 +1,4 @@
+import os
 import logging
 import torchaudio
 import numpy as np
@@ -31,7 +32,7 @@ class DiarizeSpeakersSpeechBrain(DiarizeSpeakers):
             Annotation: Pyannote Annotation object containing information about speaker diarization.
         """
         # Set up temporary directory for VAD model
-        tmpdir = "tmpdir"
+        tmpdir = os.path.join(kwargs['work_directory_path'], "tmpdir")
 
         # Load VAD model from SpeechBrain
         vad_model = VAD.from_hparams(
