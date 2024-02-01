@@ -34,11 +34,22 @@ class DiarizeSpeakersSpeechBrain(DiarizeSpeakers):
         tmpdir = "tmpdir"
 
         # Load VAD model from SpeechBrain
-        vad_model = VAD.from_hparams(
-            source=model_speechbrain_vad,
-            savedir=tmpdir,
-            run_opts={"device": kwargs['device']}
-        )
+        try:
+            vad_model = VAD.from_hparams(
+                source=model_speechbrain_vad,
+                savedir=tmpdir,
+                run_opts={"device": kwargs['device']}
+            )
+        except OSError as e:
+            if e.winerror == 1314:
+                LOG.exception(f"Not enough priviledges to install the model. Audio will not be segmented on silences: {str(e)}")
+                waveform = ConvertToWav.load_float32_16khz_mono_audio(input_file=audio_path, device=kwargs['device'])
+                diarization = Annotation("waveform")
+                diarization[Segment(0, len(waveform)/16000)] = "speaker"
+                return diarization
+            else:
+                raise
+
 
         # Perform VAD
         boundaries = vad_model.get_speech_segments(audio_path)
