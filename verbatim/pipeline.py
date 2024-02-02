@@ -2,7 +2,9 @@
 pipeline
 """
 #pylint: disable=unused-import
+import os
 import logging
+
 from .context import Context
 from .wav_conversion import ConvertToWav, ConvertToWavFFMpeg, ConvertToWavSoundfile
 from .voice_isolation import IsolateVoices, IsolateVoicesNone, IsolateVoicesFile, IsolateVoicesDemucs, IsolateVoicesMDX
@@ -17,17 +19,14 @@ from .transcription import Transcription
 LOG = logging.getLogger(__name__)
 
 class Pipeline:
-    #pylint: disable=dangerous-default-value
     def __init__(self,
                  context: Context,
                  convert_to_wav: ConvertToWav = None,
-                 isolate_voices: IsolateVoices = IsolateVoicesMDX(),
-                 diarize_speakers: DiarizeSpeakers = DiarizeSpeakersPyannote(),
-                 detect_languages: DetectLanguage = DetectLanguageFasterWhisper(),
-                 speech_transcription: TranscribeSpeech = TranscribeSpeechFasterWhisper(),
-                 transcripte_writing: [WriteTranscript] = [
-                     WriteTranscriptDocx(), WriteTranscriptAss(), WriteTranscriptStdout()
-                     ],
+                 isolate_voices: IsolateVoices = None,
+                 diarize_speakers: DiarizeSpeakers = None,
+                 detect_languages: DetectLanguage = None,
+                 speech_transcription: TranscribeSpeech = None,
+                 transcripte_writing: [WriteTranscript] = None,
                  ):
 
         if convert_to_wav is None:
@@ -36,6 +35,17 @@ class Pipeline:
             else:
                 LOG.warning("ffmpeg was not detected, will only handle .wav audio files")
                 convert_to_wav = ConvertToWavSoundfile()
+ 
+        if isolate_voices is None:
+            isolate_voices = IsolateVoicesMDX()
+        if diarize_speakers is None:
+            diarize_speakers = DiarizeSpeakersPyannote()
+        if detect_languages is None:
+            detect_languages = DetectLanguageFasterWhisper()
+        if speech_transcription is None:
+            speech_transcription = TranscribeSpeechFasterWhisper()
+        if transcripte_writing is None:
+            transcripte_writing = [ WriteTranscriptDocx(), WriteTranscriptAss(), WriteTranscriptStdout() ]
 
         self.context: Context = context
         self.convert_to_wav: ConvertToWav = convert_to_wav
@@ -46,14 +56,24 @@ class Pipeline:
         self.transcripte_writing: [WriteTranscript] = transcripte_writing
 
     def execute(self):
+        os.makedirs(self.context.work_directory_path, exist_ok=True)
 
-        filters: [] = [
-            self.convert_to_wav,
-            self.isolate_voices,
-            self.diarize_speakers,
-            self.detect_languages,
-            self.transcript_speech
-        ] + self.transcripte_writing
+        if self.context.transcribe_only:
+            self.context.audio_file_path = self.context.source_file_path
+            self.context.voice_file_path = self.context.audio_file_path
+            self.context.language_file = None
+            self.context.diarization_file = None
+            filters: [] = [
+                self.transcript_speech
+            ] + self.transcripte_writing
+        else:
+            filters: [] = [
+                self.convert_to_wav,
+                self.isolate_voices,
+                self.diarize_speakers,
+                self.detect_languages,
+                self.transcript_speech
+            ] + self.transcripte_writing
 
         for f in filters:
             f.load(**self.context.to_dict())

@@ -27,6 +27,7 @@ class Context:
     model_mdx:str
     model_speechbrain_vad:str
     has_ffmpeg: bool
+    transcribe_only:bool
 
     def __init__(self, source_file: str, out_dir: str = "out", languages: [str] = None,
                   nb_speakers=1, log_level=logging.WARNING, device:str="cuda",

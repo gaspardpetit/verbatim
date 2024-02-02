@@ -3,7 +3,7 @@ import logging
 from abc import abstractmethod
 import numpy as np
 from numpy import ndarray
-from pyannote.core import Annotation
+from pyannote.core import Annotation, Segment
 from pyannote.database.util import load_rttm
 
 from ..transcription import Transcription
@@ -321,9 +321,17 @@ class TranscribeSpeech(Filter):
 
         speech_segment_float32_16khz = ConvertToWav.load_float32_16khz_mono_audio(
             input_file=voice_file_path, device=kwargs['device'])
-        detected_languages: Transcription = Transcription.load(language_file)
-        rttms = load_rttm(diarization_file)
-        diarization = next(iter(rttms.values()))
+        if language_file is None:
+            detected_languages: Transcription = Transcription()
+        else:
+            detected_languages: Transcription = Transcription.load(language_file)
+        if diarization_file is None:
+            rttms = None
+            diarization = Annotation(uri="waveform")
+            diarization[Segment(0, len(speech_segment_float32_16khz)/16000)] = "speaker"
+        else:
+            rttms = load_rttm(diarization_file)
+            diarization = next(iter(rttms.values()))
 
         full_transcription = Transcription()
         sequence = self._prepare_second_pass_diarization(diarization=diarization, detected_languages=detected_languages)
