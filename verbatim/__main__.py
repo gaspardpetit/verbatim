@@ -25,6 +25,10 @@ def main():
                         help="Languages for speech recognition. Provide multiple values for multiple languages.")
     parser.add_argument("-n", "--nb_speakers", type=int,
                         help="Number of speakers in the audio file. Defaults to 1.", default=1)
+    parser.add_argument("-b", "--nb_beams", type=int,
+                        help="Number of parallel when resolving transcription. " +
+                        "1-3 for fast, 12-15 for high quality. Default is 9.",
+                        default=None)
     parser.add_argument("-v", "--verbose", action="count", default=0,
                         help="Increase verbosity (specify multiple times for more verbosity)")
     parser.add_argument("--version", action="version", version=f"{package_name} {__version__}")
@@ -92,6 +96,12 @@ def main():
     context.nb_speakers=nb_speakers
     context.log_level=log_level
     context.device=device
+
+    if args.nb_beams is None:
+        if context.beams is None:
+            context.beams = 9
+    else:
+        context.beams = args.nb_beams
 
     if args.transcribe_only:
         context.transcribe_only = True
