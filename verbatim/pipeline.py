@@ -35,7 +35,7 @@ class Pipeline:
             else:
                 LOG.warning("ffmpeg was not detected, will only handle .wav audio files")
                 convert_to_wav = ConvertToWavSoundfile()
- 
+
         if isolate_voices is None:
             isolate_voices = IsolateVoicesMDX()
         if diarize_speakers is None:
