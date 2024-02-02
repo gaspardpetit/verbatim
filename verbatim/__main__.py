@@ -33,6 +33,8 @@ def main():
                         help="Increase verbosity (specify multiple times for more verbosity)")
     parser.add_argument("--version", action="version", version=f"{package_name} {__version__}")
     parser.add_argument("--cpu", action="store_true", help="Toggle CPU usage")
+    parser.add_argument("--transcribe_only", action="store_true",
+                        help="Skip preprocessing, including diarization and only transcribe")
     parser.add_argument("--write-config",
                         help="Write the config file so it can be edited", default=None)
     parser.add_argument("--read-config",
@@ -100,6 +102,11 @@ def main():
             context.beams = 9
     else:
         context.beams = args.nb_beams
+
+    if args.transcribe_only:
+        context.transcribe_only = True
+    else:
+        context.transcribe_only = False
 
 
     if args.write_config:
