@@ -27,6 +27,7 @@ class Context:
     model_mdx:str
     model_speechbrain_vad:str
     has_ffmpeg: bool
+    beams:int
 
     def __init__(self, source_file: str, out_dir: str = "out", languages: [str] = None,
                   nb_speakers=1, log_level=logging.WARNING, device:str="cuda",
@@ -57,6 +58,7 @@ class Context:
         self.model_mdx = model_mdx
         self.model_speechbrain_vad = model_speechbrain_vad
         self.has_ffmpeg = True
+        self.beams = 9
 
     def __str__(self):
         return self.to_yaml()
