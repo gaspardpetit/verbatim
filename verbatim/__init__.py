@@ -16,4 +16,4 @@ warnings.filterwarnings("ignore", category=UserWarning, module=r".*")
 from .context import Context
 from .pipeline import Pipeline
 
-__version__ = "0.1.5"
+__version__ = "0.1.6"
