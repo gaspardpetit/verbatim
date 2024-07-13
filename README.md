@@ -10,6 +10,14 @@ For high quality multi-lingual speech to text.
 
 ## Installation
 
+### Prerequisites
+
+FFMpeg is needed to process encoded audio files. This may be done from your package manager on Linux  (ex. `sudo apt install ffmpeg`) or from [Chocolatey](https://community.chocolatey.org/packages/ffmpeg) on Windows.
+
+### Installing
+
+On Windows, you may install 
+
 Install from PyPI:
 ```
 pip install verbatim
