@@ -1,5 +1,5 @@
 import json
-from typing import Optional
+from typing import Optional, List
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json, LetterCase, DataClassJsonMixin
 
@@ -81,9 +81,9 @@ class Utterance(DataClassJsonMixin):
     confidence: float
     silence_prob: float
 
-    def __init__(self, speaker: str, words: [Word], language: str, start: float = None, end: float = None,
+    def __init__(self, speaker: str, words: List[Word], language: str, start: float = None, end: float = None,
                  confidence: float = None, silence_prob: float = None):
-        self.words: [Word] = words
+        self.words: List[Word] = words
         self.language: str = language
         self.speaker: str = speaker
         self.start: float = start or min((w.start for w in words), default=start)
@@ -150,8 +150,18 @@ class Transcription(DataClassJsonMixin):
     def get_text(self):
         return '\n'.join(utterance.get_text() for utterance in self.utterances)
 
+    def regroup_by_utterance(self):
+        uttered_words: List[Utterance] = []
+        for utterance in self.utterances:
+            uttered_words.append(utterance)
+
+        grouped: Transcription = Transcription()
+        for utterance in sorted(self.utterances, key=lambda u: u.start):
+            grouped.append(utterance)
+        return grouped
+
     def regroup_by_words(self):
-        uttered_words: [Utterance] = []
+        uttered_words: List[Utterance] = []
         for utterance in self.utterances:
             for word in utterance.words:
                 uttered_words.append(
