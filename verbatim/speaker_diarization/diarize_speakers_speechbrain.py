@@ -4,7 +4,7 @@ import logging
 import torchaudio
 import numpy as np
 
-from speechbrain.pretrained import VAD
+from speechbrain.inference import VAD
 from pyannote.core import Annotation, Segment
 
 from ..wav_conversion import ConvertToWav
@@ -76,24 +76,6 @@ class DiarizeSpeakersSpeechBrain(DiarizeSpeakers):
         torchaudio.save(f"{audio_path}_vad.wav", upsampled_boundaries.cpu(), 16000)
 
         return diarization
-
-    @staticmethod
-    def pad_audio_to_duration(audio_samples, target_duration_seconds, sampling_rate=16000):
-        # Calculate the target length in samples
-        target_length_samples = int(target_duration_seconds * sampling_rate)
-
-        # Calculate the current length of the audio
-        current_length_samples = len(audio_samples)
-
-        # Calculate the amount of padding needed
-        padding_needed = target_length_samples - current_length_samples
-        if padding_needed <= 0:
-            return audio_samples
-
-        # Pad the audio samples with zeros (silence)
-        padded_audio = np.pad(audio_samples, (0, padding_needed), mode='constant', constant_values=0)
-
-        return padded_audio
 
     def execute(self, voice_file_path: str, diarization_file: str,
                 min_speakers: int = 1, max_speakers: int = None,

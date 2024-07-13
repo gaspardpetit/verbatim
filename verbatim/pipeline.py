@@ -26,7 +26,7 @@ class Pipeline:
                  diarize_speakers: DiarizeSpeakers = None,
                  detect_languages: DetectLanguage = None,
                  speech_transcription: TranscribeSpeech = None,
-                 transcripte_writing: [WriteTranscript] = None,
+                 transcript_writing: [WriteTranscript] = None,
                  ):
 
         if convert_to_wav is None:
@@ -44,8 +44,8 @@ class Pipeline:
             detect_languages = DetectLanguageFasterWhisper()
         if speech_transcription is None:
             speech_transcription = TranscribeSpeechFasterWhisper()
-        if transcripte_writing is None:
-            transcripte_writing = [ WriteTranscriptDocx(), WriteTranscriptAss(), WriteTranscriptStdout() ]
+        if transcript_writing is None:
+            transcript_writing = [ WriteTranscriptDocx(), WriteTranscriptAss(), WriteTranscriptStdout() ]
 
         self.context: Context = context
         self.convert_to_wav: ConvertToWav = convert_to_wav
@@ -53,7 +53,7 @@ class Pipeline:
         self.diarize_speakers: DiarizeSpeakers = diarize_speakers
         self.detect_languages: DetectLanguage = detect_languages
         self.transcript_speech: TranscribeSpeech = speech_transcription
-        self.transcripte_writing: [WriteTranscript] = transcripte_writing
+        self.transcript_writing: [WriteTranscript] = transcript_writing
 
     def execute(self):
         os.makedirs(self.context.work_directory_path, exist_ok=True)
@@ -65,7 +65,7 @@ class Pipeline:
             self.context.diarization_file = None
             filters: [] = [
                 self.transcript_speech
-            ] + self.transcripte_writing
+            ] + self.transcript_writing
         else:
             filters: [] = [
                 self.convert_to_wav,
@@ -73,7 +73,7 @@ class Pipeline:
                 self.diarize_speakers,
                 self.detect_languages,
                 self.transcript_speech
-            ] + self.transcripte_writing
+            ] + self.transcript_writing
 
         for f in filters:
             f.load(**self.context.to_dict())

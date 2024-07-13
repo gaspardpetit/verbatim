@@ -64,10 +64,9 @@ def main():
         print(f"Error: Input file '{args.input}' not found.")
         return
 
-    # Validate output directory existence
+    # Validate output directory existence or create it
     if not os.path.isdir(args.output):
-        print(f"Error: Output directory '{args.output}' not found.")
-        return
+        os.makedirs(args.output)
 
     # Create output directory if it does not exist
     if not os.path.exists(args.output):

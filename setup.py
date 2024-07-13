@@ -34,6 +34,8 @@ REQUIREMENTS = """
 
     python-docx
     langcodes
+    
+    speechbrain
 """.split()
 
 

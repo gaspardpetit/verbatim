@@ -272,10 +272,6 @@ class TranscribeSpeech(Filter):
                 end=int(mute_end + fade_end / 2),
             )
 
-        # speechbrain throws an exception when processing audio shorter than 30s
-        # https://github.com/speechbrain/speechbrain/issues/2334
-        audio_lang = DiarizeSpeakersSpeechBrain.pad_audio_to_duration(audio_lang, 31, 16000)
-
         work_directory_path = kwargs['work_directory_path'] or "."
         speaker_lang_audio_path = os.path.join(work_directory_path, f"{speaker}-{language}.wav")
         ConvertToWav.save_float32_16khz_mono_audio(audio_lang, speaker_lang_audio_path)
@@ -350,14 +346,19 @@ class TranscribeSpeech(Filter):
                 for utterance in transcription.utterances:
                     full_transcription.append(utterance)
         else:
-            for language in languages:
-                for speaker in speakers:
+            for speaker in speakers:
+                best_confidence = -1
+                best_transcription = None
+                for language in languages:
                     transcription: Transcription = self.execute_for_speaker_and_language(
-                        speech_segment_float32_16khz=speech_segment_float32_16khz, sequence=sequence, speaker=speaker,
-                        language=language,
-                        **kwargs)
-                    for utterance in transcription.utterances:
-                        full_transcription.append(utterance)
+                    speech_segment_float32_16khz=speech_segment_float32_16khz, sequence=sequence, speaker=speaker,
+                    language=language,
+                    **kwargs)
+                    if transcription.confidence > best_confidence:
+                        best_confidence = transcription.confidence
+                        best_transcription = transcription
+                for utterance in best_transcription.utterances:
+                    full_transcription.append(utterance)
 
         full_transcription = full_transcription.regroup_by_words()
         full_transcription.save(transcription_path)
