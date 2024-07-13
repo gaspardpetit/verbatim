@@ -12,7 +12,11 @@ For high quality multi-lingual speech to text.
 
 ### Prerequisites
 
+#### FFMpeg
 FFMpeg is needed to process encoded audio files. This may be done from your package manager on Linux  (ex. `sudo apt install ffmpeg`) or from [Chocolatey](https://community.chocolatey.org/packages/ffmpeg) on Windows.
+
+#### Torch with Cuda Support
+If the tool fallsback to CPU instead of GPU, you may need to reinstall the torch dependency with Cuda support. Refere to the following instructions: [https://pytorch.org/get-started/locally/](https://pytorch.org/get-started/locally/)
 
 ### Installing
 
