@@ -1,5 +1,5 @@
+import sys
 from verbatim.__main__ import main
-import sys;
 
 # Simulate command-line arguments
 sys.argv = [
