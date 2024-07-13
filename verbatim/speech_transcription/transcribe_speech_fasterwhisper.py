@@ -72,14 +72,16 @@ class TranscribeSpeechFasterWhisper(TranscribeSpeech):
         model = FasterWhisperModel().model
 
         segments, info = model.transcribe(
-            word_timestamps=True,
+            # word timestamps are enabled but should not be trusted in muti language transcriptions
+            word_timestamps=True, 
             audio=speech_segment_float32_16khz,
             initial_prompt=prompt,
             language=language,
             beam_size=beams,
             best_of=beams,
             patience=1,
-            vad_filter=True
+            # don't enable VAD, it does not work well in multi language scenarios
+            vad_filter=False, 
         )
         for segment in segments:
             utterance = self._get_utterance_from_segment(segment, info, speaker, speech_offset)
