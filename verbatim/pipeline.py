@@ -54,7 +54,7 @@ class Pipeline:
         self.isolate_voices: IsolateVoices = isolate_voices
         self.diarize_speakers: DiarizeSpeakers = diarize_speakers
         self.detect_languages: DetectLanguage = detect_languages
-        self.transcript_speech: TranscribeSpeech = speech_transcription
+        self.speech_transcription: TranscribeSpeech = speech_transcription
         self.transcript_writing: WriteTranscript = transcript_writing
 
     def execute(self):
@@ -66,7 +66,7 @@ class Pipeline:
             self.context.language_file = None
             self.context.diarization_file = None
             filters: List[Filter] = [
-                self.transcript_speech,
+                self.speech_transcription,
                 self.transcript_writing,
             ]
         else:
@@ -75,7 +75,7 @@ class Pipeline:
                 self.isolate_voices,
                 self.diarize_speakers,
                 self.detect_languages,
-                self.transcript_speech,
+                self.speech_transcription,
                 self.transcript_writing,
             ]
 

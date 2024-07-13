@@ -4,7 +4,6 @@ import sys
 import logging
 import torch
 from .__init__ import __version__
-from .pipeline import Pipeline
 from .context import Context
 
 
@@ -112,8 +111,16 @@ def main():
         with open(args.write_config, "w", encoding="utf-8") as f:
             f.write(context.to_yaml())
 
-    pipeline: Pipeline = Pipeline(context=context)
-    pipeline.execute()
+    if context.transcribe_only:
+        from .engine import Engine
+        from .processor import Processor, ProcessorTranscribe
+        engine:Engine = Engine()
+        processor:Processor = ProcessorTranscribe(context=context, engine=engine)
+        processor.execute()
+    else:
+        from .pipeline import Pipeline
+        pipeline: Pipeline = Pipeline(context=context)
+        pipeline.execute()
 
 if __name__ == "__main__":
     main()
