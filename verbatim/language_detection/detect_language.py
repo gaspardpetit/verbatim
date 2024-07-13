@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import List
 from numpy import ndarray
 from pyannote.core import Annotation
 from pyannote.database.util import load_rttm
@@ -52,7 +53,7 @@ class DetectLanguage(Filter):
     def identify_diarization_silences(self,
                                       speech_segment_float32_16khz: ndarray,
                                       diarization:Annotation,
-                                      languages:[str],
+                                      languages:List[str],
                                       **kwargs:dict) -> Transcription:
         last_time: float = 0
         transcription = Transcription()
@@ -97,7 +98,7 @@ class DetectLanguage(Filter):
 
         return transcription
 
-    def get_utterances_as_triplets(self, transcription:Transcription) -> [[Utterance]]:
+    def get_utterances_as_triplets(self, transcription:Transcription) -> List[List[Utterance]]:
         triplets: list[list[Utterance]] = []
         utterance = None
         for utterance in transcription.utterances:
@@ -116,8 +117,8 @@ class DetectLanguage(Filter):
 
     def detect_unknown_languages(self,
                                  speech_segment_float32_16khz:ndarray,
-                                 triplets:[[Utterance]],
-                                 languages:[str],
+                                 triplets:List[List[Utterance]],
+                                 languages:List[str],
                                  **kwargs:dict):
         for triplet in triplets:
             center = triplet[1]
@@ -156,9 +157,9 @@ class DetectLanguage(Filter):
                     center.confidence = max_confidence
 
     def fill_language_gaps(self,
-                           triplets:[[Utterance]],
+                           triplets:List[List[Utterance]],
                            speech_segment_float32_16khz:ndarray,
-                           languages:[str],
+                           languages:List[str],
                            **kwargs:dict):
         changed = True
 
@@ -282,7 +283,7 @@ class DetectLanguage(Filter):
             # as a second pass, identify short segments with low confidence, and attempt to
             # merge with high confidence neighbors
 
-            triplets: [[Utterance]] = self.get_utterances_as_triplets(transcription)
+            triplets: List[List[Utterance]] = self.get_utterances_as_triplets(transcription)
 
             self.detect_unknown_languages(
                 speech_segment_float32_16khz=speech_segment_float32_16khz,

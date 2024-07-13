@@ -14,7 +14,7 @@ from .speaker_diarization import DiarizeSpeakersFile, DiarizeSpeakersSpeechBrain
 from .language_detection import DetectLanguage, DetectLanguageFasterWhisper, DetectLanguageWhisper, DetectLanguageFile
 from .speech_transcription import TranscribeSpeechWhisper, TranscribeSpeechFile
 from .speech_transcription import TranscribeSpeech, TranscribeSpeechFasterWhisper
-from .transcript_writing import WriteTranscript, WriteTranscriptDocx, WriteTranscriptAss, WriteTranscriptStdout
+from .transcript_writing import WriteTranscript, WriteTranscriptDocx, WriteTranscriptAss, WriteTranscriptStdout, WriteTranscriptMulti
 from .transcription import Transcription
 from .filter import Filter
 
@@ -28,7 +28,7 @@ class Pipeline:
                  diarize_speakers: DiarizeSpeakers = None,
                  detect_languages: DetectLanguage = None,
                  speech_transcription: TranscribeSpeech = None,
-                 transcript_writing: List[WriteTranscript] = None,
+                 transcript_writing: WriteTranscript = None,
                  ):
 
         if convert_to_wav is None:
@@ -47,7 +47,7 @@ class Pipeline:
         if speech_transcription is None:
             speech_transcription = TranscribeSpeechFasterWhisper()
         if transcript_writing is None:
-            transcript_writing = [ WriteTranscriptDocx(), WriteTranscriptAss(), WriteTranscriptStdout() ]
+            transcript_writing = WriteTranscriptMulti([ WriteTranscriptDocx(), WriteTranscriptAss(), WriteTranscriptStdout() ])
 
         self.context: Context = context
         self.convert_to_wav: ConvertToWav = convert_to_wav
@@ -55,7 +55,7 @@ class Pipeline:
         self.diarize_speakers: DiarizeSpeakers = diarize_speakers
         self.detect_languages: DetectLanguage = detect_languages
         self.transcript_speech: TranscribeSpeech = speech_transcription
-        self.transcript_writing: List[WriteTranscript] = transcript_writing
+        self.transcript_writing: WriteTranscript = transcript_writing
 
     def execute(self):
         os.makedirs(self.context.work_directory_path, exist_ok=True)
@@ -66,16 +66,18 @@ class Pipeline:
             self.context.language_file = None
             self.context.diarization_file = None
             filters: List[Filter] = [
-                self.transcript_speech
-            ] + self.transcript_writing
+                self.transcript_speech,
+                self.transcript_writing,
+            ]
         else:
             filters: List[Filter] = [
                 self.convert_to_wav,
                 self.isolate_voices,
                 self.diarize_speakers,
                 self.detect_languages,
-                self.transcript_speech
-            ] + self.transcript_writing
+                self.transcript_speech,
+                self.transcript_writing,
+            ]
 
         for f in filters:
             f.load(**self.context.to_dict())
