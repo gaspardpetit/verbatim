@@ -2,7 +2,7 @@ import logging
 import os
 from pathlib import Path
 import yaml
-
+from typing import List
 
 LOG = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ class Context:
     language_file: str
     transcription_path: str
     output_file: str
-    languages: [str]
+    languages: List[str]
     nb_speakers: int
     log_level: int
     device: str
@@ -30,7 +30,7 @@ class Context:
     beams:int
     transcribe_only:bool
 
-    def __init__(self, source_file: str, out_dir: str = "out", languages: [str] = None,
+    def __init__(self, source_file: str, out_dir: str = "out", languages: List[str] = None,
                   nb_speakers=1, log_level=logging.WARNING, device:str="cuda",
                   model_fasterwhisper="large-v3", model_whisper="large-v3",
                   model_pyannote_segmentation:str = "pyannote/segmentation-3.0",

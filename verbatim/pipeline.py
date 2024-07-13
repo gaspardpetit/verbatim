@@ -4,6 +4,7 @@ pipeline
 #pylint: disable=unused-import
 import os
 import logging
+from typing import List
 
 from .context import Context
 from .wav_conversion import ConvertToWav, ConvertToWavFFMpeg, ConvertToWavSoundfile
@@ -15,6 +16,7 @@ from .speech_transcription import TranscribeSpeechWhisper, TranscribeSpeechFile
 from .speech_transcription import TranscribeSpeech, TranscribeSpeechFasterWhisper
 from .transcript_writing import WriteTranscript, WriteTranscriptDocx, WriteTranscriptAss, WriteTranscriptStdout
 from .transcription import Transcription
+from .filter import Filter
 
 LOG = logging.getLogger(__name__)
 
@@ -26,7 +28,7 @@ class Pipeline:
                  diarize_speakers: DiarizeSpeakers = None,
                  detect_languages: DetectLanguage = None,
                  speech_transcription: TranscribeSpeech = None,
-                 transcript_writing: [WriteTranscript] = None,
+                 transcript_writing: List[WriteTranscript] = None,
                  ):
 
         if convert_to_wav is None:
@@ -53,7 +55,7 @@ class Pipeline:
         self.diarize_speakers: DiarizeSpeakers = diarize_speakers
         self.detect_languages: DetectLanguage = detect_languages
         self.transcript_speech: TranscribeSpeech = speech_transcription
-        self.transcript_writing: [WriteTranscript] = transcript_writing
+        self.transcript_writing: List[WriteTranscript] = transcript_writing
 
     def execute(self):
         os.makedirs(self.context.work_directory_path, exist_ok=True)
@@ -63,11 +65,11 @@ class Pipeline:
             self.context.voice_file_path = self.context.audio_file_path
             self.context.language_file = None
             self.context.diarization_file = None
-            filters: [] = [
+            filters: List[Filter] = [
                 self.transcript_speech
             ] + self.transcript_writing
         else:
-            filters: [] = [
+            filters: List[Filter] = [
                 self.convert_to_wav,
                 self.isolate_voices,
                 self.diarize_speakers,
