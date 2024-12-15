@@ -15,6 +15,7 @@ REQUIREMENTS = """
 
     pyannote.core
     pyannote.audio
+    pyannote-audio[separation]
 
     torch
     torchaudio

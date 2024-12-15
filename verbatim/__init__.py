@@ -13,7 +13,5 @@ warnings.filterwarnings("ignore", category=UserWarning, module=r"torch_audioment
 warnings.filterwarnings("ignore", category=UserWarning, module=r".*")
 
 # pylint: disable=wrong-import-position
-from .context import Context
-from .pipeline import Pipeline
 
-__version__ = "0.1.6"
+__version__ = "1.0.1"
