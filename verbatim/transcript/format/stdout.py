@@ -1,7 +1,7 @@
 import sys
 
-from verbatim.transcript.format.txt import TextIOTranscriptWriter, COLORSCHEME_ACKNOWLEDGED, COLORSCHEME_NONE
-from verbatim.transcript.format.writer import TranscriptWriterConfig
+from .txt import TextIOTranscriptWriter, COLORSCHEME_ACKNOWLEDGED, COLORSCHEME_NONE
+from .writer import TranscriptWriterConfig
 
 
 class StdoutTranscriptWriter(TextIOTranscriptWriter):

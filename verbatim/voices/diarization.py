@@ -3,10 +3,13 @@ import logging
 import numpy as np
 import scipy.io.wavfile
 import torch
-from pyannote.audio import Pipeline
+from pyannote.audio import Inference, Model, Pipeline
 from pyannote.audio.pipelines.utils.hook import ProgressHook
+from pyannote.audio.utils.multi_task import map_with_specifications
+from pyannote.audio.utils.reproducibility import fix_reproducibility
 from pyannote.core.annotation import Annotation
 from pyannote.database.util import load_rttm
+from scipy.spatial.distance import cdist
 
 from ..audio.audio import wav_to_int16
 from ..transcript.words import VerbatimUtterance
@@ -43,7 +46,7 @@ class Diarization:
             self.pipeline.instantiate(hyper_parameters)
         else:
             self.pipeline = Pipeline.from_pretrained(
-                "pyannote/speaker-diarization-3.1",
+                checkpoint_path="pyannote/speaker-diarization-3.1",
                 use_auth_token=self.huggingface_token
             )
             self.pipeline.instantiate({})
@@ -83,27 +86,17 @@ class Diarization:
                     LOG.debug(f"Skipping speaker {s} as it is out of bounds.")
         return diarization
 
-    def diarize_utterance(self, u:VerbatimUtterance):
-        import torch
-        from scipy.spatial.distance import cdist
-        rel_start = u.start_ts - self.state.window_ts
-        if rel_start < 0:
-            rel_start = 0
-        rel_end = u.end_ts - self.state.window_ts
-        if rel_end < 0:
-            return
+    def diarize_utterance(self, u:VerbatimUtterance, window_ts:int, audio:np.array, speaker_embeddings):
+        rel_start = max(0, u.start_ts - window_ts)
+        rel_end = max(0, u.end_ts - window_ts)
         # compute embedding and compare
-        from pyannote.audio import Model
-        model = Model.from_pretrained("pyannote/embedding",
+        model = Model.from_pretrained(checkpoint="pyannote/embedding",
                                       use_auth_token=self.huggingface_token)
-        from pyannote.audio import Inference
-        from pyannote.audio.utils.reproducibility import fix_reproducibility
-        from pyannote.audio.utils.multi_task import map_with_specifications
 
         inference = Inference(model, window="whole")
         fix_reproducibility(inference.device)
         inference.to(torch.device("cuda"))
-        audio_segment = torch.tensor(self.state.rolling_window.array[rel_start:rel_end].reshape(1, 1, -1),
+        audio_segment = torch.tensor(audio[rel_start:rel_end].reshape(1, 1, -1),
                                      device='cuda')
 
         output = inference.infer(audio_segment)
@@ -116,17 +109,17 @@ class Diarization:
 
         best_i = -1
         best_distance = 1
-        for i, speaker_embedding in enumerate(self.state.speaker_embeddings):
+        for i, speaker_embedding in enumerate(speaker_embeddings):
             distance = cdist(embedding, speaker_embedding, metric="cosine")[0, 0]
             if distance < best_distance:
                 best_distance = distance
                 best_i = i
         if best_i == -1:
-            self.state.speaker_embeddings.append(embedding)
+            speaker_embeddings.append(embedding)
             print("Added first speaker")
         else:
             if best_distance < 0.15:
                 print(f"Detected speaker {best_i}")
             else:
                 print(f"Added speaker {best_i}")
-                self.state.speaker_embeddings.append(embedding)
+                speaker_embeddings.append(embedding)

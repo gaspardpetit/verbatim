@@ -1,15 +1,15 @@
-from typing import TextIO
+from typing import TextIO, Union
 
-from verbatim.transcript.format.writer import TranscriptWriter, TranscriptWriterConfig
-from verbatim.transcript.formatting import format_milliseconds
-from verbatim.transcript.words import VerbatimUtterance
+from .writer import TranscriptWriter, TranscriptWriterConfig
+from ..formatting import format_milliseconds
+from ..words import VerbatimUtterance
 
 
-def BOLD(str:str) -> str:
-    return "**" + str + "**"
+def BOLD(text:str) -> str:
+    return "**" + text + "**"
 
-def ITAL(str:str) -> str:
-    return "*" + str + "*"
+def ITAL(text:str) -> str:
+    return "*" + text + "*"
 
 class TranscriptFormatter:
     def __init__(self):
@@ -35,7 +35,7 @@ class MarkdownTranscriptWriter(TranscriptWriter):
     def __init__(self, config: TranscriptWriterConfig):
         super().__init__(config)
         self.formatter:TranscriptFormatter = TranscriptFormatter()
-        self.out:TextIO = None
+        self.out:Union[None,TextIO] = None
 
     def open(self, path_no_ext:str):
         self.out = open(f"{path_no_ext}.md", "w", encoding="utf-8")

@@ -3,7 +3,7 @@ import logging
 import soundfile as sf
 import numpy as np
 
-from verbatim.audio.convert_to_wav import ConvertToWav
+from .convert_to_wav import ConvertToWav
 
 LOG = logging.getLogger(__name__)
 

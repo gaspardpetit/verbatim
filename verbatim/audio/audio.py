@@ -1,12 +1,13 @@
 import logging
 
 import numpy as np
+from pydub import AudioSegment
 from scipy.signal import resample
 
 # Configure logger
 LOG = logging.getLogger(__name__)
 
-def FormatAudio(audio: np.ndarray, from_sampling_rate: int) -> np.ndarray:
+def format_audio(audio: np.ndarray, from_sampling_rate: int) -> np.ndarray:
     to_sampling_rate = 16000
 
     if audio.dtype != np.float32:
@@ -65,15 +66,9 @@ def wav_to_int16(data):
 
 def samples_to_seconds(index:int):
     return index / 16000.0
-    
+
 def convert_mp3_to_wav(input_mp3, output_wav):
-    from pydub import AudioSegment
     # Load the mp3 file
     audio = AudioSegment.from_mp3(input_mp3)
     # Export the audio as wav
     audio.export(output_wav, format="wav")
-
-# Set up logging
-LOG = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
-

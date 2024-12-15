@@ -1,7 +1,7 @@
 import os
 import logging
 from ffmpeg import FFmpeg, Progress
-from verbatim.audio.convert_to_wav import ConvertToWav
+from .convert_to_wav import ConvertToWav
 
 LOG = logging.getLogger(__name__)
 

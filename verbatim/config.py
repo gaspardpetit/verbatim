@@ -3,8 +3,8 @@ from typing import Dict, List
 
 from pyannote.core.annotation import Annotation
 
-from verbatim.audio.sources.audiosource import AudioSource
-from verbatim.transcript.format.writer import TranscriptWriterConfig
+from .audio.sources.audiosource import AudioSource
+from .transcript.format.writer import TranscriptWriterConfig
 
 
 @dataclass

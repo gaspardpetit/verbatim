@@ -6,21 +6,21 @@ import sys
 import numpy as np
 import torch
 
-from verbatim.transcript.format.writer import TranscriptWriterConfig, SpeakerStyle, TimestampStyle, ProbabilityStyle, \
+from .transcript.format.writer import SpeakerStyle, TimestampStyle, ProbabilityStyle, \
     LanguageStyle
 from .__init__ import __version__
 from .audio.sources import MicAudioSource, FileAudioSource, PCMInputStreamAudioSource
-from .transcript.format import TranscriptWriter, TextTranscriptWriter
 from .config import Config
+from .transcript.format import TranscriptWriter, TextTranscriptWriter
 from .verbatim import Verbatim
 from .voices.diarization import Diarization
+from .transcript.format import (MultiTranscriptWriter, AssTranscriptWriter,
+    DocxTranscriptWriter, MarkdownTranscriptWriter, JsonTranscriptWriter, StdoutTranscriptWriter)
 
 LOG = logging.getLogger(__name__)
 
 # Get the package name dynamically
 PACKAGE_NAME = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
-
-import os
 
 def load_env_file(env_path=".env"):
     """
@@ -66,8 +66,6 @@ def load_env_file(env_path=".env"):
 
 
 def configure_writers(config:Config, original_audio_file:str) -> TranscriptWriter:
-    from .transcript.format import MultiTranscriptWriter, AssTranscriptWriter, DocxTranscriptWriter, MarkdownTranscriptWriter, JsonTranscriptWriter, StdoutTranscriptWriter
-
     multi_writer:MultiTranscriptWriter = MultiTranscriptWriter()
     if config.enable_txt:
         multi_writer.add_writer(TextTranscriptWriter(config=config.write_config))
@@ -102,9 +100,10 @@ def main():
     parser.add_argument("-o", "--output",
                         help="Path to the output directory", default=".")
     parser.add_argument("-d", "--diarization", default=None,
-                        help="Identify speakers in transcript using the diarization rttm file at the specified path (ex. diarization.rttm)")
+                        help="Identify speakers in transcript using the diarization RTTM file at the specified path (ex. diarization.rttm)")
     parser.add_argument("-i", "--isolate", nargs='?', action=OptionalValueAction, default=None,
-                    help="Extract voices from background noise. Outputs files <name>-vocals.wav and <name>-noise.wav if a name is provided, otherwise uses default names.")
+                    help="Extract voices from background noise. Outputs files <name>-vocals.wav and <name>-noise.wav "
+                    "if a name is provided, otherwise uses default names.")
     parser.add_argument("-l", "--languages", nargs="*",
                         help="Languages for speech recognition. Provide multiple values for multiple languages.")
     parser.add_argument("-n", "--speakers", nargs='?', action=OptionalValueAction, default=None,
@@ -218,7 +217,8 @@ def main():
                 file_audio_source.isolate_voices(out_path_prefix=args.isolate or None)
             if not args.speakers is None:
                 config.diarize = True
-                config.diarization = file_audio_source.compute_diarization(rttm_file=args.diarization, device=config.device, nb_speakers=args.speakers)
+                config.diarization = file_audio_source.compute_diarization(
+                    rttm_file=args.diarization, device=config.device, nb_speakers=args.speakers)
         else:
             if not args.speakers is None:
                 config.diarize = True

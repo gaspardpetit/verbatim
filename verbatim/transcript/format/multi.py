@@ -1,8 +1,7 @@
 from typing import List
 
-from verbatim.transcript.format.writer import TranscriptWriter, TranscriptWriterConfig
-from verbatim.transcript.transcript import Transcript
-from verbatim.transcript.words import VerbatimUtterance
+from .writer import TranscriptWriter, TranscriptWriterConfig
+from ..words import VerbatimUtterance
 
 
 class MultiTranscriptWriter(TranscriptWriter):

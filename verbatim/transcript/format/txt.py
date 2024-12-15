@@ -1,14 +1,12 @@
-import os
-import sys
-from abc import ABC
 from dataclasses import dataclass
-from typing import List, TextIO
+from typing import TextIO, Union
 
 from colorama import Fore, Style
 
-from verbatim.transcript.format.writer import TranscriptWriter, TranscriptWriterConfig
-from verbatim.transcript.formatting import format_milliseconds
-from verbatim.transcript.words import VerbatimUtterance, VerbatimWord
+from .writer import TranscriptWriter, TranscriptWriterConfig
+from ..formatting import format_milliseconds
+from ..words import VerbatimUtterance
+
 
 @dataclass
 class ColorScheme:
@@ -76,7 +74,7 @@ class TranscriptFormatter:
         out.write(line)
 
 class TextIOTranscriptWriter(TranscriptWriter):
-    def __init__(self, config: TranscriptWriterConfig, out:TextIO, colours=COLORSCHEME_ACKNOWLEDGED):
+    def __init__(self, config: TranscriptWriterConfig, out:Union[None,TextIO], colours=COLORSCHEME_ACKNOWLEDGED):
         super().__init__(config)
         self.formatter:TranscriptFormatter = TranscriptFormatter()
         self.out:TextIO = out

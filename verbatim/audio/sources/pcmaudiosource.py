@@ -3,7 +3,7 @@ from typing import BinaryIO
 
 import numpy as np
 
-from verbatim.audio.sources.audiosource import AudioSource
+from .audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ class PCMInputStreamAudioSource(AudioSource):
     stream: BinaryIO
     channels: int
     sampling_rate: int
-    dtype: type
+    dtype: np.dtype
     _has_more: bool
 
     def __init__(self, stream: BinaryIO, channels: int = 1, sampling_rate: int = 16000, dtype=np.int16):

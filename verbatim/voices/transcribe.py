@@ -5,8 +5,7 @@ from typing import List
 import numpy as np
 from faster_whisper import WhisperModel
 from ..audio.audio import samples_to_seconds
-
-from verbatim.transcript.words import VerbatimWord
+from ..transcript.words import VerbatimWord
 
 LOG = logging.getLogger(__name__)
 
@@ -20,15 +19,19 @@ class Transcriber:
         pass
 
     @abstractmethod
-    def transcribe(self, audio:np.array, lang: str, prompt: str, prefix: str, window_ts:int, audio_ts:int) -> List[VerbatimWord]:
+    def transcribe(self, *, audio:np.array, lang: str, prompt: str, prefix: str, window_ts:int, audio_ts:int) -> List[VerbatimWord]:
         pass
 
 class WhisperTranscriber(Transcriber):
-    def __init__(self, model_size_or_path:str, device:str,
-                 whisper_beam_size:int = 3,
-                 whisper_best_of:int = 3,
-                 whisper_patience:float = 1.0,
-                 whisper_temperatures:List[float] = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]):
+    def __init__(self, *, model_size_or_path:str, device:str,
+        whisper_beam_size:int = 3,
+        whisper_best_of:int = 3,
+        whisper_patience:float = 1.0,
+        whisper_temperatures:List[float] = None
+    ):
+        if whisper_temperatures is None:
+            whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+
         if device == "cpu":
             self.whisper_model = WhisperModel(model_size_or_path=model_size_or_path, device=device, compute_type="default", cpu_threads=16)
         else:
@@ -56,42 +59,40 @@ class WhisperTranscriber(Transcriber):
         return guess_lang, guess_prob
 
 
-    def transcribe(self, audio:np.array, lang: str, prompt: str, prefix: str, window_ts:int, audio_ts:int) -> List[VerbatimWord]:
+    def transcribe(self, *, audio:np.array, lang: str, prompt: str, prefix: str, window_ts:int, audio_ts:int) -> List[VerbatimWord]:
         LOG.info(f"Transcription Prefix: {prefix}")
         show_progress = LOG.getEffectiveLevel() <= logging.INFO
         segment_iter, info = self.whisper_model.transcribe(audio=audio,
-                                                           language=lang,
-                                                           task="transcribe",
-                                                           log_progress=show_progress,
-                                                           beam_size=self.whisper_beam_size,
-                                                           best_of=self.whisper_best_of,
-                                                           patience=self.whisper_patience,
-                                                           length_penalty=1.0, repetition_penalty=1.0,
-                                                           no_repeat_ngram_size=0,
-                                                           temperature=self.whisper_temperatures,
-                                                           # temperature=[0],
-                                                           compression_ratio_threshold=2.4,
-                                                           log_prob_threshold=-1,
-                                                           no_speech_threshold=0.95,
-                                                           # condition_on_previous_text=True,
-                                                           condition_on_previous_text=False,
-                                                           # prompt_reset_on_temperature=0.5,
-                                                           prompt_reset_on_temperature=0.0,
-                                                           # initial_prompt=None, prefix=None,
-                                                           initial_prompt=prompt, prefix=prefix,
-                                                           suppress_blank=False, suppress_tokens=[-1],
-                                                           without_timestamps=False, max_initial_timestamp=1.0,
-                                                           word_timestamps=True,
-                                                           prepend_punctuations=PREPEND_PUNCTUATIONS,
-                                                           append_punctuations=APPEND_PUNCTUATIONS,
-                                                           multilingual=False,
-                                                           vad_filter=False, vad_parameters=None,
-                                                           max_new_tokens=None, chunk_length=None,
-                                                           clip_timestamps=f"0.0",  # f"{start_offset_ts_seconds}",
-                                                           hallucination_silence_threshold=None,
-                                                           hotwords=None,
-                                                           language_detection_threshold=0.5,
-                                                           language_detection_segments=1)
+            language=lang,
+            task="transcribe",
+            log_progress=show_progress,
+            beam_size=self.whisper_beam_size,
+            best_of=self.whisper_best_of,
+            patience=self.whisper_patience,
+            length_penalty=1.0, repetition_penalty=1.0,
+            no_repeat_ngram_size=0,
+            temperature=self.whisper_temperatures,
+            compression_ratio_threshold=2.4,
+            log_prob_threshold=-1,
+            no_speech_threshold=0.95,
+            condition_on_previous_text=False,
+            prompt_reset_on_temperature=0.0,
+            initial_prompt=prompt, prefix=prefix,
+            suppress_blank=False, suppress_tokens=[-1],
+            without_timestamps=False, max_initial_timestamp=1.0,
+            word_timestamps=True,
+            prepend_punctuations=PREPEND_PUNCTUATIONS,
+            append_punctuations=APPEND_PUNCTUATIONS,
+            multilingual=False,
+            vad_filter=False, vad_parameters=None,
+            max_new_tokens=None, chunk_length=None,
+            clip_timestamps="0.0",
+            hallucination_silence_threshold=None,
+            hotwords=None,
+            language_detection_threshold=0.5,
+            language_detection_segments=1)
+
+        LOG.debug(f"info={info}")
 
         transcript_words: List[VerbatimWord] = []
         for segment in segment_iter:

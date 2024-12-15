@@ -1,11 +1,11 @@
-from abc import abstractmethod
 import numpy as np
-from numpy import ndarray
-import torch
-from torch import Tensor
 import soundfile as sf
+import torch
 import torchaudio
+from numpy import ndarray
 from pydub import AudioSegment
+from torch import Tensor
+
 
 class ConvertToWav:
     @staticmethod
@@ -14,6 +14,7 @@ class ConvertToWav:
         Convert PyDub AudioSegment to a NumPy array with float32 format and 16kHz sample rate.
 
         Args:
+            device:
             audio (AudioSegment): Input audio in PyDub's AudioSegment format.
 
         Returns:
@@ -40,6 +41,7 @@ class ConvertToWav:
         Load audio from file and convert it to a NumPy array with float32 format and 16kHz sample rate.
 
         Args:
+            device:
             input_file (str): Path to the input audio file.
 
         Returns:

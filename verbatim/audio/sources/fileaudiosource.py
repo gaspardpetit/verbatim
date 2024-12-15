@@ -1,16 +1,16 @@
 import logging
 import os
 import wave
-from typing import Dict
+from typing import Dict, Union
 
 import numpy as np
 from pyannote.core.annotation import Annotation
 
 from .audiosource import AudioSource
-from verbatim.audio.audio import FormatAudio
-from verbatim.audio.audio import convert_mp3_to_wav
-from verbatim.voices.diarization import Diarization
-from verbatim.voices.isolation import VoiceSeparator
+from ..audio import format_audio
+from ..audio import convert_mp3_to_wav
+from ...voices.diarization import Diarization
+from ...voices.isolation import VoiceSeparator
 
 LOG = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class FileAudioSource(AudioSource):
             wav_file_path = self.file_path.replace(".mp3", ".wav")
             convert_mp3_to_wav(self.file_path, wav_file_path)
             self.file_path = wav_file_path
-    
+
     def compute_diarization(self, device:str, rttm_file:str = None, nb_speakers:int = None) -> Annotation:
         diarization = None
         try:
@@ -41,7 +41,7 @@ class FileAudioSource(AudioSource):
 
     def isolate_voices(self, out_path_prefix:str=None):
         LOG.info("Initializing Voice Isolation Model.")
-        voice_separator:VoiceSeparator = None
+        voice_separator:Union[None, VoiceSeparator] = None
         try:
             voice_separator = VoiceSeparator(log_level=LOG.level)
             if not out_path_prefix:
@@ -57,7 +57,7 @@ class FileAudioSource(AudioSource):
                     voice_prefix = f"{basename}-voice"
                     noise_prefix = f"{basename}-noise"
 
-            self.file_path = voice_separator.isolate_voice_in_file(
+            self.file_path, _ = voice_separator.isolate_voice_in_file(
                 file=self.file_path,
                 out_voice=voice_prefix,
                 out_noise=noise_prefix,
@@ -65,7 +65,7 @@ class FileAudioSource(AudioSource):
         finally:
             if voice_separator:
                 del voice_separator
-            
+
     def next_chunk(self, chunk_length=1) -> np.ndarray:
         LOG.info(f"Reading {chunk_length} seconds of audio from file.")
         frames = self.stream.readframes(int(self.stream.getframerate() * chunk_length))
@@ -77,9 +77,9 @@ class FileAudioSource(AudioSource):
 
         if len(audio_array) == 0:
             return audio_array
-        
-        audio_array = FormatAudio(audio_array, from_sampling_rate=self.stream.getframerate())
-        
+
+        audio_array = format_audio(audio_array, from_sampling_rate=self.stream.getframerate())
+
         LOG.info("Finished reading audio chunk from file.")
         return audio_array
 

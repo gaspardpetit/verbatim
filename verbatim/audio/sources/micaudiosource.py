@@ -72,7 +72,7 @@ class MicAudioSourcePyAudio(AudioSource):
     frames_per_iter:int
     frames_per_buffer:int
     sampling_rate:int
-    
+
     def __init__(self, latency: int = 16000, frames_per_buffer: int = 1000, sampling_rate: int = 16000):
         super().__init__()
         self.frames_per_iter:int=latency
@@ -86,7 +86,7 @@ class MicAudioSourcePyAudio(AudioSource):
         for _ in range(0, int(self.frames_per_iter / self.frames_per_buffer * chunk_length)):
             data = self.stream.read(self.frames_per_buffer)
             frames.append(data)
-        
+
         audio_bytes = b''.join(frames)
         audio_array = np.frombuffer(audio_bytes, dtype=np.int16)
         # Convert int16 array to float32 and normalize to [-1, 1]
@@ -102,6 +102,6 @@ class MicAudioSourcePyAudio(AudioSource):
         self.stream.stop_stream()
         self.stream.close()
         self.p.terminate()
-        
+
     def has_more(self):
         return True

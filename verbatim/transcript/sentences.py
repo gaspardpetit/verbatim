@@ -1,6 +1,7 @@
 import logging
 from abc import abstractmethod
 from typing import List
+import re
 
 # Configure logger
 LOG = logging.getLogger(__name__)
@@ -12,13 +13,12 @@ class SentenceTokenizer:
 
 class FastSentenceTokenizer(SentenceTokenizer):
     def split(self, text:str) -> List[str]:
-        import re
         # List of punctuation marks to split on
-        SPLIT_PUNCTUATIONS = r".。;!！?？"
-        PUNCTUATIONS = "\"'.。,;，!！?？:：”)]}、\"'“¿([{-"
+        split_punctuations = r".。;!！?？"
+        punctuations = "\"'.。,;，!！?？:：”)]}、\"'“¿([{-"
         # Create a regex pattern to match any punctuation character
-        regex_punctuation = f"([{re.escape(SPLIT_PUNCTUATIONS)}])"
-        regex_not_punctuation = f"([^{re.escape(PUNCTUATIONS)}])"
+        regex_punctuation = f"([{re.escape(split_punctuations)}])"
+        regex_not_punctuation = f"([^{re.escape(punctuations)}])"
         # Split the sentence, keeping the punctuation in the result
         parts = re.split(regex_punctuation, text)
         # Merge punctuation with the preceding part, preserving spaces
@@ -48,4 +48,3 @@ class SaTSentenceTokenizer(SentenceTokenizer):
 
     def split(self, text:str) -> List[str]:
         return self.sat_sm.split(text)
-

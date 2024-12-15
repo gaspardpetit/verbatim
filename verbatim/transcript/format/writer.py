@@ -2,8 +2,8 @@ import dataclasses
 from abc import abstractmethod
 from enum import Enum
 
-from verbatim.transcript.transcript import Transcript
-from verbatim.transcript.words import VerbatimUtterance
+from ..words import VerbatimUtterance
+
 
 class TimestampStyle(Enum):
     none = 1

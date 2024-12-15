@@ -1,8 +1,7 @@
-from typing import TextIO
+from typing import TextIO, Union
 
-from verbatim.transcript.format.writer import TranscriptWriter, TranscriptWriterConfig
-from verbatim.transcript.formatting import format_milliseconds
-from verbatim.transcript.words import VerbatimUtterance
+from .writer import TranscriptWriter, TranscriptWriterConfig
+from ..words import VerbatimUtterance
 
 
 class TranscriptFormatter:
@@ -42,7 +41,7 @@ class JsonTranscriptWriter(TranscriptWriter):
     def __init__(self, config: TranscriptWriterConfig):
         super().__init__(config)
         self.formatter:TranscriptFormatter = TranscriptFormatter()
-        self.out:TextIO = None
+        self.out:Union[None,TextIO] = None
 
     def open(self, path_no_ext:str):
         self.out = open(f"{path_no_ext}.json", "w", encoding="utf-8")

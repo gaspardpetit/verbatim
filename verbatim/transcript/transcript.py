@@ -1,5 +1,5 @@
 from typing import List
-from verbatim.transcript.words import VerbatimUtterance
+from .words import VerbatimUtterance
 
 class Transcript:
     def __init__(self):

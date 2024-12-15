@@ -1,15 +1,14 @@
 """
 Originally from https://github.com/jianfch/stable-ts/blob/main/stable_whisper/text_output.py
 """
+import logging
 # pylint: disable=logging-fstring-interpolation
 import os
 import warnings
-from typing import List, Tuple, Union, Callable, Optional
 from itertools import chain
-import logging
+from typing import List, Tuple, Union, Callable
 
 from .writer import TranscriptWriter, TranscriptWriterConfig
-from ..transcript import Transcript
 from ..words import VerbatimUtterance
 
 LOG = logging.getLogger(__name__)
@@ -20,7 +19,7 @@ def is_ascending_sequence(seq: List[Union[int, float]], verbose: bool = True) ->
 
     Args:
         seq (List[Union[int, float]]): The input sequence to check.
-        verbose (bool, optional): If True, log details of the first descending pair. 
+        verbose (bool, optional): If True, log details of the first descending pair.
             Defaults to True.
 
     Returns:
@@ -59,7 +58,7 @@ def valid_ts(ts: List[dict], warn: bool = True) -> bool:
     return valid
 
 
-__all__ = ['result_to_srt_vtt', 'result_to_ass', 'result_to_tsv', 'result_to_txt']
+__all__ = ['result_to_srt_vtt', 'result_to_ass', 'result_to_tsv', 'result_to_txt', 'AssTranscriptWriter']
 SUPPORTED_FORMATS = ('srt', 'vtt', 'ass', 'tsv', 'txt')
 
 
@@ -221,7 +220,7 @@ def to_ass_word_level_segments(segments: List[dict], karaoke: bool = False) -> L
         {
             "text": to_segment_string(s),
             "start": s['start'],
-            "end": s['end'] 
+            "end": s['end']
         } for s in segments
     ]
 
@@ -252,7 +251,7 @@ def _preprocess_args(result: (dict, list),
     return segments, segment_level, word_level
 
 
-def result_to_any(result: (dict, list),
+def result_to_any(*, result: (dict, list),
                   filepath: str = None,
                   filetype: str = None,
                   segments2blocks: Callable = None,
@@ -302,7 +301,7 @@ def result_to_any(result: (dict, list),
         return sub_str
 
 
-def result_to_srt_vtt(result: (dict, list),
+def result_to_srt_vtt(*, result: (dict, list),
                       filepath: str = None,
                       segment_level=True,
                       word_level=True,
@@ -336,7 +335,7 @@ def result_to_srt_vtt(result: (dict, list),
     )
 
 
-def result_to_tsv(result: (dict, list),
+def result_to_tsv(*, result: (dict, list),
                   filepath: str = None,
                   segment_level: bool = None,
                   word_level: bool = None,
@@ -346,7 +345,7 @@ def result_to_tsv(result: (dict, list),
     if segment_level is None and word_level is None:
         segment_level = True
     if word_level is segment_level:
-        raise ValueError('[word_level] and [segment_level] cannot be the same ' 
+        raise ValueError('[word_level] and [segment_level] cannot be the same '
                                     'since [tag] is not support for this format')
 
     def segments2blocks(segments):
@@ -365,7 +364,7 @@ def result_to_tsv(result: (dict, list),
     )
 
 
-def result_to_ass(result: (dict, list),
+def result_to_ass(*, result: (dict, list),
                   filepath: str = None,
                   segment_level=True,
                   word_level=True,

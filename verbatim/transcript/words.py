@@ -3,7 +3,7 @@ from typing import List
 
 from faster_whisper.transcribe import Word
 
-from verbatim.audio.audio import samples_to_seconds
+from ..audio.audio import samples_to_seconds
 
 
 @dataclass

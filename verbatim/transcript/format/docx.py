@@ -1,16 +1,14 @@
 import logging
 from typing import List
+
 from docx import Document
-from docx.shared import RGBColor
 from docx.enum.text import WD_COLOR_INDEX
 from docx.oxml import OxmlElement
+from docx.shared import RGBColor
 from langcodes import standardize_tag
 
-from verbatim.transcript.format import TranscriptWriter
-from verbatim.transcript.format.writer import TranscriptWriterConfig, TimestampStyle, SpeakerStyle, ProbabilityStyle, \
-    LanguageStyle
-from verbatim.transcript.transcript import Transcript
-from verbatim.transcript.words import VerbatimUtterance
+from .writer import TranscriptWriterConfig, TimestampStyle, SpeakerStyle, ProbabilityStyle, LanguageStyle, TranscriptWriter
+from ..words import VerbatimUtterance
 
 LOG = logging.getLogger(__name__)
 
@@ -80,8 +78,8 @@ def format_word(paragraph, word, formatting, lang):
 
 
 
-def write_docx(utterances: List[VerbatimUtterance], no_timestamps: bool, no_speakers: bool,
-               with_confidence: bool, with_language: bool, output_file: str) -> None:
+def write_docx(*, utterances: List[VerbatimUtterance], no_timestamps: bool, no_speakers: bool,
+                with_confidence: bool, with_language: bool, output_file: str) -> None:
     """
     Write a list of utterances to a Microsoft Word (docx) file.
 
@@ -125,7 +123,7 @@ def write_docx(utterances: List[VerbatimUtterance], no_timestamps: bool, no_spea
             format_word(paragraph, word.word, formatting, lang)
 
     doc.save(output_file)
- 
+
 
 
 class DocxTranscriptWriter(TranscriptWriter):
@@ -149,4 +147,3 @@ class DocxTranscriptWriter(TranscriptWriter):
             with_language=self.config.language_style != LanguageStyle.none,
             output_file=self.output_file
         )
-
