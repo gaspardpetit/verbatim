@@ -37,6 +37,13 @@ REQUIREMENTS = """
     langcodes
     
     speechbrain
+    
+    colorama
+    pyaudio
+    sounddevice
+    silero-vad
+    wtpsplit
+    
 """.split()
 
 

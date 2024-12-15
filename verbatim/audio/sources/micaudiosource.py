@@ -6,6 +6,7 @@ import pyaudio
 import sounddevice as sd
 
 from .audiosource import AudioSource
+from ..audio import samples_to_seconds
 
 LOG = logging.getLogger(__name__)
 
