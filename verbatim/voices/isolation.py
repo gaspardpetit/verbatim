@@ -4,6 +4,8 @@ import librosa
 import numpy as np
 from audio_separator.separator import Separator
 
+from verbatim.audio.audio import FormatAudio
+
 # Configure logger
 LOG = logging.getLogger(__name__)
 
