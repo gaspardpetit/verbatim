@@ -475,7 +475,7 @@ class AssTranscriptWriter(TranscriptWriter):
         self.utterances.append(utterance)
 
     def close(self):
-        result_to_ass({"segments": [{
+        result_to_ass(result={"segments": [{
             "start": u.get_start(),
             "end": u.get_end(),
             "text": f"{u.speaker}: {''.join([w.word for w in u.words])}",
@@ -488,7 +488,7 @@ class AssTranscriptWriter(TranscriptWriter):
                 "end": w.end_ts / 16000,
                 "word": w.word
             } for w in u.words]}
-            for u in self.utterances]}, self.output_file)
+            for u in self.utterances]}, filepath=self.output_file)
         LOG.info("To combine the subtitles with the original file:")
         LOG.info(
             f"""ffmpeg -f lavfi -i color=size=720x120:rate=25:color=black -i "{self.original_audio_file}" """ +

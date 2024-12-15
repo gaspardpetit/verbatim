@@ -95,6 +95,7 @@ class TextTranscriptWriter(TextIOTranscriptWriter):
         super().__init__(config, out=None, colours=COLORSCHEME_NONE)
 
     def open(self, path_no_ext:str):
+        # pylint: disable=consider-using-with
         self.out = open(f"{path_no_ext}.txt", "w", encoding="utf-8")
 
     def close(self):

@@ -25,7 +25,7 @@ class TranscriptFormatter:
         out.write(f'    "start": {utterance.start_ts}, "start_ms": {utterance.start_ts * 1000 / 16000},\n')
         out.write(f'    "end": {utterance.end_ts}, "end_ms": {utterance.end_ts * 1000 / 16000},\n')
         out.write(f'    "speaker": "{utterance.speaker}",\n')
-        out.write(f'    "words": [')
+        out.write( '    "words": [')
         first_word = True
         for w in utterance.words:
             if first_word:
@@ -44,6 +44,7 @@ class JsonTranscriptWriter(TranscriptWriter):
         self.out:Union[None,TextIO] = None
 
     def open(self, path_no_ext:str):
+        # pylint: disable=consider-using-with
         self.out = open(f"{path_no_ext}.json", "w", encoding="utf-8")
         self.formatter.open(out=self.out)
 

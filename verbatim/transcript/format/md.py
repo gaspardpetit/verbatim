@@ -5,10 +5,10 @@ from ..formatting import format_milliseconds
 from ..words import VerbatimUtterance
 
 
-def BOLD(text:str) -> str:
+def bold(text:str) -> str:
     return "**" + text + "**"
 
-def ITAL(text:str) -> str:
+def ital(text:str) -> str:
     return "*" + text + "*"
 
 class TranscriptFormatter:
@@ -25,11 +25,11 @@ class TranscriptFormatter:
             line_header += f"[{utterance.speaker}]"
         for w in utterance.words:
             if w.lang != self.current_language:
-                line_text += ITAL(f"[{w.lang}]")
+                line_text += ital(f"[{w.lang}]")
                 self.current_language = w.lang
             line_text += w.word
         line_text += '\n\n'
-        out.write(BOLD(line_header +  ":") + line_text)
+        out.write(bold(line_header + ":") + line_text)
 
 class MarkdownTranscriptWriter(TranscriptWriter):
     def __init__(self, config: TranscriptWriterConfig):
@@ -38,6 +38,7 @@ class MarkdownTranscriptWriter(TranscriptWriter):
         self.out:Union[None,TextIO] = None
 
     def open(self, path_no_ext:str):
+        # pylint: disable=consider-using-with
         self.out = open(f"{path_no_ext}.md", "w", encoding="utf-8")
 
     def close(self):
@@ -46,5 +47,3 @@ class MarkdownTranscriptWriter(TranscriptWriter):
     def write(self, utterance:VerbatimUtterance):
         self.formatter.format_utterance(utterance=utterance, out=self.out)
         self.out.flush()
-
-

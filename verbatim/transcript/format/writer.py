@@ -4,7 +4,7 @@ from enum import Enum
 
 from ..words import VerbatimUtterance
 
-
+# pylint: disable=invalid-name
 class TimestampStyle(Enum):
     none = 1
     start = 2
