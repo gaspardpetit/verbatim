@@ -2,9 +2,7 @@
 __init__.py
 """
 import warnings
-
-# see https://github.com/pyannote/pyannote-audio/issues/1576
-warnings.filterwarnings("ignore", category=UserWarning, module=r"pyannote\.audio\.core\.io")
+import logging
 
 # see https://github.com/asteroid-team/torch-audiomentations/issues/172
 warnings.filterwarnings("ignore", category=UserWarning, module=r"torch_audiomentations\.utils\.io")
@@ -12,8 +10,10 @@ warnings.filterwarnings("ignore", category=UserWarning, module=r"torch_audioment
 # see https://github.com/asteroid-team/torch-audiomentations/issues/172
 warnings.filterwarnings("ignore", category=UserWarning, module=r".*")
 
-# pylint: disable=wrong-import-position
-from .context import Context
-from .pipeline import Pipeline
+warnings.filterwarnings("ignore", category=DeprecationWarning, module=r"silero_vad\.model")
 
-__version__ = "0.1.6"
+# disable INFO:speechbrain.utils.quirks:Applied quirks (see `speechbrain.utils.quirks`): [disable_jit_profiling, allow_tf32]
+#         INFO:speechbrain.utils.quirks:Excluded quirks specified by the `SB_DISABLE_QUIRKS` environment (comma-separated list): []
+logging.getLogger("speechbrain.utils.quirks").setLevel(logging.WARNING)
+
+__version__ = "1.0.1"

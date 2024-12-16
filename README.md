@@ -6,7 +6,7 @@
 
 # Verbatim
 
-For high quality multi-lingual speech to text.
+For high quality multilingual speech to text.
 
 ## Installation
 
@@ -102,7 +102,7 @@ pipeline: Pipeline = Pipeline(context=context)
 pipeline.execute()
 ```
 
-The project is organized to be modular, such that individual components can be used outside of the full pipeline, and the pipeline can be customized to use custom stages. For example, to use a custom diarization stage:
+The project is organized to be modular, such that individual components can be used outside the full pipeline, and the pipeline can be customized to use custom stages. For example, to use a custom diarization stage:
 
 
 ```python
@@ -131,7 +131,7 @@ Using MDX:
 ```python
 from verbatim.voice_isolation import IsolateVoicesMDX
 IsolateVoicesMDX().execute(
-    audio_file_path="original.mp3" 
+    audio_file_path="original.mp3",
     voice_file_path="voice.wav")
 ```
 
@@ -139,7 +139,7 @@ Using Demucs:
 ```python
 from verbatim.voice_isolation import IsolateVoicesDemucs
 IsolateVoicesDemucs().execute(
-    audio_file_path="original.mp3" 
+    audio_file_path="original.mp3",
     voice_file_path="voice.wav")
 ```
 
@@ -222,7 +222,7 @@ The output provides word-level confidence, with poorly recognized words clearly 
 The output text is associated with timestamps to facilitate source audio navigation when manually editing.
 
 ### Voice Isolation
-Verbatim will work on unclean audio sources, for example where there might be music, key strokes from keyboards, background noise, etc. Voices are isolated from other sounds using [adefossez/demucs](https://github.com/adefossez/demucs).
+Verbatim will work on unclean audio sources, for example where there might be music, keystrokes from keyboards, background noise, etc. Voices are isolated from other sounds using [adefossez/demucs](https://github.com/adefossez/demucs).
 
 For audit purposes, the audio that was removed because it was considered *background* noise is saved so it can be manually reviewed if necessary.
 
@@ -268,7 +268,7 @@ The language used in each section of the diarization is identified using [SYSTRA
 
 We use [SYSTRAN/faster-whisper](https://github.com/SYSTRAN/faster-whisper) for translation, using the [whisper-large-v3](https://huggingface.co/openai/whisper-large-v3) model which support mixture of language. It is still necessary to segment the audio, otherwise whisper eventually switches to translating instead of transcribing when the language requested does not match the speech.
 
-Whisper provides state of the art transcription, but it is prone to hallucinations. A short audio segment may generate speech that does not exist with high level of certainty, making hallucinations difficult to detect. To reduce the likelihood of these occuranges, the audio track is split into multiple audio tracks, one for each `speaker`x`language` pair. Voice activity detection (VAD) is then performed using [speechbrain](https://github.com/speechbrain/speechbrain) to identify large audio segments that can be processed together without compromising word timestamp quality.
+Whisper provides state-of-the-art transcription, but it is prone to hallucinations. A short audio segment may generate speech that does not exist with high level of certainty, making hallucinations difficult to detect. To reduce the likelihood of these occuranges, the audio track is split into multiple audio tracks, one for each `speaker`x`language` pair. Voice activity detection (VAD) is then performed using [speechbrain](https://github.com/speechbrain/speechbrain) to identify large audio segments that can be processed together without compromising word timestamp quality.
 
 We use a different VAD for speaker diarization than speech-to-text processing. [pyannote](https://github.com/pyannote)'s VAD seemed more granular and better suited to identify short segments that may involve change in language or speaker, while [speechbrain](https://github.com/speechbrain/speechbrain)'s VAD seems more conservative, preferring larger segments, making it better suited for grouping large audio segments for speech-to-text while still allowing to skip large sections of silence.
 
@@ -302,7 +302,7 @@ https://github.com/gaspardpetit/verbatim/assets/9883156/cecec5aa-cb09-473e-bf9b-
 
 https://github.com/gaspardpetit/verbatim/assets/9883156/8074c064-f4d2-4ec4-8fc0-c985f7c276e8
 
-The output consists of a word document highlighting words with low certainty (low certainty are underlined and highlighted in yellow, while medium certainty are simply underlined):
+The output consists of a Word document highlighting words with low certainty (low certainty are underlined and highlighted in yellow, while medium certainty are simply underlined):
 
 ![Microsoft Word Output](doc/img/word_output.png)
 
@@ -412,7 +412,7 @@ A direct use of whisper on an audio clip like this one results in many errors. S
     <td>❌</td>
     <td></td>
     <td>Pull the mask toward you to start the flow of oxygen. Place the mask over your nose and mouth. Make sure your
-      own mask is well adjusted before helping others.</td>
+      own mask is well-adjusted before helping others.</td>
   </tr>
 
   <tr>
@@ -444,7 +444,7 @@ A direct use of whisper on an audio clip like this one results in many errors. S
     <td>❌</td>
     <td>Les issues de secours sont situées de chaque côté de la cabine, à l'avant, au centre, à l'arrière. <span
         style="background-color: yellow;">à l'avant, au
-        centre, à l'arrière.</td>
+        centre, à l'arrière.</span></td>
     <td>Les issues de secours sont situées de chaque côté de la cabine, à l'avant, au centre, à l'arrière.</td>
   </tr>
 

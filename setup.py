@@ -15,6 +15,7 @@ REQUIREMENTS = """
 
     pyannote.core
     pyannote.audio
+    pyannote-audio[separation]
 
     torch
     torchaudio
@@ -36,6 +37,13 @@ REQUIREMENTS = """
     langcodes
     
     speechbrain
+    
+    colorama
+    pyaudio
+    sounddevice
+    silero-vad
+    wtpsplit
+    
 """.split()
 
 
