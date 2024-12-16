@@ -4,6 +4,7 @@ from typing import Dict, List
 
 import numpy as np
 import torch
+
 from silero_vad import get_speech_timestamps, load_silero_vad
 
 # Configure logger
@@ -16,7 +17,11 @@ class VoiceActivityDetection:
 
 class SileroVoiceActivityDetection(VoiceActivityDetection):
     def __init__(self):
-        self.model = load_silero_vad()
+        import warnings
+        with warnings.catch_warnings():
+            # suppresses silero_vad\model.py:15: DeprecationWarning: path is deprecated. Use files() instead. Refer to https://importlib-resources.readthedocs.io/en/latest/using.html#migrating-from-legacy for migration advice. 
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            self.model = load_silero_vad()
 
     def find_activity(self, audio: np.ndarray) -> List[Dict[str, int]]:
         audio_tensor = torch.from_numpy(audio).float()

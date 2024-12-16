@@ -17,6 +17,7 @@ class MicAudioSourceSoundDevice:
         self.audio_queue = queue.Queue()
         self.stream = None
 
+    # pylint: disable=unused-argument
     def _audio_callback(self, indata, frames, time, status:sd.CallbackFlags):
         if status:
             LOG.warning(f"Audio stream status: {status}")
@@ -96,7 +97,8 @@ class MicAudioSourcePyAudio(AudioSource):
 
     def open(self):
         self.p: pyaudio.PyAudio  = pyaudio.PyAudio()
-        self.stream: pyaudio.Stream = self.p.open(format=pyaudio.paInt16, channels=1, rate=self.sampling_rate, input=True, frames_per_buffer=self.frames_per_buffer)
+        self.stream: pyaudio.Stream = self.p.open(
+            format=pyaudio.paInt16, channels=1, rate=self.sampling_rate, input=True, frames_per_buffer=self.frames_per_buffer)
 
     def close(self):
         self.stream.stop_stream()

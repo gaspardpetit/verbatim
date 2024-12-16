@@ -9,6 +9,7 @@ LOG = logging.getLogger(__name__)
 
 class ConvertToWavSoundfile(ConvertToWav):
 
+    # pylint: disable=unused-argument
     def execute(self, source_file_path: str, audio_file_path: str, **kwargs: dict):
         # Use ffmpeg from the singleton instance to convert input file to raw PCM
         output_directory = os.path.dirname(audio_file_path)

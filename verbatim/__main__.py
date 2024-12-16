@@ -37,7 +37,7 @@ def load_env_file(env_path=".env"):
         return False
 
     try:
-        with open(env_path, "r") as file:
+        with open(env_path, "r", encoding="utf-8") as file:
             for line in file:
                 line = line.strip()
                 # Skip empty lines and comments
@@ -57,9 +57,9 @@ def load_env_file(env_path=".env"):
                 # Set the environment variable
                 os.environ[key] = value
 
-        print(f"Environment variables from '{env_path}' loaded successfully.")
+        LOG.info(f"Environment variables from '{env_path}' loaded successfully.")
         return True
-
+    # pylint: disable=broad-exception-caught
     except Exception as e:
         print(f"Error while loading '{env_path}': {e}")
         return False
@@ -85,7 +85,6 @@ def configure_writers(config:Config, original_audio_file:str) -> TranscriptWrite
 
 
 def main():
-    load_env_file()
     class OptionalValueAction(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             # Set the attribute to the provided value or an empty string if no value is given
@@ -147,6 +146,8 @@ def main():
                         level=log_level,
                         format='%(asctime)s [%(levelname)s][%(filename)s:%(lineno)d][%(funcName)s] %(message)s',
                         datefmt='%Y-%m-%dT%H:%M:%SZ')
+
+    load_env_file()
 
     # Check if the version option is specified
     if hasattr(args, 'version') and args.version:
@@ -236,4 +237,5 @@ def main():
     writer.close()
 
 if __name__ == "__main__":
+    sys.argv = ['run.py', 'samples/voices.wav', '-w', 'out', '--language', 'en', 'fr', '--txt', '--md', '--json', '--docx', '--ass']
     main()

@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+import math
 from pydub import AudioSegment
 from scipy.signal import resample
 
@@ -37,7 +38,6 @@ def format_audio(audio: np.ndarray, from_sampling_rate: int) -> np.ndarray:
 
 
 def wav_to_int16(data):
-    import math
     if data.dtype == np.int16:
         return data
     if data.dtype == np.float16:
@@ -62,7 +62,7 @@ def wav_to_int16(data):
         return (data * ((1.0 * np.iinfo(np.int16).max) / np.iinfo(np.int8).max)).astype(np.int16)
     if data.dtype == np.int32:
         return (data * ((1.0 * np.iinfo(np.int16).max) / np.iinfo(np.int32).max)).astype(np.int16)
-    raise Exception(f"unexpected: {data.dtype}")
+    raise ValueError(f"unexpected: {data.dtype}")
 
 def samples_to_seconds(index:int):
     return index / 16000.0

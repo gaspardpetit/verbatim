@@ -15,10 +15,15 @@ from .transcript.sentences import FastSentenceTokenizer, SentenceTokenizer, SaTS
 from .transcript.words import VerbatimWord, VerbatimUtterance
 from .audio.audio import samples_to_seconds
 from .config import Config
-from .transcript.format.txt import TranscriptFormatter, COLORSCHEME_ACKNOWLEDGED, COLORSCHEME_UNACKNOWLEDGED, \
+from .transcript.format.txt import (
+    TranscriptFormatter,
+    COLORSCHEME_ACKNOWLEDGED,
+    COLORSCHEME_UNACKNOWLEDGED,
     COLORSCHEME_UNCONFIRMED
+)
 from .voices.silences import SileroVoiceActivityDetection, VoiceActivityDetection
-from .voices.transcribe import WhisperTranscriber, Transcriber, APPEND_PUNCTUATIONS
+from .voices.transcribe import WhisperTranscriber, FasterWhisperTranscriber, Transcriber
+from .voices.transcribe.transcribe import APPEND_PUNCTUATIONS
 
 # Configure logger
 LOG = logging.getLogger(__name__)
@@ -158,7 +163,7 @@ class Verbatim:
         self.config = config
 
         LOG.info("Initializing WhisperModel and audio stream.")
-        self.transcriber:Transcriber = WhisperTranscriber(
+        self.transcriber:Transcriber = FasterWhisperTranscriber(
             model_size_or_path=config.whisper_model_size, device=config.device,
             whisper_beam_size = config.whisper_beam_size,
             whisper_best_of = config.whisper_best_of,

@@ -59,6 +59,7 @@ class Diarization:
         annotation:Annotation = next(iter(rttms.values()))
         return annotation
 
+    # pylint: disable=unused-argument
     def compute_diarization(self, file_path:str, out_rttm_file:str = None, nb_speakers:int=None) -> Annotation:
         if not out_rttm_file:
             out_rttm_file = "out.rttm"
@@ -101,6 +102,7 @@ class Diarization:
 
         output = inference.infer(audio_segment)
 
+        # pylint: disable=unused-argument
         def __first_sample(outputs: np.ndarray, **kwargs) -> np.ndarray:
             return outputs[0]
 

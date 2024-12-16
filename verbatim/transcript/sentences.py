@@ -2,6 +2,7 @@ import logging
 from abc import abstractmethod
 from typing import List
 import re
+from wtpsplit import SaT
 
 # Configure logger
 LOG = logging.getLogger(__name__)
@@ -42,7 +43,6 @@ class FastSentenceTokenizer(SentenceTokenizer):
 
 class SaTSentenceTokenizer(SentenceTokenizer):
     def __init__(self, device:str, model="sat-12l-sm"):
-        from wtpsplit import SaT
         self.sat_sm = SaT(model)
         self.sat_sm.half().to(device)
 

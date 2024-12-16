@@ -85,6 +85,7 @@ class FFMpegInstance:
 
 class ConvertToWavFFMpeg(ConvertToWav):
 
+    # pylint: disable=unused-argument
     def execute(self, source_file_path: str, audio_file_path: str, **kwargs: dict):
         """
         Convert audio file to WAV format using ffmpeg.
