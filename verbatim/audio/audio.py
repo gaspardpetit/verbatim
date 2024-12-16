@@ -1,7 +1,7 @@
 import logging
+import math
 
 import numpy as np
-import math
 from pydub import AudioSegment
 from scipy.signal import resample
 

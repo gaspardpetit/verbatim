@@ -1,6 +1,7 @@
 import logging
 from abc import abstractmethod
 from typing import Dict, List
+import warnings
 
 import numpy as np
 import torch
@@ -17,9 +18,9 @@ class VoiceActivityDetection:
 
 class SileroVoiceActivityDetection(VoiceActivityDetection):
     def __init__(self):
-        import warnings
         with warnings.catch_warnings():
-            # suppresses silero_vad\model.py:15: DeprecationWarning: path is deprecated. Use files() instead. Refer to https://importlib-resources.readthedocs.io/en/latest/using.html#migrating-from-legacy for migration advice. 
+            # suppresses silero_vad\model.py:15: DeprecationWarning: path is deprecated. Use files() instead. 
+            # Refer to https://importlib-resources.readthedocs.io/en/latest/using.html#migrating-from-legacy for migration advice.
             warnings.filterwarnings("ignore", category=DeprecationWarning)
             self.model = load_silero_vad()
 

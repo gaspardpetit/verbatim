@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 import wave
+import traceback
 from dataclasses import dataclass, field
 from io import StringIO
 from typing import List, Tuple, TextIO
@@ -22,6 +23,7 @@ from .transcript.format.txt import (
     COLORSCHEME_UNCONFIRMED
 )
 from .voices.silences import SileroVoiceActivityDetection, VoiceActivityDetection
+#pylint: disable=unused-import
 from .voices.transcribe import WhisperTranscriber, FasterWhisperTranscriber, Transcriber
 from .voices.transcribe.transcribe import APPEND_PUNCTUATIONS
 
@@ -82,7 +84,7 @@ class WhisperHistory:
         return confirmed_words
 
     def confirm(self, current_words: List[VerbatimWord], prefix: List[VerbatimWord], after_ts: int) -> List[VerbatimWord]:
-        return max((self.confirm_transcript(current_words=current_words, transcript=transcript, prefix=prefix, after_ts=after_ts) 
+        return max((self.confirm_transcript(current_words=current_words, transcript=transcript, prefix=prefix, after_ts=after_ts)
                         for transcript in self.transcript_history),
                         key=len, default=[])
 
@@ -209,6 +211,7 @@ class Verbatim:
     def dump_window_to_file(self, filename: str = "debug_window.wav"):
         window = self.state.rolling_window.array
         LOG.debug("Dumping current window to file for debugging.")
+        # pylint: disable=no-member
         with wave.open(filename, 'wb') as wf:
             wf.setnchannels(1)  # Mono
             wf.setsampwidth(2)  # 16-bit audio
@@ -338,7 +341,7 @@ class Verbatim:
         return confirmed_words, unconfirmed_words
 
     def get_next_number_of_chunks(self):
-        available_chunks = (self.config.window_duration - float(self.state.audio_ts - self.state.window_ts) / self.config.sampling_rate)
+        available_chunks = self.config.window_duration - float(self.state.audio_ts - self.state.window_ts) / self.config.sampling_rate
 
         thresholds = self.config.chunk_table
 
@@ -349,9 +352,18 @@ class Verbatim:
         # If for some reason available_chunks is less than 0, return the smallest chunk count.
         return 1
 
-    def pretty_print_transcript(self, acknowledged_utterances:List[VerbatimUtterance], unacknowledged_utterances:List[VerbatimUtterance], unconfirmed_words:List[VerbatimWord], file:TextIO = sys.stdout):
+    def pretty_print_transcript(
+        self,
+        acknowledged_utterances:List[VerbatimUtterance],
+        unacknowledged_utterances:List[VerbatimUtterance],
+        unconfirmed_words:List[VerbatimWord],
+        file:TextIO = sys.stdout
+    ):
         formatter:TranscriptFormatter = TranscriptFormatter()
-        file.write(f"[{samples_to_seconds(self.state.window_ts)}/{samples_to_seconds(self.state.audio_ts - self.state.acknowledged_ts)}/{samples_to_seconds(self.state.audio_ts - self.state.confirmed_ts)}]" + Fore.LIGHTGREEN_EX)
+        file.write(
+            f"[{samples_to_seconds(self.state.window_ts)}/"
+            f"{samples_to_seconds(self.state.audio_ts - self.state.acknowledged_ts)}/"
+            f"{samples_to_seconds(self.state.audio_ts - self.state.confirmed_ts)}]" + Fore.LIGHTGREEN_EX)
         for u in acknowledged_utterances:
             formatter.format_utterance(utterance=u, out=file, colours=COLORSCHEME_ACKNOWLEDGED)
         for u in unacknowledged_utterances:
@@ -405,7 +417,7 @@ class Verbatim:
         if duration < 1:
             samples = [ start + duration * 0.5]
         elif duration < 4:
-            samples = [ start + duration * 0.25, 
+            samples = [ start + duration * 0.25,
                         start + duration * 0.5,
                         start + duration * 0.75 ]
         else:
@@ -492,19 +504,19 @@ class Verbatim:
 
 
             outstr = StringIO()
-            self.pretty_print_transcript(acknowledged_utterances=[], unacknowledged_utterances=confirmed_utterances, unconfirmed_words=unconfirmed_words, file=outstr)
+            self.pretty_print_transcript(
+                acknowledged_utterances=[], unacknowledged_utterances=confirmed_utterances, unconfirmed_words=unconfirmed_words, file=outstr)
             LOG.info(outstr.getvalue())
 
-            self.state.acknowledged_words = WhisperHistory.advance_transcript(timestamp=self.state.window_ts, transcript=self.state.acknowledged_words)
+            self.state.acknowledged_words = WhisperHistory.advance_transcript(
+                timestamp=self.state.window_ts, transcript=self.state.acknowledged_words)
 
             if self.state.acknowledged_ts > self.state.window_ts:
                 shift_amount = self.state.acknowledged_ts - self.state.window_ts
                 self.state.advance_audio_window(shift_amount)
                 self.state.skip_silences = True
 
-            if len(utterances) > 1:
-                continue
-            else:
+            if len(utterances) <= 1:
                 break
 
     def capture_audio(self, audio_source:AudioSource):
@@ -537,8 +549,8 @@ class Verbatim:
         except KeyboardInterrupt:
             LOG.info("KeyboardInterrupt detected, stopping transcription.")
             LOG.debug("Stopping...")
+        # pylint: disable=broad-exception-caught
         except Exception as e:
-            import traceback
             LOG.error(f"An unexpected error occurred: {e}\n{traceback.format_exc()}")
             LOG.debug("Stopping...")
         finally:
