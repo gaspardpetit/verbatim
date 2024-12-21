@@ -42,7 +42,7 @@ class WhisperHistory:
 
     @staticmethod
     def advance_transcript(timestamp: int, transcript: List[VerbatimWord]) -> List[VerbatimWord]:
-        return [w for w in transcript if w.end_ts >= timestamp]
+        return [w for w in transcript if w.end_ts > timestamp]
 
     def advance(self, timestamp: int):
         self.transcript_history = [self.advance_transcript(timestamp, transcript) for transcript in self.transcript_history]
@@ -379,16 +379,33 @@ class Verbatim:
         file.write(os.linesep)
         file.flush()
 
-    def acknowledge_utterances(self, utterances:List[VerbatimUtterance]) -> Tuple[List[VerbatimUtterance], List[VerbatimUtterance]]:
+    def acknowledge_utterances(self, utterances:List[VerbatimUtterance], min_ack_duration=16000, min_unack_duration=16000) -> Tuple[List[VerbatimUtterance], List[VerbatimUtterance]]:
         if len(utterances) == 0:
-            return [], []
-        if len(utterances) == 1:
+            return [], utterances
+        
+        # check if the last utterance is complete
+        last_valid_utterance_index = len(utterances) - 1
             valid_endings = tuple(APPEND_PUNCTUATIONS)
-            if utterances[0].text.endswith(valid_endings):
-                return utterances, []
-            else:
+        if not utterances[last_valid_utterance_index].text.endswith(valid_endings):
+            last_valid_utterance_index = last_valid_utterance_index - 1
+
+        if last_valid_utterance_index < 0:
                 return [], utterances
-        return utterances[0:1], utterances[1:]
+
+        start_ts = utterances[0].start_ts
+        full_duration = utterances[-1].end_ts - start_ts
+        max_duration = full_duration - min_unack_duration
+
+        duration = 0
+        index = 0
+        while duration < 16000 and index <= last_valid_utterance_index:
+            new_duration = utterances[index].end_ts - start_ts
+            if new_duration > max_duration:
+                break
+            duration = new_duration
+            index += 1
+
+        return utterances[0:index], utterances[index:]
 
     def get_speaker_at(self, time:float, diarization:Annotation):
         for turn, _, speaker in diarization.itertracks(yield_label=True):

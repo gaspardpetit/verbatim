@@ -22,6 +22,7 @@ class Config:
     isolate:bool = None
     speakers:int = None
     diarization: Annotation = None
+    diarization_file: str = None
     whisper_model_size: str = "large-v3"
     device: str = "cuda"
     stream: bool = False

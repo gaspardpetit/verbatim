@@ -136,14 +136,14 @@ def configure_audio_source(config:Config) -> AudioSource:
             if not config.speakers is None:
                 config.diarize = True
                 config.diarization = file_audio_source.compute_diarization(
-                    rttm_file=config.diarization, device=config.device, nb_speakers=config.speakers)
+                    rttm_file=config.diarization_file, device=config.device, nb_speakers=config.speakers)
         else:
             if not config.speakers is None:
                 config.diarize = True
 
-        if config.diarization:
+        if config.diarization_file:
             from .voices.diarization import Diarization
-            config.diarization = Diarization.load_diarization(rttm_file=config.diarization)
+            config.diarization = Diarization.load_diarization(rttm_file=config.diarization_file)
         return file_audio_source
 
 def main():
@@ -171,7 +171,7 @@ def main():
                     "if a name is provided, otherwise uses default names.")
     parser.add_argument("-l", "--languages", nargs="*",
                         help="Languages for speech recognition. Provide multiple values for multiple languages.")
-    parser.add_argument("-n", "--speakers", nargs='?', action=OptionalValueAction, default=None,
+    parser.add_argument("-n", "--diarize", nargs='?', action=OptionalValueAction, default=None,
                         help="Number of speakers in the audio file.")
     parser.add_argument("-b", "--nb_beams", type=int,
                         help="Number of parallel when resolving transcription. " +
@@ -277,8 +277,8 @@ def main():
     config.lang = args.languages if args.languages else ["en", "fr"]
     config.input_source = args.input
     config.isolate = args.isolate
-    config.speakers = args.speakers
-    config.diarization = args.diarization
+    config.speakers = args.diarize
+    config.diarization_file = args.diarization
     config.source_stream = configure_audio_source(config)
 
     writer:TranscriptWriter = configure_writers(config, original_audio_file=config.input_source)
