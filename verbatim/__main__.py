@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import sys
+import re
 
 import numpy as np
 import torch
@@ -76,8 +77,6 @@ def timestr_to_sample(timestr: str, sample_rate: int = 16000) -> int:
     Returns:
         int: The corresponding sample index.
     """
-    import re
-
     # Define a regular expression to parse the time string
     time_pattern = re.compile(
         r"^(?:(?P<hours>\d+):)?(?:(?P<minutes>\d+):)?(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
@@ -99,6 +98,7 @@ def timestr_to_sample(timestr: str, sample_rate: int = 16000) -> int:
     return int(total_seconds * sample_rate)
 
 def configure_writers(config:Config, original_audio_file:str) -> TranscriptWriter:
+    # pylint: disable=import-outside-toplevel
     from .transcript.format import (TextTranscriptWriter, MultiTranscriptWriter, AssTranscriptWriter,
         DocxTranscriptWriter, MarkdownTranscriptWriter, JsonTranscriptWriter, StdoutTranscriptWriter)
 
@@ -120,6 +120,7 @@ def configure_writers(config:Config, original_audio_file:str) -> TranscriptWrite
     return multi_writer
 
 def configure_audio_source(config:Config) -> AudioSource:
+    # pylint: disable=import-outside-toplevel
     from .audio.sources.micaudiosource import MicAudioSourcePyAudio as MicAudioSource
     from .audio.sources.fileaudiosource import FileAudioSource
     from .audio.sources.pcmaudiosource import PCMInputStreamAudioSource
@@ -283,6 +284,7 @@ def main():
 
     writer:TranscriptWriter = configure_writers(config, original_audio_file=config.input_source)
 
+    # pylint: disable=import-outside-toplevel
     from .verbatim import Verbatim
     transcriber = Verbatim(config)
     writer.open(path_no_ext="out")
