@@ -25,7 +25,7 @@ from .transcript.format.txt import (
 from .voices.silences import SileroVoiceActivityDetection, VoiceActivityDetection
 #pylint: disable=unused-import
 from .voices.transcribe import WhisperTranscriber, FasterWhisperTranscriber, Transcriber
-from .voices.transcribe.transcribe import APPEND_PUNCTUATIONS
+from .voices.transcribe.transcribe import APPEND_PUNCTUATIONS, PREPEND_PUNCTUATIONS
 
 # Configure logger
 LOG = logging.getLogger(__name__)
@@ -240,8 +240,14 @@ class Verbatim:
         current_char_index = 0
         current_word_index = 0
 
+        def remove_spaces_and_punctuation(string: str) -> str:
+            return string.translate(str.maketrans('', '', " " + PREPEND_PUNCTUATIONS + APPEND_PUNCTUATIONS))
+
+
         # For each sentence, we want to collect a sublist of VerbatimWord
         for sentence in sentences:
+            # igonre punctuation and spaces
+            sentence = remove_spaces_and_punctuation(sentence)
             sentence_length = len(sentence.strip())
             target_end = current_char_index + sentence_length
 
@@ -251,11 +257,7 @@ class Verbatim:
                 # Pick the next word
                 w = window_words[current_word_index]
                 sentence_words.append(w)
-                word_text = w.word
-                if current_char_index == target_end - sentence_length:
-                    word_text = word_text.lstrip()
-                if current_char_index + len(word_text) > target_end:
-                    word_text = word_text.rstrip()
+                word_text = remove_spaces_and_punctuation(w.word)
                 current_char_index += len(word_text)
                 current_word_index += 1
 
