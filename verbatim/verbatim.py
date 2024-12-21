@@ -484,7 +484,7 @@ class Verbatim:
 
         return None
 
-    def process_audio_window(self) -> Generator[VerbatimUtterance]:
+    def process_audio_window(self) -> Generator[VerbatimUtterance, None, None]:
         while True:
             utterances = []
             enable_vad = True
@@ -556,7 +556,7 @@ class Verbatim:
         self.state.append_audio_to_window(audio_array)
         return True
 
-    def transcribe(self) -> Generator[VerbatimUtterance]:
+    def transcribe(self) -> Generator[VerbatimUtterance, None, None]:
         self.state.rolling_window.reset()  # Initialize empty rolling window
 
         try:
