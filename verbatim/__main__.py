@@ -6,16 +6,16 @@ import sys
 import numpy as np
 import torch
 
-from .transcript.format.writer import SpeakerStyle, TimestampStyle, ProbabilityStyle, \
-    LanguageStyle
 from .__init__ import __version__
-from .audio.sources import MicAudioSource, FileAudioSource, PCMInputStreamAudioSource
 from .config import Config
-from .transcript.format import TranscriptWriter, TextTranscriptWriter
-from .verbatim import Verbatim
-from .voices.diarization import Diarization
-from .transcript.format import (MultiTranscriptWriter, AssTranscriptWriter,
-    DocxTranscriptWriter, MarkdownTranscriptWriter, JsonTranscriptWriter, StdoutTranscriptWriter)
+from .transcript.format.writer import (
+    TranscriptWriter,
+    SpeakerStyle,
+    TimestampStyle,
+    ProbabilityStyle,
+    LanguageStyle
+)
+from .audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
 
@@ -64,8 +64,44 @@ def load_env_file(env_path=".env"):
         print(f"Error while loading '{env_path}': {e}")
         return False
 
+def timestr_to_sample(timestr: str, sample_rate: int = 16000) -> int:
+    """
+    Converts a time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms
+    (milliseconds optional) to the corresponding sample index.
+
+    Args:
+        timestr (str): Time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms.
+        sample_rate (int): Sampling rate in Hz (default is 16000).
+
+    Returns:
+        int: The corresponding sample index.
+    """
+    import re
+
+    # Define a regular expression to parse the time string
+    time_pattern = re.compile(
+        r"^(?:(?P<hours>\d+):)?(?:(?P<minutes>\d+):)?(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
+    )
+    match = time_pattern.match(timestr.strip())
+    if not match:
+        raise ValueError(f"Invalid time string format: {timestr}")
+
+    # Extract components, defaulting to 0 if missing
+    hours = int(match.group("hours")) if match.group("hours") else 0
+    minutes = int(match.group("minutes")) if match.group("minutes") else 0
+    seconds = int(match.group("seconds")) if match.group("seconds") else 0
+    milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
+
+    # Calculate total time in seconds
+    total_seconds = hours * 3600 + minutes * 60 + seconds + milliseconds / 1000.0
+
+    # Convert to sample index
+    return int(total_seconds * sample_rate)
 
 def configure_writers(config:Config, original_audio_file:str) -> TranscriptWriter:
+    from .transcript.format import (TextTranscriptWriter, MultiTranscriptWriter, AssTranscriptWriter,
+        DocxTranscriptWriter, MarkdownTranscriptWriter, JsonTranscriptWriter, StdoutTranscriptWriter)
+
     multi_writer:MultiTranscriptWriter = MultiTranscriptWriter()
     if config.enable_txt:
         multi_writer.add_writer(TextTranscriptWriter(config=config.write_config))
@@ -83,6 +119,32 @@ def configure_writers(config:Config, original_audio_file:str) -> TranscriptWrite
         multi_writer.add_writer(StdoutTranscriptWriter(config=config.write_config, with_colours=False))
     return multi_writer
 
+def configure_audio_source(config:Config) -> AudioSource:
+    from .audio.sources.micaudiosource import MicAudioSourcePyAudio as MicAudioSource
+    from .audio.sources.fileaudiosource import FileAudioSource
+    from .audio.sources.pcmaudiosource import PCMInputStreamAudioSource
+
+    if config.input_source == "-":
+        return PCMInputStreamAudioSource(stream=sys.stdin, channels=1, sampling_rate=16000, dtype=np.int16)
+    elif config.input_source is None or config.input_source == ">":
+        return MicAudioSource()
+    else:
+        file_audio_source = FileAudioSource(config.input_source, start_sample=config.start_time, end_sample=config.stop_time)
+        if not config.stream:
+            if config.isolate is not None:
+                file_audio_source.isolate_voices(out_path_prefix=config.isolate or None)
+            if not config.speakers is None:
+                config.diarize = True
+                config.diarization = file_audio_source.compute_diarization(
+                    rttm_file=config.diarization, device=config.device, nb_speakers=config.speakers)
+        else:
+            if not config.speakers is None:
+                config.diarize = True
+
+        if config.diarization:
+            from .voices.diarization import Diarization
+            config.diarization = Diarization.load_diarization(rttm_file=config.diarization)
+        return file_audio_source
 
 def main():
     class OptionalValueAction(argparse.Action):
@@ -96,6 +158,10 @@ def main():
     parser.add_argument("input", nargs='?', default=None,
                         help="Path to the input audio file. Use '-' to read from stdin "
                         "(expecting 16bit 16kHz mono PCM stream) or '>' to use microphone.")
+    parser.add_argument("-f", "--from",
+                        help="Start time within the file in hh:mm:ss.ms or mm:ss.ms", default="00:00.000", dest="start_time")
+    parser.add_argument("-t", "--to",
+                        help="Stop time within the file in hh:mm:ss.ms or mm:ss.ms", default="", dest="stop_time")
     parser.add_argument("-o", "--output",
                         help="Path to the output directory", default=".")
     parser.add_argument("-d", "--diarization", default=None,
@@ -167,6 +233,10 @@ def main():
     config.output_dir = args.outdir
     LOG.info(f"Output directory set to {config.output_dir}")
 
+    # Set the output directory
+    config.start_time = timestr_to_sample(args.start_time) if args.start_time else None
+    config.stop_time = timestr_to_sample(args.stop_time) if args.stop_time else None
+
     # Set output formats
     config.write_config.timestamp_style = args.format_timestamp
     config.write_config.probability_style = args.format_probability
@@ -181,7 +251,7 @@ def main():
     config.enable_stdout = args.stdout
     config.enable_stdout_nocolor = args.stdout_nocolor
 
-    config.source = args.output
+
     # Validate output directory existence or create it
     if not os.path.isdir(args.output):
         os.makedirs(args.output)
@@ -205,31 +275,15 @@ def main():
         config.whisper_temperatures = [0, 0.6]
 
     config.lang = args.languages if args.languages else ["en", "fr"]
+    config.input_source = args.input
+    config.isolate = args.isolate
+    config.speakers = args.speakers
+    config.diarization = args.diarization
+    config.source_stream = configure_audio_source(config)
 
-    input_source = args.input
-    if input_source == "-":
-        config.source = PCMInputStreamAudioSource(stream=sys.stdin, channels=1, sampling_rate=16000, dtype=np.int16)
-    elif input_source is None or input_source == ">":
-        config.source = MicAudioSource()
-    else:
-        file_audio_source = FileAudioSource(input_source)
-        if not config.stream:
-            if args.isolate is not None:
-                file_audio_source.isolate_voices(out_path_prefix=args.isolate or None)
-            if not args.speakers is None:
-                config.diarize = True
-                config.diarization = file_audio_source.compute_diarization(
-                    rttm_file=args.diarization, device=config.device, nb_speakers=args.speakers)
-        else:
-            if not args.speakers is None:
-                config.diarize = True
+    writer:TranscriptWriter = configure_writers(config, original_audio_file=config.input_source)
 
-        if args.diarization:
-            config.diarization = Diarization.load_diarization(rttm_file=args.diarization)
-        config.source = file_audio_source
-
-    writer:TranscriptWriter = configure_writers(config, original_audio_file=input_source)
-
+    from .verbatim import Verbatim
     transcriber = Verbatim(config)
     writer.open(path_no_ext="out")
     for utterance in transcriber.transcribe():

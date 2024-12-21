@@ -182,6 +182,10 @@ class Verbatim:
         else:
             self.sentence_tokenizer: SentenceTokenizer = SaTSentenceTokenizer(config.device)
 
+        if config.start_time != 0:
+            self.state.window_ts = config.start_time
+            self.state.audio_ts = config.start_time
+
     def skip_leading_silence(self) -> int:
         voice_segments = self.vad.find_activity(audio=self.state.rolling_window.array)
         LOG.debug(f"Voice segments: {voice_segments}")
@@ -533,10 +537,10 @@ class Verbatim:
         self.state.rolling_window.reset()  # Initialize empty rolling window
 
         try:
-            self.config.source.open()
+            self.config.source_stream.open()
             LOG.info("Starting main loop for audio transcription.")
             while True:
-                has_more_audio = self.capture_audio(audio_source=self.config.source)
+                has_more_audio = self.capture_audio(audio_source=self.config.source_stream)
                 had_utterances = False
 
                 for u in self.process_audio_window():
@@ -562,4 +566,4 @@ class Verbatim:
                 unconfirmed_utterance:VerbatimUtterance = VerbatimUtterance.from_words(self.state.unconfirmed_words)
                 yield unconfirmed_utterance
 
-            self.config.source.close()
+            self.config.source_stream.close()

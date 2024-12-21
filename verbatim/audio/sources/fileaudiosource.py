@@ -20,7 +20,7 @@ class FileAudioSource(AudioSource):
     speaker_audio:Dict[str, np.array]
     stream:wave.Wave_read = None
 
-    def __init__(self, file: str):
+    def __init__(self, file: str, start_sample:int = 0, end_sample:Union[None, int] = None):
         super().__init__()
         self.file_path = file
         if self.file_path.endswith(".mp3"):
@@ -28,6 +28,8 @@ class FileAudioSource(AudioSource):
             wav_file_path = self.file_path.replace(".mp3", ".wav")
             convert_mp3_to_wav(self.file_path, wav_file_path)
             self.file_path = wav_file_path
+        self.end_sample = end_sample
+        self.start_sample = start_sample
 
     def compute_diarization(self, device:str, rttm_file:str = None, nb_speakers:int = None) -> Annotation:
         diarization = None
@@ -66,6 +68,14 @@ class FileAudioSource(AudioSource):
             if voice_separator:
                 del voice_separator
 
+    def setpos(self, new_sample_pos:int):
+        file_samplerate = self.stream.getframerate()
+        if file_samplerate != 16000:
+            file_sample_pos = new_sample_pos * file_samplerate // 16000
+        else:
+            file_sample_pos = new_sample_pos
+        self.stream.setpos(int(file_sample_pos))
+
     def next_chunk(self, chunk_length=1) -> np.ndarray:
         LOG.info(f"Reading {chunk_length} seconds of audio from file.")
         frames = self.stream.readframes(int(self.stream.getframerate() * chunk_length))
@@ -85,11 +95,15 @@ class FileAudioSource(AudioSource):
 
     def has_more(self):
         current_frame = self.stream.tell()
+        if self.end_sample is not None and current_frame > self.end_sample:
+            return False
         total_frames = self.stream.getnframes()
         return current_frame < total_frames
 
     def open(self):
         self.stream = wave.open(self.file_path, 'rb')
+        if self.start_sample != 0:
+            self.setpos(self.start_sample)
 
     def close(self):
         self.stream.close()

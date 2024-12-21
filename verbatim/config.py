@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from pyannote.core.annotation import Annotation
 
@@ -15,7 +15,12 @@ class Config:
     window_duration: int = 30  # seconds
     whisper_prompts: Dict[str, str] = None
     lang: List[str] = field(default_factory=list)
-    source: AudioSource = None
+    start_time:int = 0
+    stop_time:Union[None,int] = None
+    source_stream: AudioSource = None
+    input_source:str = None
+    isolate:bool = None
+    speakers:int = None
     diarization: Annotation = None
     whisper_model_size: str = "large-v3"
     device: str = "cuda"
