@@ -5,7 +5,7 @@ import wave
 import traceback
 from dataclasses import dataclass, field
 from io import StringIO
-from typing import List, Tuple, TextIO
+from typing import List, Tuple, TextIO, Generator
 
 import numpy as np
 from colorama import Fore
@@ -379,18 +379,22 @@ class Verbatim:
         file.write(os.linesep)
         file.flush()
 
-    def acknowledge_utterances(self, utterances:List[VerbatimUtterance], min_ack_duration=16000, min_unack_duration=16000) -> Tuple[List[VerbatimUtterance], List[VerbatimUtterance]]:
+    def acknowledge_utterances(
+            self,
+            utterances:List[VerbatimUtterance],
+            min_ack_duration=16000, min_unack_duration=16000
+    ) -> Tuple[List[VerbatimUtterance], List[VerbatimUtterance]]:
         if len(utterances) == 0:
             return [], utterances
-        
+
         # check if the last utterance is complete
         last_valid_utterance_index = len(utterances) - 1
-            valid_endings = tuple(APPEND_PUNCTUATIONS)
+        valid_endings = tuple(APPEND_PUNCTUATIONS)
         if not utterances[last_valid_utterance_index].text.endswith(valid_endings):
             last_valid_utterance_index = last_valid_utterance_index - 1
 
         if last_valid_utterance_index < 0:
-                return [], utterances
+            return [], utterances
 
         start_ts = utterances[0].start_ts
         full_duration = utterances[-1].end_ts - start_ts
@@ -398,7 +402,7 @@ class Verbatim:
 
         duration = 0
         index = 0
-        while duration < 16000 and index <= last_valid_utterance_index:
+        while duration < min_ack_duration and index <= last_valid_utterance_index:
             new_duration = utterances[index].end_ts - start_ts
             if new_duration > max_duration:
                 break
@@ -480,7 +484,7 @@ class Verbatim:
 
         return None
 
-    def process_audio_window(self) -> List[VerbatimUtterance]:
+    def process_audio_window(self) -> Generator[VerbatimUtterance]:
         while True:
             utterances = []
             enable_vad = True
@@ -552,7 +556,7 @@ class Verbatim:
         self.state.append_audio_to_window(audio_array)
         return True
 
-    def transcribe(self) -> List[VerbatimUtterance]:
+    def transcribe(self) -> Generator[VerbatimUtterance]:
         self.state.rolling_window.reset()  # Initialize empty rolling window
 
         try:

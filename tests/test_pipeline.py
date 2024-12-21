@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     print(os.getcwd())
     config:Config = Config()
-    config.source = FileAudioSource("tests/data/init.mp3")
+    config.source_stream = FileAudioSource("tests/data/init.mp3")
     config.lang = ["fr", "en"]
     config.device = "cpu"
     verbatim:Verbatim = Verbatim(config=config)
