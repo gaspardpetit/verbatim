@@ -575,10 +575,9 @@ class Verbatim:
                 while len(self.state.unacknowledged_utterances) > 0:
                     if self.state.unacknowledged_utterances[0].end_ts > self.state.window_ts:
                         break
-                    else:
-                        utterance = self.state.unacknowledged_utterances.pop(0)
-                        utterance.speaker = self.assign_speaker(utterance, self.config.diarization)
-                        yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
+                    utterance = self.state.unacknowledged_utterances.pop(0)
+                    utterance.speaker = self.assign_speaker(utterance, self.config.diarization)
+                    yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
 
                 if len(self.state.unacknowledged_utterances) > 0:
                     flushed_utterances_words = []
@@ -586,11 +585,10 @@ class Verbatim:
                     while len(partial_utterance.words) > 0:
                         if partial_utterance.words[0].end_ts > self.state.window_ts:
                             break
-                        else:
-                            flushed_word = partial_utterance.words.pop(0)
-                            flushed_utterances_words.append(flushed_word)
-                            partial_utterance.start_ts = partial_utterance.words[-1].start_ts
-                            partial_utterance.text = [w.word for w in partial_utterance.words]
+                        flushed_word = partial_utterance.words.pop(0)
+                        flushed_utterances_words.append(flushed_word)
+                        partial_utterance.start_ts = partial_utterance.words[-1].start_ts
+                        partial_utterance.text = [w.word for w in partial_utterance.words]
 
                     if len(flushed_utterances_words) > 0:
                         utterance = VerbatimUtterance.from_words(flushed_utterances_words)
@@ -601,9 +599,8 @@ class Verbatim:
                     while len(self.state.unconfirmed_words) > 0:
                         if self.state.unconfirmed_words[0].end_ts > self.state.window_ts:
                             break
-                        else:
-                            flushed_word = self.state.unconfirmed_words.pop(0)
-                            flushed_utterances_words.append(flushed_word)
+                        flushed_word = self.state.unconfirmed_words.pop(0)
+                        flushed_utterances_words.append(flushed_word)
 
                     if len(flushed_utterances_words) > 0:
                         utterance = VerbatimUtterance.from_words(flushed_utterances_words)
