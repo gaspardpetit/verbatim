@@ -36,8 +36,8 @@ class LanguageStyle(Enum):
 class TranscriptWriterConfig:
     timestamp_style:TimestampStyle = TimestampStyle.none
     speaker_style:SpeakerStyle = SpeakerStyle.none
-    probability_style:SpeakerStyle = ProbabilityStyle.none
-    language_style:SpeakerStyle = LanguageStyle.none
+    probability_style:ProbabilityStyle = ProbabilityStyle.none
+    language_style:LanguageStyle = LanguageStyle.none
 
 class TranscriptWriter:
     def __init__(self, config:TranscriptWriterConfig):

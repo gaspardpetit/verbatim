@@ -142,7 +142,7 @@ class TranscriptFormatter:
 
     def _format_language(self, md:MarkdownText, language:str, first_word:bool):
         if self.language_style == LanguageStyle.none:
-            return
+            pass
         elif self.language_style == LanguageStyle.change:
             if language != self.current_language:
                 self.current_language = language
@@ -150,9 +150,10 @@ class TranscriptFormatter:
         elif self.language_style == LanguageStyle.always:
             if first_word or language != self.current_language:
                 self.current_language = language
-                return md.bold(f"[{language}]")
+                md.bold(f"[{language}]")
 
     def _format_word_with_probability(self, md:MarkdownText, word:str, probability:float, utterance_probability:float):
+        # pylint: disable=too-many-boolean-expressions
         if (self.probability_style == ProbabilityStyle.word and probability < 0.90/2 or
             self.probability_style == ProbabilityStyle.word_75 and probability < 0.75/2 or
             self.probability_style == ProbabilityStyle.word_50 and probability < 0.50/2 or
@@ -174,7 +175,7 @@ class TranscriptFormatter:
             self.probability_style == ProbabilityStyle.line_25 and utterance_probability < 0.25):
             md.italic(word)
         else:
-            return md.append(word)
+            md.append(word)
 
     def format_utterance(self, utterance:VerbatimUtterance, out:TextIO):
         md:MarkdownText = MarkdownText()
