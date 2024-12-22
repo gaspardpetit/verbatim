@@ -485,7 +485,7 @@ class Verbatim:
 
         return None
 
-    def process_audio_window(self) -> Generator[VerbatimUtterance, None, None]:
+    def process_audio_window(self) -> Generator[Tuple[VerbatimUtterance,List[VerbatimUtterance],List[VerbatimWord]], None, None]:
         while True:
             utterances = []
             enable_vad = True
@@ -517,10 +517,11 @@ class Verbatim:
                 #    for acknowledged_utterance in acknowledged_utterances:
                 #        self.diarize_utterance(acknowledged_utterance)
 
-                yield from acknowledged_utterances
-
                 self.state.acknowledged_utterances += acknowledged_utterances
                 self.state.unacknowledged_utterances = confirmed_utterances
+
+                for i, utterance in enumerate(acknowledged_utterances):
+                    yield utterance, acknowledged_utterances[i+1:] + confirmed_utterances, unconfirmed_words
 
                 if len(acknowledged_utterances) > 0:
                     for u in acknowledged_utterances:
@@ -557,7 +558,7 @@ class Verbatim:
         self.state.append_audio_to_window(audio_array)
         return True
 
-    def transcribe(self) -> Generator[VerbatimUtterance, None, None]:
+    def transcribe(self) -> Generator[Tuple[VerbatimUtterance,List[VerbatimUtterance],List[VerbatimWord]], None, None]:
         self.state.rolling_window.reset()  # Initialize empty rolling window
 
         try:
@@ -567,9 +568,9 @@ class Verbatim:
                 has_more_audio = self.capture_audio(audio_source=self.config.source_stream)
                 had_utterances = False
 
-                for u in self.process_audio_window():
+                for utterance, unacknowmedged, unconfirmed in self.process_audio_window():
                     had_utterances = True
-                    yield u
+                    yield utterance, unacknowmedged, unconfirmed
 
                 if not had_utterances and not has_more_audio:
                     break
@@ -584,10 +585,13 @@ class Verbatim:
         finally:
             LOG.info("Cleaning up resources.")
 
-            yield from self.state.unacknowledged_utterances
+            for i, utterance in enumerate(self.state.unacknowledged_utterances):
+                utterance.speaker = self.assign_speaker(utterance, self.config.diarization)
+                yield utterance, self.state.unacknowledged_utterances[i+1:], self.state.unconfirmed_words
 
             if len(self.state.unconfirmed_words) > 0:
                 unconfirmed_utterance:VerbatimUtterance = VerbatimUtterance.from_words(self.state.unconfirmed_words)
-                yield unconfirmed_utterance
+                unconfirmed_utterance.speaker = self.assign_speaker(unconfirmed_utterance, self.config.diarization)
+                yield unconfirmed_utterance, [], []
 
             self.config.source_stream.close()

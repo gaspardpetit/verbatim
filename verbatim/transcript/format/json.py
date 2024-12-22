@@ -1,7 +1,7 @@
-from typing import TextIO, Union
+from typing import TextIO, Union, List
 
 from .writer import TranscriptWriter, TranscriptWriterConfig
-from ..words import VerbatimUtterance
+from ..words import VerbatimUtterance, VerbatimWord
 
 
 class TranscriptFormatter:
@@ -53,6 +53,6 @@ class JsonTranscriptWriter(TranscriptWriter):
         self.formatter.close(out=self.out)
         self.out.close()
 
-    def write(self, utterance:VerbatimUtterance):
+    def write(self, utterance:VerbatimUtterance, unacknowledged_utterance:List[VerbatimUtterance] = None, unconfirmed_words:List[VerbatimWord] = None):
         self.formatter.format_utterance(utterance=utterance, out=self.out)
         self.out.flush()

@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from typing import TextIO, Union
+from typing import TextIO, Union, List
 
 from colorama import Fore, Style
 
 from .writer import TranscriptWriter, TranscriptWriterConfig
 from ..formatting import format_milliseconds
-from ..words import VerbatimUtterance
+from ..words import VerbatimUtterance, VerbatimWord
 
 
 @dataclass
@@ -74,11 +74,18 @@ class TranscriptFormatter:
         out.write(line)
 
 class TextIOTranscriptWriter(TranscriptWriter):
-    def __init__(self, config: TranscriptWriterConfig, out:Union[None,TextIO], colours=COLORSCHEME_ACKNOWLEDGED):
+    def __init__(self, config: TranscriptWriterConfig, out:Union[None,TextIO], 
+                 acknowledged_colours=COLORSCHEME_ACKNOWLEDGED,
+                 unacknowledged_colours=COLORSCHEME_UNACKNOWLEDGED,
+                 unconfirmed_colors=COLORSCHEME_UNCONFIRMED,
+                 print_unacknowledged:bool = False):
         super().__init__(config)
         self.formatter:TranscriptFormatter = TranscriptFormatter()
         self.out:TextIO = out
-        self.colours = colours
+        self.acknowledged_colours = acknowledged_colours
+        self.unacknowledged_colours = unacknowledged_colours
+        self.unconfirmed_colors = unconfirmed_colors
+        self.print_unacknowledged = print_unacknowledged
 
     def open(self, path_no_ext:str):
         pass
@@ -86,13 +93,22 @@ class TextIOTranscriptWriter(TranscriptWriter):
     def close(self):
         pass
 
-    def write(self, utterance:VerbatimUtterance):
-        self.formatter.format_utterance(utterance=utterance, out=self.out, colours=self.colours)
+    def write(self, utterance:VerbatimUtterance, unacknowledged_utterance:List[VerbatimUtterance] = None, unconfirmed_words:List[VerbatimWord] = None):
+        self.formatter.format_utterance(utterance=utterance, out=self.out, colours=self.acknowledged_colours)
+        if self.print_unacknowledged:
+            if unacknowledged_utterance:
+                for unack in unacknowledged_utterance:
+                    self.formatter.format_utterance(utterance=unack, out=self.out, colours=self.unconfirmed_colors)
+            if unconfirmed_words and len(unconfirmed_words) > 0:
+                self.formatter.format_utterance(utterance=VerbatimUtterance.from_words(unconfirmed_words), out=self.out, colours=self.unconfirmed_colors)
         self.out.flush()
 
 class TextTranscriptWriter(TextIOTranscriptWriter):
     def __init__(self, config: TranscriptWriterConfig):
-        super().__init__(config, out=None, colours=COLORSCHEME_NONE)
+        super().__init__(config, out=None, 
+                         acknowledged_colours=COLORSCHEME_NONE,
+                         unacknowledged_colours=COLORSCHEME_NONE,
+                         unconfirmed_colors=COLORSCHEME_NONE)
 
     def open(self, path_no_ext:str):
         # pylint: disable=consider-using-with
