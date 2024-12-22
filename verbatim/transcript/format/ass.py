@@ -68,7 +68,7 @@ def _save_as_file(content: str, path: str):
     LOG.info(f'Saved: {os.path.abspath(path)}')
 
 
-def _get_segments(result: (dict, list), min_dur: float, reverse_text: Union[bool, tuple] = False):
+def _get_segments(result:Tuple[dict, list], min_dur: float, reverse_text: Union[bool, tuple] = False):
     if isinstance(result, dict):
         if reverse_text:
             warnings.warn(f'[reverse_text]=True only applies to WhisperResult but result is {type(result)}')
@@ -84,30 +84,30 @@ def finalize_text(text: str, strip: bool = True):
     return text.strip().replace('\n ', '\n')
 
 
-def sec2hhmmss(seconds: (float, int)):
+def sec2hhmmss(seconds:Tuple[float, int]):
     mm, ss = divmod(seconds, 60)
     hh, mm = divmod(mm, 60)
     return hh, mm, ss
 
 
-def sec2milliseconds(seconds: (float, int)) -> int:
+def sec2milliseconds(seconds:Tuple[float, int]) -> int:
     return round(seconds * 1000)
 
 
-def sec2centiseconds(seconds: (float, int)) -> int:
+def sec2centiseconds(seconds:Tuple[float, int]) -> int:
     return round(seconds * 100)
 
 
-def sec2vtt(seconds: (float, int)) -> str:
+def sec2vtt(seconds:Tuple[float, int]) -> str:
     hh, mm, ss = sec2hhmmss(seconds)
     return f'{hh:0>2.0f}:{mm:0>2.0f}:{ss:0>6.3f}'
 
 
-def sec2srt(seconds: (float, int)) -> str:
+def sec2srt(seconds:Tuple[float, int]) -> str:
     return sec2vtt(seconds).replace(".", ",")
 
 
-def sec2ass(seconds: (float, int)) -> str:
+def sec2ass(seconds:Tuple[float, int]) -> str:
     hh, mm, ss = sec2hhmmss(seconds)
     return f'{hh:0>1.0f}:{mm:0>2.0f}:{ss:0>2.2f}'
 
@@ -238,7 +238,7 @@ def _confirm_word_level(segments: List[dict]) -> bool:
     return True
 
 
-def _preprocess_args(result: (dict, list),
+def _preprocess_args(result:Tuple[dict, list],
                      segment_level: bool,
                      word_level: bool,
                      min_dur: float,
@@ -251,7 +251,7 @@ def _preprocess_args(result: (dict, list),
     return segments, segment_level, word_level
 
 
-def result_to_any(*, result: (dict, list),
+def result_to_any(*, result:Tuple[dict, list],
                   filepath: str = None,
                   filetype: str = None,
                   segments2blocks: Callable = None,
@@ -301,7 +301,7 @@ def result_to_any(*, result: (dict, list),
         return sub_str
 
 
-def result_to_srt_vtt(*, result: (dict, list),
+def result_to_srt_vtt(*, result:Tuple[dict, list],
                       filepath: str = None,
                       segment_level=True,
                       word_level=True,
@@ -335,7 +335,7 @@ def result_to_srt_vtt(*, result: (dict, list),
     )
 
 
-def result_to_tsv(*, result: (dict, list),
+def result_to_tsv(*, result:Tuple[dict, list],
                   filepath: str = None,
                   segment_level: bool = None,
                   word_level: bool = None,
@@ -364,7 +364,7 @@ def result_to_tsv(*, result: (dict, list),
     )
 
 
-def result_to_ass(*, result: (dict, list),
+def result_to_ass(*, result:Tuple[dict, list],
                   filepath: str = None,
                   segment_level=True,
                   word_level=True,
@@ -439,7 +439,7 @@ def result_to_ass(*, result: (dict, list),
 
 
 def result_to_txt(
-        result: (dict, list),
+        result:Tuple[dict, list],
         filepath: str = None,
         min_dur: float = 0.02,
         strip=True,
