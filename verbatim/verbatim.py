@@ -24,8 +24,7 @@ from .transcript.format.txt import (
 )
 from .voices.silences import SileroVoiceActivityDetection, VoiceActivityDetection
 #pylint: disable=unused-import
-from .voices.transcribe import WhisperTranscriber, FasterWhisperTranscriber, Transcriber
-from .voices.transcribe.transcribe import APPEND_PUNCTUATIONS, PREPEND_PUNCTUATIONS
+from .voices.transcribe.transcribe import Transcriber, APPEND_PUNCTUATIONS, PREPEND_PUNCTUATIONS
 
 # Configure logger
 LOG = logging.getLogger(__name__)
@@ -165,6 +164,8 @@ class Verbatim:
         self.config = config
 
         LOG.info("Initializing WhisperModel and audio stream.")
+        # pylint: disable=import-outside-toplevel
+        from .voices.transcribe.faster_whisper import FasterWhisperTranscriber
         self.transcriber:Transcriber = FasterWhisperTranscriber(
             model_size_or_path=config.whisper_model_size, device=config.device,
             whisper_beam_size = config.whisper_beam_size,
