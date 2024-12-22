@@ -25,7 +25,7 @@ class Config:
     whisper_model_size: str = "large-v3"
     device: str = "cuda"
     stream: bool = False
-    diarize:int|None = None
+    diarize:Union[int,None] = None
     whisper_beam_size: int = 9
     whisper_best_of: int = 9
     whisper_patience: float = 2.0
