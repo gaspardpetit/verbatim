@@ -134,13 +134,9 @@ def configure_audio_source(config:Config) -> AudioSource:
         if not config.stream:
             if config.isolate is not None:
                 file_audio_source.isolate_voices(out_path_prefix=config.isolate or None)
-            if not config.speakers is None:
-                config.diarize = True
+            if not config.diarize is None:
                 config.diarization = file_audio_source.compute_diarization(
-                    rttm_file=config.diarization_file, device=config.device, nb_speakers=config.speakers)
-        else:
-            if not config.speakers is None:
-                config.diarize = True
+                    rttm_file=config.diarization_file, device=config.device, nb_speakers=config.diarize)
 
         if config.diarization_file:
             from .voices.diarization import Diarization
@@ -163,9 +159,9 @@ def main():
                         help="Start time within the file in hh:mm:ss.ms or mm:ss.ms", default="00:00.000", dest="start_time")
     parser.add_argument("-t", "--to",
                         help="Stop time within the file in hh:mm:ss.ms or mm:ss.ms", default="", dest="stop_time")
-    parser.add_argument("-o", "--output",
+    parser.add_argument("-o", "--outdir",
                         help="Path to the output directory", default=".")
-    parser.add_argument("-d", "--diarization", default=None,
+    parser.add_argument("-d", "--diarization", nargs='?', action=OptionalValueAction, default=None,
                         help="Identify speakers in transcript using the diarization RTTM file at the specified path (ex. diarization.rttm)")
     parser.add_argument("-i", "--isolate", nargs='?', action=OptionalValueAction, default=None,
                     help="Extract voices from background noise. Outputs files <name>-vocals.wav and <name>-noise.wav "
@@ -183,10 +179,8 @@ def main():
     parser.add_argument("--version", action="version", version=f"{PACKAGE_NAME} {__version__}")
     parser.add_argument("--cpu", action="store_true", help="Toggle CPU usage")
     parser.add_argument("-s", "--stream", action="store_true", help="Set mode to low latency streaming")
-    parser.add_argument("-w", "--workdir", default=os.getenv("TMPDIR", os.getenv("TEMP", os.getenv("TMP", "."))),
+    parser.add_argument("-w", "--workdir", nargs='?', action=OptionalValueAction, default=None,
                         help="Set the working directory where temporary files may be written to (default is system temp directory)")
-    parser.add_argument("--outdir", default=".",
-                        help="Set the output directory where final output files will be saved (default is current directory)")
     parser.add_argument("--ass", action="store_true", help="Enable ASS subtitle file output")
     parser.add_argument("--docx", action="store_true", help="Enable Microsoft Word DOCX output")
     parser.add_argument("--txt", action="store_true", help="Enable TXT file output")
@@ -194,13 +188,13 @@ def main():
     parser.add_argument("--md", action="store_true", help="Enable Markdown (MD) output")
     parser.add_argument("--stdout", action="store_true", default=True, help="Enable stdout output (enabled by default)")
     parser.add_argument("--stdout-nocolor", action="store_true", help="Enable stdout output without colors")
-    parser.add_argument("--format-timestamp", type=lambda s: TimestampStyle[s], choices=list(TimestampStyle), default=TimestampStyle.none,
+    parser.add_argument("--format-timestamp", type=lambda s: TimestampStyle[s], choices=list(TimestampStyle), default=TimestampStyle.minute,
                         help="Set the timestamp format: 'none' for no timestamps, 'start' for start time, 'range' for start and end times")
-    parser.add_argument("--format-speaker", type=lambda s: SpeakerStyle[s], choices=list(SpeakerStyle), default=SpeakerStyle.none,
+    parser.add_argument("--format-speaker", type=lambda s: SpeakerStyle[s], choices=list(SpeakerStyle), default=SpeakerStyle.change,
                         help="Set the timestamp format: 'none' for no timestamps, 'start' for start time, 'range' for start and end times")
-    parser.add_argument("--format-probability", type=lambda s: ProbabilityStyle[s], choices=list(ProbabilityStyle), default=ProbabilityStyle.none,
+    parser.add_argument("--format-probability", type=lambda s: ProbabilityStyle[s], choices=list(ProbabilityStyle), default=ProbabilityStyle.line,
                         help="Set the timestamp format: 'none' for no timestamps, 'start' for start time, 'range' for start and end times")
-    parser.add_argument("--format-language", type=lambda s: LanguageStyle[s], choices=list(LanguageStyle), default=LanguageStyle.none,
+    parser.add_argument("--format-language", type=lambda s: LanguageStyle[s], choices=list(LanguageStyle), default=LanguageStyle.change,
                         help="Set the timestamp format: 'none' for no timestamps, 'start' for start time, 'range' for start and end times")
 
     args = parser.parse_args()
@@ -221,18 +215,28 @@ def main():
         return  # Exit if the version option is specified
 
     config:Config = Config()
-
-    # Set the working directory
-    if not os.path.isdir(args.workdir):
-        os.makedirs(args.workdir)
-    config.working_dir = args.workdir
-    LOG.info(f"Working directory set to {config.working_dir}")
+    config.input_source = args.input
 
     # Set the output directory
     if not os.path.isdir(args.outdir):
         os.makedirs(args.outdir)
     config.output_dir = args.outdir
     LOG.info(f"Output directory set to {config.output_dir}")
+
+    # Set the working directory
+    if args.workdir is None:
+        config.working_dir = os.getenv("TMPDIR", os.getenv("TEMP", os.getenv("TMP", ".")))
+    elif args.workdir == "":
+        config.working_dir = config.output_dir
+    else:
+        if not os.path.isdir(args.workdir):
+            os.makedirs(args.workdir)
+        config.working_dir = args.workdir
+    LOG.info(f"Working directory set to {config.working_dir}")
+
+    input_name_no_ext = os.path.splitext(os.path.split(config.input_source)[-1])[0]
+    config.output_prefix_no_ext = os.path.join(config.output_dir, input_name_no_ext)
+    config.working_prefix_no_ext = os.path.join(config.working_dir, input_name_no_ext)
 
     # Set the output directory
     config.start_time = timestr_to_sample(args.start_time) if args.start_time else None
@@ -251,11 +255,6 @@ def main():
     config.enable_json = args.json
     config.enable_stdout = args.stdout
     config.enable_stdout_nocolor = args.stdout_nocolor
-
-
-    # Validate output directory existence or create it
-    if not os.path.isdir(args.output):
-        os.makedirs(args.output)
 
     if args.cpu or not torch.cuda.is_available():
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
@@ -276,10 +275,17 @@ def main():
         config.whisper_temperatures = [0, 0.6]
 
     config.lang = args.languages if args.languages else ["en", "fr"]
-    config.input_source = args.input
     config.isolate = args.isolate
-    config.speakers = args.diarize
+    config.diarize = args.diarize
+    if config.diarize == '':
+        config.diarize = 0
+    elif config.diarize is not None:
+        config.diarize = int(config.diarize)
+
     config.diarization_file = args.diarization
+    if config.diarization_file == "" or (config.diarize is not None and config.diarization_file is None):
+        config.diarization_file = config.output_prefix_no_ext + ".rttm"
+
     config.source_stream = configure_audio_source(config)
 
     writer:TranscriptWriter = configure_writers(config, original_audio_file=config.input_source)
@@ -287,7 +293,7 @@ def main():
     # pylint: disable=import-outside-toplevel
     from .verbatim import Verbatim
     transcriber = Verbatim(config)
-    writer.open(path_no_ext="out")
+    writer.open(path_no_ext=config.output_prefix_no_ext)
     for utterance in transcriber.transcribe():
         writer.write(utterance=utterance)
     writer.close()

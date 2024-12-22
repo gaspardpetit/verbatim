@@ -9,17 +9,23 @@ class TimestampStyle(Enum):
     none = 1
     start = 2
     range = 3
+    minute = 4
 
 class SpeakerStyle(Enum):
     none = 1
-    grouped = 2
-    change = 3
-    always = 4
+    change = 2
+    always = 3
 
 class ProbabilityStyle(Enum):
     none = 1
     line = 2
-    word = 3
+    line_75 = 3
+    line_50 = 4
+    line_25 = 5
+    word = 6
+    word_75 = 7
+    word_50 = 8
+    word_25 = 9
 
 class LanguageStyle(Enum):
     none = 1

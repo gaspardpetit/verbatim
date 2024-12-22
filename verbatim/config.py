@@ -20,13 +20,12 @@ class Config:
     source_stream: AudioSource = None
     input_source:str = None
     isolate:bool = None
-    speakers:int = None
     diarization: Annotation = None
     diarization_file: str = None
     whisper_model_size: str = "large-v3"
     device: str = "cuda"
     stream: bool = False
-    diarize: bool = False
+    diarize:int|None = None
     whisper_beam_size: int = 9
     whisper_best_of: int = 9
     whisper_patience: float = 2.0
@@ -42,6 +41,8 @@ class Config:
     enable_stdout: bool = True
     enable_stdout_nocolor: bool = False
     write_config:TranscriptWriterConfig = field(default=TranscriptWriterConfig)
+    output_prefix_no_ext:str = "out"
+    working_prefix_no_ext:str = "out"
 
     def __init__(self):
         self.chunk_table = [

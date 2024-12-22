@@ -22,9 +22,10 @@ class TranscriptFormatter:
         else:
             out.write(',\n')
         out.write('  {\n')
-        out.write(f'    "start": {utterance.start_ts}, "start_ms": {utterance.start_ts * 1000 / 16000},\n')
-        out.write(f'    "end": {utterance.end_ts}, "end_ms": {utterance.end_ts * 1000 / 16000},\n')
+        out.write(f'    "start_sample": {utterance.start_ts}, "start_second": {utterance.start_ts / 16000:.2f},\n')
+        out.write(f'    "end_sample": {utterance.end_ts}, "end_second": {utterance.end_ts / 16000:.2f},\n')
         out.write(f'    "speaker": "{utterance.speaker}",\n')
+        out.write(f'    "text": "{utterance.text}",\n')
         out.write( '    "words": [')
         first_word = True
         for w in utterance.words:
@@ -33,8 +34,8 @@ class TranscriptFormatter:
                 out.write('\n')
             else:
                 out.write(',\n')
-            out.write(f'      {{ "text": "{w.word}", "lang": "{w.lang}", "prob": {w.probability} }}')
-        out.write('    ]\n')
+            out.write(f'      {{ "text": "{w.word}", "lang": "{w.lang}", "prob": {w.probability:.4f} }}')
+        out.write('\n    ]\n')
         out.write('  }')
 
 class JsonTranscriptWriter(TranscriptWriter):
