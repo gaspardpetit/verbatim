@@ -54,5 +54,8 @@ class TranscriptWriter:
         pass
 
     @abstractmethod
-    def write(self, utterance:VerbatimUtterance, unacknowledged_utterance:List[VerbatimUtterance] = None, unconfirmed_words:List[VerbatimWord] = None):
+    def write(self,
+              utterance:VerbatimUtterance,
+              unacknowledged_utterance:List[VerbatimUtterance] = None,
+              unconfirmed_words:List[VerbatimWord] = None):
         pass

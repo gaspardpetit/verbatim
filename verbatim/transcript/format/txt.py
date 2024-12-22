@@ -74,7 +74,7 @@ class TranscriptFormatter:
         out.write(line)
 
 class TextIOTranscriptWriter(TranscriptWriter):
-    def __init__(self, config: TranscriptWriterConfig, out:Union[None,TextIO], 
+    def __init__(self, *, config: TranscriptWriterConfig, out:Union[None,TextIO],
                  acknowledged_colours=COLORSCHEME_ACKNOWLEDGED,
                  unacknowledged_colours=COLORSCHEME_UNACKNOWLEDGED,
                  unconfirmed_colors=COLORSCHEME_UNCONFIRMED,
@@ -93,19 +93,24 @@ class TextIOTranscriptWriter(TranscriptWriter):
     def close(self):
         pass
 
-    def write(self, utterance:VerbatimUtterance, unacknowledged_utterance:List[VerbatimUtterance] = None, unconfirmed_words:List[VerbatimWord] = None):
+    def write(self,
+              utterance:VerbatimUtterance,
+              unacknowledged_utterance:List[VerbatimUtterance] = None,
+              unconfirmed_words:List[VerbatimWord] = None):
         self.formatter.format_utterance(utterance=utterance, out=self.out, colours=self.acknowledged_colours)
         if self.print_unacknowledged:
             if unacknowledged_utterance:
                 for unack in unacknowledged_utterance:
                     self.formatter.format_utterance(utterance=unack, out=self.out, colours=self.unconfirmed_colors)
             if unconfirmed_words and len(unconfirmed_words) > 0:
-                self.formatter.format_utterance(utterance=VerbatimUtterance.from_words(unconfirmed_words), out=self.out, colours=self.unconfirmed_colors)
+                self.formatter.format_utterance(
+                    utterance=VerbatimUtterance.from_words(unconfirmed_words),
+                    out=self.out, colours=self.unconfirmed_colors)
         self.out.flush()
 
 class TextTranscriptWriter(TextIOTranscriptWriter):
     def __init__(self, config: TranscriptWriterConfig):
-        super().__init__(config, out=None, 
+        super().__init__(config=config, out=None,
                          acknowledged_colours=COLORSCHEME_NONE,
                          unacknowledged_colours=COLORSCHEME_NONE,
                          unconfirmed_colors=COLORSCHEME_NONE)

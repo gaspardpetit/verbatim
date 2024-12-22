@@ -209,6 +209,9 @@ class MarkdownTranscriptWriter(TranscriptWriter):
     def close(self):
         self.out.close()
 
-    def write(self, utterance:VerbatimUtterance, unacknowledged_utterance:List[VerbatimUtterance] = None, unconfirmed_words:List[VerbatimWord] = None):
+    def write(self,
+              utterance:VerbatimUtterance,
+              unacknowledged_utterance:List[VerbatimUtterance] = None,
+              unconfirmed_words:List[VerbatimWord] = None):
         self.formatter.format_utterance(utterance=utterance, out=self.out)
         self.out.flush()

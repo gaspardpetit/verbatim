@@ -471,7 +471,10 @@ class AssTranscriptWriter(TranscriptWriter):
     def open(self, path_no_ext:str):
         self.output_file = f"{path_no_ext}.ass"
 
-    def write(self, utterance:VerbatimUtterance, unacknowledged_utterance:List[VerbatimUtterance] = None, unconfirmed_words:List[VerbatimWord] = None):
+    def write(self,
+              utterance:VerbatimUtterance,
+              unacknowledged_utterance:List[VerbatimUtterance] = None,
+              unconfirmed_words:List[VerbatimWord] = None):
         self.utterances.append(utterance)
 
     def close(self):
