@@ -502,7 +502,7 @@ class Verbatim:
                     return
 
             if self.config.debug:
-                self.dump_window_to_file()  # Dump current window for debugging
+                self.dump_window_to_file(filename=f"{self.config.working_prefix_no_ext}-debug_window.wav")  # Dump current window for debugging
 
             confirmed_words, unconfirmed_words = self.transcribe_window()
             self.state.unconfirmed_words = unconfirmed_words
