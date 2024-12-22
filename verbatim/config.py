@@ -46,11 +46,11 @@ class Config:
 
     def __init__(self):
         self.chunk_table = [
-            (20, 5),
-            (15, 4),
-            (10, 3),
-            (5, 2),
-            (0, 1),
+            (0.75, 0.20),
+            (0.50, 0.15),
+            (0.25, 0.10),
+            (0.10, 0.05),
+            (0.00, 0.025),
         ]
         self.lang = ["fr", "en"]
         self.whisper_prompts = {

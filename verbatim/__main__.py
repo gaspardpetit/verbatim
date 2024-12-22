@@ -268,7 +268,7 @@ def main():
     config.stream = args.stream
     if config.stream:
         config.chunk_table = [
-            (0, 1),
+            (0, 0.025),
         ]
         config.whisper_best_of = 3
         config.whisper_beam_size = 3
