@@ -16,11 +16,9 @@ For high quality multilingual speech to text.
 FFMpeg is needed to process encoded audio files. This may be done from your package manager on Linux  (ex. `sudo apt install ffmpeg`) or from [Chocolatey](https://community.chocolatey.org/packages/ffmpeg) on Windows.
 
 #### Torch with Cuda Support
-If the tool fallsback to CPU instead of GPU, you may need to reinstall the torch dependency with Cuda support. Refere to the following instructions: [https://pytorch.org/get-started/locally/](https://pytorch.org/get-started/locally/)
+If the tool falls back to CPU instead of GPU, you may need to reinstall the torch dependency with Cuda support. Refer to the following instructions: [https://pytorch.org/get-started/locally/](https://pytorch.org/get-started/locally/)
 
 ### Installing
-
-On Windows, you may install 
 
 Install from PyPI:
 ```
@@ -34,11 +32,18 @@ pip install git+https://github.com/gaspardpetit/verbatim.git
 
 ## HuggingFace Token
 This project requires access to the pyannote models which are gated:
+
 1. Create an account on [Hugging Face](https://huggingface.co/)
 2. Request access to the model at https://huggingface.co/pyannote/speaker-diarization-3.1
 3. Request access to the model at https://huggingface.co/pyannote/segmentation-3.0
 4. From your `Settings` > `Access Tokens`, generate an access token
-5. When running verbatim for the first time, set the `TOKEN_HUGGINGFACE` environment variable to your Hugging Face token. Once the model is downloaded, this is no longer necessary.
+5. When running verbatim for the first time, set the `TOKEN_HUGGINGFACE` environment variable to your Hugging Face token. Once the model is downloaded, this is no longer necessary. 
+
+Instead of setting `TOKEN_HUGGINGFACE` environment variable, you may prefer to set the value using a `.env` file in the current directory like this:
+#### .env
+```bash
+HUGGINGFACE_TOKEN=hf_******
+```
 
 
 ## Usage (from terminal)
@@ -77,7 +82,7 @@ With GPU support
 docker run --network none --shm-size 8G --gpus all \
     -v "/local/path/to/out/:/data/out/" \
     -v "/local/path/to/audio.mp3:/data/audio.mp3" ghcr.io/gaspardpetit/verbatim:latest \
-    verbatim /data/audio.mp3 -o /data/out --language en fr"
+    verbatim /data/audio.mp3 -o /data/out --languages en fr"
 ```
 
 Without GPU support
@@ -85,7 +90,7 @@ Without GPU support
 docker run --network none \
     -v "/local/path/to/out/:/data/out/" \
     -v "/local/path/to/audio.mp3:/data/audio.mp3" ghcr.io/gaspardpetit/verbatim:latest \
-    verbatim /data/audio.mp3 -o /data/out --language en fr"
+    verbatim /data/audio.mp3 -o /data/out --languages en fr"
 ```
 
 
@@ -249,7 +254,7 @@ The output includes
 
 ![doc/architecture.svg](doc/img/Architecture.svg)
 
-### 1. Injestion 🔊
+### 1. Ingestion 🔊
 Audio Files are converted ◌⃯ to raw audio using [ffmpeg](https://ffmpeg.org/). 
 
 ### 2. Voice Isolation 🗩
