@@ -69,7 +69,7 @@ class Diarization:
             if self._use_ami:
                 diarization, sources = self.pipeline(file_path, hook=hook)
             else:
-                diarization = self.pipeline(file_path, hook=hook)
+                diarization = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
 
         # dump the diarization output to disk using RTTM format
         with open(out_rttm_file, "w", encoding="utf-8") as rttm:
