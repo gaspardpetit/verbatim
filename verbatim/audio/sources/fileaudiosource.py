@@ -34,7 +34,9 @@ class FileAudioSource(AudioSource):
     def compute_diarization(self, device:str, rttm_file:str = None, nb_speakers:int = None) -> Annotation:
         diarization = None
         try:
-            diarization = Diarization(device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN"))
+            diarization = Diarization(device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN"), use_ami=True)
+            if nb_speakers == 0:
+                nb_speakers = None
             annotation = diarization.compute_diarization(file_path=self.file_path, out_rttm_file=rttm_file, nb_speakers=nb_speakers)
             return annotation
         finally:
