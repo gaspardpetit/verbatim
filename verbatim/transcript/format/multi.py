@@ -1,7 +1,7 @@
 from typing import List
 
 from .writer import TranscriptWriter, TranscriptWriterConfig
-from ..words import VerbatimUtterance
+from ..words import VerbatimUtterance, VerbatimWord
 
 
 class MultiTranscriptWriter(TranscriptWriter):
@@ -22,9 +22,12 @@ class MultiTranscriptWriter(TranscriptWriter):
         for w in self.writers:
             w.close()
 
-    def write(self, utterance:VerbatimUtterance):
+    def write(self,
+              utterance:VerbatimUtterance,
+              unacknowledged_utterance:List[VerbatimUtterance] = None,
+              unconfirmed_words:List[VerbatimWord] = None):
         for w in self.writers:
-            w.write(utterance=utterance)
+            w.write(utterance=utterance, unacknowledged_utterance=unacknowledged_utterance, unconfirmed_words=unconfirmed_words)
 
     def add_writer(self, writer:TranscriptWriter):
         self.writers.append(writer)

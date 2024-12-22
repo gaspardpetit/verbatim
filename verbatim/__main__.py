@@ -247,6 +247,7 @@ def main():
     config.write_config.probability_style = args.format_probability
     config.write_config.speaker_style = args.format_speaker
     config.write_config.language_style = args.format_language
+    config.write_config.verbose = log_level <= logging.INFO
 
     config.enable_ass = args.ass
     config.enable_docx = args.docx
@@ -294,8 +295,8 @@ def main():
     from .verbatim import Verbatim
     transcriber = Verbatim(config)
     writer.open(path_no_ext=config.output_prefix_no_ext)
-    for utterance in transcriber.transcribe():
-        writer.write(utterance=utterance)
+    for utterance, unacknowledged, unconfirmed in transcriber.transcribe():
+        writer.write(utterance=utterance, unacknowledged_utterance=unacknowledged, unconfirmed_words=unconfirmed)
     writer.close()
 
 if __name__ == "__main__":

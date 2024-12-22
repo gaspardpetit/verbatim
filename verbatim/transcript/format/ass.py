@@ -9,7 +9,7 @@ from itertools import chain
 from typing import List, Tuple, Union, Callable
 
 from .writer import TranscriptWriter, TranscriptWriterConfig
-from ..words import VerbatimUtterance
+from ..words import VerbatimUtterance, VerbatimWord
 
 LOG = logging.getLogger(__name__)
 
@@ -471,7 +471,10 @@ class AssTranscriptWriter(TranscriptWriter):
     def open(self, path_no_ext:str):
         self.output_file = f"{path_no_ext}.ass"
 
-    def write(self, utterance:VerbatimUtterance):
+    def write(self,
+              utterance:VerbatimUtterance,
+              unacknowledged_utterance:List[VerbatimUtterance] = None,
+              unconfirmed_words:List[VerbatimWord] = None):
         self.utterances.append(utterance)
 
     def close(self):

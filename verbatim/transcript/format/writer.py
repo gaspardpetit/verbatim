@@ -1,8 +1,9 @@
 import dataclasses
 from abc import abstractmethod
+from typing import List
 from enum import Enum
 
-from ..words import VerbatimUtterance
+from ..words import VerbatimUtterance, VerbatimWord
 
 # pylint: disable=invalid-name
 class TimestampStyle(Enum):
@@ -38,6 +39,7 @@ class TranscriptWriterConfig:
     speaker_style:SpeakerStyle = SpeakerStyle.none
     probability_style:ProbabilityStyle = ProbabilityStyle.none
     language_style:LanguageStyle = LanguageStyle.none
+    verbose:bool = False
 
 class TranscriptWriter:
     def __init__(self, config:TranscriptWriterConfig):
@@ -52,5 +54,8 @@ class TranscriptWriter:
         pass
 
     @abstractmethod
-    def write(self, utterance:VerbatimUtterance):
+    def write(self,
+              utterance:VerbatimUtterance,
+              unacknowledged_utterance:List[VerbatimUtterance] = None,
+              unconfirmed_words:List[VerbatimWord] = None):
         pass

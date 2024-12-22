@@ -8,7 +8,7 @@ from docx.text.paragraph import Paragraph
 from docx.text.run import Run
 
 from .writer import TranscriptWriterConfig, TimestampStyle, SpeakerStyle, ProbabilityStyle, LanguageStyle, TranscriptWriter
-from ..words import VerbatimUtterance
+from ..words import VerbatimUtterance, VerbatimWord
 from ..formatting import format_milliseconds
 
 
@@ -168,7 +168,10 @@ class DocxTranscriptWriter(TranscriptWriter):
     def open(self, path_no_ext:str):
         self.output_file = f"{path_no_ext}.docx"
 
-    def write(self, utterance:VerbatimUtterance):
+    def write(self,
+              utterance:VerbatimUtterance,
+              unacknowledged_utterance:List[VerbatimUtterance] = None,
+              unconfirmed_words:List[VerbatimWord] = None):
         self.utterances.append(utterance)
 
     def close(self):
