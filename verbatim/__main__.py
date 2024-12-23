@@ -77,19 +77,37 @@ def timestr_to_sample(timestr: str, sample_rate: int = 16000) -> int:
     Returns:
         int: The corresponding sample index.
     """
-    # Define a regular expression to parse the time string
-    time_pattern = re.compile(
-        r"^(?:(?P<hours>\d+):)?(?:(?P<minutes>\d+):)?(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
-    )
-    match = time_pattern.match(timestr.strip())
-    if not match:
-        raise ValueError(f"Invalid time string format: {timestr}")
+    import re
 
-    # Extract components, defaulting to 0 if missing
-    hours = int(match.group("hours")) if match.group("hours") else 0
-    minutes = int(match.group("minutes")) if match.group("minutes") else 0
-    seconds = int(match.group("seconds")) if match.group("seconds") else 0
-    milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
+    # Define regex patterns for specific formats
+    hh_mm_ss_ms_pattern = re.compile(
+        r"^(?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
+    )
+    mm_ss_ms_pattern = re.compile(
+        r"^(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
+    )
+    ss_ms_pattern = re.compile(
+        r"^(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
+    )
+
+    # Match the input against patterns
+    if match := hh_mm_ss_ms_pattern.match(timestr.strip()):
+        hours = int(match.group("hours"))
+        minutes = int(match.group("minutes"))
+        seconds = int(match.group("seconds"))
+        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
+    elif match := mm_ss_ms_pattern.match(timestr.strip()):
+        hours = 0
+        minutes = int(match.group("minutes"))
+        seconds = int(match.group("seconds"))
+        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
+    elif match := ss_ms_pattern.match(timestr.strip()):
+        hours = 0
+        minutes = 0
+        seconds = int(match.group("seconds"))
+        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
+    else:
+        raise ValueError(f"Invalid time string format: {timestr}")
 
     # Calculate total time in seconds
     total_seconds = hours * 3600 + minutes * 60 + seconds + milliseconds / 1000.0
