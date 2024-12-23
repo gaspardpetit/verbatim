@@ -3,6 +3,7 @@ import logging
 
 import numpy as np
 import av
+# pylint: disable=no-name-in-module
 from av.audio.resampler import AudioResampler
 from av.audio.frame import AudioFrame
 
@@ -42,6 +43,7 @@ class PyAVAudioSource(AudioSource):
 
         # Internals
         self._container: av.container.InputContainer = None
+        # pylint: disable=c-extension-no-member
         self._stream: av.audio.stream.AudioStream = None
         self._frame_iter = None
 
