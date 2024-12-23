@@ -140,6 +140,7 @@ def configure_audio_source(config:Config) -> AudioSource:
     # pylint: disable=import-outside-toplevel
     from .audio.sources.micaudiosource import MicAudioSourcePyAudio as MicAudioSource
     from .audio.sources.fileaudiosource import FileAudioSource
+    from .audio.sources.ffmpegfileaudiosource import PyAVAudioSource
     from .audio.sources.pcmaudiosource import PCMInputStreamAudioSource
 
     if config.input_source == "-":
@@ -147,17 +148,28 @@ def configure_audio_source(config:Config) -> AudioSource:
     elif config.input_source is None or config.input_source == ">":
         return MicAudioSource()
     else:
-        file_audio_source = FileAudioSource(config.input_source, start_sample=config.start_time, end_sample=config.stop_time)
-        if not config.stream:
-            if config.isolate is not None:
-                file_audio_source.isolate_voices(out_path_prefix=config.isolate or None)
-            if not config.diarize is None:
-                config.diarization = file_audio_source.compute_diarization(
-                    rttm_file=config.diarization_file, device=config.device, nb_speakers=config.diarize)
+        if os.path.splitext(config.input_source)[-1] == ".wav":
+            file_audio_source = FileAudioSource(config.input_source, start_sample=config.start_time, end_sample=config.stop_time)
+            if not config.stream:
+                if config.isolate is not None:
+                    file_audio_source.isolate_voices(out_path_prefix=config.isolate or None)
+                if not config.diarize is None:
+                    config.diarization = file_audio_source.compute_diarization(
+                        rttm_file=config.diarization_file, device=config.device, nb_speakers=config.diarize)
 
-        if config.diarization_file:
-            from .voices.diarization import Diarization
-            config.diarization = Diarization.load_diarization(rttm_file=config.diarization_file)
+            if config.diarization_file:
+                from .voices.diarization import Diarization
+                config.diarization = Diarization.load_diarization(rttm_file=config.diarization_file)
+        else:
+            if not config.stream and (config.isolate is not None or not config.diarize is None):
+                file_audio_source = PyAVAudioSource(file_path=config.input_source)
+                from .audio.sources.wavsink import WavSink
+                config.input_source = config.working_prefix_no_ext + '.wav'
+                WavSink.dump_to_wav(audio_source=file_audio_source, output_path=config.input_source)
+                return configure_audio_source(config)
+            else:
+                file_audio_source = PyAVAudioSource(
+                    file_path=config.input_source, start_time=config.start_time/16000, end_time=config.stop_time/16000 if config.stop_time else None)
         return file_audio_source
 
 def main():
