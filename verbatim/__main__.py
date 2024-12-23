@@ -77,8 +77,6 @@ def timestr_to_sample(timestr: str, sample_rate: int = 16000) -> int:
     Returns:
         int: The corresponding sample index.
     """
-    import re
-
     # Define regex patterns for specific formats
     hh_mm_ss_ms_pattern = re.compile(
         r"^(?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
@@ -114,6 +112,7 @@ def timestr_to_sample(timestr: str, sample_rate: int = 16000) -> int:
 
     # Convert to sample index
     return int(total_seconds * sample_rate)
+
 
 def configure_writers(config:Config, original_audio_file:str) -> TranscriptWriter:
     # pylint: disable=import-outside-toplevel
