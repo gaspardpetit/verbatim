@@ -151,7 +151,8 @@ def configure_audio_source(config:Config) -> AudioSource:
                 WavSink.dump_to_wav(audio_source=file_audio_source, output_path=config.input_source)
                 return configure_audio_source(config)
             else:
-                file_audio_source = PyAVAudioSource(file_path=config.input_source, start_time=config.start_time/16000, end_time=config.stop_time/16000 if config.stop_time else None)
+                file_audio_source = PyAVAudioSource(
+                    file_path=config.input_source, start_time=config.start_time/16000, end_time=config.stop_time/16000 if config.stop_time else None)
         return file_audio_source
 
 def main():
