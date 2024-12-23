@@ -1,6 +1,7 @@
-from .audiosource import AudioSource
 import wave
 import numpy as np
+
+from .audiosource import AudioSource
 
 class WavSink:
     @staticmethod
@@ -10,8 +11,8 @@ class WavSink:
         """
         # Open the PyAVAudioSource
         audio_source.open()
-        
-        # Create a .wav file for writing
+
+        # pylint: disable=no-member
         with wave.open(output_path, 'w') as wav_file:
             # Set WAV parameters
             num_channels = 1  # Mono
