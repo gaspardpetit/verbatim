@@ -269,7 +269,8 @@ class Verbatim:
                     raise ValueError("Mismatch in alignment between sentences and words.")
 
             # Now we have all the words for this sentence
-            result.append(VerbatimUtterance.from_words(sentence_words))
+            if len(sentence_words) > 0:
+                result.append(VerbatimUtterance.from_words(sentence_words))
 
         # At the end, `result` should be a List[List[VerbatimWord]]
         return result
@@ -415,6 +416,9 @@ class Verbatim:
         return utterances[0:index], utterances[index:]
 
     def get_speaker_at(self, time:float, diarization:Annotation):
+        if diarization is None:
+            return None
+
         for turn, _, speaker in diarization.itertracks(yield_label=True):
             if turn.end < time:
                 continue
@@ -440,6 +444,9 @@ class Verbatim:
         return None
 
     def assign_speaker(self, utterance:VerbatimUtterance, diarization:Annotation):
+        if diarization is None:
+            return None
+
         start = utterance.start_ts / 16000.0
         end =utterance.end_ts / 16000.0
         duration = end - start
