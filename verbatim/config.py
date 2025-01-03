@@ -30,7 +30,7 @@ class Config:
     whisper_best_of: int = 9
     whisper_patience: float = 2.0
     whisper_temperatures: List[float] = None
-    debug: bool = True
+    debug: bool = False
     working_dir: str = "."
     output_dir: str = "."
     enable_ass: bool = False
