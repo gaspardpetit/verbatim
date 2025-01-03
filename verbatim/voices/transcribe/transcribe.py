@@ -29,5 +29,14 @@ class Transcriber:
         pass
 
     @abstractmethod
-    def transcribe(self, *, audio:np.array, lang: str, prompt: str, prefix: str, window_ts:int, audio_ts:int) -> List[VerbatimWord]:
+    def transcribe(
+        self, *,
+        audio:np.array,
+        lang: str, prompt: str, prefix: str,
+        window_ts:int, audio_ts:int,
+        whisper_beam_size:int = 3,
+        whisper_best_of:int = 3,
+        whisper_patience:float = 1.0,
+        whisper_temperatures:List[float] = None
+    ) -> List[VerbatimWord]:
         pass
