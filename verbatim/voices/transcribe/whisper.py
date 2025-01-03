@@ -38,7 +38,19 @@ class WhisperTranscriber(Transcriber):
 
         return best_lang, lang_probs[best_lang]
 
-    def transcribe(self, *, audio:np.array, lang: str, prompt: str, prefix: str, window_ts:int, audio_ts:int) -> List[VerbatimWord]:
+    def transcribe(
+            self, *,
+            audio:np.array,
+            lang: str, prompt: str, prefix: str,
+            window_ts:int, audio_ts:int,
+            whisper_beam_size: int = 3,
+            whisper_best_of: int = 3,
+            whisper_patience: float = 1.0,
+            whisper_temperatures: List[float] = None,
+    ) -> List[VerbatimWord]:
+        if whisper_temperatures is None:
+            whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+
         use_fp16 = self.device == "cuda"
         verbose:Union[None,bool] = None
         if LOG.getEffectiveLevel() < logging.INFO:
@@ -53,11 +65,11 @@ class WhisperTranscriber(Transcriber):
         options = whisper.DecodingOptions(
             task=whisper_config.task,
             language=lang,
-            temperature=tuple(self.whisper_temperatures),
+            temperature=tuple(whisper_temperatures),
             sample_len=None,
-            best_of=self.whisper_best_of,
-            beam_size=self.whisper_beam_size,
-            patience=self.whisper_patience,
+            best_of=whisper_best_of,
+            beam_size=whisper_beam_size,
+            patience=whisper_patience,
             length_penalty=whisper_config.length_penalty,
             prompt=prompt,
             prefix=prefix,

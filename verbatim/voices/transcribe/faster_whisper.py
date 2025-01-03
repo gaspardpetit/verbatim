@@ -46,20 +46,32 @@ class FasterWhisperTranscriber(Transcriber):
         return guess_lang, guess_prob
 
 
-    def transcribe(self, *, audio:np.array, lang: str, prompt: str, prefix: str, window_ts:int, audio_ts:int) -> List[VerbatimWord]:
+    def transcribe(
+            self, *,
+            audio:np.array,
+            lang: str, prompt: str, prefix: str,
+            window_ts:int, audio_ts:int,
+            whisper_beam_size:int = 3,
+            whisper_best_of:int = 3,
+            whisper_patience:float = 1.0,
+            whisper_temperatures:List[float] = None
+            ) -> List[VerbatimWord]:
         LOG.info(f"Transcription Prefix: {prefix}")
+        if whisper_temperatures is None:
+            whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+
         show_progress = LOG.getEffectiveLevel() <= logging.INFO
         whisper_config:WhisperConfig = WhisperConfig()
         segment_iter, info = self.whisper_model.transcribe(audio=audio,
             language=lang,
             task=whisper_config.task,
             log_progress=show_progress,
-            beam_size=self.whisper_beam_size,
-            best_of=self.whisper_best_of,
-            patience=self.whisper_patience,
+            beam_size=whisper_beam_size,
+            best_of=whisper_best_of,
+            patience=whisper_patience,
             length_penalty=whisper_config.length_penalty, repetition_penalty=1.0,
             no_repeat_ngram_size=0,
-            temperature=self.whisper_temperatures,
+            temperature=whisper_temperatures,
             compression_ratio_threshold=whisper_config.compression_ratio_threshold,
             log_prob_threshold=whisper_config.logprob_threshold,
             no_speech_threshold=whisper_config.no_speech_threshold,
