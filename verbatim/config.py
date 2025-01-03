@@ -1,3 +1,8 @@
+import logging
+import os
+import re
+import errno
+
 from dataclasses import dataclass, field
 from typing import Dict, List, Union
 
@@ -5,6 +10,56 @@ from pyannote.core.annotation import Annotation
 
 from .audio.sources.audiosource import AudioSource
 from .transcript.format.writer import TranscriptWriterConfig
+
+LOG = logging.getLogger(__name__)
+
+def timestr_to_sample(timestr: str, sample_rate: int = 16000) -> int:
+    """
+    Converts a time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms
+    (milliseconds optional) to the corresponding sample index.
+
+    Args:
+        timestr (str): Time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms.
+        sample_rate (int): Sampling rate in Hz (default is 16000).
+
+    Returns:
+        int: The corresponding sample index.
+    """
+    # Define regex patterns for specific formats
+    hh_mm_ss_ms_pattern = re.compile(
+        r"^(?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
+    )
+    mm_ss_ms_pattern = re.compile(
+        r"^(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
+    )
+    ss_ms_pattern = re.compile(
+        r"^(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
+    )
+
+    # Match the input against patterns
+    if match := hh_mm_ss_ms_pattern.match(timestr.strip()):
+        hours = int(match.group("hours"))
+        minutes = int(match.group("minutes"))
+        seconds = int(match.group("seconds"))
+        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
+    elif match := mm_ss_ms_pattern.match(timestr.strip()):
+        hours = 0
+        minutes = int(match.group("minutes"))
+        seconds = int(match.group("seconds"))
+        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
+    elif match := ss_ms_pattern.match(timestr.strip()):
+        hours = 0
+        minutes = 0
+        seconds = int(match.group("seconds"))
+        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
+    else:
+        raise ValueError(f"Invalid time string format: {timestr}")
+
+    # Calculate total time in seconds
+    total_seconds = hours * 3600 + minutes * 60 + seconds + milliseconds / 1000.0
+
+    # Convert to sample index
+    return int(total_seconds * sample_rate)
 
 
 @dataclass
@@ -19,7 +74,7 @@ class Config:
     stop_time:Union[None,int] = None
     source_stream: AudioSource = None
     input_source:str = None
-    isolate:bool = None
+    isolate:Union[None,bool] = None
     diarization: Annotation = None
     diarization_file: str = None
     whisper_model_size: str = "large-v3"
@@ -44,7 +99,15 @@ class Config:
     output_prefix_no_ext:str = "out"
     working_prefix_no_ext:str = "out"
 
-    def __init__(self):
+    def __init__(
+            self, *,
+            input_source:Union[None,str],
+            outdir:Union[None,str] = ".", workdir:Union[None,str] = None,
+            use_cpu:Union[None, bool] = None,
+            stream:Union[None,bool] = False, isolate:Union[None,bool]=None, diarize:Union[None,int] = None,
+            start_time:Union[None,str] = "0", stop_time:Union[None,str] = None
+            ):
+
         self.chunk_table = [
             (0.75, 0.20),
             (0.50, 0.15),
@@ -52,7 +115,7 @@ class Config:
             (0.10, 0.05),
             (0.00, 0.025),
         ]
-        self.lang = ["fr", "en"]
+        self.lang = ["en"]
         self.whisper_prompts = {
             "en": "This is a sentence.",
             "zh": "这是一个句子。",
@@ -155,3 +218,130 @@ class Config:
             "su": "Ieu mangrupikeun kalimah."
         }
         self.whisper_temperatures = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        self.working_dir = os.getenv("TMPDIR", os.getenv("TEMP", os.getenv("TMP", ".")))
+
+        # pylint: disable=import-outside-toplevel
+        import torch
+        if use_cpu or not torch.cuda.is_available():
+            os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
+            LOG.info("Using CPU")
+            self.device = "cpu"
+        else:
+            LOG.info("Using GPU")
+            self.device = "cuda"
+
+        if stream:
+            self.configure_for_low_latency_streaming()
+
+        self.isolate = isolate
+        self.diarize = diarize
+        if self.diarize == '':
+            self.diarize = 0
+        elif self.diarize is not None:
+            self.diarize = int(self.diarize)
+
+        self.configure_output_directory(outdir=outdir, workdir=workdir)
+        if input_source is not None:
+            self.configure_audio_source(input_source=input_source, start_time=start_time, stop_time=stop_time)
+
+    def configure_output_directory(self, outdir:str, workdir:str):
+        if not os.path.isdir(outdir):
+            os.makedirs(outdir)
+        self.output_dir = outdir
+        LOG.info(f"Output directory set to {self.output_dir}")
+
+        # Set the working directory
+        if workdir is None:
+            self.working_dir = os.getenv("TMPDIR", os.getenv("TEMP", os.getenv("TMP", ".")))
+        elif workdir == "":
+            self.working_dir = self.output_dir
+        else:
+            if not os.path.isdir(workdir):
+                os.makedirs(workdir)
+            self.working_dir = workdir
+        LOG.info(f"Working directory set to {self.working_dir}")
+
+
+    def configure_audio_source(self, input_source:str, start_time:str, stop_time:str):
+        self.input_source = input_source
+        if os.path.exists(input_source) is False:
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), input_source)
+
+        input_name_no_ext = os.path.splitext(os.path.split(self.input_source)[-1])[0]
+        self.output_prefix_no_ext = os.path.join(self.output_dir, input_name_no_ext)
+        self.working_prefix_no_ext = os.path.join(self.working_dir, input_name_no_ext)
+
+        self.diarization_file = self.diarization
+        if self.diarization_file == "" or (self.diarize is not None and self.diarization_file is None):
+            self.diarization_file = self.output_prefix_no_ext + ".rttm"
+
+        self.start_time = timestr_to_sample(start_time) if start_time else None
+        self.stop_time = timestr_to_sample(stop_time) if stop_time else None
+
+        # pylint: disable=import-outside-toplevel
+        from .audio.sources.micaudiosource import MicAudioSourcePyAudio as MicAudioSource
+        from .audio.sources.fileaudiosource import FileAudioSource
+        from .audio.sources.ffmpegfileaudiosource import PyAVAudioSource
+        from .audio.sources.pcmaudiosource import PCMInputStreamAudioSource
+        import sys
+        import numpy as np
+
+        if self.input_source == "-":
+            self.source_stream = PCMInputStreamAudioSource(stream=sys.stdin, channels=1, sampling_rate=16000, dtype=np.int16)
+            return
+
+        elif self.input_source is None or self.input_source == ">":
+            self.source_stream = MicAudioSource()
+            return
+        else:
+            if os.path.splitext(self.input_source)[-1] == ".wav":
+                file_audio_source = FileAudioSource(self.input_source, start_sample=self.start_time, end_sample=self.stop_time)
+                if not self.stream:
+                    if self.isolate is not None:
+                        file_audio_source.isolate_voices(out_path_prefix=self.isolate or None)
+                    if not self.diarize is None:
+                        self.diarization = file_audio_source.compute_diarization(
+                            rttm_file=self.diarization_file, device=self.device, nb_speakers=self.diarize)
+
+                if self.diarization_file:
+                    from .voices.diarization import Diarization
+                    self.diarization = Diarization.load_diarization(rttm_file=self.diarization_file)
+            else:
+                if not self.stream and (self.isolate is not None or not self.diarize is None):
+                    file_audio_source = PyAVAudioSource(file_path=self.input_source)
+                    from .audio.sources.wavsink import WavSink
+                    self.input_source = self.working_prefix_no_ext + '.wav'
+                    WavSink.dump_to_wav(audio_source=file_audio_source, output_path=self.input_source)
+                    self.configure_audio_source(input_source=self.input_source, start_time=start_time, stop_time=stop_time)
+                    return
+                else:
+                    file_audio_source = PyAVAudioSource(
+                        file_path=self.input_source, start_time=self.start_time/16000, end_time=self.stop_time/16000 if self.stop_time else None)
+            self.source_stream = file_audio_source
+            return
+
+    def configure_for_low_latency_streaming(self):
+        self.stream = True
+        if self.stream:
+            self.chunk_table = [
+                (0, 0.025),
+            ]
+            self.whisper_best_of = 3
+            self.whisper_beam_size = 3
+            self.whisper_patience = 3.0
+            self.whisper_temperatures = [0, 0.6]
+
+    def configure_output_formats(self, output_formats:List[str]) -> "Config":
+        self.enable_ass = "ass" in output_formats
+        self.enable_docx = "docx" in output_formats
+        self.enable_txt = "txt" in output_formats
+        self.enable_md = "md" in output_formats
+        self.enable_json = "json" in output_formats
+        self.enable_stdout = "json" in output_formats
+        self.enable_stdout = "stdout" in output_formats
+        self.enable_stdout_nocolor = "stdout-nocolor" in output_formats
+        return self
+
+    def configure_languages(self, lang=List[str]) -> "Config":
+        self.lang = lang
+        return self

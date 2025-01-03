@@ -2,7 +2,6 @@ import os
 import sys
 import unittest
 
-from verbatim.audio.sources import FileAudioSource
 from verbatim.config import Config
 from verbatim.verbatim import Verbatim
 
@@ -21,10 +20,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
 
     print(os.getcwd())
-    config:Config = Config()
-    config.source_stream = FileAudioSource("tests/data/init.mp3")
-    config.lang = ["fr", "en"]
-    config.device = "cpu"
+    config:Config = Config(input_source="tests/data/init.mp3", use_cpu=True).configure_languages(["fr", "en"])
     verbatim:Verbatim = Verbatim(config=config)
     for utterance in verbatim.transcribe():
         print(utterance.text)

@@ -28,7 +28,7 @@ REQUIREMENTS = """
 
     dataclasses_json
 
-    python-ffmpeg
+    av
     pydub
 
     audio_separator

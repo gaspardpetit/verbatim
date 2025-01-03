@@ -115,8 +115,8 @@ class State:
     speaker_embeddings:List = None
 
 
-    def __init__(self):
-        self.config = Config()
+    def __init__(self, config:Config):
+        self.config = config
         self.confirmed_ts = -1
         self.acknowledged_ts = -1
         self.window_ts = 0  # Window timestamp in samples
@@ -160,9 +160,9 @@ class Verbatim:
     state:State = None
     config:Config = None
 
-    def __init__(self, config:Config = Config()):
-        self.state = State()
+    def __init__(self, config:Config):
         self.config = config
+        self.state = State(config)
 
         LOG.info("Initializing WhisperModel and audio stream.")
         # pylint: disable=import-outside-toplevel
@@ -292,7 +292,7 @@ class Verbatim:
     def _guess_language(self, audio:np.array, sample_offset:int, sample_duration:int, lang:List[str]) -> Tuple[str,float]:
         lang_samples = audio[sample_offset:sample_offset + sample_duration]
         LOG.info(f"Detecting language using samples {sample_offset}({samples_to_seconds(sample_offset)}) "
-                 "to {sample_offset + sample_duration}({samples_to_seconds(sample_offset + sample_duration)})")
+                 f"to {sample_offset + sample_duration}({samples_to_seconds(sample_offset + sample_duration)})")
         return self.transcriber.guess_language(audio=lang_samples, lang=lang)
 
 
