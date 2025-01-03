@@ -174,9 +174,11 @@ class Verbatim:
 
     def skip_leading_silence(self, min_speech_duration_ms:int = 500) -> int:
         min_speech_duration_ms = 750
-        min_speech_duration_samples = (16000 * min_speech_duration_ms // 1000)
+        min_speech_duration_samples = 16000 * min_speech_duration_ms // 1000
         audio_samples = self.state.audio_ts - self.state.window_ts
-        voice_segments = self.models.vad.find_activity(audio=self.state.rolling_window.array[0:audio_samples], min_speech_duration_ms=min_speech_duration_ms)
+        voice_segments = self.models.vad.find_activity(
+            audio=self.state.rolling_window.array[0:audio_samples],
+            min_speech_duration_ms=min_speech_duration_ms)
         LOG.debug(f"Voice segments: {voice_segments}")
         if len(voice_segments) == 0:
             LOG.info(f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f} and {samples_to_seconds(self.state.audio_ts):.2f}")
@@ -194,7 +196,8 @@ class Verbatim:
 
         # skip leading silences
         if voice_start > 0:
-            LOG.info(f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f} and {samples_to_seconds(self.state.window_ts + voice_start):.2f}")
+            LOG.info(f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f}"
+                     f"and {samples_to_seconds(self.state.window_ts + voice_start):.2f}")
             self.state.advance_audio_window(voice_start)
             return voice_length + self.state.window_ts
 
@@ -527,12 +530,12 @@ class Verbatim:
                 if len(acknowledged_utterances) > 0:
                     for u in acknowledged_utterances:
                         self.state.acknowledged_words += u.words
-                    
+
                     # utterances are split at short pauses, advance a bit to avoid repeating the last word
                     # but not too much as to skip the first word of the next utterance
                     utterance_padding_ms = 100
                     utterance_padding_samples = utterance_padding_ms * 16000 // 1000
-                    
+
                     self.state.acknowledged_ts = acknowledged_utterances[-1].end_ts + utterance_padding_samples
                     self.state.skip_silences = True
             else:
