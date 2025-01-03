@@ -78,7 +78,7 @@ class WhisperHistory:
             else:
                 break
         if len(confirmed_words) > 0:
-            LOG.info(f"CONFIRMED: {''.join([w.word for w in confirmed_words])}")
+            LOG.debug(f"CONFIRMED CANDIDATE: {''.join([w.word for w in confirmed_words])}")
         return confirmed_words
 
     def confirm(self, current_words: List[VerbatimWord], prefix: List[VerbatimWord], after_ts: int) -> List[VerbatimWord]:
@@ -110,7 +110,7 @@ class State:
     unconfirmed_words:List[VerbatimWord]
     acknowledged_utterances:List[VerbatimUtterance]
     unacknowledged_utterances:List[VerbatimUtterance]
-    skip_silences: bool = False
+    skip_silences: bool = True
     speaker_embeddings:List = None
 
 
@@ -131,6 +131,8 @@ class State:
         self.rolling_window = RollingWindow(window_size=window_size, dtype=np.float32)  # Initialize empty rolling window
 
     def advance_audio_window(self, offset:int):
+        if offset <= 0:
+            return
         LOG.debug(f"Shifting rolling window by {offset} samples ({samples_to_seconds(offset)}s) "
                     "to offset {self.window_ts + offset} ({samples_to_seconds(self.window_ts + offset)}s).")
 
@@ -170,31 +172,36 @@ class Verbatim:
             self.state.window_ts = config.start_time
             self.state.audio_ts = config.start_time
 
-    def skip_leading_silence(self) -> int:
-        voice_segments = self.models.vad.find_activity(audio=self.state.rolling_window.array)
+    def skip_leading_silence(self, min_speech_duration_ms:int = 500) -> int:
+        min_speech_duration_ms = 750
+        min_speech_duration_samples = 16000 * min_speech_duration_ms // 1000
+        audio_samples = self.state.audio_ts - self.state.window_ts
+        voice_segments = self.models.vad.find_activity(
+            audio=self.state.rolling_window.array[0:audio_samples],
+            min_speech_duration_ms=min_speech_duration_ms)
         LOG.debug(f"Voice segments: {voice_segments}")
         if len(voice_segments) == 0:
-            return 0
+            LOG.info(f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f} and {samples_to_seconds(self.state.audio_ts):.2f}")
+
+            # preserve a bit of audio at the end that may have been too short just because it is truncated
+            padding = min_speech_duration_samples
+            remaining_audio = self.state.audio_ts - self.state.window_ts - padding
+            self.state.advance_audio_window(remaining_audio)
+
+            return self.state.audio_ts
 
         voice_start = voice_segments[0]['start']
         voice_end = voice_segments[0]['end']
+        voice_length = voice_end - voice_start
 
         # skip leading silences
         if voice_start > 0:
+            LOG.info(f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f}"
+                     f"and {samples_to_seconds(self.state.window_ts + voice_start):.2f}")
             self.state.advance_audio_window(voice_start)
-            voice_end -= voice_start
-            return voice_end + self.state.window_ts
+            return voice_length + self.state.window_ts
 
-        # skip short audio sequences followed by a silence
-        if voice_end - voice_start < 16000 and len(voice_segments) > 1:
-            next_voice_start = voice_segments[1]['start']
-            next_voice_end = voice_segments[1]['end']
-            LOG.debug(f"Shifting rolling window by {next_voice_start} samples.")
-            self.state.advance_audio_window(next_voice_start)
-            next_voice_end -= next_voice_start
-            return next_voice_end + self.state.window_ts
-
-        return voice_end + self.state.window_ts
+        return voice_length + self.state.window_ts
 
     def dump_window_to_file(self, filename: str = "debug_window.wav"):
         window = self.state.rolling_window.array
@@ -306,7 +313,7 @@ class Verbatim:
         LOG.info(f"Valid audio range: 0.0 - {samples_to_seconds(self.state.audio_ts - self.state.window_ts)}")
 
         acknowledged_words_in_window = WhisperHistory.advance_transcript(timestamp=self.state.window_ts, transcript=self.state.acknowledged_words)
-        prefix_text = ''.join([w.word for w in acknowledged_words_in_window])
+        prefix_text = ''.join([w.word for u in self.state.unacknowledged_utterances for w in u.words])
         lang = self.guess_language(timestamp=max(0, self.state.acknowledged_ts))
         whisper_prompt = self.config.whisper_prompts[lang] if lang in self.config.whisper_prompts else self.config.whisper_prompts["en"]
         transcript_words = self.models.transcriber.transcribe(
@@ -483,19 +490,20 @@ class Verbatim:
 
     def process_audio_window(self) -> Generator[Tuple[VerbatimUtterance,List[VerbatimUtterance],List[VerbatimWord]], None, None]:
         while True:
+            # minimum number of samples to attempt transcription
+            min_audio_duration_samples = 16000
+            min_speech_duration_ms = 500
             utterances = []
             enable_vad = True
             if enable_vad and self.state.skip_silences:
                 self.state.skip_silences = False
+                self.skip_leading_silence(min_speech_duration_ms=min_speech_duration_ms)
+                if self.state.audio_ts - self.state.window_ts < min_audio_duration_samples:
+                    # we skipped all available audio - keep skipping silences and do nothing else for now
+                    self.state.skip_silences = True
 
-                voice_end = self.skip_leading_silence()
-
-                if voice_end <= 0:
-                    if self.state.audio_ts > self.state.window_ts:
-                        remaining_audio = self.state.audio_ts - self.state.window_ts
-                        self.state.advance_audio_window(remaining_audio)
-                        self.state.skip_silences = True
-                    return
+            if self.state.audio_ts - self.state.window_ts < min_audio_duration_samples:
+                return
 
             if self.config.debug:
                 self.dump_window_to_file(filename=f"{self.config.working_prefix_no_ext}-debug_window.wav")  # Dump current window for debugging
@@ -522,7 +530,14 @@ class Verbatim:
                 if len(acknowledged_utterances) > 0:
                     for u in acknowledged_utterances:
                         self.state.acknowledged_words += u.words
-                    self.state.acknowledged_ts = acknowledged_utterances[-1].end_ts
+
+                    # utterances are split at short pauses, advance a bit to avoid repeating the last word
+                    # but not too much as to skip the first word of the next utterance
+                    utterance_padding_ms = 100
+                    utterance_padding_samples = utterance_padding_ms * 16000 // 1000
+
+                    self.state.acknowledged_ts = acknowledged_utterances[-1].end_ts + utterance_padding_samples
+                    self.state.skip_silences = True
             else:
                 acknowledged_utterances = []
                 confirmed_utterances = []
