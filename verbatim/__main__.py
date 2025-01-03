@@ -2,10 +2,6 @@ import argparse
 import logging
 import os
 import sys
-import re
-
-import numpy as np
-import torch
 
 from .__init__ import __version__
 from .config import Config
@@ -16,7 +12,6 @@ from .transcript.format.writer import (
     ProbabilityStyle,
     LanguageStyle
 )
-from .audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
 
@@ -65,55 +60,6 @@ def load_env_file(env_path=".env"):
         print(f"Error while loading '{env_path}': {e}")
         return False
 
-def timestr_to_sample(timestr: str, sample_rate: int = 16000) -> int:
-    """
-    Converts a time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms
-    (milliseconds optional) to the corresponding sample index.
-
-    Args:
-        timestr (str): Time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms.
-        sample_rate (int): Sampling rate in Hz (default is 16000).
-
-    Returns:
-        int: The corresponding sample index.
-    """
-    # Define regex patterns for specific formats
-    hh_mm_ss_ms_pattern = re.compile(
-        r"^(?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
-    )
-    mm_ss_ms_pattern = re.compile(
-        r"^(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
-    )
-    ss_ms_pattern = re.compile(
-        r"^(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
-    )
-
-    # Match the input against patterns
-    if match := hh_mm_ss_ms_pattern.match(timestr.strip()):
-        hours = int(match.group("hours"))
-        minutes = int(match.group("minutes"))
-        seconds = int(match.group("seconds"))
-        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
-    elif match := mm_ss_ms_pattern.match(timestr.strip()):
-        hours = 0
-        minutes = int(match.group("minutes"))
-        seconds = int(match.group("seconds"))
-        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
-    elif match := ss_ms_pattern.match(timestr.strip()):
-        hours = 0
-        minutes = 0
-        seconds = int(match.group("seconds"))
-        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
-    else:
-        raise ValueError(f"Invalid time string format: {timestr}")
-
-    # Calculate total time in seconds
-    total_seconds = hours * 3600 + minutes * 60 + seconds + milliseconds / 1000.0
-
-    # Convert to sample index
-    return int(total_seconds * sample_rate)
-
-
 def configure_writers(config:Config, original_audio_file:str) -> TranscriptWriter:
     # pylint: disable=import-outside-toplevel
     from .transcript.format import (TextTranscriptWriter, MultiTranscriptWriter, AssTranscriptWriter,
@@ -135,42 +81,6 @@ def configure_writers(config:Config, original_audio_file:str) -> TranscriptWrite
     if config.enable_stdout_nocolor:
         multi_writer.add_writer(StdoutTranscriptWriter(config=config.write_config, with_colours=False))
     return multi_writer
-
-def configure_audio_source(config:Config) -> AudioSource:
-    # pylint: disable=import-outside-toplevel
-    from .audio.sources.micaudiosource import MicAudioSourcePyAudio as MicAudioSource
-    from .audio.sources.fileaudiosource import FileAudioSource
-    from .audio.sources.ffmpegfileaudiosource import PyAVAudioSource
-    from .audio.sources.pcmaudiosource import PCMInputStreamAudioSource
-
-    if config.input_source == "-":
-        return PCMInputStreamAudioSource(stream=sys.stdin, channels=1, sampling_rate=16000, dtype=np.int16)
-    elif config.input_source is None or config.input_source == ">":
-        return MicAudioSource()
-    else:
-        if os.path.splitext(config.input_source)[-1] == ".wav":
-            file_audio_source = FileAudioSource(config.input_source, start_sample=config.start_time, end_sample=config.stop_time)
-            if not config.stream:
-                if config.isolate is not None:
-                    file_audio_source.isolate_voices(out_path_prefix=config.isolate or None)
-                if not config.diarize is None:
-                    config.diarization = file_audio_source.compute_diarization(
-                        rttm_file=config.diarization_file, device=config.device, nb_speakers=config.diarize)
-
-            if config.diarization_file:
-                from .voices.diarization import Diarization
-                config.diarization = Diarization.load_diarization(rttm_file=config.diarization_file)
-        else:
-            if not config.stream and (config.isolate is not None or not config.diarize is None):
-                file_audio_source = PyAVAudioSource(file_path=config.input_source)
-                from .audio.sources.wavsink import WavSink
-                config.input_source = config.working_prefix_no_ext + '.wav'
-                WavSink.dump_to_wav(audio_source=file_audio_source, output_path=config.input_source)
-                return configure_audio_source(config)
-            else:
-                file_audio_source = PyAVAudioSource(
-                    file_path=config.input_source, start_time=config.start_time/16000, end_time=config.stop_time/16000 if config.stop_time else None)
-        return file_audio_source
 
 def main():
     class OptionalValueAction(argparse.Action):
@@ -243,33 +153,18 @@ def main():
     if hasattr(args, 'version') and args.version:
         return  # Exit if the version option is specified
 
-    config:Config = Config()
-    config.input_source = args.input
+    config:Config = Config(
+        use_cpu=args.cpu,
+        input_source=args.input,
+        outdir=args.outdir,
+        workdir=args.workdir,
+        stream=args.stream,
+        isolate=args.isolate,
+        diarize=args.diarize,
+        start_time=args.start_time,
+        stop_time=args.stop_time)
 
-    # Set the output directory
-    if not os.path.isdir(args.outdir):
-        os.makedirs(args.outdir)
-    config.output_dir = args.outdir
-    LOG.info(f"Output directory set to {config.output_dir}")
-
-    # Set the working directory
-    if args.workdir is None:
-        config.working_dir = os.getenv("TMPDIR", os.getenv("TEMP", os.getenv("TMP", ".")))
-    elif args.workdir == "":
-        config.working_dir = config.output_dir
-    else:
-        if not os.path.isdir(args.workdir):
-            os.makedirs(args.workdir)
-        config.working_dir = args.workdir
-    LOG.info(f"Working directory set to {config.working_dir}")
-
-    input_name_no_ext = os.path.splitext(os.path.split(config.input_source)[-1])[0]
-    config.output_prefix_no_ext = os.path.join(config.output_dir, input_name_no_ext)
-    config.working_prefix_no_ext = os.path.join(config.working_dir, input_name_no_ext)
-
-    # Set the output directory
-    config.start_time = timestr_to_sample(args.start_time) if args.start_time else None
-    config.stop_time = timestr_to_sample(args.stop_time) if args.stop_time else None
+    config.lang = args.languages if args.languages else ["en"]
 
     # Set output formats
     config.write_config.timestamp_style = args.format_timestamp
@@ -278,51 +173,28 @@ def main():
     config.write_config.language_style = args.format_language
     config.write_config.verbose = log_level <= logging.INFO
 
-    config.enable_ass = args.ass
-    config.enable_docx = args.docx
-    config.enable_txt = args.txt
-    config.enable_md = args.md
-    config.enable_json = args.json
-    config.enable_stdout = args.stdout
-    config.enable_stdout_nocolor = args.stdout_nocolor
+    output_formats = []
+    if args.ass:
+        output_formats.append("ass")
+    if args.docx:
+        output_formats.append("docx")
+    if args.txt:
+        output_formats.append("txt")
+    if args.md:
+        output_formats.append("md")
+    if args.json:
+        output_formats.append("json")
+    if args.stdout:
+        output_formats.append("stdout")
+    if args.stdout_nocolor:
+        output_formats.append("stdout-nocolor")
 
-    if args.cpu or not torch.cuda.is_available():
-        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
-        LOG.info("Using CPU")
-        config.device = "cpu"
-    else:
-        LOG.info("Using GPU")
-        config.device = "cuda"
-
-    config.stream = args.stream
-    if config.stream:
-        config.chunk_table = [
-            (0, 0.025),
-        ]
-        config.whisper_best_of = 3
-        config.whisper_beam_size = 3
-        config.whisper_patience = 3.0
-        config.whisper_temperatures = [0, 0.6]
-
-    config.lang = args.languages if args.languages else ["en", "fr"]
-    config.isolate = args.isolate
-    config.diarize = args.diarize
-    if config.diarize == '':
-        config.diarize = 0
-    elif config.diarize is not None:
-        config.diarize = int(config.diarize)
-
-    config.diarization_file = args.diarization
-    if config.diarization_file == "" or (config.diarize is not None and config.diarization_file is None):
-        config.diarization_file = config.output_prefix_no_ext + ".rttm"
-
-    config.source_stream = configure_audio_source(config)
-
-    writer:TranscriptWriter = configure_writers(config, original_audio_file=config.input_source)
+    config.configure_output_formats(output_formats=output_formats)
 
     # pylint: disable=import-outside-toplevel
     from .verbatim import Verbatim
     transcriber = Verbatim(config)
+    writer:TranscriptWriter = configure_writers(config, original_audio_file=config.input_source)
     writer.open(path_no_ext=config.output_prefix_no_ext)
     for utterance, unacknowledged, unconfirmed in transcriber.transcribe():
         writer.write(utterance=utterance, unacknowledged_utterance=unacknowledged, unconfirmed_words=unconfirmed)
