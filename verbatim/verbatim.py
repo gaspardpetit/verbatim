@@ -12,19 +12,18 @@ from colorama import Fore
 from pyannote.core.annotation import Annotation
 
 from .audio.sources.audiosource import AudioSource
-from .transcript.sentences import FastSentenceTokenizer, SentenceTokenizer, SaTSentenceTokenizer
 from .transcript.words import VerbatimWord, VerbatimUtterance
 from .audio.audio import samples_to_seconds
 from .config import Config
+from .models import Models
 from .transcript.format.txt import (
     TranscriptFormatter,
     COLORSCHEME_ACKNOWLEDGED,
     COLORSCHEME_UNACKNOWLEDGED,
     COLORSCHEME_UNCONFIRMED
 )
-from .voices.silences import SileroVoiceActivityDetection, VoiceActivityDetection
 #pylint: disable=unused-import
-from .voices.transcribe.transcribe import Transcriber, APPEND_PUNCTUATIONS, PREPEND_PUNCTUATIONS
+from .voices.transcribe.transcribe import APPEND_PUNCTUATIONS, PREPEND_PUNCTUATIONS
 
 # Configure logger
 LOG = logging.getLogger(__name__)
@@ -160,36 +159,19 @@ class Verbatim:
     state:State = None
     config:Config = None
 
-    def __init__(self, config:Config):
+    def __init__(self, config:Config, models=None):
         self.config = config
         self.state = State(config)
-
-        LOG.info("Initializing WhisperModel and audio stream.")
-        # pylint: disable=import-outside-toplevel
-        from .voices.transcribe.faster_whisper import FasterWhisperTranscriber
-        self.transcriber:Transcriber = FasterWhisperTranscriber(
-            model_size_or_path=config.whisper_model_size, device=config.device,
-            whisper_beam_size = config.whisper_beam_size,
-            whisper_best_of = config.whisper_best_of,
-            whisper_patience = config.whisper_patience,
-            whisper_temperatures = config.whisper_temperatures
-        )
-
-        LOG.info("Initializing Silero VAD model.")
-        self.vad:VoiceActivityDetection = SileroVoiceActivityDetection()
-
-        LOG.info("Initializing Sentence Tokenizer.")
-        if config.stream:
-            self.sentence_tokenizer: SentenceTokenizer = FastSentenceTokenizer()
-        else:
-            self.sentence_tokenizer: SentenceTokenizer = SaTSentenceTokenizer(config.device)
+        if models is None:
+            models = Models(device=config.device, stream=config.stream)
+        self.models = models
 
         if config.start_time != 0:
             self.state.window_ts = config.start_time
             self.state.audio_ts = config.start_time
 
     def skip_leading_silence(self) -> int:
-        voice_segments = self.vad.find_activity(audio=self.state.rolling_window.array)
+        voice_segments = self.models.vad.find_activity(audio=self.state.rolling_window.array)
         LOG.debug(f"Voice segments: {voice_segments}")
         if len(voice_segments) == 0:
             return 0
@@ -293,7 +275,7 @@ class Verbatim:
         lang_samples = audio[sample_offset:sample_offset + sample_duration]
         LOG.info(f"Detecting language using samples {sample_offset}({samples_to_seconds(sample_offset)}) "
                  f"to {sample_offset + sample_duration}({samples_to_seconds(sample_offset + sample_duration)})")
-        return self.transcriber.guess_language(audio=lang_samples, lang=lang)
+        return self.models.transcriber.guess_language(audio=lang_samples, lang=lang)
 
 
     def guess_language(self, timestamp:int):
@@ -327,10 +309,15 @@ class Verbatim:
         prefix_text = ''.join([w.word for w in acknowledged_words_in_window])
         lang = self.guess_language(timestamp=max(0, self.state.acknowledged_ts))
         whisper_prompt = self.config.whisper_prompts[lang] if lang in self.config.whisper_prompts else self.config.whisper_prompts["en"]
-        transcript_words = self.transcriber.transcribe(
+        transcript_words = self.models.transcriber.transcribe(
             audio=self.state.rolling_window.array,
             lang=lang, prompt=whisper_prompt, prefix=prefix_text,
-            window_ts=self.state.window_ts, audio_ts=self.state.audio_ts)
+            window_ts=self.state.window_ts, audio_ts=self.state.audio_ts,
+            whisper_beam_size = self.config.whisper_beam_size,
+            whisper_best_of = self.config.whisper_best_of,
+            whisper_patience = self.config.whisper_patience,
+            whisper_temperatures = self.config.whisper_temperatures,
+            )
 
         self.state.transcript_candidate_history.advance(self.state.window_ts)
         confirmed_words = self.state.transcript_candidate_history.confirm(
@@ -516,7 +503,7 @@ class Verbatim:
             confirmed_words, unconfirmed_words = self.transcribe_window()
             self.state.unconfirmed_words = unconfirmed_words
             if len(confirmed_words) > 0:
-                utterances = self.words_to_sentences(word_tokenizer=self.sentence_tokenizer, window_words=confirmed_words)
+                utterances = self.words_to_sentences(word_tokenizer=self.models.sentence_tokenizer, window_words=confirmed_words)
                 acknowledged_utterances, confirmed_utterances = self.acknowledge_utterances(utterances=utterances)
 
                 if self.config.diarization:
