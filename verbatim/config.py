@@ -101,7 +101,7 @@ class Config:
 
     def __init__(
             self, *,
-            input_source:Union[None,str], 
+            input_source:Union[None,str],
             outdir:Union[None,str] = ".", workdir:Union[None,str] = None,
             use_cpu:Union[None, bool] = None,
             stream:Union[None,bool] = False, isolate:Union[None,bool]=None, diarize:Union[None,int] = None,
