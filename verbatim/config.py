@@ -80,6 +80,7 @@ class Config:
     device: str = "cuda"
     stream: bool = False
     diarize:Union[int,None] = None
+    separate:bool = False
     whisper_beam_size: int = 9
     whisper_best_of: int = 9
     whisper_patience: float = 2.0
@@ -103,7 +104,8 @@ class Config:
             input_source:Union[None,str],
             outdir:Union[None,str] = ".", workdir:Union[None,str] = None,
             use_cpu:Union[None, bool] = None,
-            stream:Union[None,bool] = False, isolate:Union[None,bool]=None, diarize:Union[None,int] = None,
+            stream:Union[None,bool] = False, 
+            isolate:Union[None,bool]=None, diarize:Union[None,int] = None, separate:bool,
             start_time:Union[None,str] = "0", stop_time:Union[None,str] = None
             ):
 
@@ -233,6 +235,7 @@ class Config:
             self.configure_for_low_latency_streaming()
 
         self.isolate = isolate
+        self.separate = separate
         self.diarize = diarize
         if self.diarize == '':
             self.diarize = 0
@@ -298,7 +301,10 @@ class Config:
                 if not self.stream:
                     if self.isolate is not None:
                         file_audio_source.isolate_voices(out_path_prefix=self.isolate or None)
-                    if not self.diarize is None:
+                    if not self.separate:
+                        self.diarization = file_audio_source.separate_voices(
+                            rttm_file=self.diarization_file, device=self.device, nb_speakers=self.diarize)
+                    elif not self.diarize is None:
                         self.diarization = file_audio_source.compute_diarization(
                             rttm_file=self.diarization_file, device=self.device, nb_speakers=self.diarize)
 

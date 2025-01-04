@@ -31,7 +31,7 @@ class FileAudioSource(AudioSource):
         self.end_sample = end_sample
         self.start_sample = start_sample
 
-    def compute_diarization(self, device:str, rttm_file:str = None, nb_speakers:int = None) -> Annotation:
+    def compute_diarization(self, device:str, rttm_file:str = None, nb_speakers:Union[None,int] = None) -> Annotation:
         diarization = None
         try:
             diarization = Diarization(device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN"))
@@ -69,6 +69,9 @@ class FileAudioSource(AudioSource):
         finally:
             if voice_separator:
                 del voice_separator
+
+    def separate_voices(self, device:str, rttm_file:str = None, nb_speakers:Union[None,int] = None):
+        pass
 
     def setpos(self, new_sample_pos:int):
         file_samplerate = self.stream.getframerate()
