@@ -295,14 +295,21 @@ class Verbatim:
             return self.config.lang[0]
 
         lang_sample_start = max(0, timestamp - self.state.window_ts)
-        lang_samples_size = min(2 * 16000, self.state.audio_ts - self.state.window_ts - lang_sample_start)
+        available_samples = self.state.audio_ts - self.state.window_ts - lang_sample_start
+        lang_samples_size = min(2 * 16000, available_samples)
 
-        lang, _ = self._guess_language(
-            audio=self.state.rolling_window.array,
-            sample_offset=lang_sample_start,
-            sample_duration=lang_samples_size,
-            lang = self.config.lang
-            )
+        while True:
+            lang, prob = self._guess_language(
+                audio=self.state.rolling_window.array,
+                sample_offset=lang_sample_start,
+                sample_duration=lang_samples_size,
+                lang = self.config.lang
+                )
+            if prob > 0.5 or lang_samples_size == available_samples:
+                break
+            else:
+                # retry with larger sample
+                lang_samples_size = min(2 * lang_samples_size, available_samples)
         return lang
 
     def transcribe_window(self) -> Tuple[List[VerbatimWord], List[VerbatimWord]]:
@@ -560,7 +567,7 @@ class Verbatim:
                 self.state.advance_audio_window(shift_amount)
                 self.state.skip_silences = True
 
-            if len(utterances) <= 1:
+            if len(acknowledged_utterances) <= 1:
                 break
 
     def capture_audio(self, audio_source:AudioSource):
