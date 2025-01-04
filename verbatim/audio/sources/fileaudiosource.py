@@ -10,7 +10,7 @@ from .audiosource import AudioSource
 from ..audio import format_audio
 from ..audio import convert_mp3_to_wav
 from ...voices.diarization import Diarization
-from ...voices.isolation import VoiceSeparator
+from ...voices.isolation import VoiceIsolation
 
 LOG = logging.getLogger(__name__)
 
@@ -43,11 +43,11 @@ class FileAudioSource(AudioSource):
             if diarization:
                 del diarization
 
-    def isolate_voices(self, out_path_prefix:str=None):
+    def isolate_voices(self, out_path_prefix:Union[None,str]=None):
         LOG.info("Initializing Voice Isolation Model.")
-        voice_separator:Union[None, VoiceSeparator] = None
+        voice_isolation:Union[None, VoiceIsolation] = None
         try:
-            voice_separator = VoiceSeparator(log_level=LOG.level)
+            voice_isolation = VoiceIsolation(log_level=LOG.level)
             if not out_path_prefix:
                 basename, _ = os.path.splitext(os.path.basename(self.file_path))
                 voice_prefix = f"{basename}-voice"
@@ -61,7 +61,7 @@ class FileAudioSource(AudioSource):
                     voice_prefix = f"{basename}-voice"
                     noise_prefix = f"{basename}-noise"
 
-            self.file_path, _ = voice_separator.isolate_voice_in_file(
+            self.file_path, _ = voice_isolation.isolate_voice_in_file(
                 file=self.file_path,
                 out_voice=voice_prefix,
                 out_noise=noise_prefix,
