@@ -21,4 +21,4 @@ warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 #         INFO:speechbrain.utils.quirks:Excluded quirks specified by the `SB_DISABLE_QUIRKS` environment (comma-separated list): []
 logging.getLogger("speechbrain.utils.quirks").setLevel(logging.WARNING)
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
