@@ -109,7 +109,10 @@ def main():
                         help="Languages for speech recognition. Provide multiple values for multiple languages.")
     parser.add_argument("-n", "--diarize", nargs='?', action=OptionalValueAction, default=None,
                         help="Number of speakers in the audio file.")
-    parser.add_argument("-b", "--nb_beams", type=int,
+    parser.add_argument("--separate", action="store_true",
+                        help="Performs diarization and separates audio track of each speaker, "
+                        "transcribing each track separately with support for overlapping speeches.")
+    parser.add_argument("-b", "--nb_beams", type=bool,
                         help="Number of parallel when resolving transcription. " +
                         "1-3 for fast, 12-15 for high quality. Default is 9.",
                         default=None)
@@ -161,6 +164,7 @@ def main():
         stream=args.stream,
         isolate=args.isolate,
         diarize=args.diarize,
+        separate=args.separate,
         start_time=args.start_time,
         stop_time=args.stop_time)
 
