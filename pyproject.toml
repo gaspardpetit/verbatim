@@ -30,6 +30,9 @@ dependencies = [
     "wtpsplit>=2.1.2",
 ]
 
+[project.scripts]
+verbatim = "verbatim.cli:main"
+
 [project.optional-dependencies]
 cuda_gpu = ["onnxruntime-gpu>=1.16.0"]
 
