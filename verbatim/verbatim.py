@@ -197,7 +197,7 @@ class Verbatim:
         # skip leading silences
         if voice_start > 0:
             LOG.info(f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f}"
-                     f"and {samples_to_seconds(self.state.window_ts + voice_start):.2f}")
+                     f" and {samples_to_seconds(self.state.window_ts + voice_start):.2f}")
             self.state.advance_audio_window(voice_start)
             return voice_length + self.state.window_ts
 
@@ -313,8 +313,12 @@ class Verbatim:
         LOG.info(f"Valid audio range: 0.0 - {samples_to_seconds(self.state.audio_ts - self.state.window_ts)}")
 
         acknowledged_words_in_window = WhisperHistory.advance_transcript(timestamp=self.state.window_ts, transcript=self.state.acknowledged_words)
-        prefix_text = ''.join([w.word for u in self.state.unacknowledged_utterances for w in u.words])
         lang = self.guess_language(timestamp=max(0, self.state.acknowledged_ts))
+        prefix_text = ""
+        for word in [w for u in self.state.unacknowledged_utterances for w in u.words]:
+            if word.lang != lang:
+                break
+            prefix_text += word.word
         whisper_prompt = self.config.whisper_prompts[lang] if lang in self.config.whisper_prompts else self.config.whisper_prompts["en"]
         transcript_words = self.models.transcriber.transcribe(
             audio=self.state.rolling_window.array,
