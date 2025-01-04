@@ -307,9 +307,9 @@ class Verbatim:
                 )
             if prob > 0.5 or lang_samples_size == available_samples:
                 break
-            else:
-                # retry with larger sample
-                lang_samples_size = min(2 * lang_samples_size, available_samples)
+            # retry with larger sample
+            lang_samples_size = min(2 * lang_samples_size, available_samples)
+
         return lang
 
     def transcribe_window(self) -> Tuple[List[VerbatimWord], List[VerbatimWord]]:
