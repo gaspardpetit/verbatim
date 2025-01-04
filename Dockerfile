@@ -7,6 +7,7 @@ RUN apt-get update && \
     python3.10-dev \
     python3-pip \
     python3.10-venv \
+    portaudio19-dev \
     ffmpeg
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1
@@ -15,19 +16,20 @@ RUN pip install --upgrade pip
 
 ADD requirements.txt requirements.txt
 ADD setup.py setup.py
-ADD verbatim verbatim
+ADD verbatim/__init__.py verbatim/__init__.py
 ADD README.md README.md
+
 RUN pip install -r requirements.txt
-
 RUN pip install pyclean
-RUN pyclean verbatim
 
-ADD tests/data/init.mp3 init.mp3
+ADD verbatim verbatim
+RUN pyclean verbatim
 
 RUN python -m pip install --upgrade build
 RUN python -m build
 RUN pip install .
 RUN mkdir out
 
-ARG TOKEN_HUGGINGFACE
-RUN TOKEN_HUGGINGFACE=$TOKEN_HUGGINGFACE verbatim init.mp3 -vv
+ARG HUGGINGFACE_TOKEN
+ADD tests/data/init.mp3 init.mp3
+RUN HUGGINGFACE_TOKEN=$HUGGINGFACE_TOKEN verbatim init.mp3 --diarize -vv
