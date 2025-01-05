@@ -3,7 +3,7 @@ name: Pylint
 on: [push]
 
 jobs:
-  lint:
+  lint-analysis:
     runs-on: ubuntu-latest
     strategy:
       matrix:
