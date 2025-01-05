@@ -3,7 +3,7 @@ name: Flake8
 on: [push]
 
 jobs:
-  lint:
+  flake8:
     runs-on: ubuntu-latest
     strategy:
       matrix:
