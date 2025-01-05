@@ -16,11 +16,13 @@ LOG = logging.getLogger(__name__)
 
 
 class FileAudioSource(AudioSource):
-    diarization:Annotation
-    speaker_audio:Dict[str, np.array]
-    stream:wave.Wave_read = None
+    diarization: Annotation
+    speaker_audio: Dict[str, np.array]
+    stream: wave.Wave_read = None
 
-    def __init__(self, file: str, start_sample:int = 0, end_sample:Union[None, int] = None):
+    def __init__(
+        self, file: str, start_sample: int = 0, end_sample: Union[None, int] = None
+    ):
         super().__init__()
         self.file_path = file
         if self.file_path.endswith(".mp3"):
@@ -31,21 +33,29 @@ class FileAudioSource(AudioSource):
         self.end_sample = end_sample
         self.start_sample = start_sample
 
-    def compute_diarization(self, device:str, rttm_file:str = None, nb_speakers:int = None) -> Annotation:
+    def compute_diarization(
+        self, device: str, rttm_file: str = None, nb_speakers: int = None
+    ) -> Annotation:
         diarization = None
         try:
-            diarization = Diarization(device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN"))
+            diarization = Diarization(
+                device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN")
+            )
             if nb_speakers == 0:
                 nb_speakers = None
-            annotation = diarization.compute_diarization(file_path=self.file_path, out_rttm_file=rttm_file, nb_speakers=nb_speakers)
+            annotation = diarization.compute_diarization(
+                file_path=self.file_path,
+                out_rttm_file=rttm_file,
+                nb_speakers=nb_speakers,
+            )
             return annotation
         finally:
             if diarization:
                 del diarization
 
-    def isolate_voices(self, out_path_prefix:str=None):
+    def isolate_voices(self, out_path_prefix: str = None):
         LOG.info("Initializing Voice Isolation Model.")
-        voice_separator:Union[None, VoiceSeparator] = None
+        voice_separator: Union[None, VoiceSeparator] = None
         try:
             voice_separator = VoiceSeparator(log_level=LOG.level)
             if not out_path_prefix:
@@ -65,12 +75,12 @@ class FileAudioSource(AudioSource):
                 file=self.file_path,
                 out_voice=voice_prefix,
                 out_noise=noise_prefix,
-                )
+            )
         finally:
             if voice_separator:
                 del voice_separator
 
-    def setpos(self, new_sample_pos:int):
+    def setpos(self, new_sample_pos: int):
         file_samplerate = self.stream.getframerate()
         if file_samplerate != 16000:
             file_sample_pos = new_sample_pos * file_samplerate // 16000
@@ -83,14 +93,22 @@ class FileAudioSource(AudioSource):
         frames = self.stream.readframes(int(self.stream.getframerate() * chunk_length))
         sample_width = self.stream.getsampwidth()
         n_channels = self.stream.getnchannels()
-        dtype = np.int16 if sample_width == 2 else np.int32 if sample_width == 4 else np.uint8
+        dtype = (
+            np.int16
+            if sample_width == 2
+            else np.int32
+            if sample_width == 4
+            else np.uint8
+        )
         audio_array = np.frombuffer(frames, dtype=dtype)
         audio_array = audio_array.reshape(-1, n_channels)
 
         if len(audio_array) == 0:
             return audio_array
 
-        audio_array = format_audio(audio_array, from_sampling_rate=self.stream.getframerate())
+        audio_array = format_audio(
+            audio_array, from_sampling_rate=self.stream.getframerate()
+        )
 
         LOG.info("Finished reading audio chunk from file.")
         return audio_array
@@ -103,7 +121,7 @@ class FileAudioSource(AudioSource):
         return current_frame < total_frames
 
     def open(self):
-        self.stream = wave.open(self.file_path, 'rb')
+        self.stream = wave.open(self.file_path, "rb")
         if self.start_sample != 0:
             self.setpos(self.start_sample)
 

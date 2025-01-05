@@ -11,25 +11,31 @@ from ..audio.audio import format_audio
 # Configure logger
 LOG = logging.getLogger(__name__)
 
+
 class VoiceSeparator:
-    def __init__(self, log_level:int = logging.WARN, model_name:str = None):
+    def __init__(self, log_level: int = logging.WARN, model_name: str = None):
         if model_name is None:
-            #model_name = 'MDX23C-8KFFT-InstVoc_HQ.ckpt'
-            model_name = 'MDX23C-8KFFT-InstVoc_HQ_2.ckpt'
+            # model_name = 'MDX23C-8KFFT-InstVoc_HQ.ckpt'
+            model_name = "MDX23C-8KFFT-InstVoc_HQ_2.ckpt"
         self.separator = Separator(log_level=log_level, sample_rate=16000)
         self.separator.load_model(model_name)
 
-    def isolate_voice_in_file(self, file:str, out_voice:str = None, out_noise:str = None) -> Tuple[str, str]:
+    def isolate_voice_in_file(
+        self, file: str, out_voice: str = None, out_noise: str = None
+    ) -> Tuple[str, str]:
         if out_voice is None:
             out_voice = "debug_audio-vocals"
         if out_noise is None:
             out_noise = "debug_audio-instrumental"
 
         # Use MDX to separate vocals from the source audio
-        output_file_paths = self.separator.model_instance.separate(file, {
-            "Instrumental": out_noise,
-            "Vocals": out_voice,
-        })
+        output_file_paths = self.separator.model_instance.separate(
+            file,
+            {
+                "Instrumental": out_noise,
+                "Vocals": out_voice,
+            },
+        )
 
         # The separated files: instrument track and vocal track
         instrument_audio_path = output_file_paths[0]
@@ -51,8 +57,12 @@ class VoiceSeparator:
         voice_audio_path, _ = self.isolate_voice_in_file(file=temp_audio_file)
 
         # Load the vocal audio back into a NumPy array
-        voice_audio, voice_sampling_rate = librosa.load(voice_audio_path, sr=None, mono=False)
-        voice_audio = voice_audio.T # librosa formats (nchannel, samples) and we expect (samples, nchannels)
+        voice_audio, voice_sampling_rate = librosa.load(
+            voice_audio_path, sr=None, mono=False
+        )
+        voice_audio = (
+            voice_audio.T
+        )  # librosa formats (nchannel, samples) and we expect (samples, nchannels)
 
         # Format the vocal audio to mono and 16 kHz
         formatted_voice_audio = format_audio(voice_audio, voice_sampling_rate)
@@ -61,7 +71,12 @@ class VoiceSeparator:
         # ensure output has same length as input
         if len(formatted_voice_audio) < input_length:
             padding_length = input_length - formatted_voice_audio
-            formatted_voice_audio = np.pad(formatted_voice_audio, (0, padding_length), mode='constant', constant_values=0)
+            formatted_voice_audio = np.pad(
+                formatted_voice_audio,
+                (0, padding_length),
+                mode="constant",
+                constant_values=0,
+            )
         elif len(formatted_voice_audio) > input_length:
             formatted_voice_audio = formatted_voice_audio[:input_length]
 

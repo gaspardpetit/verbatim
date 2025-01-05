@@ -14,7 +14,7 @@ class MultiTranscriptWriter(TranscriptWriter):
     def get_extension(self):
         return ""
 
-    def open(self, path_no_ext:str):
+    def open(self, path_no_ext: str):
         for w in self.writers:
             w.open(path_no_ext)
 
@@ -22,12 +22,18 @@ class MultiTranscriptWriter(TranscriptWriter):
         for w in self.writers:
             w.close()
 
-    def write(self,
-              utterance:VerbatimUtterance,
-              unacknowledged_utterance:List[VerbatimUtterance] = None,
-              unconfirmed_words:List[VerbatimWord] = None):
+    def write(
+        self,
+        utterance: VerbatimUtterance,
+        unacknowledged_utterance: List[VerbatimUtterance] = None,
+        unconfirmed_words: List[VerbatimWord] = None,
+    ):
         for w in self.writers:
-            w.write(utterance=utterance, unacknowledged_utterance=unacknowledged_utterance, unconfirmed_words=unconfirmed_words)
+            w.write(
+                utterance=utterance,
+                unacknowledged_utterance=unacknowledged_utterance,
+                unconfirmed_words=unconfirmed_words,
+            )
 
-    def add_writer(self, writer:TranscriptWriter):
+    def add_writer(self, writer: TranscriptWriter):
         self.writers.append(writer)

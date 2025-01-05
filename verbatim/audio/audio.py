@@ -8,6 +8,7 @@ from scipy.signal import resample
 # Configure logger
 LOG = logging.getLogger(__name__)
 
+
 def format_audio(audio: np.ndarray, from_sampling_rate: int) -> np.ndarray:
     to_sampling_rate = 16000
 
@@ -43,29 +44,35 @@ def wav_to_int16(data):
     if data.dtype == np.float16:
         min_val = np.min(data)
         max_val = np.max(data)
-        n = max(math.fabs(min_val),math.fabs(max_val))
+        n = max(math.fabs(min_val), math.fabs(max_val))
         data = data / n
         return (data * np.iinfo(np.int16).max).astype(np.int16)
     if data.dtype == np.float32:
         min_val = np.min(data)
         max_val = np.max(data)
-        n = max(math.fabs(min_val),math.fabs(max_val))
+        n = max(math.fabs(min_val), math.fabs(max_val))
         data = data / n
         return (data * np.iinfo(np.int16).max).astype(np.int16)
     if data.dtype == np.float64:
         min_val = np.min(data)
         max_val = np.max(data)
-        n = max(math.fabs(min_val),math.fabs(max_val))
+        n = max(math.fabs(min_val), math.fabs(max_val))
         data = data / n
         return (data * np.iinfo(np.int16).max).astype(np.int16)
     if data.dtype == np.int8:
-        return (data * ((1.0 * np.iinfo(np.int16).max) / np.iinfo(np.int8).max)).astype(np.int16)
+        return (data * ((1.0 * np.iinfo(np.int16).max) / np.iinfo(np.int8).max)).astype(
+            np.int16
+        )
     if data.dtype == np.int32:
-        return (data * ((1.0 * np.iinfo(np.int16).max) / np.iinfo(np.int32).max)).astype(np.int16)
+        return (
+            data * ((1.0 * np.iinfo(np.int16).max) / np.iinfo(np.int32).max)
+        ).astype(np.int16)
     raise ValueError(f"unexpected: {data.dtype}")
 
-def samples_to_seconds(index:int):
+
+def samples_to_seconds(index: int):
     return index / 16000.0
+
 
 def convert_mp3_to_wav(input_mp3, output_wav):
     # Load the mp3 file

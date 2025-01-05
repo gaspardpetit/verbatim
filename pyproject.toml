@@ -1,0 +1,96 @@
+[project]
+name = "verbatim"
+dynamic = ["version"]
+description = "high quality multi-lingual speech to text"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [{ name = "Gaspard Petit", email = "gaspardpetit@gmail.com" }]
+keywords = [
+    "speech-to-text",
+    "audio processing",
+    "multilingual",
+    "natural language processing",
+    "automatic speech recognition",
+    "ASR",
+    "text transcription",
+    "language support",
+    "machine learning",
+    "deep learning",
+    "NLP",
+    "linguistics",
+    "voice recognition",
+    "PyTorch",
+    "TensorFlow",
+    "audio analysis",
+    "speech analytics",
+    "spoken language processing",
+    "i18n",
+    "internationalization",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Linguistic",
+    "Topic :: Multimedia :: Sound/Audio :: Analysis",
+    "License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "audio-separator>=0.18.0",
+    "av>=14.0.1",
+    "colorama>=0.4.6",
+    "dataclasses-json>=0.6.7",
+    "demucs>=4.0.1",
+    "faster-whisper>=1.1.1",
+    "langcodes>=3.5.0",
+    "numpy>=2.0.2",
+    "onnxruntime>=1.16.0",
+    "openai-whisper>=20240930",
+    "pyannote-audio[separation]>=3.3.2",
+    "pyannote-core>=5.0.0",
+    "pyaudio>=0.2.14",
+    "pydub>=0.25.1",
+    "python-docx>=1.1.2",
+    "silero-vad>=5.1.2",
+    "sounddevice>=0.5.1",
+    "soundfile>=0.13.0",
+    "speechbrain>=1.0.2",
+    "torch>=2.4.1",
+    "torchaudio>=2.4.1",
+    "wheel>=0.45.1",
+    "wtpsplit>=2.1.2",
+]
+
+[dependency-groups]
+dev = ["ruff>=0.8.6"]
+
+[project.optional-dependencies]
+cuda_gpu = ["onnxruntime-gpu>=1.16.0"]
+
+[project.urls]
+Homepage = "https://github.com/gaspardpetit/verbatim"
+
+[project.scripts]
+verbatim = "verbatim.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = ["verbatim/**/*"]
+
+[tool.hatch.version]
+path = "verbatim/__init__.py"
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"

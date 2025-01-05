@@ -3,9 +3,12 @@ import numpy as np
 
 from .audiosource import AudioSource
 
+
 class WavSink:
     @staticmethod
-    def dump_to_wav(audio_source: AudioSource, output_path: str, sample_rate:int = 16000):
+    def dump_to_wav(
+        audio_source: AudioSource, output_path: str, sample_rate: int = 16000
+    ):
         """
         Dump the entire audio content from PyAVAudioSource to a .wav file.
         """
@@ -13,7 +16,7 @@ class WavSink:
         audio_source.open()
 
         # pylint: disable=no-member
-        with wave.open(output_path, 'w') as wav_file:
+        with wave.open(output_path, "w") as wav_file:
             # Set WAV parameters
             num_channels = 1  # Mono
             sample_width = 2  # 16-bit PCM
