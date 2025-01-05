@@ -64,15 +64,13 @@ def load_env_file(env_path=".env"):
 
 def configure_writers(config: Config, original_audio_file: str) -> TranscriptWriter:
     # pylint: disable=import-outside-toplevel
-    from .transcript.format import (
-        TextTranscriptWriter,
-        MultiTranscriptWriter,
-        AssTranscriptWriter,
-        DocxTranscriptWriter,
-        MarkdownTranscriptWriter,
-        JsonTranscriptWriter,
-        StdoutTranscriptWriter,
-    )
+    from .transcript.format.txt import TextTranscriptWriter
+    from .transcript.format.multi import MultiTranscriptWriter
+    from .transcript.format.ass import AssTranscriptWriter
+    from .transcript.format.docx import DocxTranscriptWriter
+    from .transcript.format.md import MarkdownTranscriptWriter
+    from .transcript.format.json import JsonTranscriptWriter
+    from .transcript.format.stdout import StdoutTranscriptWriter
 
     multi_writer: MultiTranscriptWriter = MultiTranscriptWriter()
     if config.enable_txt:
