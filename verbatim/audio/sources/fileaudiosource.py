@@ -67,8 +67,8 @@ class FileAudioSource(AudioSource):
                 out_noise=noise_prefix,
                 )
         finally:
-            if voice_separator:
-                del voice_separator
+            if voice_isolation:
+                del voice_isolation
 
     def separate_voices(self, device:str, rttm_file:str = None, nb_speakers:Union[None,int] = None):
         pass
