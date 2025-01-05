@@ -14,7 +14,7 @@ class Models:
     def __init__(
             self,
             device:str,
-            whisper_model_size:str = "nyrahealth/faster_CrisperWhisper",
+            whisper_model_size:str = "large-v3",
             stream:bool = False
         ):
         LOG.info("Initializing WhisperModel and audio stream.")
