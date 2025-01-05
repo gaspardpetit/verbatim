@@ -3,6 +3,7 @@ import logging
 
 import numpy as np
 import av
+
 # pylint: disable=no-name-in-module
 from av.audio.resampler import AudioResampler
 from av.audio.frame import AudioFrame
@@ -11,6 +12,7 @@ from av.audio.frame import AudioFrame
 from .audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
+
 
 class PyAVAudioSource(AudioSource):
     """
@@ -74,7 +76,11 @@ class PyAVAudioSource(AudioSource):
         if self.start_time > 0:
             # av.seek() or container.seek() uses timestamps in AV_TIME_BASE units
             # but PyAV usually accepts "seconds" if we specify 'any' for backward flag
-            self._container.seek(int(self.start_time / self._stream.time_base), any_frame=False, stream=self._stream)
+            self._container.seek(
+                int(self.start_time / self._stream.time_base),
+                any_frame=False,
+                stream=self._stream,
+            )
             LOG.info(f"Seeking to {self.start_time} seconds.")
 
         # We create a generator that decodes frames from the audio stream
@@ -101,9 +107,9 @@ class PyAVAudioSource(AudioSource):
         needed_samples = int(chunk_length * self.target_sample_rate)
 
         resampler = AudioResampler(
-            format='flt',     # float32
-            layout='mono',    # 1 channel
-            rate=16000        # target samplerate
+            format="flt",  # float32
+            layout="mono",  # 1 channel
+            rate=16000,  # target samplerate
         )
 
         # Keep reading frames from PyAV until we have enough
@@ -123,14 +129,18 @@ class PyAVAudioSource(AudioSource):
                 # In PyAV, each stream has time_base -> frame_time = frame.pts * stream.time_base
                 current_time_sec = float(frame.pts * self._stream.time_base)
                 if current_time_sec > self.end_time:
-                    LOG.info(f"Reached end_time={self.end_time:.2f}s (current={current_time_sec:.2f}s). Stopping.")
+                    LOG.info(
+                        f"Reached end_time={self.end_time:.2f}s (current={current_time_sec:.2f}s). Stopping."
+                    )
                     self._done_decoding = True
                     break
 
             # Resample to your desired format
-            new_frames:list[AudioFrame] = resampler.resample(frame)
+            new_frames: list[AudioFrame] = resampler.resample(frame)
             for new_frame in new_frames:
-                new_frame = new_frame.to_ndarray().astype(np.float32, copy=False).squeeze()
+                new_frame = (
+                    new_frame.to_ndarray().astype(np.float32, copy=False).squeeze()
+                )
                 self._sample_buffer = np.concatenate([self._sample_buffer, new_frame])
 
         # By now, we either have enough samples or we hit EOF

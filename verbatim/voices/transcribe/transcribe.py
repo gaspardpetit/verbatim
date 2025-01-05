@@ -7,8 +7,8 @@ from ...transcript.words import VerbatimWord
 
 LOG = logging.getLogger(__name__)
 
-PREPEND_PUNCTUATIONS="\"'“¿([{-"
-APPEND_PUNCTUATIONS="\"'.。,;，!！?？:：”)]}、"
+PREPEND_PUNCTUATIONS = "\"'“¿([{-"
+APPEND_PUNCTUATIONS = "\"'.。,;，!！?？:：”)]}、"
 
 
 class WhisperConfig:
@@ -23,20 +23,25 @@ class WhisperConfig:
         self.logprob_threshold = -1.0
         self.compression_ratio_threshold = 2.4
 
+
 class Transcriber:
     @abstractmethod
-    def guess_language(self, audio:np.array, lang:List[str]) -> Tuple[str, float]:
+    def guess_language(self, audio: np.array, lang: List[str]) -> Tuple[str, float]:
         pass
 
     @abstractmethod
     def transcribe(
-        self, *,
-        audio:np.array,
-        lang: str, prompt: str, prefix: str,
-        window_ts:int, audio_ts:int,
-        whisper_beam_size:int = 3,
-        whisper_best_of:int = 3,
-        whisper_patience:float = 1.0,
-        whisper_temperatures:List[float] = None
+        self,
+        *,
+        audio: np.array,
+        lang: str,
+        prompt: str,
+        prefix: str,
+        window_ts: int,
+        audio_ts: int,
+        whisper_beam_size: int = 3,
+        whisper_best_of: int = 3,
+        whisper_patience: float = 1.0,
+        whisper_temperatures: List[float] = None,
     ) -> List[VerbatimWord]:
         pass

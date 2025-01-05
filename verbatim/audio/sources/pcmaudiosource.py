@@ -7,6 +7,7 @@ from .audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
 
+
 class PCMInputStreamAudioSource(AudioSource):
     stream: BinaryIO
     channels: int
@@ -14,7 +15,13 @@ class PCMInputStreamAudioSource(AudioSource):
     dtype: np.dtype
     _has_more: bool
 
-    def __init__(self, stream: BinaryIO, channels: int = 1, sampling_rate: int = 16000, dtype=np.int16):
+    def __init__(
+        self,
+        stream: BinaryIO,
+        channels: int = 1,
+        sampling_rate: int = 16000,
+        dtype=np.int16,
+    ):
         super().__init__()
         self.stream = stream
         self.channels = channels
@@ -25,7 +32,9 @@ class PCMInputStreamAudioSource(AudioSource):
     def next_chunk(self, chunk_length=1) -> np.ndarray:
         # Calculate the number of bytes needed per chunk
         bytes_per_sample = np.dtype(self.dtype).itemsize
-        bytes_needed = chunk_length * self.sampling_rate * self.channels * bytes_per_sample
+        bytes_needed = (
+            chunk_length * self.sampling_rate * self.channels * bytes_per_sample
+        )
 
         # Buffer to store the read bytes
         input_data = bytearray()
@@ -40,7 +49,9 @@ class PCMInputStreamAudioSource(AudioSource):
 
         # Convert the byte data to a NumPy array
         samples = np.frombuffer(input_data, dtype=self.dtype)
-        return samples[:bytes_needed // bytes_per_sample]  # Ensure the array is the correct length
+        return samples[
+            : bytes_needed // bytes_per_sample
+        ]  # Ensure the array is the correct length
 
     def open(self):
         # caller is responsible for the lifecycle of the stream
