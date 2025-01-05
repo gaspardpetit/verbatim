@@ -53,6 +53,8 @@ dependencies = [
     "langcodes>=3.5.0",
     "numpy<=1.26.3",
     "onnxruntime>=1.16.0",
+    "onnxruntime>=1.16.0 ; python_version > '3.9'",
+    "onnxruntime<1.20 ; python_version <= '3.9'", # see https://github.com/astral-sh/uv/issues/9425
     "openai-whisper>=20240930",
     "pyannote-audio[separation]>=3.3.2",
     "pyannote-core>=5.0.0",
@@ -76,7 +78,8 @@ dev = ["ruff>=0.8.6"]
 
 [project.optional-dependencies]
 cuda_gpu = [
-    "onnxruntime-gpu>=1.16.0"
+    "onnxruntime-gpu>=1.16.0 ; python_version > '3.9'",
+    "onnxruntime-gpu<1.20 ; python_version <= '3.9'", # see https://github.com/astral-sh/uv/issues/9425
 ]
 
 [project.urls]
