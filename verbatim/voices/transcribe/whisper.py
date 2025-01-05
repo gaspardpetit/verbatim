@@ -107,6 +107,7 @@ class WhisperTranscriber(Transcriber):
         words: List[VerbatimWord] = []
         for segment in transcript["segments"]:
             # pylint: disable=unused-variable
+            # ruff: noqa: F841
             segment_id: int = segment.get("id")
             segment_seek: int = segment.get("seek")
             segment_start: str = segment.get("start")

@@ -341,7 +341,7 @@ class Config:
                         file_audio_source.isolate_voices(
                             out_path_prefix=self.isolate or None
                         )
-                    if not self.diarize is None:
+                    if self.diarize is not None:
                         self.diarization = file_audio_source.compute_diarization(
                             rttm_file=self.diarization_file,
                             device=self.device,
@@ -356,7 +356,7 @@ class Config:
                     )
             else:
                 if not self.stream and (
-                    self.isolate is not None or not self.diarize is None
+                    self.isolate is not None or self.diarize is not None
                 ):
                     file_audio_source = PyAVAudioSource(file_path=self.input_source)
                     from .audio.sources.wavsink import WavSink
