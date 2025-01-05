@@ -3,9 +3,12 @@ from abc import abstractmethod
 import numpy as np
 
 class AudioSource:
-    start_offset:int = 0 # start time in samples
-    def __init__(self):
-        pass
+    start_offset:int # start time in samples
+    input_source:str # filename or representative name
+
+    def __init__(self, name:str, start_offset:int = 0):
+        self.input_source = name
+        self.start_offset = start_offset
 
     @abstractmethod
     def next_chunk(self, chunk_length=1) -> np.ndarray:

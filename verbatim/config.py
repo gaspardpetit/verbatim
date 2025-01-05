@@ -53,9 +53,6 @@ class Config:
     output_prefix_no_ext:str = "out"
     working_prefix_no_ext:str = "out"
 
-    # INPUT
-    input_source:str = None
-
     def __init__(
             self, *,
             outdir:Union[None,str] = ".", workdir:Union[None,str] = None,
@@ -218,11 +215,10 @@ class Config:
 
 
     def configure_audio_source(self, input_source:str, start_time:Union[None,str] = None, stop_time:Union[None,str] = None) -> AudioSource:
-        self.input_source = input_source
         if os.path.exists(input_source) is False:
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), input_source)
 
-        input_name_no_ext = os.path.splitext(os.path.split(self.input_source)[-1])[0]
+        input_name_no_ext = os.path.splitext(os.path.split(input_source)[-1])[0]
         self.output_prefix_no_ext = os.path.join(self.output_dir, input_name_no_ext)
         self.working_prefix_no_ext = os.path.join(self.working_dir, input_name_no_ext)
 
@@ -234,33 +230,33 @@ class Config:
         stop_time_sample = timestr_to_sample(stop_time) if stop_time else None
 
         # pylint: disable=import-outside-toplevel
-        if self.input_source == "-":
+        if input_source == "-":
             from .audio.sources.pcmaudiosource import PCMInputStreamAudioSource
-            return PCMInputStreamAudioSource(stream=sys.stdin, channels=1, sampling_rate=16000, dtype=np.int16)
+            return PCMInputStreamAudioSource(name="<stdin>", stream=sys.stdin, channels=1, sampling_rate=16000, dtype=np.int16)
 
-        if self.input_source is None or self.input_source == ">":
+        if input_source is None or input_source == ">":
             from .audio.sources.micaudiosource import (
                 MicAudioSourcePyAudio as MicAudioSource,
             )
             return MicAudioSource()
 
-        if os.path.splitext(self.input_source)[-1] != ".wav":
+        if os.path.splitext(input_source)[-1] != ".wav":
             from .audio.sources.ffmpegfileaudiosource import PyAVAudioSource
             if not(not self.stream and (self.isolate is not None or not self.diarize is None)):
                 file_audio_source = PyAVAudioSource(
-                    file_path=self.input_source,
+                    file_path=input_source,
                     start_time=samples_to_seconds(start_time_sample),
                     end_time=samples_to_seconds(stop_time_sample) if stop_time_sample else None)
                 return file_audio_source
 
-            file_audio_source = PyAVAudioSource(file_path=self.input_source)
+            file_audio_source = PyAVAudioSource(file_path=input_source)
             from .audio.sources.wavsink import WavSink
-            self.input_source = self.working_prefix_no_ext + '.wav'
-            WavSink.dump_to_wav(audio_source=file_audio_source, output_path=self.input_source)
-            return self.configure_audio_source(input_source=self.input_source, start_time=start_time, stop_time=stop_time)
+            input_source = self.working_prefix_no_ext + '.wav'
+            WavSink.dump_to_wav(audio_source=file_audio_source, output_path=input_source)
+            return self.configure_audio_source(input_source=input_source, start_time=start_time, stop_time=stop_time)
 
         from .audio.sources.fileaudiosource import FileAudioSource
-        file_audio_source = FileAudioSource(self.input_source, start_sample=start_time_sample, end_sample=stop_time_sample)
+        file_audio_source = FileAudioSource(input_source, start_sample=start_time_sample, end_sample=stop_time_sample)
         if not self.stream:
             if self.isolate is not None:
                 file_audio_source.isolate_voices(out_path_prefix=self.isolate or None)

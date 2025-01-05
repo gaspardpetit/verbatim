@@ -22,7 +22,7 @@ class FileAudioSource(AudioSource):
     file_path:str
 
     def __init__(self, file: str, start_sample:int = 0, end_sample:Union[None, int] = None):
-        super().__init__()
+        super().__init__(name=file, start_offset=start_sample)
         self.file_path = file
         if self.file_path.endswith(".mp3"):
             # Convert mp3 to wav
@@ -30,7 +30,6 @@ class FileAudioSource(AudioSource):
             convert_mp3_to_wav(self.file_path, wav_file_path)
             self.file_path = wav_file_path
         self.end_sample = end_sample
-        self.start_offset = start_sample
 
     def compute_diarization(self, device:str, rttm_file:str = None, nb_speakers:Union[None,int] = None) -> Annotation:
         diarization = None

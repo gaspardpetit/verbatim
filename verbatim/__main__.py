@@ -197,11 +197,8 @@ def main():
     from .verbatim import Verbatim
     from .audio.sources.audiosource import AudioSource
     transcriber = Verbatim(config)
-    source_stream:AudioSource = config.configure_audio_source(
-        input_source=args.input,
-        start_time=args.start_time,
-        stop_time=args.stop_time)
-    writer:TranscriptWriter = configure_writers(config, original_audio_file=config.input_source)
+    source_stream:AudioSource = config.configure_audio_source(input_source=args.input, start_time=args.start_time, stop_time=args.stop_time)
+    writer:TranscriptWriter = configure_writers(config, original_audio_file=source_stream.input_source)
     writer.open(path_no_ext=config.output_prefix_no_ext)
     for utterance, unacknowledged, unconfirmed in transcriber.transcribe(source_stream):
         writer.write(utterance=utterance, unacknowledged_utterance=unacknowledged, unconfirmed_words=unconfirmed)

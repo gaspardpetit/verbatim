@@ -68,6 +68,9 @@ def wav_to_int16(data):
 def samples_to_seconds(index:int) -> float:
     return index / 16000.0
 
+def seconds_to_samples(seconds:float) -> int:
+    return int(seconds * 16000)
+
 def timestr_to_sample(timestr: str, sample_rate: int = 16000) -> int:
     """
     Converts a time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms

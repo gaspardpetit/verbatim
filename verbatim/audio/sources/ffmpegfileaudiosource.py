@@ -6,6 +6,7 @@ import av
 # pylint: disable=no-name-in-module
 from av.audio.resampler import AudioResampler
 from av.audio.frame import AudioFrame
+from ..audio import seconds_to_samples, samples_to_seconds
 
 
 from .audiosource import AudioSource
@@ -35,10 +36,9 @@ class PyAVAudioSource(AudioSource):
         :param start_time: Seek to this time (seconds) before reading
         :param end_time: Stop reading after this time (seconds) from start
         """
-        super().__init__()
+        super().__init__(name=file_path, start_offset=seconds_to_samples(start_time))
         self.file_path = file_path
         self.target_sample_rate = target_sample_rate
-        self.start_time = start_time
         self.end_time = end_time
 
         # Internals
@@ -71,11 +71,12 @@ class PyAVAudioSource(AudioSource):
         # E.g., self._stream.codec_context.sample_rate = self.target_sample_rate
 
         # If we want to seek to `start_time`, do so in seconds:
-        if self.start_time > 0:
+        start_time = samples_to_seconds(self.start_offset)
+        if start_time > 0:
             # av.seek() or container.seek() uses timestamps in AV_TIME_BASE units
             # but PyAV usually accepts "seconds" if we specify 'any' for backward flag
-            self._container.seek(int(self.start_time / self._stream.time_base), any_frame=False, stream=self._stream)
-            LOG.info(f"Seeking to {self.start_time} seconds.")
+            self._container.seek(int(start_time / self._stream.time_base), any_frame=False, stream=self._stream)
+            LOG.info(f"Seeking to {start_time} seconds.")
 
         # We create a generator that decodes frames from the audio stream
         # This is the raw frames from the container
