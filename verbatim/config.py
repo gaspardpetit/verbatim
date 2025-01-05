@@ -104,7 +104,7 @@ class Config:
             input_source:Union[None,str],
             outdir:Union[None,str] = ".", workdir:Union[None,str] = None,
             use_cpu:Union[None, bool] = None,
-            stream:Union[None,bool] = False, 
+            stream:Union[None,bool] = False,
             isolate:Union[None,bool]=None, diarize:Union[None,int] = None, separate:bool = False,
             start_time:Union[None,str] = "0", stop_time:Union[None,str] = None
             ):
@@ -302,7 +302,7 @@ class Config:
                     if self.isolate is not None:
                         file_audio_source.isolate_voices(out_path_prefix=self.isolate or None)
                     if not self.separate:
-                        self.diarization = file_audio_source.separate_voices(
+                        file_audio_source.separate_voices(
                             rttm_file=self.diarization_file, device=self.device, nb_speakers=self.diarize)
                     elif not self.diarize is None:
                         self.diarization = file_audio_source.compute_diarization(
