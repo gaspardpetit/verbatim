@@ -1,5 +1,6 @@
 import logging
 import math
+import re
 
 import numpy as np
 from pydub import AudioSegment
@@ -64,8 +65,56 @@ def wav_to_int16(data):
         return (data * ((1.0 * np.iinfo(np.int16).max) / np.iinfo(np.int32).max)).astype(np.int16)
     raise ValueError(f"unexpected: {data.dtype}")
 
-def samples_to_seconds(index:int):
+def samples_to_seconds(index:int) -> float:
     return index / 16000.0
+
+def timestr_to_sample(timestr: str, sample_rate: int = 16000) -> int:
+    """
+    Converts a time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms
+    (milliseconds optional) to the corresponding sample index.
+
+    Args:
+        timestr (str): Time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms.
+        sample_rate (int): Sampling rate in Hz (default is 16000).
+
+    Returns:
+        int: The corresponding sample index.
+    """
+    # Define regex patterns for specific formats
+    hh_mm_ss_ms_pattern = re.compile(
+        r"^(?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
+    )
+    mm_ss_ms_pattern = re.compile(
+        r"^(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
+    )
+    ss_ms_pattern = re.compile(
+        r"^(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
+    )
+
+    # Match the input against patterns
+    if match := hh_mm_ss_ms_pattern.match(timestr.strip()):
+        hours = int(match.group("hours"))
+        minutes = int(match.group("minutes"))
+        seconds = int(match.group("seconds"))
+        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
+    elif match := mm_ss_ms_pattern.match(timestr.strip()):
+        hours = 0
+        minutes = int(match.group("minutes"))
+        seconds = int(match.group("seconds"))
+        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
+    elif match := ss_ms_pattern.match(timestr.strip()):
+        hours = 0
+        minutes = 0
+        seconds = int(match.group("seconds"))
+        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
+    else:
+        raise ValueError(f"Invalid time string format: {timestr}")
+
+    # Calculate total time in seconds
+    total_seconds = hours * 3600 + minutes * 60 + seconds + milliseconds / 1000.0
+
+    # Convert to sample index
+    return int(total_seconds * sample_rate)
 
 def convert_mp3_to_wav(input_mp3, output_wav):
     # Load the mp3 file
