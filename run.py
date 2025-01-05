@@ -1,5 +1,5 @@
 import sys
-from verbatim.cli import main
+from verbatim.main import main
 
 sys.argv = [
     "run.py",
