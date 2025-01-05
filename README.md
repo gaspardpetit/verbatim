@@ -37,9 +37,10 @@ This project requires access to the pyannote models which are gated:
 2. Request access to the model at https://huggingface.co/pyannote/speaker-diarization-3.1
 3. Request access to the model at https://huggingface.co/pyannote/segmentation-3.0
 4. From your `Settings` > `Access Tokens`, generate an access token
-5. When running verbatim for the first time, set the `TOKEN_HUGGINGFACE` environment variable to your Hugging Face token. Once the model is downloaded, this is no longer necessary. 
+5. When running verbatim for the first time, set the `HUGGINGFACE_TOKEN` environment variable to your Hugging Face token. Once the model is downloaded, this is no longer necessary. 
 
-Instead of setting `TOKEN_HUGGINGFACE` environment variable, you may prefer to set the value using a `.env` file in the current directory like this:
+Instead of setting `HUGGINGFACE_TOKEN` environment variable, you may prefer to set the value using a `.env` file in the current directory like this:
+
 #### .env
 ```bash
 HUGGINGFACE_TOKEN=hf_******
