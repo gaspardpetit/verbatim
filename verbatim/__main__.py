@@ -158,15 +158,13 @@ def main():
 
     config:Config = Config(
         use_cpu=args.cpu,
-        input_source=args.input,
         outdir=args.outdir,
         workdir=args.workdir,
         stream=args.stream,
         isolate=args.isolate,
         diarize=args.diarize,
         separate=args.separate,
-        start_time=args.start_time,
-        stop_time=args.stop_time)
+        )
 
     config.lang = args.languages if args.languages else ["en"]
 
@@ -197,10 +195,15 @@ def main():
 
     # pylint: disable=import-outside-toplevel
     from .verbatim import Verbatim
+    from .audio.sources.audiosource import AudioSource
     transcriber = Verbatim(config)
+    source_stream:AudioSource = config.configure_audio_source(
+        input_source=args.input,
+        start_time=args.start_time,
+        stop_time=args.stop_time)
     writer:TranscriptWriter = configure_writers(config, original_audio_file=config.input_source)
     writer.open(path_no_ext=config.output_prefix_no_ext)
-    for utterance, unacknowledged, unconfirmed in transcriber.transcribe(config.source_stream):
+    for utterance, unacknowledged, unconfirmed in transcriber.transcribe(source_stream):
         writer.write(utterance=utterance, unacknowledged_utterance=unacknowledged, unconfirmed_words=unconfirmed)
     writer.close()
 

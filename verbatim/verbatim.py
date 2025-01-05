@@ -5,7 +5,7 @@ import wave
 import traceback
 from dataclasses import dataclass, field
 from io import StringIO
-from typing import List, Tuple, TextIO, Generator
+from typing import List, Tuple, TextIO, Generator, Union
 
 import numpy as np
 from colorama import Fore
@@ -158,19 +158,15 @@ class State:
 
 
 class Verbatim:
-    state:State = None
-    config:Config = None
+    state:Union[None,State] = None
+    config:Config
+    models:Models
 
     def __init__(self, config:Config, models=None):
         self.config = config
-        self.state = State(config)
         if models is None:
             models = Models(device=config.device, stream=config.stream)
         self.models = models
-
-        if config.start_time != 0:
-            self.state.window_ts = config.start_time
-            self.state.audio_ts = config.start_time
 
     def skip_leading_silence(self, min_speech_duration_ms:int = 500) -> int:
         min_speech_duration_ms = 750
@@ -581,7 +577,10 @@ class Verbatim:
         return True
 
     def transcribe(self, source_stream:AudioSource) -> Generator[Tuple[VerbatimUtterance,List[VerbatimUtterance],List[VerbatimWord]], None, None]:
-        self.state.rolling_window.reset()  # Initialize empty rolling window
+        if source_stream.start_offset != 0:
+            self.state.window_ts = source_stream.start_offset
+            self.state.audio_ts = source_stream.start_offset
+        self.state = State(self.config)
 
         try:
             source_stream.open()

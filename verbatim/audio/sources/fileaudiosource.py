@@ -18,7 +18,6 @@ LOG = logging.getLogger(__name__)
 class FileAudioSource(AudioSource):
     diarization:Union[None,Annotation] = None
     stream:wave.Wave_read = None
-    start_sample:int = 0
     end_sample:Union[None,int] = None
     file_path:str
 
@@ -31,7 +30,7 @@ class FileAudioSource(AudioSource):
             convert_mp3_to_wav(self.file_path, wav_file_path)
             self.file_path = wav_file_path
         self.end_sample = end_sample
-        self.start_sample = start_sample
+        self.start_offset = start_sample
 
     def compute_diarization(self, device:str, rttm_file:str = None, nb_speakers:Union[None,int] = None) -> Annotation:
         diarization = None
@@ -109,8 +108,8 @@ class FileAudioSource(AudioSource):
 
     def open(self):
         self.stream = wave.open(self.file_path, 'rb')
-        if self.start_sample != 0:
-            self.setpos(self.start_sample)
+        if self.start_offset != 0:
+            self.setpos(self.start_offset)
 
     def close(self):
         self.stream.close()
