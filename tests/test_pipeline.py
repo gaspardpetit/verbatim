@@ -22,5 +22,5 @@ if __name__ == '__main__':
     print(os.getcwd())
     config:Config = Config(input_source="tests/data/init.mp3", use_cpu=True).configure_languages(["fr", "en"])
     verbatim:Verbatim = Verbatim(config=config)
-    for utterance in verbatim.transcribe():
-        print(utterance.text)
+    for acknowledged_utterances, unacknowledged_utterances, unconfirmed_words in verbatim.transcribe(config.source_stream):
+        print(acknowledged_utterances.text)

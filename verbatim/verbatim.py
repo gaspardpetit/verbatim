@@ -580,14 +580,14 @@ class Verbatim:
         self.state.append_audio_to_window(audio_array)
         return True
 
-    def transcribe(self) -> Generator[Tuple[VerbatimUtterance,List[VerbatimUtterance],List[VerbatimWord]], None, None]:
+    def transcribe(self, source_stream:AudioSource) -> Generator[Tuple[VerbatimUtterance,List[VerbatimUtterance],List[VerbatimWord]], None, None]:
         self.state.rolling_window.reset()  # Initialize empty rolling window
 
         try:
-            self.config.source_stream.open()
+            source_stream.open()
             LOG.info("Starting main loop for audio transcription.")
             while True:
-                has_more_audio = self.capture_audio(audio_source=self.config.source_stream)
+                has_more_audio = self.capture_audio(audio_source=source_stream)
                 had_utterances = False
 
                 # capture any utterance that slipped out of the current window
@@ -656,4 +656,4 @@ class Verbatim:
                 unconfirmed_utterance.speaker = self.assign_speaker(unconfirmed_utterance, self.config.diarization)
                 yield unconfirmed_utterance, [], []
 
-            self.config.source_stream.close()
+            source_stream.close()
