@@ -1,7 +1,7 @@
 import logging
 import os
 import wave
-from typing import Dict, Union
+from typing import Union
 
 import numpy as np
 from pyannote.core.annotation import Annotation
@@ -16,9 +16,11 @@ LOG = logging.getLogger(__name__)
 
 
 class FileAudioSource(AudioSource):
-    diarization:Annotation
-    speaker_audio:Dict[str, np.array]
+    diarization:Union[None,Annotation] = None
     stream:wave.Wave_read = None
+    start_sample:int = 0
+    end_sample:Union[None,int] = None
+    file_path:str
 
     def __init__(self, file: str, start_sample:int = 0, end_sample:Union[None, int] = None):
         super().__init__()
