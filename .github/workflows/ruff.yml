@@ -32,6 +32,6 @@ jobs:
         run: |
           pip install ruff
 
-      - name: Analyse the code with Pylint
+      - name: Analyse the code with Ruff
         run: |
           ruff check $(git ls-files '*.py')
