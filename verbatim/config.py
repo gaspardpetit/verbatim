@@ -105,7 +105,7 @@ class Config:
             outdir:Union[None,str] = ".", workdir:Union[None,str] = None,
             use_cpu:Union[None, bool] = None,
             stream:Union[None,bool] = False, 
-            isolate:Union[None,bool]=None, diarize:Union[None,int] = None, separate:bool,
+            isolate:Union[None,bool]=None, diarize:Union[None,int] = None, separate:bool = False,
             start_time:Union[None,str] = "0", stop_time:Union[None,str] = None
             ):
 

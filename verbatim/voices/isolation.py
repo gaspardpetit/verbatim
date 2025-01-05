@@ -11,7 +11,7 @@ from ..audio.audio import format_audio
 # Configure logger
 LOG = logging.getLogger(__name__)
 
-class VoiceIsolator:
+class VoiceIsolation:
     def __init__(self, log_level:int = logging.WARN, model_name:str = None):
         if model_name is None:
             #model_name = 'MDX23C-8KFFT-InstVoc_HQ.ckpt'
