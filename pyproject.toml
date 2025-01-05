@@ -3,7 +3,7 @@ name = "verbatim"
 dynamic = ["version"]
 description = "high quality multi-lingual speech to text"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.9,<3.12"
 license = "MIT"
 authors = [{ name = "Gaspard Petit", email = "gaspardpetit@gmail.com" }]
 keywords = [
@@ -51,7 +51,7 @@ dependencies = [
     "demucs>=4.0.1",
     "faster-whisper>=1.1.1",
     "langcodes>=3.5.0",
-    "numpy>=2.0.2",
+    "numpy<=1.26.3",
     "onnxruntime>=1.16.0",
     "openai-whisper>=20240930",
     "pyannote-audio[separation]>=3.3.2",
@@ -67,13 +67,17 @@ dependencies = [
     "torchaudio>=2.4.1",
     "wheel>=0.45.1",
     "wtpsplit>=2.1.2",
+    "llvmlite==0.43.0",
+    "pillow==10.4.0",
 ]
 
 [dependency-groups]
 dev = ["ruff>=0.8.6"]
 
 [project.optional-dependencies]
-cuda_gpu = ["onnxruntime-gpu>=1.16.0"]
+cuda_gpu = [
+    "onnxruntime-gpu>=1.16.0"
+]
 
 [project.urls]
 Homepage = "https://github.com/gaspardpetit/verbatim"
@@ -94,3 +98,17 @@ path = "verbatim/__init__.py"
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu124", marker = "sys_platform != 'darwin'"},
+]
+
+torchaudio = [
+  { index = "pytorch-cu124", marker = "sys_platform != 'darwin'"},
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
