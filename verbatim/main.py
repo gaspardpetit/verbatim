@@ -6,6 +6,7 @@ from typing import List
 
 from .__init__ import __version__
 from .config import Config
+from .audio.sources.audiosource import AudioSource
 from .transcript.format.writer import (
     TranscriptWriterConfig,
     TranscriptWriter,
@@ -259,18 +260,17 @@ def main():
 
     config: Config = Config(
         use_cpu=args.cpu,
-        input_source=args.input,
         outdir=args.outdir,
         workdir=args.workdir,
         stream=args.stream,
         isolate=args.isolate,
         diarize=args.diarize,
-        start_time=args.start_time,
-        stop_time=args.stop_time,
     )
 
-    input_name_no_ext = os.path.splitext(os.path.split(args.input)[-1])[0]
+    source_path = args.input
+    input_name_no_ext = os.path.splitext(os.path.split(source_path)[-1])[0]
     output_prefix_no_ext = os.path.join(config.output_dir, input_name_no_ext)
+    working_prefix_no_ext = os.path.join(config.working_dir, input_name_no_ext)
 
     config.lang = args.languages if args.languages else ["en"]
 
@@ -298,15 +298,20 @@ def main():
     if args.stdout_nocolor:
         output_formats.append("stdout-nocolor")
 
-    writer: TranscriptWriter = configure_writers(write_config, output_formats=output_formats, original_audio_file=config.source_stream.source_name)
+    writer: TranscriptWriter = configure_writers(write_config, output_formats=output_formats, original_audio_file=source_path)
+
+    audio_source:AudioSource = Config.configure_audio_source(config=config,
+        input_source=source_path, start_time=args.start_time, stop_time=args.stop_time,
+        working_prefix_no_ext=working_prefix_no_ext, output_prefix_no_ext=output_prefix_no_ext)
+
 
     # pylint: disable=import-outside-toplevel
     from .verbatim import Verbatim
-
     transcriber = Verbatim(config)
     writer.open(path_no_ext=output_prefix_no_ext)
-    for utterance, unacknowledged, unconfirmed in transcriber.transcribe():
-        writer.write(utterance=utterance, unacknowledged_utterance=unacknowledged, unconfirmed_words=unconfirmed)
+    with audio_source.open() as audio_stream:
+        for utterance, unacknowledged, unconfirmed in transcriber.transcribe(audio_stream=audio_stream):
+            writer.write(utterance=utterance, unacknowledged_utterance=unacknowledged, unconfirmed_words=unconfirmed)
     writer.close()
 
 
