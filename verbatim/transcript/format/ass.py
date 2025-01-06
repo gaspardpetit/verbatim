@@ -55,7 +55,7 @@ def valid_ts(ts: List[dict], warn: bool = True) -> bool:
     valid = is_ascending_sequence(time_points, False)
 
     if warn and not valid:
-        warnings.warn("Found timestamp(s) jumping backwards in time. " "Use word_timestamps=True to avoid the issue.")
+        warnings.warn("Found timestamp(s) jumping backwards in time. Use word_timestamps=True to avoid the issue.")
 
     return valid
 
@@ -213,7 +213,7 @@ def to_word_level(segments: List[dict]) -> List[dict]:
 
 def _confirm_word_level(segments: List[dict]) -> bool:
     if not all(bool(s.get("words")) for s in segments):
-        warnings.warn("Result is missing word timestamps. Word-level timing cannot be exported. " 'Use "word_level=False" to avoid this warning')
+        warnings.warn('Result is missing word timestamps. Word-level timing cannot be exported. Use "word_level=False" to avoid this warning')
         return False
     return True
 
@@ -334,7 +334,7 @@ def result_to_tsv(
     if segment_level is None and word_level is None:
         segment_level = True
     if word_level is segment_level:
-        raise ValueError("[word_level] and [segment_level] cannot be the same " "since [tag] is not support for this format")
+        raise ValueError("[word_level] and [segment_level] cannot be the same since [tag] is not support for this format")
 
     def segments2blocks(segments):
         return "\n\n".join(segment2tsvblock(s, strip=strip) for i, s in enumerate(segments))
