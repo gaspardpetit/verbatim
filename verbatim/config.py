@@ -10,7 +10,6 @@ from pyannote.core.annotation import Annotation
 
 from .audio.audio import samples_to_seconds, timestr_to_samples
 from .audio.sources.audiosource import AudioSource
-from .transcript.format.writer import TranscriptWriterConfig
 
 LOG = logging.getLogger(__name__)
 
@@ -49,7 +48,6 @@ class Config:
     enable_json: bool = False
     enable_stdout: bool = True
     enable_stdout_nocolor: bool = False
-    write_config:TranscriptWriterConfig = field(default=TranscriptWriterConfig)
 
     # INPUT
     source_stream: AudioSource = None
@@ -325,17 +323,6 @@ class Config:
             self.whisper_beam_size = 3
             self.whisper_patience = 3.0
             self.whisper_temperatures = [0, 0.6]
-
-    def configure_output_formats(self, output_formats: List[str]) -> "Config":
-        self.enable_ass = "ass" in output_formats
-        self.enable_docx = "docx" in output_formats
-        self.enable_txt = "txt" in output_formats
-        self.enable_md = "md" in output_formats
-        self.enable_json = "json" in output_formats
-        self.enable_stdout = "json" in output_formats
-        self.enable_stdout = "stdout" in output_formats
-        self.enable_stdout_nocolor = "stdout-nocolor" in output_formats
-        return self
 
     def configure_languages(self, lang=List[str]) -> "Config":
         self.lang = lang

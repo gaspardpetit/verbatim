@@ -2,10 +2,12 @@ import argparse
 import logging
 import os
 import sys
+from typing import List
 
 from .__init__ import __version__
 from .config import Config
 from .transcript.format.writer import (
+    TranscriptWriterConfig,
     TranscriptWriter,
     SpeakerStyle,
     TimestampStyle,
@@ -62,39 +64,32 @@ def load_env_file(env_path=".env"):
         return False
 
 
-def configure_writers(config: Config, original_audio_file: str) -> TranscriptWriter:
+def configure_writers(write_config: TranscriptWriterConfig, output_formats:List[str], original_audio_file: str) -> TranscriptWriter:
     # pylint: disable=import-outside-toplevel
-    from .transcript.format.txt import TextTranscriptWriter
     from .transcript.format.multi import MultiTranscriptWriter
-    from .transcript.format.ass import AssTranscriptWriter
-    from .transcript.format.docx import DocxTranscriptWriter
-    from .transcript.format.md import MarkdownTranscriptWriter
-    from .transcript.format.json import JsonTranscriptWriter
-    from .transcript.format.stdout import StdoutTranscriptWriter
 
     multi_writer: MultiTranscriptWriter = MultiTranscriptWriter()
-    if config.enable_txt:
-        multi_writer.add_writer(TextTranscriptWriter(config=config.write_config))
-    if config.enable_ass:
-        multi_writer.add_writer(
-            AssTranscriptWriter(
-                config=config.write_config, original_audio_file=original_audio_file
-            )
-        )
-    if config.enable_docx:
-        multi_writer.add_writer(DocxTranscriptWriter(config=config.write_config))
-    if config.enable_md:
-        multi_writer.add_writer(MarkdownTranscriptWriter(config=config.write_config))
-    if config.enable_json:
-        multi_writer.add_writer(JsonTranscriptWriter(config=config.write_config))
-    if config.enable_stdout and not config.enable_stdout_nocolor:
-        multi_writer.add_writer(
-            StdoutTranscriptWriter(config=config.write_config, with_colours=True)
-        )
-    if config.enable_stdout_nocolor:
-        multi_writer.add_writer(
-            StdoutTranscriptWriter(config=config.write_config, with_colours=False)
-        )
+    if "txt" in output_formats:
+        from .transcript.format.txt import TextTranscriptWriter
+        multi_writer.add_writer(TextTranscriptWriter(config=write_config))
+    if "ass" in output_formats:
+        from .transcript.format.ass import AssTranscriptWriter
+        multi_writer.add_writer(AssTranscriptWriter(config=write_config, original_audio_file=original_audio_file))
+    if "docx" in output_formats:
+        from .transcript.format.docx import DocxTranscriptWriter
+        multi_writer.add_writer(DocxTranscriptWriter(config=write_config))
+    if "md" in output_formats:
+        from .transcript.format.md import MarkdownTranscriptWriter
+        multi_writer.add_writer(MarkdownTranscriptWriter(config=write_config))
+    if "json" in output_formats:
+        from .transcript.format.json import JsonTranscriptWriter
+        multi_writer.add_writer(JsonTranscriptWriter(config=write_config))
+    if "stdout" in output_formats and "stdout-nocolor" not in output_formats:
+        from .transcript.format.stdout import StdoutTranscriptWriter
+        multi_writer.add_writer(StdoutTranscriptWriter(config=write_config, with_colours=True))
+    if "stdout-nocolor" in output_formats:
+        from .transcript.format.stdout import StdoutTranscriptWriter
+        multi_writer.add_writer(StdoutTranscriptWriter(config=write_config, with_colours=False))
     return multi_writer
 
 
@@ -280,11 +275,12 @@ def main():
     config.lang = args.languages if args.languages else ["en"]
 
     # Set output formats
-    config.write_config.timestamp_style = args.format_timestamp
-    config.write_config.probability_style = args.format_probability
-    config.write_config.speaker_style = args.format_speaker
-    config.write_config.language_style = args.format_language
-    config.write_config.verbose = log_level <= logging.INFO
+    write_config:TranscriptWriterConfig = TranscriptWriterConfig()
+    write_config.timestamp_style = args.format_timestamp
+    write_config.probability_style = args.format_probability
+    write_config.speaker_style = args.format_speaker
+    write_config.language_style = args.format_language
+    write_config.verbose = log_level <= logging.INFO
 
     output_formats = []
     if args.ass:
@@ -302,20 +298,15 @@ def main():
     if args.stdout_nocolor:
         output_formats.append("stdout-nocolor")
 
-    config.configure_output_formats(output_formats=output_formats)
+    writer: TranscriptWriter = configure_writers(write_config, output_formats=output_formats, original_audio_file=config.source_stream.source_name)
 
     # pylint: disable=import-outside-toplevel
     from .verbatim import Verbatim
 
     transcriber = Verbatim(config)
-    writer: TranscriptWriter = configure_writers(config, original_audio_file=config.source_stream.source_name)
     writer.open(path_no_ext=output_prefix_no_ext)
     for utterance, unacknowledged, unconfirmed in transcriber.transcribe():
-        writer.write(
-            utterance=utterance,
-            unacknowledged_utterance=unacknowledged,
-            unconfirmed_words=unconfirmed,
-        )
+        writer.write(utterance=utterance, unacknowledged_utterance=unacknowledged, unconfirmed_words=unconfirmed)
     writer.close()
 
 
