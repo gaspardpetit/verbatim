@@ -20,6 +20,13 @@ class VoiceSeparator:
         self.separator = Separator(log_level=log_level, sample_rate=16000)
         self.separator.load_model(model_name)
 
+    def __enter__(self) -> "VoiceSeparator":
+        return self
+
+    def __exit__(self, ex_type, ex_value, ex_traceback):
+        del self.separator
+        return False
+
     def isolate_voice_in_file(
         self, file: str, out_voice: str = None, out_noise: str = None
     ) -> Tuple[str, str]:

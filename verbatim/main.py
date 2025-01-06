@@ -2,10 +2,13 @@ import argparse
 import logging
 import os
 import sys
+from typing import List
 
 from .__init__ import __version__
 from .config import Config
+from .audio.sources.audiosource import AudioSource
 from .transcript.format.writer import (
+    TranscriptWriterConfig,
     TranscriptWriter,
     SpeakerStyle,
     TimestampStyle,
@@ -62,43 +65,37 @@ def load_env_file(env_path=".env"):
         return False
 
 
-def configure_writers(config: Config, original_audio_file: str) -> TranscriptWriter:
+def configure_writers(write_config: TranscriptWriterConfig, output_formats:List[str], original_audio_file: str) -> TranscriptWriter:
     # pylint: disable=import-outside-toplevel
-    from .transcript.format.txt import TextTranscriptWriter
     from .transcript.format.multi import MultiTranscriptWriter
-    from .transcript.format.ass import AssTranscriptWriter
-    from .transcript.format.docx import DocxTranscriptWriter
-    from .transcript.format.md import MarkdownTranscriptWriter
-    from .transcript.format.json import JsonTranscriptWriter
-    from .transcript.format.stdout import StdoutTranscriptWriter
 
     multi_writer: MultiTranscriptWriter = MultiTranscriptWriter()
-    if config.enable_txt:
-        multi_writer.add_writer(TextTranscriptWriter(config=config.write_config))
-    if config.enable_ass:
-        multi_writer.add_writer(
-            AssTranscriptWriter(
-                config=config.write_config, original_audio_file=original_audio_file
-            )
-        )
-    if config.enable_docx:
-        multi_writer.add_writer(DocxTranscriptWriter(config=config.write_config))
-    if config.enable_md:
-        multi_writer.add_writer(MarkdownTranscriptWriter(config=config.write_config))
-    if config.enable_json:
-        multi_writer.add_writer(JsonTranscriptWriter(config=config.write_config))
-    if config.enable_stdout and not config.enable_stdout_nocolor:
-        multi_writer.add_writer(
-            StdoutTranscriptWriter(config=config.write_config, with_colours=True)
-        )
-    if config.enable_stdout_nocolor:
-        multi_writer.add_writer(
-            StdoutTranscriptWriter(config=config.write_config, with_colours=False)
-        )
+    if "txt" in output_formats:
+        from .transcript.format.txt import TextTranscriptWriter
+        multi_writer.add_writer(TextTranscriptWriter(config=write_config))
+    if "ass" in output_formats:
+        from .transcript.format.ass import AssTranscriptWriter
+        multi_writer.add_writer(AssTranscriptWriter(config=write_config, original_audio_file=original_audio_file))
+    if "docx" in output_formats:
+        from .transcript.format.docx import DocxTranscriptWriter
+        multi_writer.add_writer(DocxTranscriptWriter(config=write_config))
+    if "md" in output_formats:
+        from .transcript.format.md import MarkdownTranscriptWriter
+        multi_writer.add_writer(MarkdownTranscriptWriter(config=write_config))
+    if "json" in output_formats:
+        from .transcript.format.json import JsonTranscriptWriter
+        multi_writer.add_writer(JsonTranscriptWriter(config=write_config))
+    if "stdout" in output_formats and "stdout-nocolor" not in output_formats:
+        from .transcript.format.stdout import StdoutTranscriptWriter
+        multi_writer.add_writer(StdoutTranscriptWriter(config=write_config, with_colours=True))
+    if "stdout-nocolor" in output_formats:
+        from .transcript.format.stdout import StdoutTranscriptWriter
+        multi_writer.add_writer(StdoutTranscriptWriter(config=write_config, with_colours=False))
     return multi_writer
 
 
 def main():
+    # pylint: disable=import-outside-toplevel
     class OptionalValueAction(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             # Set the attribute to the provided value or an empty string if no value is given
@@ -264,24 +261,25 @@ def main():
 
     config: Config = Config(
         use_cpu=args.cpu,
-        input_source=args.input,
         outdir=args.outdir,
         workdir=args.workdir,
         stream=args.stream,
-        isolate=args.isolate,
-        diarize=args.diarize,
-        start_time=args.start_time,
-        stop_time=args.stop_time,
     )
+
+    source_path = args.input
+    input_name_no_ext = os.path.splitext(os.path.split(source_path)[-1])[0]
+    output_prefix_no_ext = os.path.join(config.output_dir, input_name_no_ext)
+    working_prefix_no_ext = os.path.join(config.working_dir, input_name_no_ext)
 
     config.lang = args.languages if args.languages else ["en"]
 
     # Set output formats
-    config.write_config.timestamp_style = args.format_timestamp
-    config.write_config.probability_style = args.format_probability
-    config.write_config.speaker_style = args.format_speaker
-    config.write_config.language_style = args.format_language
-    config.write_config.verbose = log_level <= logging.INFO
+    write_config:TranscriptWriterConfig = TranscriptWriterConfig()
+    write_config.timestamp_style = args.format_timestamp
+    write_config.probability_style = args.format_probability
+    write_config.speaker_style = args.format_speaker
+    write_config.language_style = args.format_language
+    write_config.verbose = log_level <= logging.INFO
 
     output_formats = []
     if args.ass:
@@ -299,22 +297,28 @@ def main():
     if args.stdout_nocolor:
         output_formats.append("stdout-nocolor")
 
-    config.configure_output_formats(output_formats=output_formats)
+    writer: TranscriptWriter = configure_writers(write_config, output_formats=output_formats, original_audio_file=source_path)
 
-    # pylint: disable=import-outside-toplevel
-    from .verbatim import Verbatim
-
-    transcriber = Verbatim(config)
-    writer: TranscriptWriter = configure_writers(
-        config, original_audio_file=config.input_source
+    from .audio.sources.sourceconfig import SourceConfig
+    source_config:SourceConfig = SourceConfig(
+        isolate=args.isolate,
+        diarize=args.diarize,
+        diarization_file=args.diarization,
     )
-    writer.open(path_no_ext=config.output_prefix_no_ext)
-    for utterance, unacknowledged, unconfirmed in transcriber.transcribe():
-        writer.write(
-            utterance=utterance,
-            unacknowledged_utterance=unacknowledged,
-            unconfirmed_words=unconfirmed,
-        )
+
+    from .audio.sources.factory import create_audio_source
+    audio_source:AudioSource = create_audio_source(source_config=source_config, device=config.device,
+        input_source=source_path, start_time=args.start_time, stop_time=args.stop_time,
+        working_prefix_no_ext=working_prefix_no_ext, output_prefix_no_ext=output_prefix_no_ext,
+        stream=config.stream)
+
+
+    from .verbatim import Verbatim
+    transcriber = Verbatim(config)
+    writer.open(path_no_ext=output_prefix_no_ext)
+    with audio_source.open() as audio_stream:
+        for utterance, unacknowledged, unconfirmed in transcriber.transcribe(audio_stream=audio_stream, working_prefix_no_ext=working_prefix_no_ext):
+            writer.write(utterance=utterance, unacknowledged_utterance=unacknowledged, unconfirmed_words=unconfirmed)
     writer.close()
 
 
