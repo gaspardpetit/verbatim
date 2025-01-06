@@ -12,7 +12,7 @@ from ..audio.audio import format_audio
 LOG = logging.getLogger(__name__)
 
 
-class VoiceSeparator:
+class VoiceIsolation:
     def __init__(self, log_level: int = logging.WARN, model_name: str = None):
         if model_name is None:
             # model_name = 'MDX23C-8KFFT-InstVoc_HQ.ckpt'
@@ -20,7 +20,7 @@ class VoiceSeparator:
         self.separator = Separator(log_level=log_level, sample_rate=16000)
         self.separator.load_model(model_name)
 
-    def __enter__(self) -> "VoiceSeparator":
+    def __enter__(self) -> "VoiceIsolation":
         return self
 
     def __exit__(self, ex_type, ex_value, ex_traceback):

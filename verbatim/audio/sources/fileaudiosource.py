@@ -10,7 +10,7 @@ from .audiosource import AudioSource, AudioStream
 from ..audio import format_audio
 from ..audio import convert_mp3_to_wav
 from ...voices.diarization import Diarization
-from ...voices.isolation import VoiceSeparator
+from ...voices.isolation import VoiceIsolation
 
 LOG = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ class FileAudioSource(AudioSource):
     @staticmethod
     def isolate_voices(file_path:str, out_path_prefix: str = None) -> Tuple[str,str]:
         LOG.info("Initializing Voice Isolation Model.")
-        with VoiceSeparator(log_level=LOG.level) as voice_separator:
+        with VoiceIsolation(log_level=LOG.level) as voice_separator:
             if not out_path_prefix:
                 basename, _ = os.path.splitext(os.path.basename(file_path))
                 voice_prefix = f"{basename}-voice"
