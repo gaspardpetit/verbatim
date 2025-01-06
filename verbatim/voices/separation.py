@@ -47,11 +47,14 @@ class SpeakerSeparation:
         return False
 
     # pylint: disable=unused-argument
-    def separate_speakers(self, *,
+    def separate_speakers(
+        self,
+        *,
         file_path: str,
         out_rttm_file: str = None,
         out_speaker_wav_prefix="",
-        nb_speakers: int = None) -> Tuple[Annotation, Dict[str,str]]:
+        nb_speakers: int = None,
+    ) -> Tuple[Annotation, Dict[str, str]]:
         if not out_rttm_file:
             out_rttm_file = "out.rttm"
 
@@ -69,7 +72,11 @@ class SpeakerSeparation:
                 speaker_data = sources.data[:, s]
                 if speaker_data.dtype != np.int16:
                     speaker_data = wav_to_int16(speaker_data)
-                file_name = f"{out_speaker_wav_prefix}-{speaker}.wav" if out_speaker_wav_prefix else f"{speaker}.wav"
+                file_name = (
+                    f"{out_speaker_wav_prefix}-{speaker}.wav"
+                    if out_speaker_wav_prefix
+                    else f"{speaker}.wav"
+                )
                 speaker_wav_files[speaker] = file_name
                 scipy.io.wavfile.write(file_name, 16000, speaker_data)
             else:

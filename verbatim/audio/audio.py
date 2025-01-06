@@ -74,8 +74,10 @@ def wav_to_int16(data):
 def samples_to_seconds(index: int) -> float:
     return index / 16000
 
+
 def seconds_to_samples(seconds: float) -> int:
     return seconds * 16000
+
 
 def timestr_to_samples(timestr: str, sample_rate: int = 16000) -> int:
     """

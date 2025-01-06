@@ -7,6 +7,7 @@ from .audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
 
+
 @dataclass
 class Config:
     sampling_rate: int = 16000
@@ -33,7 +34,8 @@ class Config:
     source_stream: AudioSource = None
 
     def __init__(
-        self, *,
+        self,
+        *,
         outdir: Union[None, str] = ".",
         workdir: Union[None, str] = None,
         use_cpu: Union[None, bool] = None,

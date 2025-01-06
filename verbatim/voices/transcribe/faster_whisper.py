@@ -59,7 +59,9 @@ class FasterWhisperTranscriber(Transcriber):
                     if t[1] > guess_prob:
                         guess_lang = t[0]
                         guess_prob = t[1]
-                        LOG.info(f"detected '{lang_iter}' with probability {guess_prob}")
+                        LOG.info(
+                            f"detected '{lang_iter}' with probability {guess_prob}"
+                        )
         return guess_lang, guess_prob
 
     def transcribe(

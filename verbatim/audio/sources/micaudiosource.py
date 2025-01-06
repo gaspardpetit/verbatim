@@ -10,15 +10,16 @@ from ..audio import samples_to_seconds
 
 LOG = logging.getLogger(__name__)
 
+
 class MicAudioStreamSoundDevice(AudioStream):
-    source:"MicAudioSourceSoundDevice"
-    audio_queue:queue.Queue
+    source: "MicAudioSourceSoundDevice"
+    audio_queue: queue.Queue
     stream = None
 
-    def __init__(self, source:"MicAudioSourceSoundDevice"):
+    def __init__(self, source: "MicAudioSourceSoundDevice"):
         super().__init__(start_offset=0, diarization=None)
         self.source = source
-        self.audio_queue =  queue.Queue()
+        self.audio_queue = queue.Queue()
 
         # Open the audio stream with the callback
         self.stream = sd.InputStream(
@@ -83,12 +84,13 @@ class MicAudioSourceSoundDevice(AudioSource):
     def open(self):
         return MicAudioStreamSoundDevice(source=self)
 
+
 class MicAudioStreamPyAudio(AudioStream):
-    source:"MicAudioSourcePyAudio"
+    source: "MicAudioSourcePyAudio"
     p: pyaudio.PyAudio
     stream: pyaudio.Stream
 
-    def __init__(self, source:"MicAudioSourcePyAudio"):
+    def __init__(self, source: "MicAudioSourcePyAudio"):
         super().__init__(start_offset=0, diarization=None)
         self.source = source
         self.p: pyaudio.PyAudio = pyaudio.PyAudio()
@@ -105,7 +107,12 @@ class MicAudioStreamPyAudio(AudioStream):
         frames = []
         # Read exactly chunk_length seconds of audio
         for _ in range(
-            0, int(self.source.frames_per_iter / self.source.frames_per_buffer * chunk_length)
+            0,
+            int(
+                self.source.frames_per_iter
+                / self.source.frames_per_buffer
+                * chunk_length
+            ),
         ):
             data = self.stream.read(self.source.frames_per_buffer)
             frames.append(data)
@@ -125,12 +132,18 @@ class MicAudioStreamPyAudio(AudioStream):
     def has_more(self):
         return True
 
+
 class MicAudioSourcePyAudio(AudioSource):
     frames_per_iter: int
     frames_per_buffer: int
     sampling_rate: int
 
-    def __init__(self, latency: int = 16000, frames_per_buffer: int = 1000, sampling_rate: int = 16000):
+    def __init__(
+        self,
+        latency: int = 16000,
+        frames_per_buffer: int = 1000,
+        sampling_rate: int = 16000,
+    ):
         super().__init__(source_name="<mic>")
         self.frames_per_iter: int = latency
         self.frames_per_buffer: int = frames_per_buffer
