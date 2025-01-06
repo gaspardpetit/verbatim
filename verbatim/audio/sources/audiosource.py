@@ -28,8 +28,9 @@ class AudioStream:
         pass
 
 class AudioSource:
-    def __init__(self):
-        pass
+    source_name:str = ""
+    def __init__(self, source_name:str):
+        self.source_name = source_name
 
     @abstractmethod
     def open(self) -> AudioStream:

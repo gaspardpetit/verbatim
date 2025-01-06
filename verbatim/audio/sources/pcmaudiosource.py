@@ -54,13 +54,9 @@ class PCMInputStreamAudioSource(AudioSource):
     dtype: np.dtype
 
     def __init__(
-        self,
-        stream: BinaryIO,
-        channels: int = 1,
-        sampling_rate: int = 16000,
-        dtype=np.int16,
-    ):
-        super().__init__()
+            self, *,
+            source_name:str, stream: BinaryIO, channels: int = 1, sampling_rate: int = 16000, dtype=np.int16):
+        super().__init__(source_name=source_name)
         self.stream = stream
         self.channels = channels
         self.sampling_rate = sampling_rate

@@ -76,11 +76,13 @@ class MicAudioStreamSoundDevice(AudioStream):
 
 class MicAudioSourceSoundDevice(AudioSource):
     def __init__(self, sampling_rate: int = 16000, frames_per_buffer: int = 1024):
+        super().__init__(source_name="<mic>")
         self.sampling_rate = sampling_rate
         self.frames_per_buffer = frames_per_buffer
 
     def open(self):
         return MicAudioStreamSoundDevice(source=self)
+
 class MicAudioStreamPyAudio(AudioStream):
     source:"MicAudioSourcePyAudio"
     p: pyaudio.PyAudio
@@ -128,13 +130,8 @@ class MicAudioSourcePyAudio(AudioSource):
     frames_per_buffer: int
     sampling_rate: int
 
-    def __init__(
-        self,
-        latency: int = 16000,
-        frames_per_buffer: int = 1000,
-        sampling_rate: int = 16000,
-    ):
-        super().__init__()
+    def __init__(self, latency: int = 16000, frames_per_buffer: int = 1000, sampling_rate: int = 16000):
+        super().__init__(source_name="<mic>")
         self.frames_per_iter: int = latency
         self.frames_per_buffer: int = frames_per_buffer
         self.sampling_rate = sampling_rate

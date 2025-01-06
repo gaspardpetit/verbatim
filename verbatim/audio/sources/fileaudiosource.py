@@ -72,10 +72,8 @@ class FileAudioSource(AudioSource):
     speaker_audio: Dict[str, np.array]
     stream: wave.Wave_read = None
 
-    def __init__(
-        self, file: str, start_sample: int = 0, end_sample: Union[None, int] = None
-    ):
-        super().__init__()
+    def __init__(self, file: str, start_sample: int = 0, end_sample: Union[None, int] = None):
+        super().__init__(source_name=file)
         self.file_path = file
         if self.file_path.endswith(".mp3"):
             # Convert mp3 to wav
@@ -85,9 +83,7 @@ class FileAudioSource(AudioSource):
         self.end_sample = end_sample
         self.start_sample = start_sample
 
-    def compute_diarization(
-        self, device: str, rttm_file: str = None, nb_speakers: int = None
-    ) -> Annotation:
+    def compute_diarization(self, device: str, rttm_file: str = None, nb_speakers: int = None) -> Annotation:
         diarization = None
         try:
             diarization = Diarization(

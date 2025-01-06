@@ -1,15 +1,16 @@
+import errno
 import logging
 import os
-import errno
-
+import sys
 from dataclasses import dataclass, field
 from typing import Dict, List, Union
 
+import numpy as np
 from pyannote.core.annotation import Annotation
 
+from .audio.audio import samples_to_seconds, timestr_to_samples
 from .audio.sources.audiosource import AudioSource
 from .transcript.format.writer import TranscriptWriterConfig
-from .audio.audio import timestr_to_samples, samples_to_seconds
 
 LOG = logging.getLogger(__name__)
 
@@ -54,7 +55,6 @@ class Config:
 
     # INPUT
     source_stream: AudioSource = None
-    input_source:str = None
 
     def __init__(
         self,
@@ -244,94 +244,74 @@ class Config:
     def configure_audio_source(
         self, input_source: str, start_time: str, stop_time: str
     ):
+        if input_source == "-":
+            # pylint: disable=import-outside-toplevel
+            from .audio.sources.pcmaudiosource import PCMInputStreamAudioSource
+            self.source_stream = PCMInputStreamAudioSource(
+                source_name="<stdin>", stream=sys.stdin, channels=1, sampling_rate=16000, dtype=np.int16
+            )
+            return
+
+        elif input_source is None or input_source == ">":
+            # pylint: disable=import-outside-toplevel
+            from .audio.sources.micaudiosource import (MicAudioSourcePyAudio as MicAudioSource)
+            self.source_stream = MicAudioSource()
+            return
+
         start_sample:int = timestr_to_samples(start_time) if start_time else 0
         stop_sample:Union[None,int] = timestr_to_samples(stop_time) if stop_time else None
 
-        self.input_source = input_source
         if os.path.exists(input_source) is False:
             raise FileNotFoundError(
                 errno.ENOENT, os.strerror(errno.ENOENT), input_source
             )
 
-        input_name_no_ext = os.path.splitext(os.path.split(self.input_source)[-1])[0]
+        input_name_no_ext = os.path.splitext(os.path.split(input_source)[-1])[0]
         self.output_prefix_no_ext = os.path.join(self.output_dir, input_name_no_ext)
         self.working_prefix_no_ext = os.path.join(self.working_dir, input_name_no_ext)
 
         self.diarization_file = self.diarization
-        if self.diarization_file == "" or (
-            self.diarize is not None and self.diarization_file is None
-        ):
+        if self.diarization_file == "" or (self.diarize is not None and self.diarization_file is None):
             self.diarization_file = self.output_prefix_no_ext + ".rttm"
 
         # pylint: disable=import-outside-toplevel
-        from .audio.sources.micaudiosource import (
-            MicAudioSourcePyAudio as MicAudioSource,
-        )
-        from .audio.sources.fileaudiosource import FileAudioSource
         from .audio.sources.ffmpegfileaudiosource import PyAVAudioSource
-        from .audio.sources.pcmaudiosource import PCMInputStreamAudioSource
-        import sys
-        import numpy as np
+        from .audio.sources.fileaudiosource import FileAudioSource
 
-        if self.input_source == "-":
-            self.source_stream = PCMInputStreamAudioSource(
-                stream=sys.stdin, channels=1, sampling_rate=16000, dtype=np.int16
+        if os.path.splitext(input_source)[-1] != ".wav":
+            if not(not self.stream and (self.isolate is not None or self.diarize is not None)):
+                file_audio_source = PyAVAudioSource(
+                    file_path=input_source,
+                    start_time=samples_to_seconds(start_sample),
+                    end_time=samples_to_seconds(stop_sample) if stop_sample else None
+                    )
+                self.source_stream = file_audio_source
+                return
+
+            file_audio_source = PyAVAudioSource(file_path=input_source)
+            from .audio.sources.wavsink import WavSink
+
+            input_source = self.working_prefix_no_ext + ".wav"
+            WavSink.dump_to_wav(audio_source=file_audio_source, output_path=input_source)
+            self.configure_audio_source(input_source=input_source, start_time=start_time, stop_time=stop_time)
+            return
+
+        file_audio_source = FileAudioSource(input_source, start_sample=start_sample, end_sample=stop_sample)
+        if not self.stream:
+            if self.isolate is not None:
+                file_audio_source.isolate_voices(out_path_prefix=self.isolate or None)
+            if self.diarize is not None:
+                self.diarization = file_audio_source.compute_diarization(
+                    rttm_file=self.diarization_file, device=self.device, nb_speakers=self.diarize)
+
+        if self.diarization_file:
+            from .voices.diarization import Diarization
+
+            self.diarization = Diarization.load_diarization(
+                rttm_file=self.diarization_file
             )
-            return
-
-        elif self.input_source is None or self.input_source == ">":
-            self.source_stream = MicAudioSource()
-            return
-        else:
-            if os.path.splitext(self.input_source)[-1] == ".wav":
-                file_audio_source = FileAudioSource(
-                    self.input_source,
-                    start_sample=start_sample,
-                    end_sample=stop_sample,
-                )
-                if not self.stream:
-                    if self.isolate is not None:
-                        file_audio_source.isolate_voices(
-                            out_path_prefix=self.isolate or None
-                        )
-                    if self.diarize is not None:
-                        self.diarization = file_audio_source.compute_diarization(
-                            rttm_file=self.diarization_file,
-                            device=self.device,
-                            nb_speakers=self.diarize,
-                        )
-
-                if self.diarization_file:
-                    from .voices.diarization import Diarization
-
-                    self.diarization = Diarization.load_diarization(
-                        rttm_file=self.diarization_file
-                    )
-            else:
-                if not self.stream and (
-                    self.isolate is not None or self.diarize is not None
-                ):
-                    file_audio_source = PyAVAudioSource(file_path=self.input_source)
-                    from .audio.sources.wavsink import WavSink
-
-                    self.input_source = self.working_prefix_no_ext + ".wav"
-                    WavSink.dump_to_wav(
-                        audio_source=file_audio_source, output_path=self.input_source
-                    )
-                    self.configure_audio_source(
-                        input_source=self.input_source,
-                        start_time=start_time,
-                        stop_time=stop_time,
-                    )
-                    return
-                else:
-                    file_audio_source = PyAVAudioSource(
-                        file_path=self.input_source,
-                        start_time=samples_to_seconds(start_sample),
-                        end_time=samples_to_seconds(stop_sample) if stop_sample else None,
-                    )
-            self.source_stream = file_audio_source
-            return
+        self.source_stream = file_audio_source
+        return
 
     def configure_for_low_latency_streaming(self):
         self.stream = True

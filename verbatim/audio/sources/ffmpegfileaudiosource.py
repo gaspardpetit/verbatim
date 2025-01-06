@@ -158,20 +158,14 @@ class PyAVAudioSource(AudioSource):
     - By default, it streams as 16-bit int PCM at some target rate (e.g. 16 kHz).
     """
 
-    def __init__(
-        self,
-        file_path: str,
-        target_sample_rate: int = 16000,
-        start_time: float = 0.0,
-        end_time: Optional[float] = None,
-    ):
+    def __init__(self, file_path: str, target_sample_rate: int = 16000, start_time: float = 0.0, end_time: Optional[float] = None):
         """
         :param file_path: Path/URL to audio file
         :param target_sample_rate: Desired sample rate for output (e.g. 16k)
         :param start_time: Seek to this time (seconds) before reading
         :param end_time: Stop reading after this time (seconds) from start
         """
-        super().__init__()
+        super().__init__(source_name=file_path)
         self.file_path = file_path
         self.target_sample_rate = target_sample_rate
         self.start_time = start_time
