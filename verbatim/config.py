@@ -1,14 +1,8 @@
-import errno
 import logging
 import os
-import sys
 from dataclasses import dataclass, field
 from typing import Dict, List, Union
 
-import numpy as np
-from pyannote.core.annotation import Annotation
-
-from .audio.audio import samples_to_seconds, timestr_to_samples
 from .audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
@@ -22,13 +16,6 @@ class Config:
     device: str = "cuda"
     stream: bool = False
     debug: bool = False
-
-    # PREPROCESSING
-    separate:bool = False
-    isolate:Union[None,bool] = None
-    diarize:Union[int,None] = None
-    diarization: Annotation = None
-    diarization_file: str = None
 
     # TRANSCRIPTION
     lang: List[str] = field(default_factory=list)
@@ -51,8 +38,6 @@ class Config:
         workdir: Union[None, str] = None,
         use_cpu: Union[None, bool] = None,
         stream: Union[None, bool] = False,
-        isolate: Union[None, bool] = None,
-        diarize: Union[None, int] = None,
     ):
         self.chunk_table = [
             (0.75, 0.20),
@@ -194,13 +179,6 @@ class Config:
         if stream:
             self.configure_for_low_latency_streaming()
 
-        self.isolate = isolate
-        self.diarize = diarize
-        if self.diarize == "":
-            self.diarize = 0
-        elif self.diarize is not None:
-            self.diarize = int(self.diarize)
-
         self.configure_output_directory(outdir=outdir, workdir=workdir)
 
     def configure_output_directory(self, outdir: str, workdir: str):
@@ -221,68 +199,6 @@ class Config:
                 os.makedirs(workdir)
             self.working_dir = workdir
         LOG.info(f"Working directory set to {self.working_dir}")
-
-    @staticmethod
-    def configure_audio_source(*,
-        config:"Config",
-        input_source: str,
-        start_time:Union[None,str] = None, stop_time:Union[None,str] = None,
-        output_prefix_no_ext:str = "out", working_prefix_no_ext:str = "out") -> AudioSource:
-
-        if input_source == "-":
-            # pylint: disable=import-outside-toplevel
-            from .audio.sources.pcmaudiosource import PCMInputStreamAudioSource
-            return PCMInputStreamAudioSource(source_name="<stdin>", stream=sys.stdin, channels=1, sampling_rate=16000, dtype=np.int16)
-
-        elif input_source is None or input_source == ">":
-            # pylint: disable=import-outside-toplevel
-            from .audio.sources.micaudiosource import (MicAudioSourcePyAudio as MicAudioSource)
-            return MicAudioSource()
-
-        start_sample:int = timestr_to_samples(start_time) if start_time else 0
-        stop_sample:Union[None,int] = timestr_to_samples(stop_time) if stop_time else None
-
-        if os.path.exists(input_source) is False:
-            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), input_source)
-
-        config.diarization_file = config.diarization
-        if config.diarization_file == "" or (config.diarize is not None and config.diarization_file is None):
-            config.diarization_file = output_prefix_no_ext + ".rttm"
-
-        # pylint: disable=import-outside-toplevel
-        from .audio.sources.ffmpegfileaudiosource import PyAVAudioSource
-        from .audio.sources.fileaudiosource import FileAudioSource
-
-        if os.path.splitext(input_source)[-1] != ".wav":
-            if not(not config.stream and (config.isolate is not None or config.diarize is not None)):
-                return PyAVAudioSource(
-                    file_path=input_source,
-                    start_time=samples_to_seconds(start_sample),
-                    end_time=samples_to_seconds(stop_sample) if stop_sample else None
-                    )
-
-            file_audio_source = PyAVAudioSource(file_path=input_source)
-            from .audio.sources.wavsink import WavSink
-
-            input_source = working_prefix_no_ext + ".wav"
-            WavSink.dump_to_wav(audio_source=file_audio_source, output_path=input_source)
-            return Config.configure_audio_source(config=config,
-                input_source=input_source, start_time=start_time, stop_time=stop_time,
-                working_prefix_no_ext=working_prefix_no_ext, output_prefix_no_ext=output_prefix_no_ext)
-
-        file_audio_source = FileAudioSource(input_source, start_sample=start_sample, end_sample=stop_sample)
-        if not config.stream:
-            if config.isolate is not None:
-                file_audio_source.isolate_voices(out_path_prefix=config.isolate or None)
-            if config.diarize is not None:
-                config.diarization = file_audio_source.compute_diarization(
-                    rttm_file=config.diarization_file, device=config.device, nb_speakers=config.diarize)
-
-        if config.diarization_file:
-            from .voices.diarization import Diarization
-            config.diarization = Diarization.load_diarization(rttm_file=config.diarization_file)
-        
-        return file_audio_source
 
     def configure_for_low_latency_streaming(self):
         self.stream = True

@@ -16,7 +16,7 @@ class PyAVAudioStream(AudioStream):
 
     def __init__(self, source:"PyAVAudioSource"):
         """Open the container, find the audio stream, and seek if needed."""
-        super().__init__(start_offset=seconds_to_samples(source.start_time))
+        super().__init__(start_offset=seconds_to_samples(source.start_time), diarization=None)
         self.source = source
 
         # Internals

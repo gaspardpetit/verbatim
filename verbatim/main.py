@@ -95,6 +95,7 @@ def configure_writers(write_config: TranscriptWriterConfig, output_formats:List[
 
 
 def main():
+    # pylint: disable=import-outside-toplevel
     class OptionalValueAction(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             # Set the attribute to the provided value or an empty string if no value is given
@@ -263,8 +264,6 @@ def main():
         outdir=args.outdir,
         workdir=args.workdir,
         stream=args.stream,
-        isolate=args.isolate,
-        diarize=args.diarize,
     )
 
     source_path = args.input
@@ -300,17 +299,25 @@ def main():
 
     writer: TranscriptWriter = configure_writers(write_config, output_formats=output_formats, original_audio_file=source_path)
 
-    audio_source:AudioSource = Config.configure_audio_source(config=config,
+    from .audio.sources.sourceconfig import SourceConfig
+    source_config:SourceConfig = SourceConfig(
+        isolate=args.isolate,
+        diarize=args.diarize,
+        diarization_file=args.diarization,
+    )
+
+    from .audio.sources.factory import create_audio_source
+    audio_source:AudioSource = create_audio_source(source_config=source_config, device=config.device,
         input_source=source_path, start_time=args.start_time, stop_time=args.stop_time,
-        working_prefix_no_ext=working_prefix_no_ext, output_prefix_no_ext=output_prefix_no_ext)
+        working_prefix_no_ext=working_prefix_no_ext, output_prefix_no_ext=output_prefix_no_ext,
+        stream=config.stream)
 
 
-    # pylint: disable=import-outside-toplevel
     from .verbatim import Verbatim
     transcriber = Verbatim(config)
     writer.open(path_no_ext=output_prefix_no_ext)
     with audio_source.open() as audio_stream:
-        for utterance, unacknowledged, unconfirmed in transcriber.transcribe(audio_stream=audio_stream):
+        for utterance, unacknowledged, unconfirmed in transcriber.transcribe(audio_stream=audio_stream, working_prefix_no_ext=working_prefix_no_ext):
             writer.write(utterance=utterance, unacknowledged_utterance=unacknowledged, unconfirmed_words=unconfirmed)
     writer.close()
 

@@ -51,6 +51,13 @@ class Diarization:
 
         self.pipeline.to(torch.device(device))
 
+    def __enter__(self) -> "Diarization":
+        return self
+
+    def __exit__(self, ex_type, ex_value, ex_traceback):
+        del self.pipeline
+        return False
+
     @staticmethod
     def load_diarization(rttm_file: str):
         rttms = load_rttm(file_rttm=rttm_file)
