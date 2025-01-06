@@ -4,8 +4,9 @@ import numpy as np
 
 
 class AudioStream:
-    def __init__(self):
-        pass
+    start_offset:int = 0
+    def __init__(self, start_offset:int):
+        self.start_offset = start_offset
 
     def __enter__(self):
         return self

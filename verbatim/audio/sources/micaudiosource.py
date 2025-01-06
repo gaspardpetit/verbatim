@@ -16,7 +16,7 @@ class MicAudioStreamSoundDevice(AudioStream):
     stream = None
 
     def __init__(self, source:"MicAudioSourceSoundDevice"):
-        super().__init__()
+        super().__init__(start_offset=0)
         self.source = source
         self.audio_queue =  queue.Queue()
 
@@ -87,7 +87,7 @@ class MicAudioStreamPyAudio(AudioStream):
     stream: pyaudio.Stream
 
     def __init__(self, source:"MicAudioSourcePyAudio"):
-        super().__init__()
+        super().__init__(start_offset=0)
         self.source = source
         self.p: pyaudio.PyAudio = pyaudio.PyAudio()
         self.stream: pyaudio.Stream = self.p.open(

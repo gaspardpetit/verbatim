@@ -7,6 +7,7 @@ import numpy as np
 import av
 
 from .audiosource import AudioSource, AudioStream
+from ..audio import seconds_to_samples
 
 LOG = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class PyAVAudioStream(AudioStream):
 
     def __init__(self, source:"PyAVAudioSource"):
         """Open the container, find the audio stream, and seek if needed."""
-        super().__init__()
+        super().__init__(start_offset=seconds_to_samples(source.start_time))
         self.source = source
 
         # Internals

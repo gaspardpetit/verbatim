@@ -18,7 +18,7 @@ class FileAudioStream(AudioStream):
     source:"FileAudioSource"
 
     def __init__(self, source:"FileAudioSource"):
-        super().__init__()
+        super().__init__(start_offset=source.start_sample)
         self.source = source
         self.stream = wave.open(self.source.file_path, "rb")
         if self.source.start_sample != 0:

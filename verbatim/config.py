@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 import errno
 
 from dataclasses import dataclass, field
@@ -10,62 +9,9 @@ from pyannote.core.annotation import Annotation
 
 from .audio.sources.audiosource import AudioSource
 from .transcript.format.writer import TranscriptWriterConfig
+from .audio.audio import timestr_to_samples, samples_to_seconds
 
 LOG = logging.getLogger(__name__)
-
-
-def timestr_to_sample(timestr: str, sample_rate: int = 16000) -> int:
-    """
-    Converts a time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms
-    (milliseconds optional) to the corresponding sample index.
-
-    Args:
-        timestr (str): Time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms.
-        sample_rate (int): Sampling rate in Hz (default is 16000).
-
-    Returns:
-        int: The corresponding sample index.
-    """
-    # Define regex patterns for specific formats
-    hh_mm_ss_ms_pattern = re.compile(
-        r"^(?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
-    )
-    mm_ss_ms_pattern = re.compile(
-        r"^(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
-    )
-    ss_ms_pattern = re.compile(r"^(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$")
-
-    # Match the input against patterns
-    if match := hh_mm_ss_ms_pattern.match(timestr.strip()):
-        hours = int(match.group("hours"))
-        minutes = int(match.group("minutes"))
-        seconds = int(match.group("seconds"))
-        milliseconds = (
-            int(match.group("milliseconds")) if match.group("milliseconds") else 0
-        )
-    elif match := mm_ss_ms_pattern.match(timestr.strip()):
-        hours = 0
-        minutes = int(match.group("minutes"))
-        seconds = int(match.group("seconds"))
-        milliseconds = (
-            int(match.group("milliseconds")) if match.group("milliseconds") else 0
-        )
-    elif match := ss_ms_pattern.match(timestr.strip()):
-        hours = 0
-        minutes = 0
-        seconds = int(match.group("seconds"))
-        milliseconds = (
-            int(match.group("milliseconds")) if match.group("milliseconds") else 0
-        )
-    else:
-        raise ValueError(f"Invalid time string format: {timestr}")
-
-    # Calculate total time in seconds
-    total_seconds = hours * 3600 + minutes * 60 + seconds + milliseconds / 1000.0
-
-    # Convert to sample index
-    return int(total_seconds * sample_rate)
-
 
 @dataclass
 class Config:
@@ -107,11 +53,9 @@ class Config:
     working_prefix_no_ext:str = "out"
 
     # INPUT
-    start_time:int = 0
-    stop_time:Union[None,int] = None
     source_stream: AudioSource = None
     input_source:str = None
-    
+
     def __init__(
         self,
         *,
@@ -300,6 +244,9 @@ class Config:
     def configure_audio_source(
         self, input_source: str, start_time: str, stop_time: str
     ):
+        start_sample:int = timestr_to_samples(start_time) if start_time else 0
+        stop_sample:Union[None,int] = timestr_to_samples(stop_time) if stop_time else None
+
         self.input_source = input_source
         if os.path.exists(input_source) is False:
             raise FileNotFoundError(
@@ -315,9 +262,6 @@ class Config:
             self.diarize is not None and self.diarization_file is None
         ):
             self.diarization_file = self.output_prefix_no_ext + ".rttm"
-
-        self.start_time = timestr_to_sample(start_time) if start_time else None
-        self.stop_time = timestr_to_sample(stop_time) if stop_time else None
 
         # pylint: disable=import-outside-toplevel
         from .audio.sources.micaudiosource import (
@@ -342,8 +286,8 @@ class Config:
             if os.path.splitext(self.input_source)[-1] == ".wav":
                 file_audio_source = FileAudioSource(
                     self.input_source,
-                    start_sample=self.start_time,
-                    end_sample=self.stop_time,
+                    start_sample=start_sample,
+                    end_sample=stop_sample,
                 )
                 if not self.stream:
                     if self.isolate is not None:
@@ -383,8 +327,8 @@ class Config:
                 else:
                     file_audio_source = PyAVAudioSource(
                         file_path=self.input_source,
-                        start_time=self.start_time / 16000,
-                        end_time=self.stop_time / 16000 if self.stop_time else None,
+                        start_time=samples_to_seconds(start_sample),
+                        end_time=samples_to_seconds(stop_sample) if stop_sample else None,
                     )
             self.source_stream = file_audio_source
             return

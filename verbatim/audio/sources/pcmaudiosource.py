@@ -11,7 +11,7 @@ class PCMInputStreamAudioStream(AudioStream):
     source:"PCMInputStreamAudioStream"
     _has_more: bool
     def __init__(self, source:"PCMInputStreamAudioStream"):
-        super().__init__()
+        super().__init__(start_offset=0)
         self.source = source
         self._has_more = True
 

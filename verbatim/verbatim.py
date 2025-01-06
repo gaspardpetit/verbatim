@@ -215,10 +215,6 @@ class Verbatim:
             models = Models(device=config.device, stream=config.stream)
         self.models = models
 
-        if config.start_time != 0:
-            self.state.window_ts = config.start_time
-            self.state.audio_ts = config.start_time
-
     def skip_leading_silence(self, min_speech_duration_ms: int = 500) -> int:
         min_speech_duration_ms = 750
         min_speech_duration_samples = 16000 * min_speech_duration_ms // 1000
@@ -719,17 +715,15 @@ class Verbatim:
         self.state.append_audio_to_window(audio_array)
         return True
 
-    def transcribe(
-        self,
-    ) -> Generator[
-        Tuple[VerbatimUtterance, List[VerbatimUtterance], List[VerbatimWord]],
-        None,
-        None,
-    ]:
-        self.state.rolling_window.reset()  # Initialize empty rolling window
-
+    def transcribe(self) -> Generator[Tuple[VerbatimUtterance, List[VerbatimUtterance], List[VerbatimWord]], None, None]:
+        self.state = State(self.config)
         try:
             with self.config.source_stream.open() as input_stream:
+                if input_stream.start_offset != 0:
+                    self.state.window_ts = input_stream.start_offset
+                    self.state.audio_ts = input_stream.start_offset
+
+
                 LOG.info("Starting main loop for audio transcription.")
                 while True:
                     has_more_audio = self.capture_audio(
