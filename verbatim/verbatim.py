@@ -12,7 +12,7 @@ from colorama import Fore
 from pyannote.core.annotation import Annotation
 
 from .audio.sources.audiosource import AudioStream
-from .transcript.words import VerbatimWord, VerbatimUtterance
+from .transcript.words import Word, Utterance
 from .audio.audio import samples_to_seconds
 from .config import Config
 from .models import Models
@@ -33,15 +33,15 @@ LOG = logging.getLogger(__name__)
 @dataclass
 class WhisperHistory:
     size: int = 12
-    transcript_history: List[List[VerbatimWord]] = field(default_factory=list)
+    transcript_history: List[List[Word]] = field(default_factory=list)
 
-    def add(self, transcription: List[VerbatimWord]):
+    def add(self, transcription: List[Word]):
         self.transcript_history.append(transcription)
         if len(self.transcript_history) > self.size:
             self.transcript_history.pop(0)
 
     @staticmethod
-    def advance_transcript(timestamp: int, transcript: List[VerbatimWord]) -> List[VerbatimWord]:
+    def advance_transcript(timestamp: int, transcript: List[Word]) -> List[Word]:
         return [w for w in transcript if w.end_ts > timestamp]
 
     def advance(self, timestamp: int):
@@ -50,11 +50,11 @@ class WhisperHistory:
 
     @staticmethod
     def confirm_transcript(
-        current_words: List[VerbatimWord],
-        transcript: List[VerbatimWord],
-        prefix: List[VerbatimWord],
+        current_words: List[Word],
+        transcript: List[Word],
+        prefix: List[Word],
         after_ts: int,
-    ) -> List[VerbatimWord]:
+    ) -> List[Word]:
         c_index = 0
         while c_index < len(current_words):
             if (c_index < len(prefix) and prefix[c_index].word == current_words[c_index].word) or (current_words[c_index].start_ts <= after_ts):
@@ -85,10 +85,10 @@ class WhisperHistory:
 
     def confirm(
         self,
-        current_words: List[VerbatimWord],
-        prefix: List[VerbatimWord],
+        current_words: List[Word],
+        prefix: List[Word],
         after_ts: int,
-    ) -> List[VerbatimWord]:
+    ) -> List[Word]:
         return max(
             (
                 self.confirm_transcript(
@@ -126,10 +126,10 @@ class State:
     audio_ts: int
     transcript_candidate_history: WhisperHistory
     rolling_window: RollingWindow
-    acknowledged_words: List[VerbatimWord]
-    unconfirmed_words: List[VerbatimWord]
-    acknowledged_utterances: List[VerbatimUtterance]
-    unacknowledged_utterances: List[VerbatimUtterance]
+    acknowledged_words: List[Word]
+    unconfirmed_words: List[Word]
+    acknowledged_utterances: List[Utterance]
+    unacknowledged_utterances: List[Utterance]
     skip_silences: bool = True
     speaker_embeddings: List = None
     working_prefix_no_ext: str = "out"
@@ -237,7 +237,7 @@ class Verbatim:
         LOG.debug("Finished writing window to file.")
 
     @staticmethod
-    def align_words_to_sentences(sentences: list[str], window_words: list[VerbatimWord]) -> list[VerbatimUtterance]:
+    def align_words_to_sentences(sentences: list[str], window_words: list[Word]) -> list[Utterance]:
         # Concatenate all sentences into a single string
         full_text_sentences = "".join(sentences)
         # Concatenate all words from window_words
@@ -279,13 +279,13 @@ class Verbatim:
 
             # Now we have all the words for this sentence
             if len(sentence_words) > 0:
-                result.append(VerbatimUtterance.from_words(sentence_words))
+                result.append(Utterance.from_words(sentence_words))
 
         # At the end, `result` should be a List[List[VerbatimWord]]
         return result
 
     @staticmethod
-    def words_to_sentences(word_tokenizer, window_words: List[VerbatimWord]) -> list[VerbatimUtterance]:
+    def words_to_sentences(word_tokenizer, window_words: List[Word]) -> list[Utterance]:
         sentences = []
         if len(window_words) == 0:
             return []
@@ -331,7 +331,7 @@ class Verbatim:
 
         return lang
 
-    def transcribe_window(self) -> Tuple[List[VerbatimWord], List[VerbatimWord]]:
+    def transcribe_window(self) -> Tuple[List[Word], List[Word]]:
         LOG.info("Starting transcription of audio chunk.")
         LOG.info(f"Window Start Time: {samples_to_seconds(self.state.window_ts)}")
         LOG.info(f"Confirmed Time: {samples_to_seconds(self.state.confirmed_ts)}")
@@ -397,9 +397,9 @@ class Verbatim:
 
     def pretty_print_transcript(
         self,
-        acknowledged_utterances: List[VerbatimUtterance],
-        unacknowledged_utterances: List[VerbatimUtterance],
-        unconfirmed_words: List[VerbatimWord],
+        acknowledged_utterances: List[Utterance],
+        unacknowledged_utterances: List[Utterance],
+        unconfirmed_words: List[Word],
         file: TextIO = sys.stdout,
     ):
         formatter: TranscriptFormatter = TranscriptFormatter()
@@ -414,7 +414,7 @@ class Verbatim:
             formatter.format_utterance(utterance=u, out=file, colours=COLORSCHEME_UNACKNOWLEDGED)
         if len(unconfirmed_words) > 0:
             formatter.format_utterance(
-                utterance=VerbatimUtterance.from_words(unconfirmed_words),
+                utterance=Utterance.from_words(unconfirmed_words),
                 out=file,
                 colours=COLORSCHEME_UNCONFIRMED,
             )
@@ -423,10 +423,10 @@ class Verbatim:
 
     def acknowledge_utterances(
         self,
-        utterances: List[VerbatimUtterance],
+        utterances: List[Utterance],
         min_ack_duration=16000,
         min_unack_duration=16000,
-    ) -> Tuple[List[VerbatimUtterance], List[VerbatimUtterance]]:
+    ) -> Tuple[List[Utterance], List[Utterance]]:
         if len(utterances) == 0:
             return [], utterances
 
@@ -481,7 +481,7 @@ class Verbatim:
                 return speaker
         return None
 
-    def assign_speaker(self, utterance: VerbatimUtterance, diarization: Annotation):
+    def assign_speaker(self, utterance: Utterance, diarization: Annotation):
         if diarization is None:
             return None
 
@@ -539,7 +539,7 @@ class Verbatim:
     def process_audio_window(
         self, audio_stream: AudioStream
     ) -> Generator[
-        Tuple[VerbatimUtterance, List[VerbatimUtterance], List[VerbatimWord]],
+        Tuple[Utterance, List[Utterance], List[Word]],
         None,
         None,
     ]:
@@ -634,7 +634,7 @@ class Verbatim:
     def transcribe(
         self, audio_stream: AudioStream, working_prefix_no_ext: str = "out"
     ) -> Generator[
-        Tuple[VerbatimUtterance, List[VerbatimUtterance], List[VerbatimWord]],
+        Tuple[Utterance, List[Utterance], List[Word]],
         None,
         None,
     ]:
@@ -674,7 +674,7 @@ class Verbatim:
                         partial_utterance.text = "".join([w.word for w in partial_utterance.words])
 
                     if len(flushed_utterances_words) > 0:
-                        utterance = VerbatimUtterance.from_words(flushed_utterances_words)
+                        utterance = Utterance.from_words(flushed_utterances_words)
                         utterance.speaker = self.assign_speaker(utterance, audio_stream.diarization)
                         yield (
                             utterance,
@@ -690,7 +690,7 @@ class Verbatim:
                         flushed_utterances_words.append(flushed_word)
 
                     if len(flushed_utterances_words) > 0:
-                        utterance = VerbatimUtterance.from_words(flushed_utterances_words)
+                        utterance = Utterance.from_words(flushed_utterances_words)
                         utterance.speaker = self.assign_speaker(utterance, audio_stream.diarization)
                         yield (
                             utterance,
@@ -699,7 +699,7 @@ class Verbatim:
                         )
 
                 if len(flushed_utterances_words) > 0:
-                    flushed_utterances.append(VerbatimUtterance.from_words(flushed_utterances_words))
+                    flushed_utterances.append(Utterance.from_words(flushed_utterances_words))
 
                 for (
                     utterance,
@@ -729,6 +729,6 @@ class Verbatim:
                 )
 
             if len(self.state.unconfirmed_words) > 0:
-                unconfirmed_utterance: VerbatimUtterance = VerbatimUtterance.from_words(self.state.unconfirmed_words)
+                unconfirmed_utterance: Utterance = Utterance.from_words(self.state.unconfirmed_words)
                 unconfirmed_utterance.speaker = self.assign_speaker(unconfirmed_utterance, audio_stream.diarization)
                 yield unconfirmed_utterance, [], []

@@ -5,7 +5,7 @@ from colorama import Fore, Style
 
 from .writer import TranscriptWriter, TranscriptWriterConfig
 from ..formatting import format_milliseconds
-from ..words import VerbatimUtterance, VerbatimWord
+from ..words import Utterance, Word
 
 
 @dataclass
@@ -55,7 +55,7 @@ class TranscriptFormatter:
         self.current_language = None
         self.current_speaker = None
 
-    def format_utterance(self, utterance: VerbatimUtterance, out: TextIO, colours: ColorScheme):
+    def format_utterance(self, utterance: Utterance, out: TextIO, colours: ColorScheme):
         line: str = ""
         line += colours.color_timestamp
         line += f"[{format_milliseconds(utterance.start_ts * 1000 / 16000)}-{format_milliseconds(utterance.end_ts * 1000 / 16000)}]"
@@ -103,9 +103,9 @@ class TextIOTranscriptWriter(TranscriptWriter):
 
     def write(
         self,
-        utterance: VerbatimUtterance,
-        unacknowledged_utterance: List[VerbatimUtterance] = None,
-        unconfirmed_words: List[VerbatimWord] = None,
+        utterance: Utterance,
+        unacknowledged_utterance: List[Utterance] = None,
+        unconfirmed_words: List[Word] = None,
     ):
         self.formatter.format_utterance(utterance=utterance, out=self.out, colours=self.acknowledged_colours)
         if self.print_unacknowledged:
@@ -114,7 +114,7 @@ class TextIOTranscriptWriter(TranscriptWriter):
                     self.formatter.format_utterance(utterance=unack, out=self.out, colours=self.unconfirmed_colors)
             if unconfirmed_words and len(unconfirmed_words) > 0:
                 self.formatter.format_utterance(
-                    utterance=VerbatimUtterance.from_words(unconfirmed_words),
+                    utterance=Utterance.from_words(unconfirmed_words),
                     out=self.out,
                     colours=self.unconfirmed_colors,
                 )

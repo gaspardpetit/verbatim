@@ -15,7 +15,7 @@ from .writer import (
     LanguageStyle,
     TranscriptWriter,
 )
-from ..words import VerbatimUtterance, VerbatimWord
+from ..words import Utterance, Word
 from ..formatting import format_milliseconds
 
 
@@ -147,7 +147,7 @@ class DocxFormatter:
         else:
             md.append(word)
 
-    def format_utterance(self, utterance: VerbatimUtterance, out: Document):
+    def format_utterance(self, utterance: Utterance, out: Document):
         paragraph: Paragraph = out.add_paragraph()
         md: DocxParagraph = DocxParagraph(paragraph=paragraph)
         self._format_timestamp(md=md, start_ts=utterance.start_ts, end_ts=utterance.end_ts)
@@ -168,7 +168,7 @@ class DocxFormatter:
 
 def write_docx(
     *,
-    utterances: List[VerbatimUtterance],
+    utterances: List[Utterance],
     speaker_style: SpeakerStyle,
     timestamp_style: TimestampStyle,
     probability_style: ProbabilityStyle,
@@ -201,9 +201,9 @@ class DocxTranscriptWriter(TranscriptWriter):
 
     def write(
         self,
-        utterance: VerbatimUtterance,
-        unacknowledged_utterance: List[VerbatimUtterance] = None,
-        unconfirmed_words: List[VerbatimWord] = None,
+        utterance: Utterance,
+        unacknowledged_utterance: List[Utterance] = None,
+        unconfirmed_words: List[Word] = None,
     ):
         self.utterances.append(utterance)
 

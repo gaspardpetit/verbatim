@@ -3,7 +3,7 @@ from abc import abstractmethod
 from typing import List, Tuple
 
 import numpy as np
-from ...transcript.words import VerbatimWord
+from ...transcript.words import Word
 
 LOG = logging.getLogger(__name__)
 
@@ -43,5 +43,5 @@ class Transcriber:
         whisper_best_of: int = 3,
         whisper_patience: float = 1.0,
         whisper_temperatures: List[float] = None,
-    ) -> List[VerbatimWord]:
+    ) -> List[Word]:
         pass

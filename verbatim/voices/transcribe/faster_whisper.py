@@ -4,7 +4,7 @@ from typing import List, Tuple
 import numpy as np
 from faster_whisper import WhisperModel
 from ...audio.audio import samples_to_seconds
-from ...transcript.words import VerbatimWord
+from ...transcript.words import Word
 from .transcribe import Transcriber, WhisperConfig
 
 LOG = logging.getLogger(__name__)
@@ -73,7 +73,7 @@ class FasterWhisperTranscriber(Transcriber):
         whisper_best_of: int = 3,
         whisper_patience: float = 1.0,
         whisper_temperatures: List[float] = None,
-    ) -> List[VerbatimWord]:
+    ) -> List[Word]:
         LOG.info(f"Transcription Prefix: {prefix}")
         if whisper_temperatures is None:
             whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
@@ -120,10 +120,10 @@ class FasterWhisperTranscriber(Transcriber):
 
         LOG.debug(f"info={info}")
 
-        transcript_words: List[VerbatimWord] = []
+        transcript_words: List[Word] = []
         for segment in segment_iter:
             for w in segment.words:
-                word = VerbatimWord.from_word(word=w, lang=lang, ts_offset=window_ts)
+                word = Word.from_word(word=w, lang=lang, ts_offset=window_ts)
                 if word.end_ts > audio_ts:
                     continue
 
