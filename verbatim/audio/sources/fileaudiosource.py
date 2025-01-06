@@ -6,7 +6,7 @@ from typing import Dict, Union
 import numpy as np
 from pyannote.core.annotation import Annotation
 
-from .audiosource import AudioSource
+from .audiosource import AudioSource, AudioStream
 from ..audio import format_audio
 from ..audio import convert_mp3_to_wav
 from ...voices.diarization import Diarization
@@ -14,6 +14,58 @@ from ...voices.isolation import VoiceSeparator
 
 LOG = logging.getLogger(__name__)
 
+class FileAudioStream(AudioStream):
+    source:"FileAudioSource"
+
+    def __init__(self, source:"FileAudioSource"):
+        super().__init__()
+        self.source = source
+        self.stream = wave.open(self.source.file_path, "rb")
+        if self.source.start_sample != 0:
+            self.setpos(self.source.start_sample)
+
+    def setpos(self, new_sample_pos: int):
+        file_samplerate = self.stream.getframerate()
+        if file_samplerate != 16000:
+            file_sample_pos = new_sample_pos * file_samplerate // 16000
+        else:
+            file_sample_pos = new_sample_pos
+        self.stream.setpos(int(file_sample_pos))
+
+    def next_chunk(self, chunk_length=1) -> np.ndarray:
+        LOG.info(f"Reading {chunk_length} seconds of audio from file.")
+        frames = self.stream.readframes(int(self.stream.getframerate() * chunk_length))
+        sample_width = self.stream.getsampwidth()
+        n_channels = self.stream.getnchannels()
+        dtype = (
+            np.int16
+            if sample_width == 2
+            else np.int32
+            if sample_width == 4
+            else np.uint8
+        )
+        audio_array = np.frombuffer(frames, dtype=dtype)
+        audio_array = audio_array.reshape(-1, n_channels)
+
+        if len(audio_array) == 0:
+            return audio_array
+
+        audio_array = format_audio(
+            audio_array, from_sampling_rate=self.stream.getframerate()
+        )
+
+        LOG.info("Finished reading audio chunk from file.")
+        return audio_array
+
+    def has_more(self):
+        current_frame = self.stream.tell()
+        if self.source.end_sample is not None and current_frame > self.source.end_sample:
+            return False
+        total_frames = self.stream.getnframes()
+        return current_frame < total_frames
+
+    def close(self):
+        self.stream.close()
 
 class FileAudioSource(AudioSource):
     diarization: Annotation
@@ -80,50 +132,5 @@ class FileAudioSource(AudioSource):
             if voice_separator:
                 del voice_separator
 
-    def setpos(self, new_sample_pos: int):
-        file_samplerate = self.stream.getframerate()
-        if file_samplerate != 16000:
-            file_sample_pos = new_sample_pos * file_samplerate // 16000
-        else:
-            file_sample_pos = new_sample_pos
-        self.stream.setpos(int(file_sample_pos))
-
-    def next_chunk(self, chunk_length=1) -> np.ndarray:
-        LOG.info(f"Reading {chunk_length} seconds of audio from file.")
-        frames = self.stream.readframes(int(self.stream.getframerate() * chunk_length))
-        sample_width = self.stream.getsampwidth()
-        n_channels = self.stream.getnchannels()
-        dtype = (
-            np.int16
-            if sample_width == 2
-            else np.int32
-            if sample_width == 4
-            else np.uint8
-        )
-        audio_array = np.frombuffer(frames, dtype=dtype)
-        audio_array = audio_array.reshape(-1, n_channels)
-
-        if len(audio_array) == 0:
-            return audio_array
-
-        audio_array = format_audio(
-            audio_array, from_sampling_rate=self.stream.getframerate()
-        )
-
-        LOG.info("Finished reading audio chunk from file.")
-        return audio_array
-
-    def has_more(self):
-        current_frame = self.stream.tell()
-        if self.end_sample is not None and current_frame > self.end_sample:
-            return False
-        total_frames = self.stream.getnframes()
-        return current_frame < total_frames
-
     def open(self):
-        self.stream = wave.open(self.file_path, "rb")
-        if self.start_sample != 0:
-            self.setpos(self.start_sample)
-
-    def close(self):
-        self.stream.close()
+        return FileAudioStream(source=self)

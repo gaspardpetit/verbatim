@@ -3,8 +3,19 @@ from abc import abstractmethod
 import numpy as np
 
 
-class AudioSource:
+class AudioStream:
     def __init__(self):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, ex_type, ex_value, ex_traceback):
+        self.close()
+        return False
+
+    @abstractmethod
+    def has_more(self) -> bool:
         pass
 
     @abstractmethod
@@ -15,10 +26,10 @@ class AudioSource:
     def close(self):
         pass
 
-    @abstractmethod
-    def open(self):
+class AudioSource:
+    def __init__(self):
         pass
 
     @abstractmethod
-    def has_more(self) -> bool:
+    def open(self) -> AudioStream:
         pass

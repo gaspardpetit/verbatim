@@ -11,7 +11,7 @@ import numpy as np
 from colorama import Fore
 from pyannote.core.annotation import Annotation
 
-from .audio.sources.audiosource import AudioSource
+from .audio.sources.audiosource import AudioStream
 from .transcript.words import VerbatimWord, VerbatimUtterance
 from .audio.audio import samples_to_seconds
 from .config import Config
@@ -709,7 +709,7 @@ class Verbatim:
             if len(acknowledged_utterances) <= 1:
                 break
 
-    def capture_audio(self, audio_source: AudioSource):
+    def capture_audio(self, audio_source: AudioStream):
         if not audio_source.has_more():
             return False
 
@@ -729,74 +729,23 @@ class Verbatim:
         self.state.rolling_window.reset()  # Initialize empty rolling window
 
         try:
-            self.config.source_stream.open()
-            LOG.info("Starting main loop for audio transcription.")
-            while True:
-                has_more_audio = self.capture_audio(
-                    audio_source=self.config.source_stream
-                )
-                had_utterances = False
-
-                # capture any utterance that slipped out of the current window
-                flushed_utterances = []
-                while len(self.state.unacknowledged_utterances) > 0:
-                    if (
-                        self.state.unacknowledged_utterances[0].end_ts
-                        > self.state.window_ts
-                    ):
-                        break
-                    utterance = self.state.unacknowledged_utterances.pop(0)
-                    utterance.speaker = self.assign_speaker(
-                        utterance, self.config.diarization
+            with self.config.source_stream.open() as input_stream:
+                LOG.info("Starting main loop for audio transcription.")
+                while True:
+                    has_more_audio = self.capture_audio(
+                        audio_source=input_stream
                     )
-                    yield (
-                        utterance,
-                        self.state.unacknowledged_utterances,
-                        self.state.unconfirmed_words,
-                    )
+                    had_utterances = False
 
-                if len(self.state.unacknowledged_utterances) > 0:
-                    flushed_utterances_words = []
-                    partial_utterance = self.state.unacknowledged_utterances[0]
-                    while len(partial_utterance.words) > 0:
-                        if partial_utterance.words[0].end_ts > self.state.window_ts:
-                            break
-                        flushed_word = partial_utterance.words.pop(0)
-                        flushed_utterances_words.append(flushed_word)
-                        partial_utterance.start_ts = partial_utterance.words[
-                            -1
-                        ].start_ts
-                        partial_utterance.text = [
-                            w.word for w in partial_utterance.words
-                        ]
-
-                    if len(flushed_utterances_words) > 0:
-                        utterance = VerbatimUtterance.from_words(
-                            flushed_utterances_words
-                        )
-                        utterance.speaker = self.assign_speaker(
-                            utterance, self.config.diarization
-                        )
-                        yield (
-                            utterance,
-                            self.state.unacknowledged_utterances,
-                            self.state.unconfirmed_words,
-                        )
-                else:
-                    flushed_utterances_words = []
-                    while len(self.state.unconfirmed_words) > 0:
+                    # capture any utterance that slipped out of the current window
+                    flushed_utterances = []
+                    while len(self.state.unacknowledged_utterances) > 0:
                         if (
-                            self.state.unconfirmed_words[0].end_ts
+                            self.state.unacknowledged_utterances[0].end_ts
                             > self.state.window_ts
                         ):
                             break
-                        flushed_word = self.state.unconfirmed_words.pop(0)
-                        flushed_utterances_words.append(flushed_word)
-
-                    if len(flushed_utterances_words) > 0:
-                        utterance = VerbatimUtterance.from_words(
-                            flushed_utterances_words
-                        )
+                        utterance = self.state.unacknowledged_utterances.pop(0)
                         utterance.speaker = self.assign_speaker(
                             utterance, self.config.diarization
                         )
@@ -806,21 +755,72 @@ class Verbatim:
                             self.state.unconfirmed_words,
                         )
 
-                if len(flushed_utterances_words) > 0:
-                    flushed_utterances.append(
-                        VerbatimUtterance.from_words(flushed_utterances_words)
-                    )
+                    if len(self.state.unacknowledged_utterances) > 0:
+                        flushed_utterances_words = []
+                        partial_utterance = self.state.unacknowledged_utterances[0]
+                        while len(partial_utterance.words) > 0:
+                            if partial_utterance.words[0].end_ts > self.state.window_ts:
+                                break
+                            flushed_word = partial_utterance.words.pop(0)
+                            flushed_utterances_words.append(flushed_word)
+                            partial_utterance.start_ts = partial_utterance.words[
+                                -1
+                            ].start_ts
+                            partial_utterance.text = [
+                                w.word for w in partial_utterance.words
+                            ]
 
-                for (
-                    utterance,
-                    unacknowmedged,
-                    unconfirmed,
-                ) in self.process_audio_window():
-                    had_utterances = True
-                    yield utterance, unacknowmedged, unconfirmed
+                        if len(flushed_utterances_words) > 0:
+                            utterance = VerbatimUtterance.from_words(
+                                flushed_utterances_words
+                            )
+                            utterance.speaker = self.assign_speaker(
+                                utterance, self.config.diarization
+                            )
+                            yield (
+                                utterance,
+                                self.state.unacknowledged_utterances,
+                                self.state.unconfirmed_words,
+                            )
+                    else:
+                        flushed_utterances_words = []
+                        while len(self.state.unconfirmed_words) > 0:
+                            if (
+                                self.state.unconfirmed_words[0].end_ts
+                                > self.state.window_ts
+                            ):
+                                break
+                            flushed_word = self.state.unconfirmed_words.pop(0)
+                            flushed_utterances_words.append(flushed_word)
 
-                if not had_utterances and not has_more_audio:
-                    break
+                        if len(flushed_utterances_words) > 0:
+                            utterance = VerbatimUtterance.from_words(
+                                flushed_utterances_words
+                            )
+                            utterance.speaker = self.assign_speaker(
+                                utterance, self.config.diarization
+                            )
+                            yield (
+                                utterance,
+                                self.state.unacknowledged_utterances,
+                                self.state.unconfirmed_words,
+                            )
+
+                    if len(flushed_utterances_words) > 0:
+                        flushed_utterances.append(
+                            VerbatimUtterance.from_words(flushed_utterances_words)
+                        )
+
+                    for (
+                        utterance,
+                        unacknowmedged,
+                        unconfirmed,
+                    ) in self.process_audio_window():
+                        had_utterances = True
+                        yield utterance, unacknowmedged, unconfirmed
+
+                    if not had_utterances and not has_more_audio:
+                        break
 
         except KeyboardInterrupt:
             LOG.info("KeyboardInterrupt detected, stopping transcription.")
@@ -830,8 +830,6 @@ class Verbatim:
             LOG.error(f"An unexpected error occurred: {e}\n{traceback.format_exc()}")
             LOG.debug("Stopping...")
         finally:
-            LOG.info("Cleaning up resources.")
-
             for i, utterance in enumerate(self.state.unacknowledged_utterances):
                 utterance.speaker = self.assign_speaker(
                     utterance, self.config.diarization
@@ -850,5 +848,3 @@ class Verbatim:
                     unconfirmed_utterance, self.config.diarization
                 )
                 yield unconfirmed_utterance, [], []
-
-            self.config.source_stream.close()

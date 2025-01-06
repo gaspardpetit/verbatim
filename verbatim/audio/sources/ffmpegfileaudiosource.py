@@ -2,51 +2,26 @@ from typing import Optional
 import logging
 
 import numpy as np
+
+# pylint: disable=c-extension-no-member
 import av
 
-# pylint: disable=no-name-in-module
-from av.audio.resampler import AudioResampler
-from av.audio.frame import AudioFrame
-
-
-from .audiosource import AudioSource
+from .audiosource import AudioSource, AudioStream
 
 LOG = logging.getLogger(__name__)
 
+class PyAVAudioStream(AudioStream):
+    source:"PyAVAudioSource"
 
-class PyAVAudioSource(AudioSource):
-    """
-    A chunk-based audio reader that uses PyAV to decode audio frames.
-
-    - Reads from a container (any format that FFmpeg/PyAV supports).
-    - Decodes audio frames into an internal buffer.
-    - Returns them in "chunk_length" second increments via next_chunk().
-    - By default, it streams as 16-bit int PCM at some target rate (e.g. 16 kHz).
-    """
-
-    def __init__(
-        self,
-        file_path: str,
-        target_sample_rate: int = 16000,
-        start_time: float = 0.0,
-        end_time: Optional[float] = None,
-    ):
-        """
-        :param file_path: Path/URL to audio file
-        :param target_sample_rate: Desired sample rate for output (e.g. 16k)
-        :param start_time: Seek to this time (seconds) before reading
-        :param end_time: Stop reading after this time (seconds) from start
-        """
+    def __init__(self, source:"PyAVAudioSource"):
+        """Open the container, find the audio stream, and seek if needed."""
         super().__init__()
-        self.file_path = file_path
-        self.target_sample_rate = target_sample_rate
-        self.start_time = start_time
-        self.end_time = end_time
+        self.source = source
 
         # Internals
-        self._container: av.container.InputContainer = None
+        self._container:av.container.InputContainer = None
         # pylint: disable=c-extension-no-member
-        self._stream: av.audio.stream.AudioStream = None
+        self._stream:av.audio.stream.AudioStream = None
         self._frame_iter = None
 
         # Buffer for leftover samples (when frames don't line up exactly with chunk size)
@@ -55,10 +30,9 @@ class PyAVAudioSource(AudioSource):
         self._closed = False
         self._done_decoding = False
 
-    def open(self):
-        """Open the container, find the audio stream, and seek if needed."""
-        LOG.info(f"Opening file with PyAV: {self.file_path}")
-        self._container = av.open(self.file_path)
+
+        LOG.info(f"Opening file with PyAV: {self.source.file_path}")
+        self._container = av.open(self.source.file_path)
 
         # Find the first audio stream (or choose a specific one if needed)
         audio_streams = [s for s in self._container.streams if s.type == "audio"]
@@ -73,15 +47,15 @@ class PyAVAudioSource(AudioSource):
         # E.g., self._stream.codec_context.sample_rate = self.target_sample_rate
 
         # If we want to seek to `start_time`, do so in seconds:
-        if self.start_time > 0:
+        if self.source.start_time > 0:
             # av.seek() or container.seek() uses timestamps in AV_TIME_BASE units
             # but PyAV usually accepts "seconds" if we specify 'any' for backward flag
             self._container.seek(
-                int(self.start_time / self._stream.time_base),
+                int(self.source.start_time / self._stream.time_base),
                 any_frame=False,
                 stream=self._stream,
             )
-            LOG.info(f"Seeking to {self.start_time} seconds.")
+            LOG.info(f"Seeking to {self.source.start_time} seconds.")
 
         # We create a generator that decodes frames from the audio stream
         # This is the raw frames from the container
@@ -104,9 +78,9 @@ class PyAVAudioSource(AudioSource):
             return np.array([], dtype=np.float32)
 
         # How many samples do we need?
-        needed_samples = int(chunk_length * self.target_sample_rate)
+        needed_samples = int(chunk_length * self.source.target_sample_rate)
 
-        resampler = AudioResampler(
+        resampler = av.audio.resampler.AudioResampler(
             format="flt",  # float32
             layout="mono",  # 1 channel
             rate=16000,  # target samplerate
@@ -124,19 +98,19 @@ class PyAVAudioSource(AudioSource):
 
             # Optionally, we can check the frame's pts (presentation timestamp)
             # to see if we've passed end_time. If so, stop decoding.
-            if self.end_time is not None and frame.pts is not None:
+            if self.source.end_time is not None and frame.pts is not None:
                 # Convert pts to seconds
                 # In PyAV, each stream has time_base -> frame_time = frame.pts * stream.time_base
                 current_time_sec = float(frame.pts * self._stream.time_base)
-                if current_time_sec > self.end_time:
+                if current_time_sec > self.source.end_time:
                     LOG.info(
-                        f"Reached end_time={self.end_time:.2f}s (current={current_time_sec:.2f}s). Stopping."
+                        f"Reached end_time={self.source.end_time:.2f}s (current={current_time_sec:.2f}s). Stopping."
                     )
                     self._done_decoding = True
                     break
 
             # Resample to your desired format
-            new_frames: list[AudioFrame] = resampler.resample(frame)
+            new_frames: list[av.audio.frame.AudioFrame] = resampler.resample(frame)
             for new_frame in new_frames:
                 new_frame = (
                     new_frame.to_ndarray().astype(np.float32, copy=False).squeeze()
@@ -172,3 +146,35 @@ class PyAVAudioSource(AudioSource):
         self._closed = True
         self._done_decoding = True
         self._sample_buffer = np.array([], dtype=np.float32)
+
+class PyAVAudioSource(AudioSource):
+    """
+    A chunk-based audio reader that uses PyAV to decode audio frames.
+
+    - Reads from a container (any format that FFmpeg/PyAV supports).
+    - Decodes audio frames into an internal buffer.
+    - Returns them in "chunk_length" second increments via next_chunk().
+    - By default, it streams as 16-bit int PCM at some target rate (e.g. 16 kHz).
+    """
+
+    def __init__(
+        self,
+        file_path: str,
+        target_sample_rate: int = 16000,
+        start_time: float = 0.0,
+        end_time: Optional[float] = None,
+    ):
+        """
+        :param file_path: Path/URL to audio file
+        :param target_sample_rate: Desired sample rate for output (e.g. 16k)
+        :param start_time: Seek to this time (seconds) before reading
+        :param end_time: Stop reading after this time (seconds) from start
+        """
+        super().__init__()
+        self.file_path = file_path
+        self.target_sample_rate = target_sample_rate
+        self.start_time = start_time
+        self.end_time = end_time
+
+    def open(self):
+        return PyAVAudioStream(source=self)
