@@ -73,23 +73,26 @@ class Config:
     transcribe_latency: int = 16000
     frames_per_buffer: int = 1000
     window_duration: int = 30  # seconds
-    whisper_prompts: Dict[str, str] = None
-    lang: List[str] = field(default_factory=list)
-    start_time: int = 0
-    stop_time: Union[None, int] = None
-    source_stream: AudioSource = None
-    input_source: str = None
-    isolate: Union[None, bool] = None
-    diarization: Annotation = None
-    diarization_file: str = None
     device: str = "cuda"
     stream: bool = False
-    diarize: Union[int, None] = None
+    debug: bool = False
+
+    # PREPROCESSING
+    separate:bool = False
+    isolate:Union[None,bool] = None
+    diarize:Union[int,None] = None
+    diarization: Annotation = None
+    diarization_file: str = None
+
+    # TRANSCRIPTION
+    lang: List[str] = field(default_factory=list)
+    whisper_prompts: Dict[str, str] = None
     whisper_beam_size: int = 9
     whisper_best_of: int = 9
     whisper_patience: float = 2.0
     whisper_temperatures: List[float] = None
-    debug: bool = False
+
+    # OUTPUT
     working_dir: str = "."
     output_dir: str = "."
     enable_ass: bool = False
@@ -99,10 +102,16 @@ class Config:
     enable_json: bool = False
     enable_stdout: bool = True
     enable_stdout_nocolor: bool = False
-    write_config: TranscriptWriterConfig = field(default=TranscriptWriterConfig)
-    output_prefix_no_ext: str = "out"
-    working_prefix_no_ext: str = "out"
+    write_config:TranscriptWriterConfig = field(default=TranscriptWriterConfig)
+    output_prefix_no_ext:str = "out"
+    working_prefix_no_ext:str = "out"
 
+    # INPUT
+    start_time:int = 0
+    stop_time:Union[None,int] = None
+    source_stream: AudioSource = None
+    input_source:str = None
+    
     def __init__(
         self,
         *,
