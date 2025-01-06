@@ -274,6 +274,9 @@ def main():
         stop_time=args.stop_time,
     )
 
+    input_name_no_ext = os.path.splitext(os.path.split(args.input)[-1])[0]
+    output_prefix_no_ext = os.path.join(config.output_dir, input_name_no_ext)
+
     config.lang = args.languages if args.languages else ["en"]
 
     # Set output formats
@@ -306,7 +309,7 @@ def main():
 
     transcriber = Verbatim(config)
     writer: TranscriptWriter = configure_writers(config, original_audio_file=config.source_stream.source_name)
-    writer.open(path_no_ext=config.output_prefix_no_ext)
+    writer.open(path_no_ext=output_prefix_no_ext)
     for utterance, unacknowledged, unconfirmed in transcriber.transcribe():
         writer.write(
             utterance=utterance,

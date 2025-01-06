@@ -50,8 +50,6 @@ class Config:
     enable_stdout: bool = True
     enable_stdout_nocolor: bool = False
     write_config:TranscriptWriterConfig = field(default=TranscriptWriterConfig)
-    output_prefix_no_ext:str = "out"
-    working_prefix_no_ext:str = "out"
 
     # INPUT
     source_stream: AudioSource = None
@@ -217,10 +215,15 @@ class Config:
             self.diarize = int(self.diarize)
 
         self.configure_output_directory(outdir=outdir, workdir=workdir)
+
         if input_source is not None:
+            input_name_no_ext = os.path.splitext(os.path.split(input_source)[-1])[0]
+            output_prefix_no_ext = os.path.join(self.output_dir, input_name_no_ext)
+            working_prefix_no_ext = os.path.join(self.working_dir, input_name_no_ext)
+
             self.configure_audio_source(
-                input_source=input_source, start_time=start_time, stop_time=stop_time
-            )
+                input_source=input_source, start_time=start_time, stop_time=stop_time,
+                working_prefix_no_ext=working_prefix_no_ext, output_prefix_no_ext=output_prefix_no_ext)
 
     def configure_output_directory(self, outdir: str, workdir: str):
         if not os.path.isdir(outdir):
@@ -242,8 +245,9 @@ class Config:
         LOG.info(f"Working directory set to {self.working_dir}")
 
     def configure_audio_source(
-        self, input_source: str, start_time: str, stop_time: str
-    ):
+            self, *,
+            input_source: str, start_time: str, stop_time: str, output_prefix_no_ext:str, working_prefix_no_ext:str):
+
         if input_source == "-":
             # pylint: disable=import-outside-toplevel
             from .audio.sources.pcmaudiosource import PCMInputStreamAudioSource
@@ -266,13 +270,9 @@ class Config:
                 errno.ENOENT, os.strerror(errno.ENOENT), input_source
             )
 
-        input_name_no_ext = os.path.splitext(os.path.split(input_source)[-1])[0]
-        self.output_prefix_no_ext = os.path.join(self.output_dir, input_name_no_ext)
-        self.working_prefix_no_ext = os.path.join(self.working_dir, input_name_no_ext)
-
         self.diarization_file = self.diarization
         if self.diarization_file == "" or (self.diarize is not None and self.diarization_file is None):
-            self.diarization_file = self.output_prefix_no_ext + ".rttm"
+            self.diarization_file = output_prefix_no_ext + ".rttm"
 
         # pylint: disable=import-outside-toplevel
         from .audio.sources.ffmpegfileaudiosource import PyAVAudioSource
@@ -291,9 +291,11 @@ class Config:
             file_audio_source = PyAVAudioSource(file_path=input_source)
             from .audio.sources.wavsink import WavSink
 
-            input_source = self.working_prefix_no_ext + ".wav"
+            input_source = working_prefix_no_ext + ".wav"
             WavSink.dump_to_wav(audio_source=file_audio_source, output_path=input_source)
-            self.configure_audio_source(input_source=input_source, start_time=start_time, stop_time=stop_time)
+            self.configure_audio_source(
+                input_source=input_source, start_time=start_time, stop_time=stop_time,
+                working_prefix_no_ext=working_prefix_no_ext, output_prefix_no_ext=output_prefix_no_ext)
             return
 
         file_audio_source = FileAudioSource(input_source, start_sample=start_sample, end_sample=stop_sample)
