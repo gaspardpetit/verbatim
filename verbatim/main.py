@@ -81,11 +81,7 @@ def configure_writers(
     if "ass" in output_formats:
         from .transcript.format.ass import AssTranscriptWriter
 
-        multi_writer.add_writer(
-            AssTranscriptWriter(
-                config=write_config, original_audio_file=original_audio_file
-            )
-        )
+        multi_writer.add_writer(AssTranscriptWriter(config=write_config, original_audio_file=original_audio_file))
     if "docx" in output_formats:
         from .transcript.format.docx import DocxTranscriptWriter
 
@@ -101,15 +97,11 @@ def configure_writers(
     if "stdout" in output_formats and "stdout-nocolor" not in output_formats:
         from .transcript.format.stdout import StdoutTranscriptWriter
 
-        multi_writer.add_writer(
-            StdoutTranscriptWriter(config=write_config, with_colours=True)
-        )
+        multi_writer.add_writer(StdoutTranscriptWriter(config=write_config, with_colours=True))
     if "stdout-nocolor" in output_formats:
         from .transcript.format.stdout import StdoutTranscriptWriter
 
-        multi_writer.add_writer(
-            StdoutTranscriptWriter(config=write_config, with_colours=False)
-        )
+        multi_writer.add_writer(StdoutTranscriptWriter(config=write_config, with_colours=False))
     return multi_writer
 
 
@@ -120,17 +112,14 @@ def main():
             # Set the attribute to the provided value or an empty string if no value is given
             setattr(namespace, self.dest, values if values is not None else "")
 
-    parser = argparse.ArgumentParser(
-        prog=PACKAGE_NAME, description="Verbatim: that's what she said"
-    )
+    parser = argparse.ArgumentParser(prog=PACKAGE_NAME, description="Verbatim: that's what she said")
 
     # Specify the command line arguments
     parser.add_argument(
         "input",
         nargs="?",
         default=None,
-        help="Path to the input audio file. Use '-' to read from stdin "
-        "(expecting 16bit 16kHz mono PCM stream) or '>' to use microphone.",
+        help="Path to the input audio file. Use '-' to read from stdin " "(expecting 16bit 16kHz mono PCM stream) or '>' to use microphone.",
     )
     parser.add_argument(
         "-f",
@@ -146,9 +135,7 @@ def main():
         default="",
         dest="stop_time",
     )
-    parser.add_argument(
-        "-o", "--outdir", help="Path to the output directory", default="."
-    )
+    parser.add_argument("-o", "--outdir", help="Path to the output directory", default=".")
     parser.add_argument(
         "-d",
         "--diarization",
@@ -189,8 +176,7 @@ def main():
         "-b",
         "--nb_beams",
         type=int,
-        help="Number of parallel when resolving transcription. "
-        + "1-3 for fast, 12-15 for high quality. Default is 9.",
+        help="Number of parallel when resolving transcription. " + "1-3 for fast, 12-15 for high quality. Default is 9.",
         default=None,
     )
     parser.add_argument(
@@ -200,13 +186,9 @@ def main():
         default=0,
         help="Increase verbosity (specify multiple times for more verbosity)",
     )
-    parser.add_argument(
-        "--version", action="version", version=f"{PACKAGE_NAME} {__version__}"
-    )
+    parser.add_argument("--version", action="version", version=f"{PACKAGE_NAME} {__version__}")
     parser.add_argument("--cpu", action="store_true", help="Toggle CPU usage")
-    parser.add_argument(
-        "-s", "--stream", action="store_true", help="Set mode to low latency streaming"
-    )
+    parser.add_argument("-s", "--stream", action="store_true", help="Set mode to low latency streaming")
     parser.add_argument(
         "-w",
         "--workdir",
@@ -215,12 +197,8 @@ def main():
         default=None,
         help="Set the working directory where temporary files may be written to (default is system temp directory)",
     )
-    parser.add_argument(
-        "--ass", action="store_true", help="Enable ASS subtitle file output"
-    )
-    parser.add_argument(
-        "--docx", action="store_true", help="Enable Microsoft Word DOCX output"
-    )
+    parser.add_argument("--ass", action="store_true", help="Enable ASS subtitle file output")
+    parser.add_argument("--docx", action="store_true", help="Enable Microsoft Word DOCX output")
     parser.add_argument("--txt", action="store_true", help="Enable TXT file output")
     parser.add_argument("--json", action="store_true", help="Enable json file output")
     parser.add_argument("--md", action="store_true", help="Enable Markdown (MD) output")
@@ -384,12 +362,8 @@ def main():
         writer.close()
 
     if len(audio_sources) > 1:
-        sorted_utterances: List[VerbatimUtterance] = sorted(
-            all_utterances, key=lambda x: x.start_ts
-        )
-        writer: TranscriptWriter = configure_writers(
-            write_config, output_formats=output_formats, original_audio_file=source_path
-        )
+        sorted_utterances: List[VerbatimUtterance] = sorted(all_utterances, key=lambda x: x.start_ts)
+        writer: TranscriptWriter = configure_writers(write_config, output_formats=output_formats, original_audio_file=source_path)
         writer.open(path_no_ext=output_prefix_no_ext)
         for sorted_utterance in sorted_utterances:
             writer.write(utterance=sorted_utterance)

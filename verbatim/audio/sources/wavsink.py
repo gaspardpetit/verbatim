@@ -6,9 +6,7 @@ from .audiosource import AudioSource
 
 class WavSink:
     @staticmethod
-    def dump_to_wav(
-        audio_source: AudioSource, output_path: str, sample_rate: int = 16000
-    ):
+    def dump_to_wav(audio_source: AudioSource, output_path: str, sample_rate: int = 16000):
         """
         Dump the entire audio content from PyAVAudioSource to a .wav file.
         """

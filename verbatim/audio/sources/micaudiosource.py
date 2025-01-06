@@ -38,9 +38,7 @@ class MicAudioStreamSoundDevice(AudioStream):
             if status.input_overflow:
                 LOG.error("Input overflow occurred! Some audio data was lost.")
             if status.input_underflow:
-                LOG.error(
-                    "Input underflow occurred!"
-                )  # Add the audio data to the queue
+                LOG.error("Input underflow occurred!")  # Add the audio data to the queue
         chunk = indata.copy().ravel()
         self.audio_queue.put(chunk)
         # LOG.debug(f"Captured new audio: len={len(chunk)} min={min(chunk)} max={max(chunk)}")
@@ -62,9 +60,7 @@ class MicAudioStreamSoundDevice(AudioStream):
             audio_array = np.concatenate(frames, axis=0)
             # Convert the audio data to float32 and normalize to [-1, 1]
             audio_array = audio_array.astype(np.float32)
-            LOG.debug(
-                f"Fetched {len(audio_array)} ({samples_to_seconds(len(audio_array))}) samples."
-            )
+            LOG.debug(f"Fetched {len(audio_array)} ({samples_to_seconds(len(audio_array))}) samples.")
             return audio_array
 
         else:
@@ -108,11 +104,7 @@ class MicAudioStreamPyAudio(AudioStream):
         # Read exactly chunk_length seconds of audio
         for _ in range(
             0,
-            int(
-                self.source.frames_per_iter
-                / self.source.frames_per_buffer
-                * chunk_length
-            ),
+            int(self.source.frames_per_iter / self.source.frames_per_buffer * chunk_length),
         ):
             data = self.stream.read(self.source.frames_per_buffer)
             frames.append(data)

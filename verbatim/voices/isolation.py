@@ -27,9 +27,7 @@ class VoiceIsolation:
         del self.separator
         return False
 
-    def isolate_voice_in_file(
-        self, file: str, out_voice: str = None, out_noise: str = None
-    ) -> Tuple[str, str]:
+    def isolate_voice_in_file(self, file: str, out_voice: str = None, out_noise: str = None) -> Tuple[str, str]:
         if out_voice is None:
             out_voice = "debug_audio-vocals"
         if out_noise is None:
@@ -64,12 +62,8 @@ class VoiceIsolation:
         voice_audio_path, _ = self.isolate_voice_in_file(file=temp_audio_file)
 
         # Load the vocal audio back into a NumPy array
-        voice_audio, voice_sampling_rate = librosa.load(
-            voice_audio_path, sr=None, mono=False
-        )
-        voice_audio = (
-            voice_audio.T
-        )  # librosa formats (nchannel, samples) and we expect (samples, nchannels)
+        voice_audio, voice_sampling_rate = librosa.load(voice_audio_path, sr=None, mono=False)
+        voice_audio = voice_audio.T  # librosa formats (nchannel, samples) and we expect (samples, nchannels)
 
         # Format the vocal audio to mono and 16 kHz
         formatted_voice_audio = format_audio(voice_audio, voice_sampling_rate)

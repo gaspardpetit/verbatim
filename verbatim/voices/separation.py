@@ -72,11 +72,7 @@ class SpeakerSeparation:
                 speaker_data = sources.data[:, s]
                 if speaker_data.dtype != np.int16:
                     speaker_data = wav_to_int16(speaker_data)
-                file_name = (
-                    f"{out_speaker_wav_prefix}-{speaker}.wav"
-                    if out_speaker_wav_prefix
-                    else f"{speaker}.wav"
-                )
+                file_name = f"{out_speaker_wav_prefix}-{speaker}.wav" if out_speaker_wav_prefix else f"{speaker}.wav"
                 speaker_wav_files[speaker] = file_name
                 scipy.io.wavfile.write(file_name, 16000, speaker_data)
             else:

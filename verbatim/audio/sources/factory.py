@@ -45,19 +45,14 @@ def create_audio_source(
     if os.path.exists(input_source) is False:
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), input_source)
 
-    if source_config.diarization_file == "" or (
-        source_config.diarize is not None and source_config.diarization_file is None
-    ):
+    if source_config.diarization_file == "" or (source_config.diarize is not None and source_config.diarization_file is None):
         source_config.diarization_file = output_prefix_no_ext + ".rttm"
 
     from .ffmpegfileaudiosource import PyAVAudioSource
     from .fileaudiosource import FileAudioSource
 
     if os.path.splitext(input_source)[-1] != ".wav":
-        if not (
-            not stream
-            and (source_config.isolate is not None or source_config.diarize is not None)
-        ):
+        if not (not stream and (source_config.isolate is not None or source_config.diarize is not None)):
             return PyAVAudioSource(
                 file_path=input_source,
                 start_time=samples_to_seconds(start_sample),
@@ -68,9 +63,7 @@ def create_audio_source(
         from .wavsink import WavSink
 
         input_source = working_prefix_no_ext + ".wav"
-        WavSink.dump_to_wav(
-            audio_source=temp_file_audio_source, output_path=input_source
-        )
+        WavSink.dump_to_wav(audio_source=temp_file_audio_source, output_path=input_source)
         return create_audio_source(
             source_config=source_config,
             device=device,
@@ -83,9 +76,7 @@ def create_audio_source(
 
     if not stream:
         if source_config.isolate is not None:
-            input_source, _noise_path = FileAudioSource.isolate_voices(
-                file_path=input_source, out_path_prefix=source_config.isolate or None
-            )
+            input_source, _noise_path = FileAudioSource.isolate_voices(file_path=input_source, out_path_prefix=source_config.isolate or None)
         if source_config.diarize is not None:
             source_config.diarization = FileAudioSource.compute_diarization(
                 file_path=input_source,
@@ -97,9 +88,7 @@ def create_audio_source(
     if source_config.diarization_file:
         from ...voices.diarization import Diarization
 
-        source_config.diarization = Diarization.load_diarization(
-            rttm_file=source_config.diarization_file
-        )
+        source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
 
     return FileAudioSource(
         input_source,
@@ -121,9 +110,7 @@ def create_separate_speaker_sources(
 ) -> List[AudioSource]:
     # pylint: disable=import-outside-toplevel
 
-    if source_config.diarization_file == "" or (
-        source_config.diarize is not None and source_config.diarization_file is None
-    ):
+    if source_config.diarization_file == "" or (source_config.diarize is not None and source_config.diarization_file is None):
         source_config.diarization_file = output_prefix_no_ext + ".rttm"
 
     nb_speakers = source_config.diarize
@@ -138,9 +125,7 @@ def create_separate_speaker_sources(
 
     sources: List[AudioSource] = []
 
-    with SpeakerSeparation(
-        device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN")
-    ) as separation:
+    with SpeakerSeparation(device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN")) as separation:
         diarization, speaker_wav_files = separation.separate_speakers(
             file_path=input_source,
             out_rttm_file=source_config.diarization_file,

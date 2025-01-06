@@ -20,12 +20,7 @@ class PCMInputStreamAudioStream(AudioStream):
     def next_chunk(self, chunk_length=1) -> np.ndarray:
         # Calculate the number of bytes needed per chunk
         bytes_per_sample = np.dtype(self.source.dtype).itemsize
-        bytes_needed = (
-            chunk_length
-            * self.source.sampling_rate
-            * self.source.channels
-            * bytes_per_sample
-        )
+        bytes_needed = chunk_length * self.source.sampling_rate * self.source.channels * bytes_per_sample
 
         # Buffer to store the read bytes
         input_data = bytearray()
@@ -40,9 +35,7 @@ class PCMInputStreamAudioStream(AudioStream):
 
         # Convert the byte data to a NumPy array
         samples = np.frombuffer(input_data, dtype=self.source.dtype)
-        return samples[
-            : bytes_needed // bytes_per_sample
-        ]  # Ensure the array is the correct length
+        return samples[: bytes_needed // bytes_per_sample]  # Ensure the array is the correct length
 
     def close(self):
         # caller is responsible for the lifecycle of the stream

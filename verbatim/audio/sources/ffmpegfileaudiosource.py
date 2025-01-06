@@ -17,9 +17,7 @@ class PyAVAudioStream(AudioStream):
 
     def __init__(self, source: "PyAVAudioSource"):
         """Open the container, find the audio stream, and seek if needed."""
-        super().__init__(
-            start_offset=seconds_to_samples(source.start_time), diarization=None
-        )
+        super().__init__(start_offset=seconds_to_samples(source.start_time), diarization=None)
         self.source = source
 
         # Internals
@@ -106,18 +104,14 @@ class PyAVAudioStream(AudioStream):
                 # In PyAV, each stream has time_base -> frame_time = frame.pts * stream.time_base
                 current_time_sec = float(frame.pts * self._stream.time_base)
                 if current_time_sec > self.source.end_time:
-                    LOG.info(
-                        f"Reached end_time={self.source.end_time:.2f}s (current={current_time_sec:.2f}s). Stopping."
-                    )
+                    LOG.info(f"Reached end_time={self.source.end_time:.2f}s (current={current_time_sec:.2f}s). Stopping.")
                     self._done_decoding = True
                     break
 
             # Resample to your desired format
             new_frames: list[av.audio.frame.AudioFrame] = resampler.resample(frame)
             for new_frame in new_frames:
-                new_frame = (
-                    new_frame.to_ndarray().astype(np.float32, copy=False).squeeze()
-                )
+                new_frame = new_frame.to_ndarray().astype(np.float32, copy=False).squeeze()
                 self._sample_buffer = np.concatenate([self._sample_buffer, new_frame])
 
         # By now, we either have enough samples or we hit EOF

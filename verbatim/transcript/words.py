@@ -43,12 +43,8 @@ class VerbatimUtterance:
         return samples_to_seconds(self.end_ts)
 
     @classmethod
-    def from_words(
-        cls, words: List[VerbatimWord], speaker: str = None
-    ) -> "VerbatimUtterance":
+    def from_words(cls, words: List[VerbatimWord], speaker: str = None) -> "VerbatimUtterance":
         start_ts = words[0].start_ts
         end_ts = words[-1].end_ts
         text = "".join([w.word for w in words])
-        return cls(
-            start_ts=start_ts, end_ts=end_ts, words=words, text=text, speaker=speaker
-        )
+        return cls(start_ts=start_ts, end_ts=end_ts, words=words, text=text, speaker=speaker)

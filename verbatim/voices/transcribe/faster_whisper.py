@@ -44,9 +44,7 @@ class FasterWhisperTranscriber(Transcriber):
         self.whisper_temperatures = whisper_temperatures
 
     def guess_language(self, audio: np.array, lang: List[str]) -> Tuple[str, float]:
-        language, language_probability, all_language_probs = (
-            self.whisper_model.detect_language(audio=audio)
-        )
+        language, language_probability, all_language_probs = self.whisper_model.detect_language(audio=audio)
         if language in lang:
             LOG.info(f"detected '{language}' with probability {language_probability}")
             return language, language_probability
@@ -59,9 +57,7 @@ class FasterWhisperTranscriber(Transcriber):
                     if t[1] > guess_prob:
                         guess_lang = t[0]
                         guess_prob = t[1]
-                        LOG.info(
-                            f"detected '{lang_iter}' with probability {guess_prob}"
-                        )
+                        LOG.info(f"detected '{lang_iter}' with probability {guess_prob}")
         return guess_lang, guess_prob
 
     def transcribe(
@@ -131,9 +127,7 @@ class FasterWhisperTranscriber(Transcriber):
                 if word.end_ts > audio_ts:
                     continue
 
-                LOG.debug(
-                    f"[{word.start_ts} ({samples_to_seconds(word.start_ts)})]: {w.word}"
-                )
+                LOG.debug(f"[{word.start_ts} ({samples_to_seconds(word.start_ts)})]: {w.word}")
                 transcript_words.append(word)
 
         return transcript_words

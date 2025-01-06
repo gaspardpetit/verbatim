@@ -38,32 +38,21 @@ class FileAudioStream(AudioStream):
         frames = self.stream.readframes(int(self.stream.getframerate() * chunk_length))
         sample_width = self.stream.getsampwidth()
         n_channels = self.stream.getnchannels()
-        dtype = (
-            np.int16
-            if sample_width == 2
-            else np.int32
-            if sample_width == 4
-            else np.uint8
-        )
+        dtype = np.int16 if sample_width == 2 else np.int32 if sample_width == 4 else np.uint8
         audio_array = np.frombuffer(frames, dtype=dtype)
         audio_array = audio_array.reshape(-1, n_channels)
 
         if len(audio_array) == 0:
             return audio_array
 
-        audio_array = format_audio(
-            audio_array, from_sampling_rate=self.stream.getframerate()
-        )
+        audio_array = format_audio(audio_array, from_sampling_rate=self.stream.getframerate())
 
         LOG.info("Finished reading audio chunk from file.")
         return audio_array
 
     def has_more(self):
         current_frame = self.stream.tell()
-        if (
-            self.source.end_sample is not None
-            and current_frame > self.source.end_sample
-        ):
+        if self.source.end_sample is not None and current_frame > self.source.end_sample:
             return False
         total_frames = self.stream.getnframes()
         return current_frame < total_frames
@@ -96,17 +85,11 @@ class FileAudioSource(AudioSource):
         self.start_sample = start_sample
 
     @staticmethod
-    def compute_diarization(
-        file_path: str, device: str, rttm_file: str = None, nb_speakers: int = None
-    ) -> Annotation:
+    def compute_diarization(file_path: str, device: str, rttm_file: str = None, nb_speakers: int = None) -> Annotation:
         if nb_speakers == 0:
             nb_speakers = None
-        with Diarization(
-            device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN")
-        ) as diarization:
-            annotation = diarization.compute_diarization(
-                file_path=file_path, out_rttm_file=rttm_file, nb_speakers=nb_speakers
-            )
+        with Diarization(device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN")) as diarization:
+            annotation = diarization.compute_diarization(file_path=file_path, out_rttm_file=rttm_file, nb_speakers=nb_speakers)
             return annotation
 
     @staticmethod
@@ -126,9 +109,7 @@ class FileAudioSource(AudioSource):
                     voice_prefix = f"{basename}-voice"
                     noise_prefix = f"{basename}-noise"
 
-            file_path, noise_path = voice_separator.isolate_voice_in_file(
-                file=file_path, out_voice=voice_prefix, out_noise=noise_prefix
-            )
+            file_path, noise_path = voice_separator.isolate_voice_in_file(file=file_path, out_voice=voice_prefix, out_noise=noise_prefix)
         return file_path, noise_path
 
     def open(self):

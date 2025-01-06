@@ -15,14 +15,8 @@ class StdoutTranscriptWriter(TextIOTranscriptWriter):
         super().__init__(
             config=config,
             out=sys.stdout,
-            acknowledged_colours=COLORSCHEME_ACKNOWLEDGED
-            if with_colours
-            else COLORSCHEME_NONE,
-            unacknowledged_colours=COLORSCHEME_UNACKNOWLEDGED
-            if with_colours
-            else COLORSCHEME_NONE,
-            unconfirmed_colors=COLORSCHEME_UNCONFIRMED
-            if with_colours
-            else COLORSCHEME_NONE,
+            acknowledged_colours=COLORSCHEME_ACKNOWLEDGED if with_colours else COLORSCHEME_NONE,
+            unacknowledged_colours=COLORSCHEME_UNACKNOWLEDGED if with_colours else COLORSCHEME_NONE,
+            unconfirmed_colors=COLORSCHEME_UNCONFIRMED if with_colours else COLORSCHEME_NONE,
             print_unacknowledged=config.verbose,
         )

@@ -169,9 +169,7 @@ class Config:
         import torch
 
         if use_cpu or not torch.cuda.is_available():
-            os.environ["CUDA_VISIBLE_DEVICES"] = (
-                "-1"  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
-            )
+            os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
             LOG.info("Using CPU")
             self.device = "cpu"
         else:
@@ -191,9 +189,7 @@ class Config:
 
         # Set the working directory
         if workdir is None:
-            self.working_dir = os.getenv(
-                "TMPDIR", os.getenv("TEMP", os.getenv("TMP", "."))
-            )
+            self.working_dir = os.getenv("TMPDIR", os.getenv("TEMP", os.getenv("TMP", ".")))
         elif workdir == "":
             self.working_dir = self.output_dir
         else:

@@ -31,12 +31,9 @@ def is_ascending_sequence(seq: List[Union[int, float]], verbose: bool = True) ->
     is_ascending = all(i <= j for i, j in zip(seq, seq[1:]))
 
     if not is_ascending and verbose:
-        first_descending_idx = next(
-            (idx for idx, (i, j) in enumerate(zip(seq[:-1], seq[1:])) if i > j), None
-        )
+        first_descending_idx = next((idx for idx, (i, j) in enumerate(zip(seq[:-1], seq[1:])) if i > j), None)
         LOG.info(
-            f"[Index{first_descending_idx}]:{seq[first_descending_idx]} > "
-            + f"[Index{first_descending_idx + 1}]:{seq[first_descending_idx + 1]}"
+            f"[Index{first_descending_idx}]:{seq[first_descending_idx]} > " + f"[Index{first_descending_idx + 1}]:{seq[first_descending_idx + 1]}"
         )
 
     return is_ascending
@@ -58,10 +55,7 @@ def valid_ts(ts: List[dict], warn: bool = True) -> bool:
     valid = is_ascending_sequence(time_points, False)
 
     if warn and not valid:
-        warnings.warn(
-            "Found timestamp(s) jumping backwards in time. "
-            "Use word_timestamps=True to avoid the issue."
-        )
+        warnings.warn("Found timestamp(s) jumping backwards in time. " "Use word_timestamps=True to avoid the issue.")
 
     return valid
 
@@ -82,21 +76,13 @@ def _save_as_file(content: str, path: str):
     LOG.info(f"Saved: {os.path.abspath(path)}")
 
 
-def _get_segments(
-    result: Tuple[dict, list], min_dur: float, reverse_text: Union[bool, tuple] = False
-):
+def _get_segments(result: Tuple[dict, list], min_dur: float, reverse_text: Union[bool, tuple] = False):
     if isinstance(result, dict):
         if reverse_text:
-            warnings.warn(
-                f"[reverse_text]=True only applies to WhisperResult but result is {type(result)}"
-            )
+            warnings.warn(f"[reverse_text]=True only applies to WhisperResult but result is {type(result)}")
         return result.get("segments")
-    elif not isinstance(result, list) and callable(
-        getattr(result, "segments_to_dicts", None)
-    ):
-        return result.apply_min_dur(min_dur, inplace=False).segments_to_dicts(
-            reverse_text=reverse_text
-        )
+    elif not isinstance(result, list) and callable(getattr(result, "segments_to_dicts", None)):
+        return result.apply_min_dur(min_dur, inplace=False).segments_to_dicts(reverse_text=reverse_text)
     return result
 
 
@@ -135,44 +121,27 @@ def sec2ass(seconds: Tuple[float, int]) -> str:
 
 
 def segment2vttblock(segment: dict, strip=True) -> str:
-    return (
-        f'{sec2vtt(segment["start"])} --> {sec2vtt(segment["end"])}\n'
-        f'{finalize_text(segment["text"], strip)}'
-    )
+    return f'{sec2vtt(segment["start"])} --> {sec2vtt(segment["end"])}\n' f'{finalize_text(segment["text"], strip)}'
 
 
 def segment2srtblock(segment: dict, idx: int, strip=True) -> str:
-    return (
-        f'{idx}\n{sec2srt(segment["start"])} --> {sec2srt(segment["end"])}\n'
-        f'{finalize_text(segment["text"], strip)}'
-    )
+    return f'{idx}\n{sec2srt(segment["start"])} --> {sec2srt(segment["end"])}\n' f'{finalize_text(segment["text"], strip)}'
 
 
 def segment2assblock(segment: dict, idx: int, strip=True) -> str:
-    return (
-        f'Dialogue: {idx},{sec2ass(segment["start"])},{sec2ass(segment["end"])},Default,,0,0,0,,'
-        f'{finalize_text(segment["text"], strip)}'
-    )
+    return f'Dialogue: {idx},{sec2ass(segment["start"])},{sec2ass(segment["end"])},Default,,0,0,0,,' f'{finalize_text(segment["text"], strip)}'
 
 
 def segment2tsvblock(segment: dict, strip=True) -> str:
     return (
-        f'{sec2milliseconds(segment["start"])}'
-        f'\t{sec2milliseconds(segment["end"])}'
-        f'\t{segment["text"].strip() if strip else segment["text"]}'
+        f'{sec2milliseconds(segment["start"])}' f'\t{sec2milliseconds(segment["end"])}' f'\t{segment["text"].strip() if strip else segment["text"]}'
     )
 
 
-def words2segments(
-    words: List[dict], tag: Tuple[str, str], reverse_text: bool = False
-) -> List[dict]:
+def words2segments(words: List[dict], tag: Tuple[str, str], reverse_text: bool = False) -> List[dict]:
     def add_tag(idx: int):
         return "".join(
-            (
-                f" {tag[0]}{w['word'][1:]}{tag[1]}"
-                if w["word"].startswith(" ")
-                else f"{tag[0]}{w['word']}{tag[1]}"
-            )
+            (f" {tag[0]}{w['word'][1:]}{tag[1]}" if w["word"].startswith(" ") else f"{tag[0]}{w['word']}{tag[1]}")
             if w["word"] not in ("", " ") and idx_ == idx
             else w["word"]
             for idx_, w in idx_filled_words
@@ -181,9 +150,7 @@ def words2segments(
     filled_words = []
     for i, word in enumerate(words):
         curr_end = round(word["end"], 3)
-        filled_words.append(
-            {"word": word["word"], "start": round(word["start"], 3), "end": curr_end}
-        )
+        filled_words.append({"word": word["word"], "start": round(word["start"], 3), "end": curr_end})
         if word != words[-1]:
             next_start = round(words[i + 1]["start"], 3)
             if next_start - curr_end != 0:
@@ -204,12 +171,7 @@ def words2segments(
 
 
 def to_word_level_segments(segments: List[dict], tag: Tuple[str, str]) -> List[dict]:
-    return list(
-        chain.from_iterable(
-            words2segments(s["words"], tag, reverse_text=s.get("reversed_text"))
-            for s in segments
-        )
-    )
+    return list(chain.from_iterable(words2segments(s["words"], tag, reverse_text=s.get("reversed_text")) for s in segments))
 
 
 def to_vtt_word_level_segments(segments: List[dict]) -> List[dict]:
@@ -231,53 +193,27 @@ def to_vtt_word_level_segments(segments: List[dict]) -> List[dict]:
             prev_end = word["end"]
         return segment_string
 
-    return [
-        {"text": to_segment_string(s), "start": s["start"], "end": s["end"]}
-        for s in segments
-    ]
+    return [{"text": to_segment_string(s), "start": s["start"], "end": s["end"]} for s in segments]
 
 
-def to_ass_word_level_segments(
-    segments: List[dict], karaoke: bool = False
-) -> List[dict]:
+def to_ass_word_level_segments(segments: List[dict], karaoke: bool = False) -> List[dict]:
     def to_segment_string(segment: dict):
         segment_string = ""
         for _, word in enumerate(segment["words"]):
-            curr_word, space = (
-                (word["word"][1:], " ")
-                if word["word"].startswith(" ")
-                else (word["word"], "")
-            )
-            segment_string += (
-                space
-                + r"{\k"
-                + ("f" if karaoke else "")
-                + f"{sec2centiseconds(word['end'] - word['start'])}"
-                + r"}"
-                + curr_word
-            )
+            curr_word, space = (word["word"][1:], " ") if word["word"].startswith(" ") else (word["word"], "")
+            segment_string += space + r"{\k" + ("f" if karaoke else "") + f"{sec2centiseconds(word['end'] - word['start'])}" + r"}" + curr_word
         return segment_string
 
-    return [
-        {"text": to_segment_string(s), "start": s["start"], "end": s["end"]}
-        for s in segments
-    ]
+    return [{"text": to_segment_string(s), "start": s["start"], "end": s["end"]} for s in segments]
 
 
 def to_word_level(segments: List[dict]) -> List[dict]:
-    return [
-        {"text": w["word"], "start": w["start"], "end": w["end"]}
-        for s in segments
-        for w in s["words"]
-    ]
+    return [{"text": w["word"], "start": w["start"], "end": w["end"]} for s in segments for w in s["words"]]
 
 
 def _confirm_word_level(segments: List[dict]) -> bool:
     if not all(bool(s.get("words")) for s in segments):
-        warnings.warn(
-            "Result is missing word timestamps. Word-level timing cannot be exported. "
-            'Use "word_level=False" to avoid this warning'
-        )
+        warnings.warn("Result is missing word timestamps. Word-level timing cannot be exported. " 'Use "word_level=False" to avoid this warning')
         return False
     return True
 
@@ -312,9 +248,7 @@ def result_to_any(
     reverse_text: Union[bool, tuple] = False,
     to_word_level_string_callback: Callable = None,
 ):
-    segments, segment_level, word_level = _preprocess_args(
-        result, segment_level, word_level, min_dur, reverse_text=reverse_text
-    )
+    segments, segment_level, word_level = _preprocess_args(result, segment_level, word_level, min_dur, reverse_text=reverse_text)
 
     if filetype is None:
         filetype = os.path.splitext(filepath)[-1][1:] or "srt"
@@ -326,11 +260,7 @@ def result_to_any(
     if word_level and segment_level:
         if tag is None:
             if default_tag is None:
-                tag = (
-                    ('<font color="#00ff00">', "</font>")
-                    if filetype == "srt"
-                    else ("<u>", "</u>")
-                )
+                tag = ('<font color="#00ff00">', "</font>") if filetype == "srt" else ("<u>", "</u>")
             else:
                 tag = default_tag
         if to_word_level_string_callback is None:
@@ -342,9 +272,7 @@ def result_to_any(
     valid_ts(segments)
 
     if segments2blocks is None:
-        sub_str = "\n\n".join(
-            segment2srtblock(s, i, strip=strip) for i, s in enumerate(segments)
-        )
+        sub_str = "\n\n".join(segment2srtblock(s, i, strip=strip) for i, s in enumerate(segments))
     else:
         sub_str = segments2blocks(segments)
 
@@ -367,24 +295,16 @@ def result_to_srt_vtt(
     strip=True,
     reverse_text: Union[bool, tuple] = False,
 ):
-    is_srt = (
-        (filepath is None or not filepath.lower().endswith(".vtt"))
-        if vtt is None
-        else not vtt
-    )
+    is_srt = (filepath is None or not filepath.lower().endswith(".vtt")) if vtt is None else not vtt
     if is_srt:
         segments2blocks = None
         to_word_level_string_callback = None
     else:
 
         def segments2blocks(segments):
-            return "WEBVTT\n\n" + "\n\n".join(
-                segment2vttblock(s, strip=strip) for i, s in enumerate(segments)
-            )
+            return "WEBVTT\n\n" + "\n\n".join(segment2vttblock(s, strip=strip) for i, s in enumerate(segments))
 
-        to_word_level_string_callback = (
-            to_vtt_word_level_segments if tag is None else tag
-        )
+        to_word_level_string_callback = to_vtt_word_level_segments if tag is None else tag
 
     return result_to_any(
         result=result,
@@ -414,15 +334,10 @@ def result_to_tsv(
     if segment_level is None and word_level is None:
         segment_level = True
     if word_level is segment_level:
-        raise ValueError(
-            "[word_level] and [segment_level] cannot be the same "
-            "since [tag] is not support for this format"
-        )
+        raise ValueError("[word_level] and [segment_level] cannot be the same " "since [tag] is not support for this format")
 
     def segments2blocks(segments):
-        return "\n\n".join(
-            segment2tsvblock(s, strip=strip) for i, s in enumerate(segments)
-        )
+        return "\n\n".join(segment2tsvblock(s, strip=strip) for i, s in enumerate(segments))
 
     return result_to_any(
         result=result,
@@ -494,11 +409,7 @@ def result_to_ass(
         fmt_style_dict.update((k, v) for k, v in kwargs.items() if k in fmt_style_dict)
 
         if tag is None and "PrimaryColour" not in kwargs:
-            fmt_style_dict["PrimaryColour"] = (
-                highlight_color
-                if highlight_color.startswith("&H")
-                else f"&H{highlight_color}"
-            )
+            fmt_style_dict["PrimaryColour"] = highlight_color if highlight_color.startswith("&H") else f"&H{highlight_color}"
 
         if font:
             fmt_style_dict.update(Fontname=font)
@@ -515,9 +426,7 @@ def result_to_ass(
             f"[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n\n"
         )
 
-        sub_str += "\n".join(
-            segment2assblock(s, i, strip=strip) for i, s in enumerate(segments)
-        )
+        sub_str += "\n".join(segment2assblock(s, i, strip=strip) for i, s in enumerate(segments))
 
         return sub_str
 
@@ -552,10 +461,7 @@ def result_to_txt(
     reverse_text: Union[bool, tuple] = False,
 ):
     def segments2blocks(segments: dict, _strip=True) -> str:
-        return "\n".join(
-            f'{segment["text"].strip() if _strip else segment["text"]}'
-            for segment in segments
-        )
+        return "\n".join(f'{segment["text"].strip() if _strip else segment["text"]}' for segment in segments)
 
     return result_to_any(
         result=result,

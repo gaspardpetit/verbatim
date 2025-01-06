@@ -12,16 +12,12 @@ class Models:
     vad: VoiceActivityDetection = None
     sentence_tokenizer: SentenceTokenizer = None
 
-    def __init__(
-        self, device: str, whisper_model_size: str = "large-v3", stream: bool = False
-    ):
+    def __init__(self, device: str, whisper_model_size: str = "large-v3", stream: bool = False):
         LOG.info("Initializing WhisperModel and audio stream.")
         # pylint: disable=import-outside-toplevel
         from .voices.transcribe.faster_whisper import FasterWhisperTranscriber
 
-        self.transcriber: Transcriber = FasterWhisperTranscriber(
-            model_size_or_path=whisper_model_size, device=device
-        )
+        self.transcriber: Transcriber = FasterWhisperTranscriber(model_size_or_path=whisper_model_size, device=device)
 
         LOG.info("Initializing Silero VAD model.")
         self.vad: VoiceActivityDetection = SileroVoiceActivityDetection()
