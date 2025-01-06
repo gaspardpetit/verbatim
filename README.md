@@ -83,7 +83,7 @@ With GPU support
 docker run --network none --shm-size 8G --gpus all \
     -v "/local/path/to/out/:/data/out/" \
     -v "/local/path/to/audio.mp3:/data/audio.mp3" ghcr.io/gaspardpetit/verbatim:latest \
-    verbatim /data/audio.mp3 -o /data/out --languages en fr"
+    verbatim /data/audio.mp3 -o /data/out --languages en fr
 ```
 
 Without GPU support
@@ -91,7 +91,7 @@ Without GPU support
 docker run --network none \
     -v "/local/path/to/out/:/data/out/" \
     -v "/local/path/to/audio.mp3:/data/audio.mp3" ghcr.io/gaspardpetit/verbatim:latest \
-    verbatim /data/audio.mp3 -o /data/out --languages en fr"
+    verbatim /data/audio.mp3 -o /data/out --languages en fr
 ```
 
 
