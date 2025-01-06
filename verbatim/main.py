@@ -337,10 +337,10 @@ def main():
             )
         )
 
-    from .transcript.words import VerbatimUtterance
+    from .transcript.words import Utterance
     from .verbatim import Verbatim
 
-    all_utterances: List[VerbatimUtterance] = []
+    all_utterances: List[Utterance] = []
     transcriber = Verbatim(config)
     for audio_source in audio_sources:
         writer: TranscriptWriter = configure_writers(
@@ -362,7 +362,7 @@ def main():
         writer.close()
 
     if len(audio_sources) > 1:
-        sorted_utterances: List[VerbatimUtterance] = sorted(all_utterances, key=lambda x: x.start_ts)
+        sorted_utterances: List[Utterance] = sorted(all_utterances, key=lambda x: x.start_ts)
         writer: TranscriptWriter = configure_writers(write_config, output_formats=output_formats, original_audio_file=source_path)
         writer.open(path_no_ext=output_prefix_no_ext)
         for sorted_utterance in sorted_utterances:

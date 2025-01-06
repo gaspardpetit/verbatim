@@ -11,7 +11,7 @@ from itertools import chain
 from typing import List, Tuple, Union, Callable
 
 from .writer import TranscriptWriter, TranscriptWriterConfig
-from ..words import VerbatimUtterance, VerbatimWord
+from ..words import Utterance, Word
 
 LOG = logging.getLogger(__name__)
 
@@ -479,7 +479,7 @@ def result_to_txt(
 class AssTranscriptWriter(TranscriptWriter):
     def __init__(self, config: TranscriptWriterConfig, original_audio_file: str):
         super().__init__(config)
-        self.utterances: List[VerbatimUtterance] = []
+        self.utterances: List[Utterance] = []
         self.output_file = None
         self.original_audio_file = original_audio_file
 
@@ -488,9 +488,9 @@ class AssTranscriptWriter(TranscriptWriter):
 
     def write(
         self,
-        utterance: VerbatimUtterance,
-        unacknowledged_utterance: List[VerbatimUtterance] = None,
-        unconfirmed_words: List[VerbatimWord] = None,
+        utterance: Utterance,
+        unacknowledged_utterance: List[Utterance] = None,
+        unconfirmed_words: List[Word] = None,
     ):
         self.utterances.append(utterance)
 
