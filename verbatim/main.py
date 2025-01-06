@@ -138,6 +138,7 @@ def main():
         default=None,
         help="Identify speakers in transcript using the diarization RTTM file at the specified path (ex. diarization.rttm)",
     )
+    parser.add_argument("--separate", action="store_true", help="Enables speaker voice separation and process each speaker separately")
     parser.add_argument(
         "-i",
         "--isolate",
@@ -297,7 +298,6 @@ def main():
     if args.stdout_nocolor:
         output_formats.append("stdout-nocolor")
 
-    writer: TranscriptWriter = configure_writers(write_config, output_formats=output_formats, original_audio_file=source_path)
 
     from .audio.sources.sourceconfig import SourceConfig
     source_config:SourceConfig = SourceConfig(
@@ -306,21 +306,49 @@ def main():
         diarization_file=args.diarization,
     )
 
-    from .audio.sources.factory import create_audio_source
-    audio_source:AudioSource = create_audio_source(source_config=source_config, device=config.device,
-        input_source=source_path, start_time=args.start_time, stop_time=args.stop_time,
-        working_prefix_no_ext=working_prefix_no_ext, output_prefix_no_ext=output_prefix_no_ext,
-        stream=config.stream)
+    from .audio.sources.factory import create_audio_source, create_separate_speaker_sources
+
+    audio_sources:List[AudioSource] = []
+    if args.separate:
+        audio_sources += create_separate_speaker_sources(
+            source_config=source_config,
+            device=config.device,
+            input_source=source_path,
+            start_time=args.start_time, stop_time=args.stop_time,
+            working_prefix_no_ext=working_prefix_no_ext, output_prefix_no_ext=output_prefix_no_ext
+            )
+    else:
+        audio_sources.append(create_audio_source(
+            source_config=source_config,
+            device=config.device,
+            input_source=source_path,
+            start_time=args.start_time, stop_time=args.stop_time,
+            working_prefix_no_ext=working_prefix_no_ext, output_prefix_no_ext=output_prefix_no_ext,
+            stream=config.stream)
+            )
 
 
+    from .transcript.words import VerbatimUtterance
     from .verbatim import Verbatim
+    all_utterances:List[VerbatimUtterance] = []
     transcriber = Verbatim(config)
-    writer.open(path_no_ext=output_prefix_no_ext)
-    with audio_source.open() as audio_stream:
-        for utterance, unacknowledged, unconfirmed in transcriber.transcribe(audio_stream=audio_stream, working_prefix_no_ext=working_prefix_no_ext):
-            writer.write(utterance=utterance, unacknowledged_utterance=unacknowledged, unconfirmed_words=unconfirmed)
-    writer.close()
+    for audio_source in audio_sources:
+        writer: TranscriptWriter = configure_writers(write_config, output_formats=output_formats, original_audio_file=audio_source.source_name)
+        writer.open(path_no_ext=output_prefix_no_ext)
+        with audio_source.open() as audio_stream:
+            for utterance, unacknowledged, unconfirmed in transcriber.transcribe(
+                audio_stream=audio_stream, working_prefix_no_ext=working_prefix_no_ext):
+                writer.write(utterance=utterance, unacknowledged_utterance=unacknowledged, unconfirmed_words=unconfirmed)
+                all_utterances.append(utterance)
+        writer.close()
 
+    if len(audio_sources) > 1:
+        sorted_utterances:List[VerbatimUtterance] = sorted(all_utterances, key=lambda x: x.start_ts)
+        writer: TranscriptWriter = configure_writers(write_config, output_formats=output_formats, original_audio_file=source_path)
+        writer.open(path_no_ext=output_prefix_no_ext)
+        for sorted_utterance in sorted_utterances:
+            writer.write(utterance=sorted_utterance)
+        writer.close()
 
 if __name__ == "__main__":
     sys.argv = [

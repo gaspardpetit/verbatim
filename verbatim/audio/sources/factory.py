@@ -1,12 +1,13 @@
 import errno
 import os
 import sys
-from typing import Union
+from typing import Union, List
 
 import numpy as np
 
 from .audiosource import AudioSource
 from .sourceconfig import SourceConfig
+from ..audio import samples_to_seconds, timestr_to_samples
 
 
 def create_audio_source(*,
@@ -17,7 +18,6 @@ def create_audio_source(*,
     output_prefix_no_ext:str = "out", working_prefix_no_ext:str = "out",
     stream:bool = False) -> AudioSource:
     # pylint: disable=import-outside-toplevel
-    from ..audio import samples_to_seconds, timestr_to_samples
 
     if input_source == "-":
         from .pcmaudiosource import PCMInputStreamAudioSource
@@ -68,3 +68,38 @@ def create_audio_source(*,
         source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
 
     return FileAudioSource(input_source, start_sample=start_sample, end_sample=stop_sample, diarization=source_config.diarization)
+
+
+
+def create_separate_speaker_sources(*,
+    input_source: str,
+    device:str,
+    source_config:SourceConfig = SourceConfig(),
+    start_time:Union[None,str] = None, stop_time:Union[None,str] = None,
+    output_prefix_no_ext:str = "out", working_prefix_no_ext:str = "out") -> List[AudioSource]:
+    # pylint: disable=import-outside-toplevel
+
+    if source_config.diarization_file == "" or (source_config.diarize is not None and source_config.diarization_file is None):
+        source_config.diarization_file = output_prefix_no_ext + ".rttm"
+
+    nb_speakers = source_config.diarize
+    if nb_speakers == 0:
+        nb_speakers = None
+
+    start_sample:int = timestr_to_samples(start_time) if start_time else 0
+    stop_sample:Union[None,int] = timestr_to_samples(stop_time) if stop_time else None
+
+    from ...voices.separation import SpeakerSeparation
+    from .fileaudiosource import FileAudioSource
+
+    sources:List[AudioSource] = []
+
+    with SpeakerSeparation(device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN")) as separation:
+        diarization, speaker_wav_files = separation.separate_speakers(
+            file_path=input_source,
+            out_rttm_file=source_config.diarization_file, out_speaker_wav_prefix=working_prefix_no_ext,
+            nb_speakers=nb_speakers)
+        for _speaker, speaker_file in speaker_wav_files.items():
+            sources.append(FileAudioSource(speaker_file, start_sample=start_sample, end_sample=stop_sample, diarization=diarization))
+
+    return sources

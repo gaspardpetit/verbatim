@@ -6,7 +6,6 @@ from pyannote.core.annotation import Annotation
 
 @dataclass
 class SourceConfig:
-    separate:bool = False
     isolate:Union[None,bool] = None
     diarize:Union[int,None] = None
     diarization: Annotation = None

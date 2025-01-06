@@ -1,53 +1,25 @@
 import logging
 
-import numpy as np
-import scipy.io.wavfile
 import torch
-from pyannote.audio import Inference, Model, Pipeline
+from pyannote.audio import Pipeline
 from pyannote.audio.pipelines.utils.hook import ProgressHook
-from pyannote.audio.utils.multi_task import map_with_specifications
-from pyannote.audio.utils.reproducibility import fix_reproducibility
 from pyannote.core.annotation import Annotation
 from pyannote.database.util import load_rttm
-from scipy.spatial.distance import cdist
 
-from ..audio.audio import wav_to_int16
-from ..transcript.words import VerbatimUtterance
 
 # Configure logger
 LOG = logging.getLogger(__name__)
 
 
 class Diarization:
-    def __init__(self, device: str, huggingface_token: str, use_ami: bool = False):
+    def __init__(self, device: str, huggingface_token: str):
         LOG.info("Initializing Diarization Pipeline.")
         self.huggingface_token = huggingface_token
-        self._use_ami = use_ami
-        if self._use_ami:
-            self.pipeline = Pipeline.from_pretrained(
-                "pyannote/speech-separation-ami-1.0",
-                use_auth_token=self.huggingface_token,
-            )
-            hyper_parameters = {
-                "segmentation": {"min_duration_off": 0.0, "threshold": 0.82},
-                "clustering": {
-                    "method": "centroid",
-                    "min_cluster_size": 15,
-                    "threshold": 0.68,
-                },
-                "separation": {
-                    "leakage_removal": True,
-                    "asr_collar": 0.32,
-                },
-            }
-
-            self.pipeline.instantiate(hyper_parameters)
-        else:
-            self.pipeline = Pipeline.from_pretrained(
-                checkpoint_path="pyannote/speaker-diarization-3.1",
-                use_auth_token=self.huggingface_token,
-            )
-            self.pipeline.instantiate({})
+        self.pipeline = Pipeline.from_pretrained(
+            checkpoint_path="pyannote/speaker-diarization-3.1",
+            use_auth_token=self.huggingface_token,
+        )
+        self.pipeline.instantiate({})
 
         self.pipeline.to(torch.device(device))
 
@@ -71,27 +43,11 @@ class Diarization:
         if not out_rttm_file:
             out_rttm_file = "out.rttm"
 
-        sources = None
         with ProgressHook() as hook:
-            if self._use_ami:
-                diarization, sources = self.pipeline(file_path, hook=hook)
-            else:
-                diarization = self.pipeline(
-                    file_path, hook=hook, num_speakers=nb_speakers
-                )
+            diarization = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
 
         # dump the diarization output to disk using RTTM format
         with open(out_rttm_file, "w", encoding="utf-8") as rttm:
             diarization.write_rttm(rttm)
 
-        if sources:
-            # dump sources to disk as SPEAKER_XX.wav files
-            for s, speaker in enumerate(diarization.labels()):
-                if s < sources.data.shape[1]:
-                    speaker_data = sources.data[:, s]
-                    if speaker_data.dtype != np.int16:
-                        speaker_data = wav_to_int16(speaker_data)
-                    scipy.io.wavfile.write(f"{speaker}.wav", 16000, speaker_data)
-                else:
-                    LOG.debug(f"Skipping speaker {s} as it is out of bounds.")
         return diarization
