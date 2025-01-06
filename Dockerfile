@@ -1,25 +1,25 @@
-FROM nvidia/cuda:12.3.1-runtime-ubuntu22.04
+FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04
 
 RUN apt-get update && \
     apt-get install -y \
     software-properties-common -y \
-    python3.10 \
-    python3.10-dev \
+    python3.11 \
+    python3.11-dev \
     python3-pip \
-    python3.10-venv \
+    python3.11-venv \
     portaudio19-dev \
     ffmpeg
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
 RUN pip install cython wheel
 RUN pip install --upgrade pip
 
-ADD requirements.txt requirements.txt
-ADD setup.py setup.py
+ADD requirements-gpu.txt requirements-gpu.txt
+ADD pyproject.toml pyproject.toml
 ADD verbatim/__init__.py verbatim/__init__.py
 ADD README.md README.md
 
-RUN pip install -r requirements.txt
+RUN pip install --extra-index-url https://download.pytorch.org/whl/cu121 -r requirements-gpu.txt
 RUN pip install pyclean
 
 ADD verbatim verbatim
@@ -32,4 +32,4 @@ RUN mkdir out
 
 ARG HUGGINGFACE_TOKEN
 ADD tests/data/init.mp3 init.mp3
-RUN HUGGINGFACE_TOKEN=$HUGGINGFACE_TOKEN verbatim init.mp3 --diarize -vv
+RUN HUGGINGFACE_TOKEN=$HUGGINGFACE_TOKEN verbatim init.mp3 --diarize --isolate -vv
