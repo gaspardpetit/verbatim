@@ -41,16 +41,11 @@ class WhisperHistory:
             self.transcript_history.pop(0)
 
     @staticmethod
-    def advance_transcript(
-        timestamp: int, transcript: List[VerbatimWord]
-    ) -> List[VerbatimWord]:
+    def advance_transcript(timestamp: int, transcript: List[VerbatimWord]) -> List[VerbatimWord]:
         return [w for w in transcript if w.end_ts > timestamp]
 
     def advance(self, timestamp: int):
-        self.transcript_history = [
-            self.advance_transcript(timestamp, transcript)
-            for transcript in self.transcript_history
-        ]
+        self.transcript_history = [self.advance_transcript(timestamp, transcript) for transcript in self.transcript_history]
         self.transcript_history = [h for h in self.transcript_history if len(h) > 0]
 
     @staticmethod
@@ -62,20 +57,14 @@ class WhisperHistory:
     ) -> List[VerbatimWord]:
         c_index = 0
         while c_index < len(current_words):
-            if (
-                c_index < len(prefix)
-                and prefix[c_index].word == current_words[c_index].word
-            ) or (current_words[c_index].start_ts <= after_ts):
+            if (c_index < len(prefix) and prefix[c_index].word == current_words[c_index].word) or (current_words[c_index].start_ts <= after_ts):
                 c_index = c_index + 1
             else:
                 break
 
         p_index = 0
         while p_index < len(transcript):
-            if (
-                p_index < len(prefix)
-                and prefix[p_index].word == transcript[p_index].word
-            ) or (transcript[p_index].start_ts <= after_ts):
+            if (p_index < len(prefix) and prefix[p_index].word == transcript[p_index].word) or (transcript[p_index].start_ts <= after_ts):
                 p_index = p_index + 1
             else:
                 break
@@ -83,10 +72,7 @@ class WhisperHistory:
         confirmed_words = []
 
         while p_index < len(transcript) and c_index < len(current_words):
-            if (
-                transcript[p_index].word.strip().lower()
-                == current_words[c_index].word.strip().lower()
-            ):
+            if transcript[p_index].word.strip().lower() == current_words[c_index].word.strip().lower():
                 LOG.debug(f"Confirming word '{transcript[p_index].word}'")
                 confirmed_words += [current_words[c_index]]
                 p_index += 1
@@ -94,9 +80,7 @@ class WhisperHistory:
             else:
                 break
         if len(confirmed_words) > 0:
-            LOG.debug(
-                f"CONFIRMED CANDIDATE: {''.join([w.word for w in confirmed_words])}"
-            )
+            LOG.debug(f"CONFIRMED CANDIDATE: {''.join([w.word for w in confirmed_words])}")
         return confirmed_words
 
     def confirm(
@@ -148,9 +132,9 @@ class State:
     unacknowledged_utterances: List[VerbatimUtterance]
     skip_silences: bool = True
     speaker_embeddings: List = None
-    working_prefix_no_ext:str = "out"
+    working_prefix_no_ext: str = "out"
 
-    def __init__(self, config: Config, working_prefix_no_ext:str="out"):
+    def __init__(self, config: Config, working_prefix_no_ext: str = "out"):
         self.config = config
         self.confirmed_ts = -1
         self.acknowledged_ts = -1
@@ -164,12 +148,8 @@ class State:
         self.speaker_embeddings = []
         self.working_prefix_no_ext = working_prefix_no_ext
 
-        window_size = (
-            self.config.sampling_rate * self.config.window_duration
-        )  # Total samples in 30 seconds
-        self.rolling_window = RollingWindow(
-            window_size=window_size, dtype=np.float32
-        )  # Initialize empty rolling window
+        window_size = self.config.sampling_rate * self.config.window_duration  # Total samples in 30 seconds
+        self.rolling_window = RollingWindow(window_size=window_size, dtype=np.float32)  # Initialize empty rolling window
 
     def advance_audio_window(self, offset: int):
         if offset <= 0:
@@ -188,17 +168,11 @@ class State:
         window_size = len(self.rolling_window.array)
         if self.audio_ts + chunk_size <= self.window_ts + window_size:
             # Append to the current rolling window
-            self.rolling_window.array[
-                self.audio_ts - self.window_ts : self.audio_ts
-                - self.window_ts
-                + chunk_size
-            ] = audio_chunk
+            self.rolling_window.array[self.audio_ts - self.window_ts : self.audio_ts - self.window_ts + chunk_size] = audio_chunk
         else:
             # Shift the window and append new audio
             shift_amount = self.audio_ts + chunk_size - (self.window_ts + window_size)
-            LOG.warning(
-                f"failed to acknowledge transcription within audio buffer of {samples_to_seconds(window_size)} seconds"
-            )
+            LOG.warning(f"failed to acknowledge transcription within audio buffer of {samples_to_seconds(window_size)} seconds")
             self.advance_audio_window(shift_amount)
             self.skip_silences = True
             self.rolling_window.array[-chunk_size:] = audio_chunk
@@ -227,9 +201,7 @@ class Verbatim:
         )
         LOG.debug(f"Voice segments: {voice_segments}")
         if len(voice_segments) == 0:
-            LOG.info(
-                f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f} and {samples_to_seconds(self.state.audio_ts):.2f}"
-            )
+            LOG.info(f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f} and {samples_to_seconds(self.state.audio_ts):.2f}")
 
             # preserve a bit of audio at the end that may have been too short just because it is truncated
             padding = min_speech_duration_samples
@@ -265,9 +237,7 @@ class Verbatim:
         LOG.debug("Finished writing window to file.")
 
     @staticmethod
-    def align_words_to_sentences(
-        sentences: list[str], window_words: list[VerbatimWord]
-    ) -> list[VerbatimUtterance]:
+    def align_words_to_sentences(sentences: list[str], window_words: list[VerbatimWord]) -> list[VerbatimUtterance]:
         # Concatenate all sentences into a single string
         full_text_sentences = "".join(sentences)
         # Concatenate all words from window_words
@@ -275,9 +245,7 @@ class Verbatim:
 
         # Basic validation step (optional but recommended)
         if full_text_sentences != full_text_words:
-            raise ValueError(
-                "The joined text from sentences and window_words do not match."
-            )
+            raise ValueError("The joined text from sentences and window_words do not match.")
 
         # We'll iterate through sentences and pick words until we match them character-for-character.
         result = []
@@ -285,9 +253,7 @@ class Verbatim:
         current_word_index = 0
 
         def remove_spaces_and_punctuation(string: str) -> str:
-            return string.translate(
-                str.maketrans("", "", " " + PREPEND_PUNCTUATIONS + APPEND_PUNCTUATIONS)
-            )
+            return string.translate(str.maketrans("", "", " " + PREPEND_PUNCTUATIONS + APPEND_PUNCTUATIONS))
 
         # For each sentence, we want to collect a sublist of VerbatimWord
         for sentence in sentences:
@@ -309,9 +275,7 @@ class Verbatim:
                 # If we overshoot, something is wrong,
                 # but given the perfect alignment we expect to land exactly on target_end
                 if current_char_index > target_end:
-                    raise ValueError(
-                        "Mismatch in alignment between sentences and words."
-                    )
+                    raise ValueError("Mismatch in alignment between sentences and words.")
 
             # Now we have all the words for this sentence
             if len(sentence_words) > 0:
@@ -321,9 +285,7 @@ class Verbatim:
         return result
 
     @staticmethod
-    def words_to_sentences(
-        word_tokenizer, window_words: List[VerbatimWord]
-    ) -> list[VerbatimUtterance]:
+    def words_to_sentences(word_tokenizer, window_words: List[VerbatimWord]) -> list[VerbatimUtterance]:
         sentences = []
         if len(window_words) == 0:
             return []
@@ -332,14 +294,10 @@ class Verbatim:
         for tok in word_tokenizer.split(window_text):
             sentences += [tok]
 
-        utterances = Verbatim.align_words_to_sentences(
-            sentences=sentences, window_words=window_words
-        )
+        utterances = Verbatim.align_words_to_sentences(sentences=sentences, window_words=window_words)
         return utterances
 
-    def _guess_language(
-        self, audio: np.array, sample_offset: int, sample_duration: int, lang: List[str]
-    ) -> Tuple[str, float]:
+    def _guess_language(self, audio: np.array, sample_offset: int, sample_duration: int, lang: List[str]) -> Tuple[str, float]:
         lang_samples = audio[sample_offset : sample_offset + sample_duration]
         LOG.info(
             f"Detecting language using samples {sample_offset}({samples_to_seconds(sample_offset)}) "
@@ -356,9 +314,7 @@ class Verbatim:
             return self.config.lang[0]
 
         lang_sample_start = max(0, timestamp - self.state.window_ts)
-        available_samples = (
-            self.state.audio_ts - self.state.window_ts - lang_sample_start
-        )
+        available_samples = self.state.audio_ts - self.state.window_ts - lang_sample_start
         lang_samples_size = min(2 * 16000, available_samples)
 
         while True:
@@ -380,24 +336,16 @@ class Verbatim:
         LOG.info(f"Window Start Time: {samples_to_seconds(self.state.window_ts)}")
         LOG.info(f"Confirmed Time: {samples_to_seconds(self.state.confirmed_ts)}")
         LOG.info(f"Acknowledged Time: {samples_to_seconds(self.state.acknowledged_ts)}")
-        LOG.info(
-            f"Valid audio range: 0.0 - {samples_to_seconds(self.state.audio_ts - self.state.window_ts)}"
-        )
+        LOG.info(f"Valid audio range: 0.0 - {samples_to_seconds(self.state.audio_ts - self.state.window_ts)}")
 
-        acknowledged_words_in_window = WhisperHistory.advance_transcript(
-            timestamp=self.state.window_ts, transcript=self.state.acknowledged_words
-        )
+        acknowledged_words_in_window = WhisperHistory.advance_transcript(timestamp=self.state.window_ts, transcript=self.state.acknowledged_words)
         lang = self.guess_language(timestamp=max(0, self.state.acknowledged_ts))
         prefix_text = ""
         for word in [w for u in self.state.unacknowledged_utterances for w in u.words]:
             if word.lang != lang:
                 break
             prefix_text += word.word
-        whisper_prompt = (
-            self.config.whisper_prompts[lang]
-            if lang in self.config.whisper_prompts
-            else self.config.whisper_prompts["en"]
-        )
+        whisper_prompt = self.config.whisper_prompts[lang] if lang in self.config.whisper_prompts else self.config.whisper_prompts["en"]
         transcript_words = self.models.transcriber.transcribe(
             audio=self.state.rolling_window.array,
             lang=lang,
@@ -421,31 +369,20 @@ class Verbatim:
 
         if len(confirmed_words) > 0:
             self.state.confirmed_ts = confirmed_words[-1].start_ts
-            LOG.debug(
-                f"Confirmed ts: {self.state.confirmed_ts} ({samples_to_seconds(self.state.confirmed_ts)})"
-            )
+            LOG.debug(f"Confirmed ts: {self.state.confirmed_ts} ({samples_to_seconds(self.state.confirmed_ts)})")
 
             newline = os.linesep
-            transcript_history = (
-                self.state.transcript_candidate_history.transcript_history
-            )
+            transcript_history = self.state.transcript_candidate_history.transcript_history
             LOG.debug(
                 f"Transcript:\n{newline.join([''.join([w.word for w in history]) for history in transcript_history])}\n"
                 f"{''.join(w.word for w in transcript_words)}\n{''.join(w.word for w in confirmed_words)}"
             )
 
-        unconfirmed_words = [
-            transcript_words[i]
-            for i in range(len(confirmed_words), len(transcript_words))
-        ]
+        unconfirmed_words = [transcript_words[i] for i in range(len(confirmed_words), len(transcript_words))]
         return confirmed_words, unconfirmed_words
 
     def get_next_number_of_chunks(self):
-        available_chunks = (
-            self.config.window_duration
-            - float(self.state.audio_ts - self.state.window_ts)
-            / self.config.sampling_rate
-        )
+        available_chunks = self.config.window_duration - float(self.state.audio_ts - self.state.window_ts) / self.config.sampling_rate
 
         thresholds = self.config.chunk_table
 
@@ -469,17 +406,12 @@ class Verbatim:
         file.write(
             f"[{samples_to_seconds(self.state.window_ts)}/"
             f"{samples_to_seconds(self.state.audio_ts - self.state.acknowledged_ts)}/"
-            f"{samples_to_seconds(self.state.audio_ts - self.state.confirmed_ts)}]"
-            + Fore.LIGHTGREEN_EX
+            f"{samples_to_seconds(self.state.audio_ts - self.state.confirmed_ts)}]" + Fore.LIGHTGREEN_EX
         )
         for u in acknowledged_utterances:
-            formatter.format_utterance(
-                utterance=u, out=file, colours=COLORSCHEME_ACKNOWLEDGED
-            )
+            formatter.format_utterance(utterance=u, out=file, colours=COLORSCHEME_ACKNOWLEDGED)
         for u in unacknowledged_utterances:
-            formatter.format_utterance(
-                utterance=u, out=file, colours=COLORSCHEME_UNACKNOWLEDGED
-            )
+            formatter.format_utterance(utterance=u, out=file, colours=COLORSCHEME_UNACKNOWLEDGED)
         if len(unconfirmed_words) > 0:
             formatter.format_utterance(
                 utterance=VerbatimUtterance.from_words(unconfirmed_words),
@@ -594,22 +526,23 @@ class Verbatim:
                     best_votes = vote
             return best_speaker
 
-        speaker = self.get_speaker_before(
-            time=start + duration * 0.5, diarization=diarization
-        )
+        speaker = self.get_speaker_before(time=start + duration * 0.5, diarization=diarization)
         if speaker:
             return speaker
 
-        speaker = self.get_speaker_after(
-            time=start + duration * 0.5, diarization=diarization
-        )
+        speaker = self.get_speaker_after(time=start + duration * 0.5, diarization=diarization)
         if speaker:
             return speaker
 
         return None
 
-    def process_audio_window(self, audio_stream:AudioStream) \
-            -> Generator[Tuple[VerbatimUtterance, List[VerbatimUtterance], List[VerbatimWord]], None, None]:
+    def process_audio_window(
+        self, audio_stream: AudioStream
+    ) -> Generator[
+        Tuple[VerbatimUtterance, List[VerbatimUtterance], List[VerbatimWord]],
+        None,
+        None,
+    ]:
         while True:
             # minimum number of samples to attempt transcription
             min_audio_duration_samples = 16000
@@ -619,10 +552,7 @@ class Verbatim:
             if enable_vad and self.state.skip_silences:
                 self.state.skip_silences = False
                 self.skip_leading_silence(min_speech_duration_ms=min_speech_duration_ms)
-                if (
-                    self.state.audio_ts - self.state.window_ts
-                    < min_audio_duration_samples
-                ):
+                if self.state.audio_ts - self.state.window_ts < min_audio_duration_samples:
                     # we skipped all available audio - keep skipping silences and do nothing else for now
                     self.state.skip_silences = True
 
@@ -630,9 +560,7 @@ class Verbatim:
                 return
 
             if self.config.debug:
-                self.dump_window_to_file(
-                    filename=f"{self.state.working_prefix_no_ext}-debug_window.wav"
-                )  # Dump current window for debugging
+                self.dump_window_to_file(filename=f"{self.state.working_prefix_no_ext}-debug_window.wav")  # Dump current window for debugging
 
             confirmed_words, unconfirmed_words = self.transcribe_window()
             self.state.unconfirmed_words = unconfirmed_words
@@ -641,9 +569,7 @@ class Verbatim:
                     word_tokenizer=self.models.sentence_tokenizer,
                     window_words=confirmed_words,
                 )
-                acknowledged_utterances, confirmed_utterances = (
-                    self.acknowledge_utterances(utterances=utterances)
-                )
+                acknowledged_utterances, confirmed_utterances = self.acknowledge_utterances(utterances=utterances)
 
                 if audio_stream.diarization:
                     for acknowledged_utterance in acknowledged_utterances:
@@ -668,9 +594,7 @@ class Verbatim:
                     utterance_padding_ms = 100
                     utterance_padding_samples = utterance_padding_ms * 16000 // 1000
 
-                    self.state.acknowledged_ts = (
-                        acknowledged_utterances[-1].end_ts + utterance_padding_samples
-                    )
+                    self.state.acknowledged_ts = acknowledged_utterances[-1].end_ts + utterance_padding_samples
                     self.state.skip_silences = True
             else:
                 acknowledged_utterances = []
@@ -707,20 +631,22 @@ class Verbatim:
         self.state.append_audio_to_window(audio_array)
         return True
 
-    def transcribe(self, audio_stream:AudioStream, working_prefix_no_ext:str="out")\
-            -> Generator[Tuple[VerbatimUtterance, List[VerbatimUtterance], List[VerbatimWord]], None, None]:
+    def transcribe(
+        self, audio_stream: AudioStream, working_prefix_no_ext: str = "out"
+    ) -> Generator[
+        Tuple[VerbatimUtterance, List[VerbatimUtterance], List[VerbatimWord]],
+        None,
+        None,
+    ]:
         self.state = State(self.config, working_prefix_no_ext=working_prefix_no_ext)
         try:
             if audio_stream.start_offset != 0:
                 self.state.window_ts = audio_stream.start_offset
                 self.state.audio_ts = audio_stream.start_offset
 
-
             LOG.info("Starting main loop for audio transcription.")
             while True:
-                has_more_audio = self.capture_audio(
-                    audio_source=audio_stream
-                )
+                has_more_audio = self.capture_audio(audio_source=audio_stream)
                 had_utterances = False
 
                 # capture any utterance that slipped out of the current window
@@ -730,7 +656,11 @@ class Verbatim:
                         break
                     utterance = self.state.unacknowledged_utterances.pop(0)
                     utterance.speaker = self.assign_speaker(utterance, audio_stream.diarization)
-                    yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
+                    yield (
+                        utterance,
+                        self.state.unacknowledged_utterances,
+                        self.state.unconfirmed_words,
+                    )
 
                 if len(self.state.unacknowledged_utterances) > 0:
                     flushed_utterances_words = []
@@ -741,30 +671,27 @@ class Verbatim:
                         flushed_word = partial_utterance.words.pop(0)
                         flushed_utterances_words.append(flushed_word)
                         partial_utterance.start_ts = partial_utterance.words[-1].start_ts
-                        partial_utterance.text = ''.join([w.word for w in partial_utterance.words])
+                        partial_utterance.text = "".join([w.word for w in partial_utterance.words])
 
                     if len(flushed_utterances_words) > 0:
                         utterance = VerbatimUtterance.from_words(flushed_utterances_words)
                         utterance.speaker = self.assign_speaker(utterance, audio_stream.diarization)
-                        yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
+                        yield (
+                            utterance,
+                            self.state.unacknowledged_utterances,
+                            self.state.unconfirmed_words,
+                        )
                 else:
                     flushed_utterances_words = []
                     while len(self.state.unconfirmed_words) > 0:
-                        if (
-                            self.state.unconfirmed_words[0].end_ts
-                            > self.state.window_ts
-                        ):
+                        if self.state.unconfirmed_words[0].end_ts > self.state.window_ts:
                             break
                         flushed_word = self.state.unconfirmed_words.pop(0)
                         flushed_utterances_words.append(flushed_word)
 
                     if len(flushed_utterances_words) > 0:
-                        utterance = VerbatimUtterance.from_words(
-                            flushed_utterances_words
-                        )
-                        utterance.speaker = self.assign_speaker(
-                            utterance, audio_stream.diarization
-                        )
+                        utterance = VerbatimUtterance.from_words(flushed_utterances_words)
+                        utterance.speaker = self.assign_speaker(utterance, audio_stream.diarization)
                         yield (
                             utterance,
                             self.state.unacknowledged_utterances,
@@ -772,9 +699,7 @@ class Verbatim:
                         )
 
                 if len(flushed_utterances_words) > 0:
-                    flushed_utterances.append(
-                        VerbatimUtterance.from_words(flushed_utterances_words)
-                    )
+                    flushed_utterances.append(VerbatimUtterance.from_words(flushed_utterances_words))
 
                 for (
                     utterance,
@@ -796,9 +721,7 @@ class Verbatim:
             LOG.debug("Stopping...")
         finally:
             for i, utterance in enumerate(self.state.unacknowledged_utterances):
-                utterance.speaker = self.assign_speaker(
-                    utterance, audio_stream.diarization
-                )
+                utterance.speaker = self.assign_speaker(utterance, audio_stream.diarization)
                 yield (
                     utterance,
                     self.state.unacknowledged_utterances[i + 1 :],
@@ -806,10 +729,6 @@ class Verbatim:
                 )
 
             if len(self.state.unconfirmed_words) > 0:
-                unconfirmed_utterance: VerbatimUtterance = VerbatimUtterance.from_words(
-                    self.state.unconfirmed_words
-                )
-                unconfirmed_utterance.speaker = self.assign_speaker(
-                    unconfirmed_utterance, audio_stream.diarization
-                )
+                unconfirmed_utterance: VerbatimUtterance = VerbatimUtterance.from_words(self.state.unconfirmed_words)
+                unconfirmed_utterance.speaker = self.assign_speaker(unconfirmed_utterance, audio_stream.diarization)
                 yield unconfirmed_utterance, [], []

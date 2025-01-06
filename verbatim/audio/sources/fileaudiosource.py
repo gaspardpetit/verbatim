@@ -14,10 +14,11 @@ from ...voices.isolation import VoiceIsolation
 
 LOG = logging.getLogger(__name__)
 
-class FileAudioStream(AudioStream):
-    source:"FileAudioSource"
 
-    def __init__(self, source:"FileAudioSource", diarization:Annotation):
+class FileAudioStream(AudioStream):
+    source: "FileAudioSource"
+
+    def __init__(self, source: "FileAudioSource", diarization: Annotation):
         super().__init__(start_offset=source.start_sample, diarization=diarization)
         self.source = source
         self.stream = wave.open(self.source.file_path, "rb")
@@ -37,22 +38,14 @@ class FileAudioStream(AudioStream):
         frames = self.stream.readframes(int(self.stream.getframerate() * chunk_length))
         sample_width = self.stream.getsampwidth()
         n_channels = self.stream.getnchannels()
-        dtype = (
-            np.int16
-            if sample_width == 2
-            else np.int32
-            if sample_width == 4
-            else np.uint8
-        )
+        dtype = np.int16 if sample_width == 2 else np.int32 if sample_width == 4 else np.uint8
         audio_array = np.frombuffer(frames, dtype=dtype)
         audio_array = audio_array.reshape(-1, n_channels)
 
         if len(audio_array) == 0:
             return audio_array
 
-        audio_array = format_audio(
-            audio_array, from_sampling_rate=self.stream.getframerate()
-        )
+        audio_array = format_audio(audio_array, from_sampling_rate=self.stream.getframerate())
 
         LOG.info("Finished reading audio chunk from file.")
         return audio_array
@@ -67,12 +60,19 @@ class FileAudioStream(AudioStream):
     def close(self):
         self.stream.close()
 
+
 class FileAudioSource(AudioSource):
     diarization: Annotation
     speaker_audio: Dict[str, np.array]
     stream: wave.Wave_read = None
 
-    def __init__(self, file: str, diarization:Annotation, start_sample: int = 0, end_sample: Union[None, int] = None):
+    def __init__(
+        self,
+        file: str,
+        diarization: Annotation,
+        start_sample: int = 0,
+        end_sample: Union[None, int] = None,
+    ):
         super().__init__(source_name=file)
         self.file_path = file
         self.diarization = diarization
@@ -85,7 +85,7 @@ class FileAudioSource(AudioSource):
         self.start_sample = start_sample
 
     @staticmethod
-    def compute_diarization(file_path:str, device: str, rttm_file: str = None, nb_speakers: int = None) -> Annotation:
+    def compute_diarization(file_path: str, device: str, rttm_file: str = None, nb_speakers: int = None) -> Annotation:
         if nb_speakers == 0:
             nb_speakers = None
         with Diarization(device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN")) as diarization:
@@ -93,7 +93,7 @@ class FileAudioSource(AudioSource):
             return annotation
 
     @staticmethod
-    def isolate_voices(file_path:str, out_path_prefix: str = None) -> Tuple[str,str]:
+    def isolate_voices(file_path: str, out_path_prefix: str = None) -> Tuple[str, str]:
         LOG.info("Initializing Voice Isolation Model.")
         with VoiceIsolation(log_level=LOG.level) as voice_separator:
             if not out_path_prefix:

@@ -7,6 +7,7 @@ from .audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
 
+
 @dataclass
 class Config:
     sampling_rate: int = 16000
@@ -33,7 +34,8 @@ class Config:
     source_stream: AudioSource = None
 
     def __init__(
-        self, *,
+        self,
+        *,
         outdir: Union[None, str] = ".",
         workdir: Union[None, str] = None,
         use_cpu: Union[None, bool] = None,
@@ -167,9 +169,7 @@ class Config:
         import torch
 
         if use_cpu or not torch.cuda.is_available():
-            os.environ["CUDA_VISIBLE_DEVICES"] = (
-                "-1"  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
-            )
+            os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
             LOG.info("Using CPU")
             self.device = "cpu"
         else:
@@ -189,9 +189,7 @@ class Config:
 
         # Set the working directory
         if workdir is None:
-            self.working_dir = os.getenv(
-                "TMPDIR", os.getenv("TEMP", os.getenv("TMP", "."))
-            )
+            self.working_dir = os.getenv("TMPDIR", os.getenv("TEMP", os.getenv("TMP", ".")))
         elif workdir == "":
             self.working_dir = self.output_dir
         else:

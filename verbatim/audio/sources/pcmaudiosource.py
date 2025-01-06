@@ -7,10 +7,12 @@ from .audiosource import AudioSource, AudioStream
 
 LOG = logging.getLogger(__name__)
 
+
 class PCMInputStreamAudioStream(AudioStream):
-    source:"PCMInputStreamAudioStream"
+    source: "PCMInputStreamAudioStream"
     _has_more: bool
-    def __init__(self, source:"PCMInputStreamAudioStream"):
+
+    def __init__(self, source: "PCMInputStreamAudioStream"):
         super().__init__(start_offset=0, diarization=None)
         self.source = source
         self._has_more = True
@@ -18,9 +20,7 @@ class PCMInputStreamAudioStream(AudioStream):
     def next_chunk(self, chunk_length=1) -> np.ndarray:
         # Calculate the number of bytes needed per chunk
         bytes_per_sample = np.dtype(self.source.dtype).itemsize
-        bytes_needed = (
-            chunk_length * self.source.sampling_rate * self.source.channels * bytes_per_sample
-        )
+        bytes_needed = chunk_length * self.source.sampling_rate * self.source.channels * bytes_per_sample
 
         # Buffer to store the read bytes
         input_data = bytearray()
@@ -35,10 +35,7 @@ class PCMInputStreamAudioStream(AudioStream):
 
         # Convert the byte data to a NumPy array
         samples = np.frombuffer(input_data, dtype=self.source.dtype)
-        return samples[
-            : bytes_needed // bytes_per_sample
-        ]  # Ensure the array is the correct length
-
+        return samples[: bytes_needed // bytes_per_sample]  # Ensure the array is the correct length
 
     def close(self):
         # caller is responsible for the lifecycle of the stream
@@ -47,6 +44,7 @@ class PCMInputStreamAudioStream(AudioStream):
     def has_more(self) -> bool:
         return self._has_more
 
+
 class PCMInputStreamAudioSource(AudioSource):
     stream: BinaryIO
     channels: int
@@ -54,8 +52,14 @@ class PCMInputStreamAudioSource(AudioSource):
     dtype: np.dtype
 
     def __init__(
-            self, *,
-            source_name:str, stream: BinaryIO, channels: int = 1, sampling_rate: int = 16000, dtype=np.int16):
+        self,
+        *,
+        source_name: str,
+        stream: BinaryIO,
+        channels: int = 1,
+        sampling_rate: int = 16000,
+        dtype=np.int16,
+    ):
         super().__init__(source_name=source_name)
         self.stream = stream
         self.channels = channels

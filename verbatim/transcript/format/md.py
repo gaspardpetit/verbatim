@@ -132,9 +132,7 @@ class TranscriptFormatter:
             md.bold(f"[{format_milliseconds(start_ts * 1000 / 16000)}]:")
 
         elif self.timestamp_style == TimestampStyle.range:
-            md.bold(
-                f"[{format_milliseconds(start_ts * 1000 / 16000)}-{format_milliseconds(end_ts * 1000 / 16000)}]:"
-            )
+            md.bold(f"[{format_milliseconds(start_ts * 1000 / 16000)}-{format_milliseconds(end_ts * 1000 / 16000)}]:")
 
     def _format_speaker(self, md: MarkdownText, speaker: str):
         if self.speaker_style == SpeakerStyle.none:
@@ -217,9 +215,7 @@ class TranscriptFormatter:
 
     def format_utterance(self, utterance: VerbatimUtterance, out: TextIO):
         md: MarkdownText = MarkdownText()
-        self._format_timestamp(
-            md=md, start_ts=utterance.start_ts, end_ts=utterance.end_ts
-        )
+        self._format_timestamp(md=md, start_ts=utterance.start_ts, end_ts=utterance.end_ts)
         self._format_speaker(md=md, speaker=utterance.speaker)
 
         percentile_25 = np.percentile([w.probability for w in utterance.words], 25)

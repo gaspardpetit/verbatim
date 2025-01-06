@@ -6,18 +6,17 @@ from pyannote.core.annotation import Annotation
 
 @dataclass
 class SourceConfig:
-    isolate:Union[None,bool] = None
-    diarize:Union[int,None] = None
+    isolate: Union[None, bool] = None
+    diarize: Union[int, None] = None
     diarization: Annotation = None
     diarization_file: str = None
 
     def __init__(
-            self,
-            isolate: Union[None, bool] = None,
-            diarize: Union[None, int] = None,
-            diarization_file:Union[None,str] = None,
-        ):
-
+        self,
+        isolate: Union[None, bool] = None,
+        diarize: Union[None, int] = None,
+        diarization_file: Union[None, str] = None,
+    ):
         self.isolate = isolate
         self.diarize = diarize
         self.diarization_file = diarization_file

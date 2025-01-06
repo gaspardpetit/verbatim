@@ -37,9 +37,7 @@ class Diarization:
         return annotation
 
     # pylint: disable=unused-argument
-    def compute_diarization(
-        self, file_path: str, out_rttm_file: str = None, nb_speakers: int = None
-    ) -> Annotation:
+    def compute_diarization(self, file_path: str, out_rttm_file: str = None, nb_speakers: int = None) -> Annotation:
         if not out_rttm_file:
             out_rttm_file = "out.rttm"
 
