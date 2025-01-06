@@ -11,7 +11,7 @@ from .writer import (
     LanguageStyle,
 )
 from ..formatting import format_milliseconds
-from ..words import VerbatimUtterance, VerbatimWord
+from ..words import Utterance, Word
 
 
 class Style(Enum):
@@ -132,9 +132,7 @@ class TranscriptFormatter:
             md.bold(f"[{format_milliseconds(start_ts * 1000 / 16000)}]:")
 
         elif self.timestamp_style == TimestampStyle.range:
-            md.bold(
-                f"[{format_milliseconds(start_ts * 1000 / 16000)}-{format_milliseconds(end_ts * 1000 / 16000)}]:"
-            )
+            md.bold(f"[{format_milliseconds(start_ts * 1000 / 16000)}-{format_milliseconds(end_ts * 1000 / 16000)}]:")
 
     def _format_speaker(self, md: MarkdownText, speaker: str):
         if self.speaker_style == SpeakerStyle.none:
@@ -215,11 +213,9 @@ class TranscriptFormatter:
         else:
             md.append(word)
 
-    def format_utterance(self, utterance: VerbatimUtterance, out: TextIO):
+    def format_utterance(self, utterance: Utterance, out: TextIO):
         md: MarkdownText = MarkdownText()
-        self._format_timestamp(
-            md=md, start_ts=utterance.start_ts, end_ts=utterance.end_ts
-        )
+        self._format_timestamp(md=md, start_ts=utterance.start_ts, end_ts=utterance.end_ts)
         self._format_speaker(md=md, speaker=utterance.speaker)
 
         percentile_25 = np.percentile([w.probability for w in utterance.words], 25)
@@ -257,9 +253,9 @@ class MarkdownTranscriptWriter(TranscriptWriter):
 
     def write(
         self,
-        utterance: VerbatimUtterance,
-        unacknowledged_utterance: List[VerbatimUtterance] = None,
-        unconfirmed_words: List[VerbatimWord] = None,
+        utterance: Utterance,
+        unacknowledged_utterance: List[Utterance] = None,
+        unconfirmed_words: List[Word] = None,
     ):
         self.formatter.format_utterance(utterance=utterance, out=self.out)
         self.out.flush()

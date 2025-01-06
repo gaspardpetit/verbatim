@@ -11,18 +11,19 @@ from ..audio import seconds_to_samples
 
 LOG = logging.getLogger(__name__)
 
-class PyAVAudioStream(AudioStream):
-    source:"PyAVAudioSource"
 
-    def __init__(self, source:"PyAVAudioSource"):
+class PyAVAudioStream(AudioStream):
+    source: "PyAVAudioSource"
+
+    def __init__(self, source: "PyAVAudioSource"):
         """Open the container, find the audio stream, and seek if needed."""
         super().__init__(start_offset=seconds_to_samples(source.start_time), diarization=None)
         self.source = source
 
         # Internals
-        self._container:av.container.InputContainer = None
+        self._container: av.container.InputContainer = None
         # pylint: disable=c-extension-no-member
-        self._stream:av.audio.stream.AudioStream = None
+        self._stream: av.audio.stream.AudioStream = None
         self._frame_iter = None
 
         # Buffer for leftover samples (when frames don't line up exactly with chunk size)
@@ -30,7 +31,6 @@ class PyAVAudioStream(AudioStream):
 
         self._closed = False
         self._done_decoding = False
-
 
         LOG.info(f"Opening file with PyAV: {self.source.file_path}")
         self._container = av.open(self.source.file_path)
@@ -104,18 +104,14 @@ class PyAVAudioStream(AudioStream):
                 # In PyAV, each stream has time_base -> frame_time = frame.pts * stream.time_base
                 current_time_sec = float(frame.pts * self._stream.time_base)
                 if current_time_sec > self.source.end_time:
-                    LOG.info(
-                        f"Reached end_time={self.source.end_time:.2f}s (current={current_time_sec:.2f}s). Stopping."
-                    )
+                    LOG.info(f"Reached end_time={self.source.end_time:.2f}s (current={current_time_sec:.2f}s). Stopping.")
                     self._done_decoding = True
                     break
 
             # Resample to your desired format
             new_frames: list[av.audio.frame.AudioFrame] = resampler.resample(frame)
             for new_frame in new_frames:
-                new_frame = (
-                    new_frame.to_ndarray().astype(np.float32, copy=False).squeeze()
-                )
+                new_frame = new_frame.to_ndarray().astype(np.float32, copy=False).squeeze()
                 self._sample_buffer = np.concatenate([self._sample_buffer, new_frame])
 
         # By now, we either have enough samples or we hit EOF
@@ -148,6 +144,7 @@ class PyAVAudioStream(AudioStream):
         self._done_decoding = True
         self._sample_buffer = np.array([], dtype=np.float32)
 
+
 class PyAVAudioSource(AudioSource):
     """
     A chunk-based audio reader that uses PyAV to decode audio frames.
@@ -158,7 +155,13 @@ class PyAVAudioSource(AudioSource):
     - By default, it streams as 16-bit int PCM at some target rate (e.g. 16 kHz).
     """
 
-    def __init__(self, file_path: str, target_sample_rate: int = 16000, start_time: float = 0.0, end_time: Optional[float] = None):
+    def __init__(
+        self,
+        file_path: str,
+        target_sample_rate: int = 16000,
+        start_time: float = 0.0,
+        end_time: Optional[float] = None,
+    ):
         """
         :param file_path: Path/URL to audio file
         :param target_sample_rate: Desired sample rate for output (e.g. 16k)

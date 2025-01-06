@@ -61,21 +61,19 @@ def wav_to_int16(data):
         data = data / n
         return (data * np.iinfo(np.int16).max).astype(np.int16)
     if data.dtype == np.int8:
-        return (data * ((1.0 * np.iinfo(np.int16).max) / np.iinfo(np.int8).max)).astype(
-            np.int16
-        )
+        return (data * ((1.0 * np.iinfo(np.int16).max) / np.iinfo(np.int8).max)).astype(np.int16)
     if data.dtype == np.int32:
-        return (
-            data * ((1.0 * np.iinfo(np.int16).max) / np.iinfo(np.int32).max)
-        ).astype(np.int16)
+        return (data * ((1.0 * np.iinfo(np.int16).max) / np.iinfo(np.int32).max)).astype(np.int16)
     raise ValueError(f"unexpected: {data.dtype}")
 
 
 def samples_to_seconds(index: int) -> float:
     return index / 16000
 
+
 def seconds_to_samples(seconds: float) -> int:
     return seconds * 16000
+
 
 def timestr_to_samples(timestr: str, sample_rate: int = 16000) -> int:
     """
@@ -90,12 +88,8 @@ def timestr_to_samples(timestr: str, sample_rate: int = 16000) -> int:
         int: The corresponding sample index.
     """
     # Define regex patterns for specific formats
-    hh_mm_ss_ms_pattern = re.compile(
-        r"^(?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
-    )
-    mm_ss_ms_pattern = re.compile(
-        r"^(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$"
-    )
+    hh_mm_ss_ms_pattern = re.compile(r"^(?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$")
+    mm_ss_ms_pattern = re.compile(r"^(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$")
     ss_ms_pattern = re.compile(r"^(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$")
 
     # Match the input against patterns
@@ -103,23 +97,17 @@ def timestr_to_samples(timestr: str, sample_rate: int = 16000) -> int:
         hours = int(match.group("hours"))
         minutes = int(match.group("minutes"))
         seconds = int(match.group("seconds"))
-        milliseconds = (
-            int(match.group("milliseconds")) if match.group("milliseconds") else 0
-        )
+        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
     elif match := mm_ss_ms_pattern.match(timestr.strip()):
         hours = 0
         minutes = int(match.group("minutes"))
         seconds = int(match.group("seconds"))
-        milliseconds = (
-            int(match.group("milliseconds")) if match.group("milliseconds") else 0
-        )
+        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
     elif match := ss_ms_pattern.match(timestr.strip()):
         hours = 0
         minutes = 0
         seconds = int(match.group("seconds"))
-        milliseconds = (
-            int(match.group("milliseconds")) if match.group("milliseconds") else 0
-        )
+        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
     else:
         raise ValueError(f"Invalid time string format: {timestr}")
 

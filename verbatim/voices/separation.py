@@ -47,11 +47,14 @@ class SpeakerSeparation:
         return False
 
     # pylint: disable=unused-argument
-    def separate_speakers(self, *,
+    def separate_speakers(
+        self,
+        *,
         file_path: str,
         out_rttm_file: str = None,
         out_speaker_wav_prefix="",
-        nb_speakers: int = None) -> Tuple[Annotation, Dict[str,str]]:
+        nb_speakers: int = None,
+    ) -> Tuple[Annotation, Dict[str, str]]:
         if not out_rttm_file:
             out_rttm_file = "out.rttm"
 

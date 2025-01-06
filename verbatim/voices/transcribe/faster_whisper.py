@@ -4,7 +4,7 @@ from typing import List, Tuple
 import numpy as np
 from faster_whisper import WhisperModel
 from ...audio.audio import samples_to_seconds
-from ...transcript.words import VerbatimWord
+from ...transcript.words import Word
 from .transcribe import Transcriber, WhisperConfig
 
 LOG = logging.getLogger(__name__)
@@ -44,9 +44,7 @@ class FasterWhisperTranscriber(Transcriber):
         self.whisper_temperatures = whisper_temperatures
 
     def guess_language(self, audio: np.array, lang: List[str]) -> Tuple[str, float]:
-        language, language_probability, all_language_probs = (
-            self.whisper_model.detect_language(audio=audio)
-        )
+        language, language_probability, all_language_probs = self.whisper_model.detect_language(audio=audio)
         if language in lang:
             LOG.info(f"detected '{language}' with probability {language_probability}")
             return language, language_probability
@@ -75,7 +73,7 @@ class FasterWhisperTranscriber(Transcriber):
         whisper_best_of: int = 3,
         whisper_patience: float = 1.0,
         whisper_temperatures: List[float] = None,
-    ) -> List[VerbatimWord]:
+    ) -> List[Word]:
         LOG.info(f"Transcription Prefix: {prefix}")
         if whisper_temperatures is None:
             whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
@@ -122,16 +120,14 @@ class FasterWhisperTranscriber(Transcriber):
 
         LOG.debug(f"info={info}")
 
-        transcript_words: List[VerbatimWord] = []
+        transcript_words: List[Word] = []
         for segment in segment_iter:
             for w in segment.words:
-                word = VerbatimWord.from_word(word=w, lang=lang, ts_offset=window_ts)
+                word = Word.from_word(word=w, lang=lang, ts_offset=window_ts)
                 if word.end_ts > audio_ts:
                     continue
 
-                LOG.debug(
-                    f"[{word.start_ts} ({samples_to_seconds(word.start_ts)})]: {w.word}"
-                )
+                LOG.debug(f"[{word.start_ts} ({samples_to_seconds(word.start_ts)})]: {w.word}")
                 transcript_words.append(word)
 
         return transcript_words

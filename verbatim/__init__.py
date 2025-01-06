@@ -7,16 +7,12 @@ import logging
 from matplotlib._api.deprecation import MatplotlibDeprecationWarning
 
 # see https://github.com/asteroid-team/torch-audiomentations/issues/172
-warnings.filterwarnings(
-    "ignore", category=UserWarning, module=r"torch_audiomentations\.utils\.io"
-)
+warnings.filterwarnings("ignore", category=UserWarning, module=r"torch_audiomentations\.utils\.io")
 
 # see https://github.com/asteroid-team/torch-audiomentations/issues/172
 warnings.filterwarnings("ignore", category=UserWarning, module=r".*")
 
-warnings.filterwarnings(
-    "ignore", category=DeprecationWarning, module=r"silero_vad\.model"
-)
+warnings.filterwarnings("ignore", category=DeprecationWarning, module=r"silero_vad\.model")
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 

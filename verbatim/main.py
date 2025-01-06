@@ -65,31 +65,42 @@ def load_env_file(env_path=".env"):
         return False
 
 
-def configure_writers(write_config: TranscriptWriterConfig, output_formats:List[str], original_audio_file: str) -> TranscriptWriter:
+def configure_writers(
+    write_config: TranscriptWriterConfig,
+    output_formats: List[str],
+    original_audio_file: str,
+) -> TranscriptWriter:
     # pylint: disable=import-outside-toplevel
     from .transcript.format.multi import MultiTranscriptWriter
 
     multi_writer: MultiTranscriptWriter = MultiTranscriptWriter()
     if "txt" in output_formats:
         from .transcript.format.txt import TextTranscriptWriter
+
         multi_writer.add_writer(TextTranscriptWriter(config=write_config))
     if "ass" in output_formats:
         from .transcript.format.ass import AssTranscriptWriter
+
         multi_writer.add_writer(AssTranscriptWriter(config=write_config, original_audio_file=original_audio_file))
     if "docx" in output_formats:
         from .transcript.format.docx import DocxTranscriptWriter
+
         multi_writer.add_writer(DocxTranscriptWriter(config=write_config))
     if "md" in output_formats:
         from .transcript.format.md import MarkdownTranscriptWriter
+
         multi_writer.add_writer(MarkdownTranscriptWriter(config=write_config))
     if "json" in output_formats:
         from .transcript.format.json import JsonTranscriptWriter
+
         multi_writer.add_writer(JsonTranscriptWriter(config=write_config))
     if "stdout" in output_formats and "stdout-nocolor" not in output_formats:
         from .transcript.format.stdout import StdoutTranscriptWriter
+
         multi_writer.add_writer(StdoutTranscriptWriter(config=write_config, with_colours=True))
     if "stdout-nocolor" in output_formats:
         from .transcript.format.stdout import StdoutTranscriptWriter
+
         multi_writer.add_writer(StdoutTranscriptWriter(config=write_config, with_colours=False))
     return multi_writer
 
@@ -101,17 +112,14 @@ def main():
             # Set the attribute to the provided value or an empty string if no value is given
             setattr(namespace, self.dest, values if values is not None else "")
 
-    parser = argparse.ArgumentParser(
-        prog=PACKAGE_NAME, description="Verbatim: that's what she said"
-    )
+    parser = argparse.ArgumentParser(prog=PACKAGE_NAME, description="Verbatim: that's what she said")
 
     # Specify the command line arguments
     parser.add_argument(
         "input",
         nargs="?",
         default=None,
-        help="Path to the input audio file. Use '-' to read from stdin "
-        "(expecting 16bit 16kHz mono PCM stream) or '>' to use microphone.",
+        help="Path to the input audio file. Use '-' to read from stdin " "(expecting 16bit 16kHz mono PCM stream) or '>' to use microphone.",
     )
     parser.add_argument(
         "-f",
@@ -127,9 +135,7 @@ def main():
         default="",
         dest="stop_time",
     )
-    parser.add_argument(
-        "-o", "--outdir", help="Path to the output directory", default="."
-    )
+    parser.add_argument("-o", "--outdir", help="Path to the output directory", default=".")
     parser.add_argument(
         "-d",
         "--diarization",
@@ -138,7 +144,11 @@ def main():
         default=None,
         help="Identify speakers in transcript using the diarization RTTM file at the specified path (ex. diarization.rttm)",
     )
-    parser.add_argument("--separate", action="store_true", help="Enables speaker voice separation and process each speaker separately")
+    parser.add_argument(
+        "--separate",
+        action="store_true",
+        help="Enables speaker voice separation and process each speaker separately",
+    )
     parser.add_argument(
         "-i",
         "--isolate",
@@ -166,8 +176,7 @@ def main():
         "-b",
         "--nb_beams",
         type=int,
-        help="Number of parallel when resolving transcription. "
-        + "1-3 for fast, 12-15 for high quality. Default is 9.",
+        help="Number of parallel when resolving transcription. " + "1-3 for fast, 12-15 for high quality. Default is 9.",
         default=None,
     )
     parser.add_argument(
@@ -177,13 +186,9 @@ def main():
         default=0,
         help="Increase verbosity (specify multiple times for more verbosity)",
     )
-    parser.add_argument(
-        "--version", action="version", version=f"{PACKAGE_NAME} {__version__}"
-    )
+    parser.add_argument("--version", action="version", version=f"{PACKAGE_NAME} {__version__}")
     parser.add_argument("--cpu", action="store_true", help="Toggle CPU usage")
-    parser.add_argument(
-        "-s", "--stream", action="store_true", help="Set mode to low latency streaming"
-    )
+    parser.add_argument("-s", "--stream", action="store_true", help="Set mode to low latency streaming")
     parser.add_argument(
         "-w",
         "--workdir",
@@ -192,12 +197,8 @@ def main():
         default=None,
         help="Set the working directory where temporary files may be written to (default is system temp directory)",
     )
-    parser.add_argument(
-        "--ass", action="store_true", help="Enable ASS subtitle file output"
-    )
-    parser.add_argument(
-        "--docx", action="store_true", help="Enable Microsoft Word DOCX output"
-    )
+    parser.add_argument("--ass", action="store_true", help="Enable ASS subtitle file output")
+    parser.add_argument("--docx", action="store_true", help="Enable Microsoft Word DOCX output")
     parser.add_argument("--txt", action="store_true", help="Enable TXT file output")
     parser.add_argument("--json", action="store_true", help="Enable json file output")
     parser.add_argument("--md", action="store_true", help="Enable Markdown (MD) output")
@@ -275,7 +276,7 @@ def main():
     config.lang = args.languages if args.languages else ["en"]
 
     # Set output formats
-    write_config:TranscriptWriterConfig = TranscriptWriterConfig()
+    write_config: TranscriptWriterConfig = TranscriptWriterConfig()
     write_config.timestamp_style = args.format_timestamp
     write_config.probability_style = args.format_probability
     write_config.speaker_style = args.format_speaker
@@ -298,57 +299,76 @@ def main():
     if args.stdout_nocolor:
         output_formats.append("stdout-nocolor")
 
-
     from .audio.sources.sourceconfig import SourceConfig
-    source_config:SourceConfig = SourceConfig(
+
+    source_config: SourceConfig = SourceConfig(
         isolate=args.isolate,
         diarize=args.diarize,
         diarization_file=args.diarization,
     )
 
-    from .audio.sources.factory import create_audio_source, create_separate_speaker_sources
+    from .audio.sources.factory import (
+        create_audio_source,
+        create_separate_speaker_sources,
+    )
 
-    audio_sources:List[AudioSource] = []
+    audio_sources: List[AudioSource] = []
     if args.separate:
         audio_sources += create_separate_speaker_sources(
             source_config=source_config,
             device=config.device,
             input_source=source_path,
-            start_time=args.start_time, stop_time=args.stop_time,
-            working_prefix_no_ext=working_prefix_no_ext, output_prefix_no_ext=output_prefix_no_ext
-            )
+            start_time=args.start_time,
+            stop_time=args.stop_time,
+            working_prefix_no_ext=working_prefix_no_ext,
+            output_prefix_no_ext=output_prefix_no_ext,
+        )
     else:
-        audio_sources.append(create_audio_source(
-            source_config=source_config,
-            device=config.device,
-            input_source=source_path,
-            start_time=args.start_time, stop_time=args.stop_time,
-            working_prefix_no_ext=working_prefix_no_ext, output_prefix_no_ext=output_prefix_no_ext,
-            stream=config.stream)
+        audio_sources.append(
+            create_audio_source(
+                source_config=source_config,
+                device=config.device,
+                input_source=source_path,
+                start_time=args.start_time,
+                stop_time=args.stop_time,
+                working_prefix_no_ext=working_prefix_no_ext,
+                output_prefix_no_ext=output_prefix_no_ext,
+                stream=config.stream,
             )
+        )
 
-
-    from .transcript.words import VerbatimUtterance
+    from .transcript.words import Utterance
     from .verbatim import Verbatim
-    all_utterances:List[VerbatimUtterance] = []
+
+    all_utterances: List[Utterance] = []
     transcriber = Verbatim(config)
     for audio_source in audio_sources:
-        writer: TranscriptWriter = configure_writers(write_config, output_formats=output_formats, original_audio_file=audio_source.source_name)
+        writer: TranscriptWriter = configure_writers(
+            write_config,
+            output_formats=output_formats,
+            original_audio_file=audio_source.source_name,
+        )
         writer.open(path_no_ext=output_prefix_no_ext)
         with audio_source.open() as audio_stream:
             for utterance, unacknowledged, unconfirmed in transcriber.transcribe(
-                audio_stream=audio_stream, working_prefix_no_ext=working_prefix_no_ext):
-                writer.write(utterance=utterance, unacknowledged_utterance=unacknowledged, unconfirmed_words=unconfirmed)
+                audio_stream=audio_stream, working_prefix_no_ext=working_prefix_no_ext
+            ):
+                writer.write(
+                    utterance=utterance,
+                    unacknowledged_utterance=unacknowledged,
+                    unconfirmed_words=unconfirmed,
+                )
                 all_utterances.append(utterance)
         writer.close()
 
     if len(audio_sources) > 1:
-        sorted_utterances:List[VerbatimUtterance] = sorted(all_utterances, key=lambda x: x.start_ts)
+        sorted_utterances: List[Utterance] = sorted(all_utterances, key=lambda x: x.start_ts)
         writer: TranscriptWriter = configure_writers(write_config, output_formats=output_formats, original_audio_file=source_path)
         writer.open(path_no_ext=output_prefix_no_ext)
         for sorted_utterance in sorted_utterances:
             writer.write(utterance=sorted_utterance)
         writer.close()
+
 
 if __name__ == "__main__":
     sys.argv = [

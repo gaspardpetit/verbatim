@@ -15,7 +15,7 @@ from .writer import (
     LanguageStyle,
     TranscriptWriter,
 )
-from ..words import VerbatimUtterance, VerbatimWord
+from ..words import Utterance, Word
 from ..formatting import format_milliseconds
 
 
@@ -35,17 +35,11 @@ class DocxParagraph:
 
     def append(self, text: str, style: Union[Style, List[Style], None] = None):
         run: Run = self.paragraph.add_run(text=text)
-        if (isinstance(style, Style) and Style.BOLD == style) or (
-            isinstance(style, list) and Style.BOLD in style
-        ):
+        if (isinstance(style, Style) and Style.BOLD == style) or (isinstance(style, list) and Style.BOLD in style):
             run.bold = True
-        if (isinstance(style, Style) and Style.ITALIC == style) or (
-            isinstance(style, list) and Style.ITALIC in style
-        ):
+        if (isinstance(style, Style) and Style.ITALIC == style) or (isinstance(style, list) and Style.ITALIC in style):
             run.italic = True
-        if (isinstance(style, Style) and Style.UNDERLINE == style) or (
-            isinstance(style, list) and Style.UNDERLINE in style
-        ):
+        if (isinstance(style, Style) and Style.UNDERLINE == style) or (isinstance(style, list) and Style.UNDERLINE in style):
             run.underline = True
 
     def bold(self, text: str):
@@ -88,9 +82,7 @@ class DocxFormatter:
             md.bold(f"[{format_milliseconds(start_ts * 1000 / 16000)}]:")
 
         elif self.timestamp_style == TimestampStyle.range:
-            md.bold(
-                f"[{format_milliseconds(start_ts * 1000 / 16000)}-{format_milliseconds(end_ts * 1000 / 16000)}]:"
-            )
+            md.bold(f"[{format_milliseconds(start_ts * 1000 / 16000)}-{format_milliseconds(end_ts * 1000 / 16000)}]:")
 
     def _format_speaker(self, md: DocxParagraph, speaker: str):
         if self.speaker_style == SpeakerStyle.none:
@@ -126,83 +118,39 @@ class DocxFormatter:
         # pylint: disable=too-many-boolean-expressions
         if (
             (self.probability_style == ProbabilityStyle.word and probability < 0.90 / 2)
-            or (
-                self.probability_style == ProbabilityStyle.word_75
-                and probability < 0.75 / 2
-            )
-            or (
-                self.probability_style == ProbabilityStyle.word_50
-                and probability < 0.50 / 2
-            )
-            or (
-                self.probability_style == ProbabilityStyle.word_25
-                and probability < 0.25 / 2
-            )
+            or (self.probability_style == ProbabilityStyle.word_75 and probability < 0.75 / 2)
+            or (self.probability_style == ProbabilityStyle.word_50 and probability < 0.50 / 2)
+            or (self.probability_style == ProbabilityStyle.word_25 and probability < 0.25 / 2)
         ):
             md.underline(word)
         elif (
             (self.probability_style == ProbabilityStyle.word and probability < 0.90)
-            or (
-                self.probability_style == ProbabilityStyle.word_75
-                and probability < 0.75
-            )
-            or (
-                self.probability_style == ProbabilityStyle.word_50
-                and probability < 0.50
-            )
-            or (
-                self.probability_style == ProbabilityStyle.word_25
-                and probability < 0.25
-            )
+            or (self.probability_style == ProbabilityStyle.word_75 and probability < 0.75)
+            or (self.probability_style == ProbabilityStyle.word_50 and probability < 0.50)
+            or (self.probability_style == ProbabilityStyle.word_25 and probability < 0.25)
         ):
             md.italic(word)
         elif (
-            (
-                self.probability_style == ProbabilityStyle.line
-                and utterance_probability < 0.90 / 2
-            )
-            or (
-                self.probability_style == ProbabilityStyle.line_75
-                and utterance_probability < 0.75 / 2
-            )
-            or (
-                self.probability_style == ProbabilityStyle.line_50
-                and utterance_probability < 0.50 / 2
-            )
-            or (
-                self.probability_style == ProbabilityStyle.line_25
-                and utterance_probability < 0.25 / 2
-            )
+            (self.probability_style == ProbabilityStyle.line and utterance_probability < 0.90 / 2)
+            or (self.probability_style == ProbabilityStyle.line_75 and utterance_probability < 0.75 / 2)
+            or (self.probability_style == ProbabilityStyle.line_50 and utterance_probability < 0.50 / 2)
+            or (self.probability_style == ProbabilityStyle.line_25 and utterance_probability < 0.25 / 2)
         ):
             md.underline(word)
         elif (
-            (
-                self.probability_style == ProbabilityStyle.line
-                and utterance_probability < 0.90
-            )
-            or (
-                self.probability_style == ProbabilityStyle.line_75
-                and utterance_probability < 0.75
-            )
-            or (
-                self.probability_style == ProbabilityStyle.line_50
-                and utterance_probability < 0.50
-            )
-            or (
-                self.probability_style == ProbabilityStyle.line_25
-                and utterance_probability < 0.25
-            )
+            (self.probability_style == ProbabilityStyle.line and utterance_probability < 0.90)
+            or (self.probability_style == ProbabilityStyle.line_75 and utterance_probability < 0.75)
+            or (self.probability_style == ProbabilityStyle.line_50 and utterance_probability < 0.50)
+            or (self.probability_style == ProbabilityStyle.line_25 and utterance_probability < 0.25)
         ):
             md.italic(word)
         else:
             md.append(word)
 
-    def format_utterance(self, utterance: VerbatimUtterance, out: Document):
+    def format_utterance(self, utterance: Utterance, out: Document):
         paragraph: Paragraph = out.add_paragraph()
         md: DocxParagraph = DocxParagraph(paragraph=paragraph)
-        self._format_timestamp(
-            md=md, start_ts=utterance.start_ts, end_ts=utterance.end_ts
-        )
+        self._format_timestamp(md=md, start_ts=utterance.start_ts, end_ts=utterance.end_ts)
         self._format_speaker(md=md, speaker=utterance.speaker)
 
         percentile_25 = np.percentile([w.probability for w in utterance.words], 25)
@@ -220,7 +168,7 @@ class DocxFormatter:
 
 def write_docx(
     *,
-    utterances: List[VerbatimUtterance],
+    utterances: List[Utterance],
     speaker_style: SpeakerStyle,
     timestamp_style: TimestampStyle,
     probability_style: ProbabilityStyle,
@@ -253,9 +201,9 @@ class DocxTranscriptWriter(TranscriptWriter):
 
     def write(
         self,
-        utterance: VerbatimUtterance,
-        unacknowledged_utterance: List[VerbatimUtterance] = None,
-        unconfirmed_words: List[VerbatimWord] = None,
+        utterance: Utterance,
+        unacknowledged_utterance: List[Utterance] = None,
+        unconfirmed_words: List[Word] = None,
     ):
         self.utterances.append(utterance)
 

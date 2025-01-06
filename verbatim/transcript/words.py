@@ -1,14 +1,14 @@
 from dataclasses import dataclass, field
 from typing import List
 
-from faster_whisper.transcribe import Word
+from faster_whisper.transcribe import Word as WhisperWord
 from pywhispercpp.model import Segment
 
 from ..audio.audio import samples_to_seconds
 
 
 @dataclass
-class VerbatimWord:
+class Word:
     start_ts: int
     end_ts: int
     word: str
@@ -16,7 +16,7 @@ class VerbatimWord:
     lang: str
 
     @classmethod
-    def from_word(cls, word: Word, lang: str, ts_offset: int = 0) -> "VerbatimWord":
+    def from_word(cls, word: WhisperWord, lang: str, ts_offset: int = 0) -> "Word":
         """Creates a VerbatimWord instance from a Word object with a timestamp offset."""
         start_ts = int(word.start * 16000) + ts_offset
         end_ts = int(word.end * 16000) + ts_offset
@@ -45,12 +45,12 @@ class VerbatimWord:
 
 
 @dataclass
-class VerbatimUtterance:
+class Utterance:
     speaker: str
     start_ts: int
     end_ts: int
     text: str
-    words: List[VerbatimWord] = field(default_factory=list)
+    words: List[Word] = field(default_factory=list)
 
     def get_start(self) -> float:
         return samples_to_seconds(self.start_ts)
@@ -59,12 +59,8 @@ class VerbatimUtterance:
         return samples_to_seconds(self.end_ts)
 
     @classmethod
-    def from_words(
-        cls, words: List[VerbatimWord], speaker: str = None
-    ) -> "VerbatimUtterance":
+    def from_words(cls, words: List[Word], speaker: str = None) -> "Utterance":
         start_ts = words[0].start_ts
         end_ts = words[-1].end_ts
         text = "".join([w.word for w in words])
-        return cls(
-            start_ts=start_ts, end_ts=end_ts, words=words, text=text, speaker=speaker
-        )
+        return cls(start_ts=start_ts, end_ts=end_ts, words=words, text=text, speaker=speaker)

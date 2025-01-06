@@ -14,9 +14,7 @@ class Models:
     vad: VoiceActivityDetection = None
     sentence_tokenizer: SentenceTokenizer = None
 
-    def __init__(
-        self, device: str, whisper_model_size: str = "large-v3", stream: bool = False
-    ):
+    def __init__(self, device: str, whisper_model_size: str = "large-v3", stream: bool = False):
         LOG.info("Initializing WhisperModel and audio stream.")
 
         if sys.platform == "darwin":

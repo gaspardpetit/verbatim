@@ -3,7 +3,7 @@ from abc import abstractmethod
 from typing import List
 from enum import Enum
 
-from ..words import VerbatimUtterance, VerbatimWord
+from ..words import Utterance, Word
 
 
 # pylint: disable=invalid-name
@@ -62,8 +62,8 @@ class TranscriptWriter:
     @abstractmethod
     def write(
         self,
-        utterance: VerbatimUtterance,
-        unacknowledged_utterance: List[VerbatimUtterance] = None,
-        unconfirmed_words: List[VerbatimWord] = None,
+        utterance: Utterance,
+        unacknowledged_utterance: List[Utterance] = None,
+        unconfirmed_words: List[Word] = None,
     ):
         pass

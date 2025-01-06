@@ -1,7 +1,7 @@
 from typing import TextIO, Union, List
 
 from .writer import TranscriptWriter, TranscriptWriterConfig
-from ..words import VerbatimUtterance, VerbatimWord
+from ..words import Utterance, Word
 
 
 class TranscriptFormatter:
@@ -16,18 +16,14 @@ class TranscriptFormatter:
     def close(self, out: TextIO):
         out.write("\n]")
 
-    def format_utterance(self, utterance: VerbatimUtterance, out: TextIO):
+    def format_utterance(self, utterance: Utterance, out: TextIO):
         if self.first_utterance:
             self.first_utterance = False
         else:
             out.write(",\n")
         out.write("  {\n")
-        out.write(
-            f'    "start_sample": {utterance.start_ts}, "start_second": {utterance.start_ts / 16000:.2f},\n'
-        )
-        out.write(
-            f'    "end_sample": {utterance.end_ts}, "end_second": {utterance.end_ts / 16000:.2f},\n'
-        )
+        out.write(f'    "start_sample": {utterance.start_ts}, "start_second": {utterance.start_ts / 16000:.2f},\n')
+        out.write(f'    "end_sample": {utterance.end_ts}, "end_second": {utterance.end_ts / 16000:.2f},\n')
         out.write(f'    "speaker": "{utterance.speaker}",\n')
         out.write(f'    "text": "{utterance.text}",\n')
         out.write('    "words": [')
@@ -38,9 +34,7 @@ class TranscriptFormatter:
                 out.write("\n")
             else:
                 out.write(",\n")
-            out.write(
-                f'      {{ "text": "{w.word}", "lang": "{w.lang}", "prob": {w.probability:.4f} }}'
-            )
+            out.write(f'      {{ "text": "{w.word}", "lang": "{w.lang}", "prob": {w.probability:.4f} }}')
         out.write("\n    ]\n")
         out.write("  }")
 
@@ -62,9 +56,9 @@ class JsonTranscriptWriter(TranscriptWriter):
 
     def write(
         self,
-        utterance: VerbatimUtterance,
-        unacknowledged_utterance: List[VerbatimUtterance] = None,
-        unconfirmed_words: List[VerbatimWord] = None,
+        utterance: Utterance,
+        unacknowledged_utterance: List[Utterance] = None,
+        unconfirmed_words: List[Word] = None,
     ):
         self.formatter.format_utterance(utterance=utterance, out=self.out)
         self.out.flush()

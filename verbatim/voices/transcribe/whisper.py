@@ -6,7 +6,7 @@ import whisper
 from whisper.model import Whisper
 
 from .transcribe import Transcriber, WhisperConfig
-from ...transcript.words import VerbatimWord
+from ...transcript.words import Word
 
 LOG = logging.getLogger(__name__)
 
@@ -34,9 +34,7 @@ class WhisperTranscriber(Transcriber):
 
     def guess_language(self, audio: np.array, lang: List[str]) -> Tuple[str, float]:
         audio = whisper.pad_or_trim(audio)
-        mel_spectrogram = whisper.log_mel_spectrogram(
-            audio, n_mels=self.model.dims.n_mels
-        ).to(self.model.device)
+        mel_spectrogram = whisper.log_mel_spectrogram(audio, n_mels=self.model.dims.n_mels).to(self.model.device)
 
         _, lang_probs = self.model.detect_language(mel=mel_spectrogram)
         best_lang = max((k for k in lang_probs if k in lang), key=lang_probs.get)
@@ -56,7 +54,7 @@ class WhisperTranscriber(Transcriber):
         whisper_best_of: int = 3,
         whisper_patience: float = 1.0,
         whisper_temperatures: List[float] = None,
-    ) -> List[VerbatimWord]:
+    ) -> List[Word]:
         if whisper_temperatures is None:
             whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
 
@@ -104,7 +102,7 @@ class WhisperTranscriber(Transcriber):
             hallucination_silence_threshold=None,
             **options.__dict__,
         )
-        words: List[VerbatimWord] = []
+        words: List[Word] = []
         for segment in transcript["segments"]:
             # pylint: disable=unused-variable
             # ruff: noqa: F841
@@ -127,7 +125,7 @@ class WhisperTranscriber(Transcriber):
                 start_ts = int(word_start * 16000) + window_ts
                 end_ts = int(word_end * 16000) + window_ts
                 words.append(
-                    VerbatimWord(
+                    Word(
                         start_ts=start_ts,
                         end_ts=end_ts,
                         word=word_text,
