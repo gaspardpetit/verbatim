@@ -6,6 +6,7 @@ import numpy as np
 from mlx_whisper import transcribe
 
 from ...transcript.words import Word
+from ...audio.audio import samples_to_seconds
 from .transcribe import Transcriber
 
 LOG = logging.getLogger(__name__)
@@ -50,7 +51,8 @@ class WhisperMlxTranscriber(Transcriber):
         # If not in allowed languages, use first allowed language
         LOG.warning(f"Detected language {detected} not in allowed languages {lang}, using {lang[0]}")
         LOG.info(f"Detected language: {detected}")
-        return lang[0], 1.0
+        prob = 1.0 if samples_to_seconds(len(audio)) > 8.0 else 0.1
+        return lang[0], prob
 
     def transcribe(
         self,
@@ -130,11 +132,6 @@ class WhisperMlxTranscriber(Transcriber):
 
                 # Log word timetamp comparison
                 LOG.info(f"Word '{word.word}': end_ts={word.end_ts}, audio_ts={audio_ts}")
-
-                # Only add words that end before current audio position
-                if word.end_ts <= audio_ts:
-                    transcript_words.append(word)
-                else:
-                    LOG.info(f"Skipping word '{word.word}' as it ends after audio_ts")
+                transcript_words.append(word)
 
         return transcript_words
