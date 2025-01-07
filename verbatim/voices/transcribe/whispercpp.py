@@ -75,7 +75,7 @@ class WhisperCppTranscriber(Transcriber):
             if end_ts > audio_ts:
                 return
 
-            word = Word.from_whisper_cpp_1w_segment(segment=w, lang=lang)
+            word = Word.from_whisper_cpp_1w_segment(segment=w, lang=lang, ts_offset=window_ts)
 
             LOG.debug(f"[{start_ts} ({samples_to_seconds(start_ts)})]: {word.word}")
             transcript_words.append(word)
