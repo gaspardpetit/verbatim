@@ -65,13 +65,15 @@ class WhisperCppTranscriber(Transcriber):
         transcript_words: List[Word] = []
 
         def on_segment(w:Segment):
-            LOG.debug(f"XXXX {w.text}")
+            if w.text.strip() == "":
+                return
+
             # WhisperCPP segments are in centiseconds (1/100 second)
             start_ts = seconds_to_samples(w.t0 / 100) + window_ts  # Convert to samples
             end_ts = seconds_to_samples(w.t1 / 100) + window_ts
 
             if end_ts > audio_ts:
-                continue
+                return
 
             word = Word.from_whisper_cpp_1w_segment(segment=w, lang=lang)
 
