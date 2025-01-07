@@ -8,7 +8,7 @@ from numpy.typing import NDArray
 
 from pywhispercpp.model import Model, Segment
 
-from verbatim.audio.audio import samples_to_seconds
+from ...audio.audio import samples_to_seconds, seconds_to_samples
 
 from ...transcript.words import Word
 from .transcribe import Transcriber
@@ -67,8 +67,8 @@ class WhisperCppTranscriber(Transcriber):
         def on_segment(w:Segment):
             LOG.debug(f"XXXX {w.text}")
             # WhisperCPP segments are in centiseconds (1/100 second)
-            start_ts = int(w.t0 * 160) + window_ts  # Convert to samples
-            end_ts = int(w.t1 * 160) + window_ts
+            start_ts = seconds_to_samples(w.t0 / 100) + window_ts  # Convert to samples
+            end_ts = seconds_to_samples(w.t1 / 100) + window_ts
 
             if end_ts > audio_ts:
                 continue
