@@ -156,7 +156,7 @@ class State:
             return
         LOG.debug(
             f"Shifting rolling window by {offset} samples ({samples_to_seconds(offset)}s) "
-            "to offset {self.window_ts + offset} ({samples_to_seconds(self.window_ts + offset)}s)."
+            f"to offset {self.window_ts + offset} ({samples_to_seconds(self.window_ts + offset)}s)."
         )
 
         self.rolling_window.array = np.roll(self.rolling_window.array, -offset)
