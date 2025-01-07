@@ -5,7 +5,7 @@ import logging
 from typing import List, Tuple, Union
 from numpy.typing import NDArray
 
-from pywhispercpp.model import Model
+from pywhispercpp.model import Model, Segment
 
 from verbatim.audio.audio import samples_to_seconds
 
@@ -61,17 +61,10 @@ class WhisperCppTranscriber(Transcriber):
     ) -> List[Word]:
         LOG.info(f"Transcription Prefix: {prefix}")
 
-        # Run inference
-        words = self.whisper_model.transcribe(
-            audio,
-            max_len=1,
-            split_on_word=True,
-            token_timestamps=True,
-        )
-
         transcript_words: List[Word] = []
-        for w in words:
-            print("XXXX", w.text)
+
+        def on_segment(w:Segment):
+            LOG.debug(f"XXXX {w.text}")
             # WhisperCPP segments are in centiseconds (1/100 second)
             start_ts = int(w.t0 * 160) + window_ts  # Convert to samples
             end_ts = int(w.t1 * 160) + window_ts
@@ -84,5 +77,14 @@ class WhisperCppTranscriber(Transcriber):
             LOG.debug(f"[{start_ts} ({samples_to_seconds(start_ts)})]: {word.word}")
             transcript_words.append(word)
 
-        print(transcript_words)
+        # Run inference
+        self.whisper_model.transcribe(
+            audio,
+            max_len=1,
+            split_on_word=True,
+            token_timestamps=True,
+            new_segment_callback=on_segment,
+        )
+
+        LOG.debug(transcript_words)
         return transcript_words
