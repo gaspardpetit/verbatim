@@ -17,7 +17,7 @@ class Word:
 
     @classmethod
     def from_word(cls, word: WhisperWord, lang: str, ts_offset: int = 0) -> "Word":
-        """Creates a VerbatimWord instance from a Word object with a timestamp offset."""
+        """Creates a Word instance from a Word object with a timestamp offset."""
         start_ts = int(word.start * 16000) + ts_offset
         end_ts = int(word.end * 16000) + ts_offset
         return cls(
@@ -31,8 +31,8 @@ class Word:
     @classmethod
     def from_whisper_cpp_1w_segment(
         cls, segment: Segment, lang: str, ts_offset: int = 0
-    ) -> "VerbatimWord":
-        """Creates a VerbatimWord instance from a WhisperCPP 1-word segment with a timestamp offset."""
+    ) -> "Word":
+        """Creates a Word instance from a WhisperCPP 1-word segment with a timestamp offset."""
         start_ts = int(segment.t0 * 160) + ts_offset
         end_ts = int(segment.t1 * 160) + ts_offset
         return cls(

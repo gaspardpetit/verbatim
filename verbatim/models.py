@@ -15,12 +15,12 @@ class Models:
     sentence_tokenizer: SentenceTokenizer = None
 
     def __init__(self, device: str, whisper_model_size: str = "large-v3", stream: bool = False):
+        # pylint: disable=import-outside-toplevel
         LOG.info("Initializing WhisperModel and audio stream.")
 
         if sys.platform == "darwin":
             # Use WhisperCPP on Mac by default
             LOG.info("Using WhisperCPP transcriber on Mac OS X")
-            # pylint: disable=import-outside-toplevel
             from .voices.transcribe.whispercpp import WhisperCppTranscriber
 
             self.transcriber = WhisperCppTranscriber(
@@ -28,7 +28,6 @@ class Models:
             )
         else:
             LOG.info("Using 'faster-whisper' transcriber.")
-            # pylint: disable=import-outside-toplevel
             from .voices.transcribe.faster_whisper import FasterWhisperTranscriber
 
             self.transcriber = FasterWhisperTranscriber(

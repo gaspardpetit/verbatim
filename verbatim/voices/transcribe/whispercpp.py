@@ -1,15 +1,15 @@
 # PS08_verbatim/verbatim/voices/transcribe/whispercpp.py
 
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Union
+from numpy.typing import NDArray
 
-import numpy as np
 from pywhispercpp.model import Model
 
 from verbatim.audio.audio import samples_to_seconds
 
-from ...transcript.words import VerbatimWord
-from .transcribe import Transcriber, WhisperConfig
+from ...transcript.words import Word
+from .transcribe import Transcriber
 
 LOG = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class WhisperCppTranscriber(Transcriber):
         whisper_beam_size: int = 3,
         whisper_best_of: int = 3,
         whisper_patience: float = 1.0,
-        whisper_temperatures: List[float] = None,
+        whisper_temperatures: Union[None,List[float]] = None,
     ):
         if whisper_temperatures is None:
             whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
@@ -40,7 +40,7 @@ class WhisperCppTranscriber(Transcriber):
         self.whisper_patience = whisper_patience
         self.whisper_temperatures = whisper_temperatures
 
-    def guess_language(self, audio: np.array, lang: List[str]) -> Tuple[str, float]:
+    def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]:
         # TODO: Implement proper language detection
         # For now return first language
         return lang[0], 1.0
@@ -48,7 +48,7 @@ class WhisperCppTranscriber(Transcriber):
     def transcribe(
         self,
         *,
-        audio: np.array,
+        audio: NDArray,
         lang: str,
         prompt: str,
         prefix: str,
@@ -57,8 +57,8 @@ class WhisperCppTranscriber(Transcriber):
         whisper_beam_size: int = 3,
         whisper_best_of: int = 3,
         whisper_patience: float = 1.0,
-        whisper_temperatures: List[float] = None,
-    ) -> List[VerbatimWord]:
+        whisper_temperatures: Union[None,List[float]] = None,
+    ) -> List[Word]:
         LOG.info(f"Transcription Prefix: {prefix}")
 
         # Run inference
@@ -69,7 +69,7 @@ class WhisperCppTranscriber(Transcriber):
             token_timestamps=True,
         )
 
-        transcript_words: List[VerbatimWord] = []
+        transcript_words: List[Word] = []
         for w in words:
             print("XXXX", w.text)
             # WhisperCPP segments are in centiseconds (1/100 second)
@@ -79,7 +79,7 @@ class WhisperCppTranscriber(Transcriber):
             if end_ts > audio_ts:
                 continue
 
-            word = VerbatimWord.from_whisper_cpp_1w_segment(segment=w, lang=lang)
+            word = Word.from_whisper_cpp_1w_segment(segment=w, lang=lang)
 
             LOG.debug(f"[{start_ts} ({samples_to_seconds(start_ts)})]: {word.word}")
             transcript_words.append(word)

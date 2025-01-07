@@ -432,7 +432,7 @@ name = "click"
 version = "8.1.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "platform_system == 'Windows'" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/b9/2e/0090cbf739cee7d23781ad4b89a9894a41538e4fcf4c31dcdd705b78eb8b/click-8.1.8.tar.gz", hash = "sha256:ed53c9d8990d83c2a27deae68e4ee337473f6330c040a31d4225c9574d16096a", size = 226593 }
 wheels = [
@@ -2687,10 +2687,33 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/85/bf/213ab706513a2ad6f0266b44c841f5123ae3592e769488be1e62268f0451/pywhispercpp-1.3.0.tar.gz", hash = "sha256:d5d4ddfdbe7472736343413355f47a74783bc40891c5826b607eac4f62b08279", size = 1580900 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/48/fe/0253e7fd4cdfc0913e2994e62ea7f95eeaa2f5cf63bf8de1c80763410eb6/pywhispercpp-1.3.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:4ca8df59533e0b68cdda70dfa74b6b2a6632e8f87ffb1fbdf8addecb66294bc2", size = 1562729 },
+    { url = "https://files.pythonhosted.org/packages/7e/ed/8d6c9f8e3df880b6a7c342b2374a4f83dd8386b66565a5feb5cff477d0a4/pywhispercpp-1.3.0-cp310-cp310-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:5eef93595c264c9ba2167c5f6d3ddb0e045fc06d9784b5bdfcbf99562736965c", size = 1894053 },
+    { url = "https://files.pythonhosted.org/packages/15/a0/2a55a54315ce84a09de6771833e9e3b2ed9c5d6a20d94ffc5e120fc8617f/pywhispercpp-1.3.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d29615b521ea27b2a3aa78558cfb45ae312816adce6f22bf8a8446e56415fa7b", size = 1788992 },
+    { url = "https://files.pythonhosted.org/packages/82/9c/9d300818b995eed02ebdba5b5d1d40b89aedf257c962b49409f736fdf27b/pywhispercpp-1.3.0-cp310-cp310-musllinux_1_2_i686.whl", hash = "sha256:a275c461937b6c8696ffd347e56cc7ad335393ae1a6b29ddfd0937a14b400765", size = 3026223 },
+    { url = "https://files.pythonhosted.org/packages/a5/cd/1e9e1ffc75d4d795070bbb0223e37bc560c766fed96abf8760a4f4d49af1/pywhispercpp-1.3.0-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:05a9a8708f5bcd436740c1acb81bd5d56781b21396a3c64d728fe3891a16acec", size = 2792340 },
+    { url = "https://files.pythonhosted.org/packages/36/1e/3d2f7f14162af139233466f9432221459ba3360b4f6247496cbda2f1e825/pywhispercpp-1.3.0-cp310-cp310-win32.whl", hash = "sha256:7f0e519d09993d249a8cc121836ce59618af68ec797bd915e320651910d78ceb", size = 731306 },
+    { url = "https://files.pythonhosted.org/packages/d6/e5/861566d36fd8a8df74a6ba741947611f906cfe31fad926fd0bac0eb2122d/pywhispercpp-1.3.0-cp310-cp310-win_amd64.whl", hash = "sha256:21445fed1dd38e23e86eb56bfe490755ab6e87af017448acef145bd913ff493b", size = 863683 },
     { url = "https://files.pythonhosted.org/packages/79/4d/4765b2477e028d27f0f497f9e7e27ecfd207cf1d133c12626a7901ceca8a/pywhispercpp-1.3.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:f66cc5ff624744cf0b7da1c53d67d2e3416f92a02c7ae945697d47d13eed5845", size = 1562728 },
+    { url = "https://files.pythonhosted.org/packages/e5/0d/a17a403feeea0e0d064fb230d56119718ca813d6b382804848c387387022/pywhispercpp-1.3.0-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:b2fb92868fb7219478f6bdff50d5045583466985e3e9017af040735eb650772d", size = 1893935 },
+    { url = "https://files.pythonhosted.org/packages/3f/09/db14ce3c4555a642ba62e4da226e578ea86d1c32ca70b93e32dae3309cf2/pywhispercpp-1.3.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:66270fb0dbb00745419001eef7c46c49e2104b80ebd21d8e65d58f0bdef7c2a7", size = 1788858 },
+    { url = "https://files.pythonhosted.org/packages/a0/28/fd4de678cfc50ad8dedba1ab5f9a3e3563759ca3dce273eb2b09b95e4729/pywhispercpp-1.3.0-cp311-cp311-musllinux_1_2_i686.whl", hash = "sha256:f61f2e36f06bb98cd139aee073d6af5223fe551bab80ce3cbdc643eb7edb5e1b", size = 3026209 },
+    { url = "https://files.pythonhosted.org/packages/94/a3/81c3616eb033344e4af356896aded58c1f36fdca253294dd501db7630a09/pywhispercpp-1.3.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:bf0478a443ea7a56f35fbeba1c5f1988b13088aafc79d533a67020ee7ce146f3", size = 2792276 },
+    { url = "https://files.pythonhosted.org/packages/49/83/0bcb864c5dff802afd4c1887149bf029ea6715e20438feb0eb0727e0e70d/pywhispercpp-1.3.0-cp311-cp311-win32.whl", hash = "sha256:0c906e7537d9e81813d86bcc98824085058174b238900bad655c8d7bd426f9a4", size = 731243 },
+    { url = "https://files.pythonhosted.org/packages/a7/15/5421c0814e611aae9f1541c36d4bfba157ae30580424091519aaeffe3f1d/pywhispercpp-1.3.0-cp311-cp311-win_amd64.whl", hash = "sha256:3af25987a0d3caa88a6c795b2e0051b74515a81c33bdbd49c6e8ca65b7fdc6db", size = 863874 },
     { url = "https://files.pythonhosted.org/packages/ba/bf/1d8ceb1cc8b1cd4df582ec0b09a6f01624cf31f659f7e302db3f1cb6e5e7/pywhispercpp-1.3.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:d71faa427c8987de68a061114d79c474d11a2f562aade9fdaa46778cdc4d1646", size = 1562801 },
+    { url = "https://files.pythonhosted.org/packages/7d/cf/2051f66762c261617090d28b47d626ea3e58f61efe9c4d274a01f5be7a2d/pywhispercpp-1.3.0-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:e023d2c1568dcabae821f2c4a17bd17e57666fa4655517ce4ca3327dc4d478b6", size = 1894476 },
+    { url = "https://files.pythonhosted.org/packages/24/61/5076ab0091686c7080214928672f690e09ca99b82f759e9ecc50d2e30f30/pywhispercpp-1.3.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c2be91b89c96b8c1d2d433f05c98f9624d4c28d5379a670dc40c48ddbcdb40a7", size = 1789238 },
+    { url = "https://files.pythonhosted.org/packages/e0/8d/d44ccb7d016b0bdbc3a1d358875a096e3218c1b37ed8a3115c7ec890e365/pywhispercpp-1.3.0-cp39-cp39-musllinux_1_2_i686.whl", hash = "sha256:edee04d8c3c630e8f010996d5f0d620aaa11165bbe2475d5f060bc00220b8597", size = 3026478 },
+    { url = "https://files.pythonhosted.org/packages/22/e6/a1d9f3e62935ed857ee7ce37b2890610526419e1b037253faabc57fca9a0/pywhispercpp-1.3.0-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:a6d17abaa1ad9b2ab09e76514ba96e9a364c656d1269900560bef0052daa30d1", size = 2792721 },
+    { url = "https://files.pythonhosted.org/packages/a1/18/f251ebcc31969f68bc83acbf7660a4c8e0f95e2b52989f9141cd4179fde2/pywhispercpp-1.3.0-cp39-cp39-win32.whl", hash = "sha256:47d61d22ff227d5ed4ddba59299528c602bdc85531b667bd8b681d2679ae95e0", size = 732212 },
+    { url = "https://files.pythonhosted.org/packages/a8/6a/6e66532134da4f127b765c9aabfe04d8b2bcc2bdfd886c324212496daf5a/pywhispercpp-1.3.0-cp39-cp39-win_amd64.whl", hash = "sha256:eaae3577392e09c53f17cc42ff69ee4ae412c892e68069eac191b6db07833fd4", size = 859680 },
     { url = "https://files.pythonhosted.org/packages/0a/88/e700e15ed21157ac11dbce8cdf955f216cf1b9b93f0a61b43ad3f37ae728/pywhispercpp-1.3.0-pp310-pypy310_pp73-macosx_11_0_arm64.whl", hash = "sha256:a1b6a76e153f282cc0a3bc7e9a1b99f41550e29c968aaad6c11105d24f261ec8", size = 1562179 },
+    { url = "https://files.pythonhosted.org/packages/e9/07/bd7a292326bd2ef0033a3702e0bcd668d36d9f73de08ad7ebdc542681522/pywhispercpp-1.3.0-pp310-pypy310_pp73-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:12c6d4453ae3493381c5a81545e160205ac22ba229b5b4fce68266743f9fff40", size = 1891986 },
+    { url = "https://files.pythonhosted.org/packages/b4/1c/2c2fd2f50946fba54edaf56721976cba18d0e1c7a24fcfb6ec0e5c0d63d5/pywhispercpp-1.3.0-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0c35d2a7c2dac815f6ede5f720e13ced67355d10d9fba0b56c9165e92203b500", size = 1788100 },
     { url = "https://files.pythonhosted.org/packages/53/14/f176cbe73a55b9087bd59d378de9c8d3dc3566604e0a17a9ceaa7f53a4ee/pywhispercpp-1.3.0-pp39-pypy39_pp73-macosx_11_0_arm64.whl", hash = "sha256:f5c6a8502b63a25367fec6a66053d883105eeec57d4e28f5c822561753ce9154", size = 1562162 },
+    { url = "https://files.pythonhosted.org/packages/3f/98/17f027aac18e936713eebd80999f9debdef113ca6c8fc5431cf74b35e3d8/pywhispercpp-1.3.0-pp39-pypy39_pp73-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:7046bf4ffc65ed35fc43d90c0eaf0963c6f5a3057c9133a35302e56b87f7ff4d", size = 1892006 },
+    { url = "https://files.pythonhosted.org/packages/9f/e1/d49804361b35c90ec3b89c7131ec5fb39e2c292e91748969778aa3ed77af/pywhispercpp-1.3.0-pp39-pypy39_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0e632968683f6e0cc8354bde0d37002fbbe5b35a4b6c480e57dd091d22f170b6", size = 1787930 },
+    { url = "https://files.pythonhosted.org/packages/b9/e5/7309195bee0a3c4fcdc14874ac1b8db83543dea651231790ad0ecbd9378c/pywhispercpp-1.3.0-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:cc1011b7353791bd0498d6136b1c9d63922310f5773c250b0c2eb667e8c30c94", size = 880009 },
 ]
 
 [[package]]
@@ -3445,19 +3468,19 @@ dependencies = [
     { name = "jinja2" },
     { name = "networkx", version = "3.2.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "nvidia-cublas-cu12", marker = "platform_machine == 'x86_64' and platform_system == 'Linux'" },
-    { name = "nvidia-cuda-cupti-cu12", marker = "platform_machine == 'x86_64' and platform_system == 'Linux'" },
-    { name = "nvidia-cuda-nvrtc-cu12", marker = "platform_machine == 'x86_64' and platform_system == 'Linux'" },
-    { name = "nvidia-cuda-runtime-cu12", marker = "platform_machine == 'x86_64' and platform_system == 'Linux'" },
-    { name = "nvidia-cudnn-cu12", marker = "platform_machine == 'x86_64' and platform_system == 'Linux'" },
-    { name = "nvidia-cufft-cu12", marker = "platform_machine == 'x86_64' and platform_system == 'Linux'" },
-    { name = "nvidia-curand-cu12", marker = "platform_machine == 'x86_64' and platform_system == 'Linux'" },
-    { name = "nvidia-cusolver-cu12", marker = "platform_machine == 'x86_64' and platform_system == 'Linux'" },
-    { name = "nvidia-cusparse-cu12", marker = "platform_machine == 'x86_64' and platform_system == 'Linux'" },
-    { name = "nvidia-nccl-cu12", marker = "platform_machine == 'x86_64' and platform_system == 'Linux'" },
-    { name = "nvidia-nvtx-cu12", marker = "platform_machine == 'x86_64' and platform_system == 'Linux'" },
+    { name = "nvidia-cublas-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-cuda-cupti-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-cuda-nvrtc-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-cuda-runtime-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-cudnn-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-cufft-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-curand-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-cusolver-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-cusparse-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-nccl-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "nvidia-nvtx-cu12", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
     { name = "sympy" },
-    { name = "triton", marker = "platform_machine == 'x86_64' and platform_system == 'Linux'" },
+    { name = "triton", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
     { name = "typing-extensions" },
 ]
 wheels = [
@@ -3599,7 +3622,7 @@ name = "tqdm"
 version = "4.67.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "platform_system == 'Windows'" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a8/4b/29b4ef32e036bb34e4ab51796dd745cdba7ed47ad142a9f4a1eb8e0c744d/tqdm-4.67.1.tar.gz", hash = "sha256:f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2", size = 169737 }
 wheels = [
@@ -3731,6 +3754,7 @@ dependencies = [
     { name = "pyaudio" },
     { name = "pydub" },
     { name = "python-docx" },
+    { name = "pywhispercpp" },
     { name = "silero-vad" },
     { name = "sounddevice" },
     { name = "soundfile" },
@@ -3745,9 +3769,6 @@ dependencies = [
 cuda-gpu = [
     { name = "onnxruntime-gpu", version = "1.19.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "onnxruntime-gpu", version = "1.20.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-]
-darwin = [
-    { name = "pywhispercpp", marker = "sys_platform == 'darwin'" },
 ]
 
 [package.dev-dependencies]
@@ -3778,7 +3799,7 @@ requires-dist = [
     { name = "pyaudio", specifier = ">=0.2.14" },
     { name = "pydub", specifier = ">=0.25.1" },
     { name = "python-docx", specifier = ">=1.1.2" },
-    { name = "pywhispercpp", marker = "sys_platform == 'darwin' and extra == 'darwin'", specifier = ">=1.3.0" },
+    { name = "pywhispercpp", specifier = ">=1.3.0" },
     { name = "silero-vad", specifier = ">=5.1.2" },
     { name = "sounddevice", specifier = ">=0.5.1" },
     { name = "soundfile", specifier = ">=0.13.0" },
