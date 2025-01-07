@@ -2,6 +2,7 @@
 
 import sys
 import logging
+import multiprocessing
 from typing import List, Tuple, Union
 from numpy.typing import NDArray
 
@@ -77,6 +78,7 @@ class WhisperCppTranscriber(Transcriber):
             LOG.debug(f"[{start_ts} ({samples_to_seconds(start_ts)})]: {word.word}")
             transcript_words.append(word)
 
+        cpu_count = max(1, multiprocessing.cpu_count() // 2)
         # Run inference
         self.whisper_model.transcribe(
             audio,
@@ -84,6 +86,7 @@ class WhisperCppTranscriber(Transcriber):
             split_on_word=True,
             token_timestamps=True,
             new_segment_callback=on_segment,
+            n_threads=cpu_count,
         )
 
         LOG.debug(transcript_words)
