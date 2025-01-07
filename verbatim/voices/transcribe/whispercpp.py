@@ -1,5 +1,6 @@
 # PS08_verbatim/verbatim/voices/transcribe/whispercpp.py
 
+import sys
 import logging
 from typing import List, Tuple, Union
 from numpy.typing import NDArray
@@ -28,12 +29,11 @@ class WhisperCppTranscriber(Transcriber):
         if whisper_temperatures is None:
             whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
 
-        if device == "cpu":
-            self.whisper_model = Model(model=model_size_or_path)
-        else:
+        if device != "cpu":
             # WhisperCPP doesn't support GPU
             LOG.warning("WhisperCPP only supports CPU inference, ignoring GPU device")
-            self.whisper_model = Model(model=model_size_or_path)
+
+        self.whisper_model = Model(model=model_size_or_path, redirect_whispercpp_logs_to=sys.stderr)
 
         self.whisper_beam_size = whisper_beam_size
         self.whisper_best_of = whisper_best_of
