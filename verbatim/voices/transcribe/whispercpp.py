@@ -87,8 +87,14 @@ class WhisperCppTranscriber(Transcriber):
             max_len=1,
             split_on_word=True,
             token_timestamps=True,
+            initial_prompt = prompt,
+            language=lang,
             new_segment_callback=on_segment,
             n_threads=cpu_count,
+            no_context=True,
+            # When using these, whisper.cpp complaints about too many encoders - disabled for now
+            #greedy={"best_of": whisper_best_of},
+            #beam_search={'beam_size': whisper_beam_size, 'patience': whisper_patience},
         )
 
         LOG.debug(transcript_words)
