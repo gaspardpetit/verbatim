@@ -41,7 +41,7 @@ class WhisperCppTranscriber(Transcriber):
         self.whisper_temperatures = whisper_temperatures
 
     def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]:
-        # TODO: Implement proper language detection
+        # https://github.com/gaspardpetit/verbatim/issues/78
         # For now return first language
         return lang[0], 1.0
 
