@@ -39,7 +39,7 @@ class Word:
             start_ts=start_ts,
             lang=lang,
             end_ts=end_ts,
-            word=segment.text,
+            word=f" {segment.text}",
             probability=1.0,
         )
 
