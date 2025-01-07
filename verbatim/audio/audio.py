@@ -72,7 +72,7 @@ def samples_to_seconds(index: int) -> float:
 
 
 def seconds_to_samples(seconds: float) -> int:
-    return seconds * 16000
+    return int(seconds * 16000)
 
 
 def timestr_to_samples(timestr: str, sample_rate: int = 16000) -> int:
