@@ -45,7 +45,8 @@ class FastSentenceTokenizer(SentenceTokenizer):
 
 
 class SaTSentenceTokenizer(SentenceTokenizer):
-    def __init__(self, device: str, model="sat-12l-sm"):
+    def __init__(self, device: str, model="sat-3l-sm"):
+        LOG.info(f"Initializing SaT Sentence Tokenizer with model {model}")
         self.sat_sm = SaT(model)
         self.sat_sm.half().to(device)
 

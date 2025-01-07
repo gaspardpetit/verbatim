@@ -120,8 +120,8 @@ uv lock --upgrade
 # Regenerating the requirements.txt files
 
 ```
-uv export --no-hashes > .\requirements.tx
-uv export --no-hashes --extra cuda_gpu > .\requirements-gpu.tx
+uv export --no-hashes > .\requirements.txt
+uv export --no-hashes --extra cuda_gpu > .\requirements-gpu.txt
 ```
 
 # Before submitting a change request
