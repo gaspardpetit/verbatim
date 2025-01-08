@@ -9,6 +9,16 @@ from .audiosource import AudioSource
 from .sourceconfig import SourceConfig
 from ..audio import samples_to_seconds, timestr_to_samples
 
+def convert_to_wav(input_path:str, working_prefix_no_ext:str) -> str:
+    # pylint: disable=import-outside-toplevel
+    from .ffmpegfileaudiosource import PyAVAudioSource
+    from .wavsink import WavSink
+    temp_file_audio_source = PyAVAudioSource(file_path=input_path)
+
+    converted_path = working_prefix_no_ext + ".wav"
+    WavSink.dump_to_wav(audio_source=temp_file_audio_source, output_path=converted_path)
+    return converted_path
+
 
 def create_audio_source(
     *,
@@ -59,11 +69,8 @@ def create_audio_source(
                 end_time=samples_to_seconds(stop_sample) if stop_sample else None,
             )
 
-        temp_file_audio_source = PyAVAudioSource(file_path=input_source)
-        from .wavsink import WavSink
+        input_source = convert_to_wav(input_path=input_source, working_prefix_no_ext=working_prefix_no_ext)
 
-        input_source = working_prefix_no_ext + ".wav"
-        WavSink.dump_to_wav(audio_source=temp_file_audio_source, output_path=input_source)
         return create_audio_source(
             source_config=source_config,
             device=device,
@@ -109,6 +116,16 @@ def create_separate_speaker_sources(
     working_prefix_no_ext: str = "out",
 ) -> List[AudioSource]:
     # pylint: disable=import-outside-toplevel
+
+    if os.path.splitext(input_source)[-1] != ".wav":
+        converted_input_source = convert_to_wav(input_path=input_source, working_prefix_no_ext=working_prefix_no_ext)
+        return create_separate_speaker_sources(
+            input_source=converted_input_source,
+            device=device,
+            source_config=source_config,
+            start_time=start_time, stop_time=stop_time,
+            output_prefix_no_ext=output_prefix_no_ext, working_prefix_no_ext=working_prefix_no_ext
+        )
 
     if source_config.diarization_file == "" or (source_config.diarize is not None and source_config.diarization_file is None):
         source_config.diarization_file = output_prefix_no_ext + ".rttm"

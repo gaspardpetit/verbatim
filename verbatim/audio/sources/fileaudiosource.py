@@ -14,6 +14,7 @@ from ...voices.isolation import VoiceIsolation
 
 LOG = logging.getLogger(__name__)
 
+COMPATIBLE_FORMATS = [".mp3", ".m4a"]
 
 class FileAudioStream(AudioStream):
     source: "FileAudioSource"
@@ -76,9 +77,10 @@ class FileAudioSource(AudioSource):
         super().__init__(source_name=file)
         self.file_path = file
         self.diarization = diarization
-        if self.file_path.endswith(".mp3"):
+        file_path_no_ext, file_path_ext = os.path.splitext(self.file_path)
+        if file_path_ext in COMPATIBLE_FORMATS:
             # Convert mp3 to wav
-            wav_file_path = self.file_path.replace(".mp3", ".wav")
+            wav_file_path = f"{file_path_no_ext}.wav"
             convert_mp3_to_wav(self.file_path, wav_file_path)
             self.file_path = wav_file_path
         self.end_sample = end_sample
