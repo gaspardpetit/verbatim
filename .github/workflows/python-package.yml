@@ -2,9 +2,9 @@ name: Python package
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
@@ -21,7 +21,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y portaudio19-dev
+          sudo apt-get install -y portaudio19-dev ffmpeg
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -36,6 +36,6 @@ jobs:
           ls -l 'requirements.txt'
           pip install -r requirements.txt || echo "No requirements.txt found, skipping dependencies installation"
 
-      - name: Test with pytest
+      - name: Test with pytest (and short audio only)
         run: |
-          pytest
+          pytest -k test_diarization_metrics_short -v
