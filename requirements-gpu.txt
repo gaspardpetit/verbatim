@@ -78,6 +78,8 @@ mdurl==0.1.2
 mir-eval==0.7
 ml-collections==0.1.1 ; python_full_version < '3.10'
 ml-collections==1.0.0 ; python_full_version >= '3.10'
+mlx==0.21.1 ; sys_platform == 'darwin'
+mlx-whisper==0.4.1 ; sys_platform == 'darwin'
 more-itertools==10.5.0
 mosestokenizer==1.2.1
 mpmath==1.3.0

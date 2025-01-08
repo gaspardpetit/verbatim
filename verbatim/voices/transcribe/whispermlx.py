@@ -1,13 +1,20 @@
 # PS08_verbatim/verbatim/voices/transcribe/whispermlx.py
 
 import logging
+import sys
 from typing import List, Tuple, Union
-import numpy as np
-from mlx_whisper import transcribe
 
-from ...transcript.words import Word
+import numpy as np
+
 from ...audio.audio import samples_to_seconds
+from ...transcript.words import Word
 from .transcribe import Transcriber
+
+if sys.platform == "darwin":
+    # pylint: disable=import-error
+    from mlx_whisper import transcribe
+else:
+    transcribe = None # pylint: disable=invalid-name
 
 LOG = logging.getLogger(__name__)
 
@@ -17,7 +24,6 @@ class WhisperMlxTranscriber(Transcriber):
         self,
         *,
         model_size_or_path: str,
-        device: str,  # MLX doesn't use device specification - it automatically uses Metal on Mac
         whisper_beam_size: int = 3,
         whisper_best_of: int = 3,
         whisper_patience: float = 1.0,
@@ -37,7 +43,7 @@ class WhisperMlxTranscriber(Transcriber):
             audio,
             path_or_hf_repo=self.model_path,
             language=None,  # Trigger language detection
-            verbose=False,
+            verbose=None,
             task="transcribe",
             no_speech_threshold=0.6,
         )
@@ -77,8 +83,12 @@ class WhisperMlxTranscriber(Transcriber):
         if isinstance(whisper_temperatures, list):
             # Transform into tuple of floats
             temperatures = tuple(whisper_temperatures)
+        else:
+            temperatures = whisper_temperatures
 
         # Set up transcription options
+        show_progress = LOG.getEffectiveLevel() <= logging.INFO
+
         result = transcribe(
             audio,
             task="transcribe",
@@ -90,7 +100,7 @@ class WhisperMlxTranscriber(Transcriber):
             # beam_size=whisper_beam_size,
             # patience=whisper_patience, # requires beam_size
             best_of=whisper_best_of,
-            verbose=None,  # Don't show progress bar
+            verbose=(True if show_progress else None),  # None = don't even show progress bar
             temperature=temperatures,
             no_speech_threshold=0.6,
         )
