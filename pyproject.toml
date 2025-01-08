@@ -77,7 +77,10 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["ruff>=0.8.6"]
+dev = [
+    "pytest>=8.3.4",
+    "ruff>=0.8.6",
+]
 
 [project.optional-dependencies]
 cuda_gpu = [
