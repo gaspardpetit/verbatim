@@ -25,7 +25,7 @@ class Models:
                 LOG.info("Using WhisperMLX transcriber on Apple Silicon")
                 from .voices.transcribe.whispermlx import WhisperMlxTranscriber
 
-                self.transcriber = WhisperMlxTranscriber(model_size_or_path=whisper_model_size, device=device)
+                self.transcriber = WhisperMlxTranscriber(model_size_or_path=whisper_model_size)
             else:
                 # Use WhisperCPP on Mac by default
                 LOG.info("Using WhisperCPP transcriber on Mac OS X")
