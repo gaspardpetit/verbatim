@@ -78,6 +78,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pylint>=3.3.3",
     "pytest>=8.3.4",
     "ruff>=0.8.6",
 ]
