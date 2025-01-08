@@ -43,7 +43,7 @@ class WhisperMlxTranscriber(Transcriber):
             audio,
             path_or_hf_repo=self.model_path,
             language=None,  # Trigger language detection
-            verbose=False,
+            verbose=None,
             task="transcribe",
             no_speech_threshold=0.6,
         )
@@ -87,6 +87,8 @@ class WhisperMlxTranscriber(Transcriber):
             temperatures = whisper_temperatures
 
         # Set up transcription options
+        show_progress = LOG.getEffectiveLevel() <= logging.INFO
+
         result = transcribe(
             audio,
             task="transcribe",
@@ -98,7 +100,7 @@ class WhisperMlxTranscriber(Transcriber):
             # beam_size=whisper_beam_size,
             # patience=whisper_patience, # requires beam_size
             best_of=whisper_best_of,
-            verbose=None,  # Don't show progress bar
+            verbose=(True if show_progress else None),  # None = don't even show progress bar
             temperature=temperatures,
             no_speech_threshold=0.6,
         )
