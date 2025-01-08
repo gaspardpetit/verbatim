@@ -1,5 +1,4 @@
 import json
-import re
 from typing import List, TextIO, Union, Dict
 
 from .writer import TranscriptWriter, TranscriptWriterConfig
