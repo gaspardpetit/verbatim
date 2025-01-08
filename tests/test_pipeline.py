@@ -2,7 +2,6 @@ import os
 import sys
 import json
 import unittest
-from typing import Dict
 
 import diarizationlm
 
@@ -87,7 +86,7 @@ class TestPipeline(unittest.TestCase):
 
         # Process audio
         with audio_source.open() as audio_stream:
-            for utterance, unack_utterances, unconfirmed_words in verbatim.transcribe(audio_stream=audio_stream):
+            for utterance in verbatim.transcribe(audio_stream=audio_stream):
                 writer.write(utterance=utterance)
 
         writer.close()
@@ -113,7 +112,7 @@ class TestPipeline(unittest.TestCase):
         # Calculate metrics
         result = diarizationlm.compute_metrics_on_json_dict(hyp_data)
 
-        # Check that all error rates are below 0.1
+        # Check that all error rates are below 10%
         self.assertLess(result["WER"], 0.1)
         self.assertLess(result["WDER"], 0.1)
         self.assertLess(result["cpWER"], 0.1)
