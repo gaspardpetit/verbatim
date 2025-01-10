@@ -173,7 +173,7 @@ class Config:
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
             LOG.info("Using CPU")
             self.device = "cpu"
-        elif platform.processor() == 'arm' and platform.system() == 'Darwin' and torch.backends.mps.is_available():
+        elif platform.processor() == "arm" and platform.system() == "Darwin" and torch.backends.mps.is_available():
             # Check for Apple Silicon and MPS availability
             LOG.info("Using MPS (Apple Silicon)")
             self.device = "mps"
@@ -216,6 +216,6 @@ class Config:
             self.whisper_patience = 3.0
             self.whisper_temperatures = [0, 0.6]
 
-    def configure_languages(self, lang:List[str]) -> "Config":
+    def configure_languages(self, lang: List[str]) -> "Config":
         self.lang = lang
         return self
