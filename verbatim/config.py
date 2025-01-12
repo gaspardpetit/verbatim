@@ -1,6 +1,7 @@
+from dataclasses import dataclass, field
 import logging
 import os
-from dataclasses import dataclass, field
+import platform
 from typing import Dict, List, Union
 
 from .audio.sources.audiosource import AudioSource
@@ -168,13 +169,19 @@ class Config:
         # pylint: disable=import-outside-toplevel
         import torch
 
-        if use_cpu or not torch.cuda.is_available():
+        if use_cpu:
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
             LOG.info("Using CPU")
             self.device = "cpu"
-        else:
-            LOG.info("Using GPU")
+        elif platform.processor() == 'arm' and platform.system() == 'Darwin' and torch.backends.mps.is_available():
+            # Check for Apple Silicon and MPS availability
+            LOG.info("Using MPS (Apple Silicon)")
+            self.device = "mps"
+        elif torch.cuda.is_available():
+            LOG.info("Using GPU (CUDA)")
             self.device = "cuda"
+        else:
+            LOG.info("Using CPU (no CUDA or MPS available)")
 
         if stream:
             self.configure_for_low_latency_streaming()
