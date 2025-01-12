@@ -1,0 +1,26 @@
+[
+  {
+    "start": 0.33,
+    "end": 3.09,
+    "speaker": "SPEAKER_00",
+    "text": "お出口は前の左側ドアです。"
+  },
+  {
+    "start": 4.31,
+    "end": 7.23,
+    "speaker": "SPEAKER_00",
+    "text": " Please exit from the door on the front left of the train."
+  },
+  {
+    "start": 33.12,
+    "end": 36.38,
+    "speaker": "SPEAKER_01",
+    "text": "お降りの際は、お足元にご注意ください。"
+  },
+  {
+    "start": 37.48,
+    "end": 40.06,
+    "speaker": "SPEAKER_01",
+    "text": " Please watch your step when you leave the train."
+  }
+]
