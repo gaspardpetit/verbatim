@@ -9,109 +9,111 @@ from .audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
 
-DEFAULT_MULTILANG_PROMPTS = MappingProxyType({
-    "en": "This is a sentence.",
-    "zh": "这是一个句子。",
-    "de": "Dies ist ein Satz.",
-    "es": "Esta es una oración.",
-    "ru": "Это предложение.",
-    "ko": "이것은 문장입니다.",
-    "fr": "Ceci est une phrase.",
-    "ja": "これは文です。",
-    "pt": "Esta é uma frase.",
-    "tr": "Bu bir cümledir.",
-    "pl": "To jest zdanie.",
-    "ca": "Això és una oració.",
-    "nl": "Dit is een zin.",
-    "ar": "هذه جملة.",
-    "sv": "Det här är en mening.",
-    "it": "Questa è una frase.",
-    "id": "Ini adalah kalimat.",
-    "hi": "यह एक वाक्य है।",
-    "fi": "Tämä on lause.",
-    "vi": "Đây là một câu.",
-    "he": "זה משפט.",
-    "uk": "Це речення.",
-    "el": "Αυτή είναι μια πρόταση.",
-    "ms": "Ini ialah ayat.",
-    "cs": "Toto je věta.",
-    "ro": "Aceasta este o propoziție.",
-    "da": "Dette er en sætning.",
-    "hu": "Ez egy mondat.",
-    "ta": "இது ஒரு வாக்கியம்.",
-    "no": "Dette er en setning.",
-    "th": "นี่คือประโยค.",
-    "ur": "یہ ایک جملہ ہے۔",
-    "hr": "Ovo je rečenica.",
-    "bg": "Това е изречение.",
-    "lt": "Tai yra sakinys.",
-    "la": "Haec sententia est.",
-    "mi": "He rerenga kōrero tēnei.",
-    "ml": "ഇത് ഒരു വാക്യം ആണ്.",
-    "cy": "Dyma frawddeg.",
-    "sk": "Toto je veta.",
-    "te": "ఇది ఒక వాక్యం.",
-    "fa": "این یک جمله است.",
-    "lv": "Šis ir teikums.",
-    "bn": "এটি একটি বাক্য।",
-    "sr": "Ово је реченица.",
-    "az": "Bu bir cümlədir.",
-    "sl": "To je stavek.",
-    "kn": "ಇದು ಒಂದು ವಾಕ್ಯ.",
-    "et": "See on lause.",
-    "mk": "Ова е реченица.",
-    "br": "Hemañ zo ur frazenn.",
-    "eu": "Hau esaldi bat da.",
-    "is": "Þetta er setning.",
-    "hy": "Սա նախադասություն է։",
-    "ne": "यो एउटा वाक्य हो।",
-    "mn": "Энэ бол өгүүлбэр юм.",
-    "bs": "Ovo je rečenica.",
-    "kk": "Бұл сөйлем.",
-    "sq": "Kjo është një fjali.",
-    "sw": "Hii ni sentensi.",
-    "gl": "Esta é unha oración.",
-    "mr": "हे एक वाक्य आहे.",
-    "pa": "ਇਹ ਇੱਕ ਵਾਕ ਹੈ।",
-    "si": "මේ වාක්‍යයක් වේ.",
-    "km": "នេះជាប្រយោគមួយ។",
-    "sn": "Uyu mutsara.",
-    "yo": "Ọ̀rọ̀ yìí ni.",
-    "so": "Tani waa jumlad.",
-    "af": "Dit is 'n sin.",
-    "oc": "Aquò es una frasa.",
-    "ka": "ეს წინადადებაა.",
-    "be": "Гэта сказ.",
-    "tg": "Ин ҷумла аст.",
-    "sd": "هيءَ هڪ جملو آهي.",
-    "gu": "આ એક વાક્ય છે.",
-    "am": "ይህ አንድ ዓረፍተ ነገር ነው።",
-    "yi": "דאָס איז אַ זאַץ.",
-    "lo": "ນີ້ແມ່ນປະໂຫຍກ.",
-    "uz": "Bu bir gap.",
-    "fo": "Hetta er ein setning.",
-    "ht": "Sa a se yon fraz.",
-    "ps": "دا یوه جمله ده.",
-    "tk": "Bu bir sözlemdir.",
-    "nn": "Dette er ei setning.",
-    "mt": "Din hija sentenza.",
-    "sa": "एषा एकं वाक्यम् अस्ति।",
-    "lb": "Dëst ass e Saz.",
-    "my": "ဒါက စာကြောင်းတစ်ခုပါ။",
-    "bo": "འདི་ནི་ཚིག་གྲུབ་ཞིག་རེད།",
-    "tl": "Ito ay isang pangungusap.",
-    "mg": "Io dia fehezanteny.",
-    "as": "এইটো এটা বাক্য।",
-    "tt": "Бу җөмлә.",
-    "haw": "He hopunaʻōlelo kēia.",
-    "ln": "Oyo ezali lokasa.",
-    "ha": "Wannan jumla ce.",
-    "ba": "Был һөйләм.",
-    "jw": "Iki ukara.",
-    "su": "Ieu mangrupikeun kalimah.",
-})
+DEFAULT_MULTILANG_PROMPTS = MappingProxyType(
+    {
+        "en": "This is a sentence.",
+        "zh": "这是一个句子。",
+        "de": "Dies ist ein Satz.",
+        "es": "Esta es una oración.",
+        "ru": "Это предложение.",
+        "ko": "이것은 문장입니다.",
+        "fr": "Ceci est une phrase.",
+        "ja": "これは文です。",
+        "pt": "Esta é uma frase.",
+        "tr": "Bu bir cümledir.",
+        "pl": "To jest zdanie.",
+        "ca": "Això és una oració.",
+        "nl": "Dit is een zin.",
+        "ar": "هذه جملة.",
+        "sv": "Det här är en mening.",
+        "it": "Questa è una frase.",
+        "id": "Ini adalah kalimat.",
+        "hi": "यह एक वाक्य है।",
+        "fi": "Tämä on lause.",
+        "vi": "Đây là một câu.",
+        "he": "זה משפט.",
+        "uk": "Це речення.",
+        "el": "Αυτή είναι μια πρόταση.",
+        "ms": "Ini ialah ayat.",
+        "cs": "Toto je věta.",
+        "ro": "Aceasta este o propoziție.",
+        "da": "Dette er en sætning.",
+        "hu": "Ez egy mondat.",
+        "ta": "இது ஒரு வாக்கியம்.",
+        "no": "Dette er en setning.",
+        "th": "นี่คือประโยค.",
+        "ur": "یہ ایک جملہ ہے۔",
+        "hr": "Ovo je rečenica.",
+        "bg": "Това е изречение.",
+        "lt": "Tai yra sakinys.",
+        "la": "Haec sententia est.",
+        "mi": "He rerenga kōrero tēnei.",
+        "ml": "ഇത് ഒരു വാക്യം ആണ്.",
+        "cy": "Dyma frawddeg.",
+        "sk": "Toto je veta.",
+        "te": "ఇది ఒక వాక్యం.",
+        "fa": "این یک جمله است.",
+        "lv": "Šis ir teikums.",
+        "bn": "এটি একটি বাক্য।",
+        "sr": "Ово је реченица.",
+        "az": "Bu bir cümlədir.",
+        "sl": "To je stavek.",
+        "kn": "ಇದು ಒಂದು ವಾಕ್ಯ.",
+        "et": "See on lause.",
+        "mk": "Ова е реченица.",
+        "br": "Hemañ zo ur frazenn.",
+        "eu": "Hau esaldi bat da.",
+        "is": "Þetta er setning.",
+        "hy": "Սա նախադասություն է։",
+        "ne": "यो एउटा वाक्य हो।",
+        "mn": "Энэ бол өгүүлбэр юм.",
+        "bs": "Ovo je rečenica.",
+        "kk": "Бұл сөйлем.",
+        "sq": "Kjo është një fjali.",
+        "sw": "Hii ni sentensi.",
+        "gl": "Esta é unha oración.",
+        "mr": "हे एक वाक्य आहे.",
+        "pa": "ਇਹ ਇੱਕ ਵਾਕ ਹੈ।",
+        "si": "මේ වාක්‍යයක් වේ.",
+        "km": "នេះជាប្រយោគមួយ។",
+        "sn": "Uyu mutsara.",
+        "yo": "Ọ̀rọ̀ yìí ni.",
+        "so": "Tani waa jumlad.",
+        "af": "Dit is 'n sin.",
+        "oc": "Aquò es una frasa.",
+        "ka": "ეს წინადადებაა.",
+        "be": "Гэта сказ.",
+        "tg": "Ин ҷумла аст.",
+        "sd": "هيءَ هڪ جملو آهي.",
+        "gu": "આ એક વાક્ય છે.",
+        "am": "ይህ አንድ ዓረፍተ ነገር ነው።",
+        "yi": "דאָס איז אַ זאַץ.",
+        "lo": "ນີ້ແມ່ນປະໂຫຍກ.",
+        "uz": "Bu bir gap.",
+        "fo": "Hetta er ein setning.",
+        "ht": "Sa a se yon fraz.",
+        "ps": "دا یوه جمله ده.",
+        "tk": "Bu bir sözlemdir.",
+        "nn": "Dette er ei setning.",
+        "mt": "Din hija sentenza.",
+        "sa": "एषा एकं वाक्यम् अस्ति।",
+        "lb": "Dëst ass e Saz.",
+        "my": "ဒါက စာကြောင်းတစ်ခုပါ။",
+        "bo": "འདི་ནི་ཚིག་གྲུབ་ཞིག་རེད།",
+        "tl": "Ito ay isang pangungusap.",
+        "mg": "Io dia fehezanteny.",
+        "as": "এইটো এটা বাক্য।",
+        "tt": "Бу җөмлә.",
+        "haw": "He hopunaʻōlelo kēia.",
+        "ln": "Oyo ezali lokasa.",
+        "ha": "Wannan jumla ce.",
+        "ba": "Был һөйләм.",
+        "jw": "Iki ukara.",
+        "su": "Ieu mangrupikeun kalimah.",
+    }
+)
 
-DEFAULT_HIGHLATENCY_CHUNKTABLE:List[Tuple[float,float]] = [
+DEFAULT_HIGHLATENCY_CHUNKTABLE: List[Tuple[float, float]] = [
     (0.75, 0.20),
     (0.50, 0.15),
     (0.25, 0.10),
@@ -119,7 +121,7 @@ DEFAULT_HIGHLATENCY_CHUNKTABLE:List[Tuple[float,float]] = [
     (0.00, 0.025),
 ]
 
-DEFAULT_HIGHLATENCY_WHISPERTEMPERATURES:List[float] = [
+DEFAULT_HIGHLATENCY_WHISPERTEMPERATURES: List[float] = [
     0,
     0.1,
     0.2,
@@ -130,14 +132,17 @@ DEFAULT_HIGHLATENCY_WHISPERTEMPERATURES:List[float] = [
     0.7,
     0.8,
     0.9,
-    1.0,]
+    1.0,
+]
 
-DEFAULT_LOWLATENCY_WHISPERTEMPERATURES:List[float] = [0, 0.6]
-DEFAULT_LOWLATENCY_CHUNKTABLE:List[Tuple[float,float]] = [(0, 0.025)]
+DEFAULT_LOWLATENCY_WHISPERTEMPERATURES: List[float] = [0, 0.6]
+DEFAULT_LOWLATENCY_CHUNKTABLE: List[Tuple[float, float]] = [(0, 0.025)]
 DEFAULT_LANGUAGES = ["en"]
+
 
 def get_default_working_directory():
     return os.getenv("TMPDIR", os.getenv("TEMP", os.getenv("TMP", ".")))
+
 
 @dataclass
 class Config:
@@ -150,9 +155,9 @@ class Config:
     debug: bool = False
 
     # TRANSCRIPTION
-    lang:List[str] = field(default_factory=lambda: DEFAULT_LANGUAGES)
+    lang: List[str] = field(default_factory=lambda: DEFAULT_LANGUAGES)
     whisper_prompts: Dict[str, str] = field(default_factory=lambda: DEFAULT_MULTILANG_PROMPTS)
-    chunk_table:List[Tuple[float,float]] = field(default_factory=list)
+    chunk_table: List[Tuple[float, float]] = field(default_factory=list)
 
     whisper_beam_size: int = -1
     whisper_best_of: int = -1
@@ -168,7 +173,6 @@ class Config:
     source_stream: Optional[AudioSource] = None
 
     def __post_init__(self):
-
         self.configure_device(device=self.device)
 
         self.configure_latency(stream=self.stream)
@@ -193,7 +197,7 @@ class Config:
 
         return "cpu"
 
-    def configure_device(self, device:str) -> "Config":
+    def configure_device(self, device: str) -> "Config":
         # Configure device
         if device == "auto":
             self.device = Config.detect_device()
@@ -213,7 +217,7 @@ class Config:
 
         return self
 
-    def configure_latency(self, stream:bool) -> "Config":
+    def configure_latency(self, stream: bool) -> "Config":
         self.stream = stream
         if len(self.chunk_table) == 0:
             self.chunk_table = DEFAULT_LOWLATENCY_CHUNKTABLE if stream else DEFAULT_HIGHLATENCY_CHUNKTABLE
@@ -227,7 +231,7 @@ class Config:
             self.whisper_patience = 1.0 if stream else 2.0
         return self
 
-    def configure_output_directory(self, output_dir:str, working_dir:str=""):
+    def configure_output_directory(self, output_dir: str, working_dir: str = ""):
         self.output_dir = output_dir
         if not os.path.isdir(self.output_dir):
             os.makedirs(self.output_dir)
