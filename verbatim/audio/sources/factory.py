@@ -9,10 +9,12 @@ from .audiosource import AudioSource
 from .sourceconfig import SourceConfig
 from ..audio import samples_to_seconds, timestr_to_samples
 
-def convert_to_wav(input_path:str, working_prefix_no_ext:str) -> str:
+
+def convert_to_wav(input_path: str, working_prefix_no_ext: str) -> str:
     # pylint: disable=import-outside-toplevel
     from .ffmpegfileaudiosource import PyAVAudioSource
     from .wavsink import WavSink
+
     temp_file_audio_source = PyAVAudioSource(file_path=input_path)
 
     converted_path = working_prefix_no_ext + ".wav"
@@ -123,8 +125,10 @@ def create_separate_speaker_sources(
             input_source=converted_input_source,
             device=device,
             source_config=source_config,
-            start_time=start_time, stop_time=stop_time,
-            output_prefix_no_ext=output_prefix_no_ext, working_prefix_no_ext=working_prefix_no_ext
+            start_time=start_time,
+            stop_time=stop_time,
+            output_prefix_no_ext=output_prefix_no_ext,
+            working_prefix_no_ext=working_prefix_no_ext,
         )
 
     if source_config.diarization_file == "" or (source_config.diarize is not None and source_config.diarization_file is None):

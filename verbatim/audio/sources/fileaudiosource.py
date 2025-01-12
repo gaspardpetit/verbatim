@@ -16,6 +16,7 @@ LOG = logging.getLogger(__name__)
 
 COMPATIBLE_FORMATS = [".mp3", ".m4a"]
 
+
 class FileAudioStream(AudioStream):
     source: "FileAudioSource"
 

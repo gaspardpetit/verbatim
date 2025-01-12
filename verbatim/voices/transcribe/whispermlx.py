@@ -14,7 +14,7 @@ if sys.platform == "darwin":
     # pylint: disable=import-error
     from mlx_whisper import transcribe
 else:
-    transcribe = None # pylint: disable=invalid-name
+    transcribe = None  # pylint: disable=invalid-name
 
 LOG = logging.getLogger(__name__)
 

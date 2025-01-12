@@ -25,7 +25,7 @@ class WhisperCppTranscriber(Transcriber):
         whisper_beam_size: int = 3,
         whisper_best_of: int = 3,
         whisper_patience: float = 1.0,
-        whisper_temperatures: Union[None,List[float]] = None,
+        whisper_temperatures: Union[None, List[float]] = None,
     ):
         if whisper_temperatures is None:
             whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
@@ -58,13 +58,13 @@ class WhisperCppTranscriber(Transcriber):
         whisper_beam_size: int = 3,
         whisper_best_of: int = 3,
         whisper_patience: float = 1.0,
-        whisper_temperatures: Union[None,List[float]] = None,
+        whisper_temperatures: Union[None, List[float]] = None,
     ) -> List[Word]:
         LOG.info(f"Transcription Prefix: {prefix}")
 
         transcript_words: List[Word] = []
 
-        def on_segment(w:Segment):
+        def on_segment(w: Segment):
             if w.text.strip() == "":
                 return
 
@@ -87,14 +87,14 @@ class WhisperCppTranscriber(Transcriber):
             max_len=1,
             split_on_word=True,
             token_timestamps=True,
-            initial_prompt = prompt,
+            initial_prompt=prompt,
             language=lang,
             new_segment_callback=on_segment,
             n_threads=cpu_count,
             no_context=True,
             # When using these, whisper.cpp complaints about too many encoders - disabled for now
-            #greedy={"best_of": whisper_best_of},
-            #beam_search={'beam_size': whisper_beam_size, 'patience': whisper_patience},
+            # greedy={"best_of": whisper_best_of},
+            # beam_search={'beam_size': whisper_beam_size, 'patience': whisper_patience},
         )
 
         LOG.debug(transcript_words)
