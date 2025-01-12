@@ -36,7 +36,9 @@ jobs:
 
       - name: Install Bandit
         run: |
-          pip install bandit
+          # pinning bandit to version 1.8.0 until
+          # issue https://github.com/PyCQA/bandit/issues/1216 is resolved
+          pip install bandit==1.8.0
 
       - name: Run Bandit Security Analysis
         run: |
