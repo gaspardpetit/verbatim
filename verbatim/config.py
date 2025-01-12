@@ -174,12 +174,12 @@ class Config:
 
         self.configure_output_directory(outdir=outdir, workdir=workdir)
 
-    def configure_device(self, use_cpu:bool):
+    def configure_device(self, use_cpu: bool):
         if not use_cpu:
             # pylint: disable=import-outside-toplevel
             import torch
 
-            if platform.processor() == 'arm' and platform.system() == 'Darwin' and torch.backends.mps.is_available():
+            if platform.processor() == "arm" and platform.system() == "Darwin" and torch.backends.mps.is_available():
                 # Check for Apple Silicon and MPS availability
                 LOG.info("Using MPS (Apple Silicon)")
                 self.device = "mps"
@@ -223,6 +223,6 @@ class Config:
             self.whisper_patience = 3.0
             self.whisper_temperatures = [0, 0.6]
 
-    def configure_languages(self, lang:List[str]) -> "Config":
+    def configure_languages(self, lang: List[str]) -> "Config":
         self.lang = lang
         return self
