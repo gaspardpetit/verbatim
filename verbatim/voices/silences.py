@@ -3,7 +3,7 @@ from abc import abstractmethod
 from typing import Dict, List
 import warnings
 
-import numpy as np
+from numpy.typing import NDArray
 import torch
 
 from silero_vad import get_speech_timestamps, load_silero_vad
@@ -14,7 +14,12 @@ LOG = logging.getLogger(__name__)
 
 class VoiceActivityDetection:
     @abstractmethod
-    def find_activity(self, audio: np.ndarray):
+    def find_activity(
+        self,
+        audio: NDArray,
+        min_speech_duration_ms: int = 250,
+        min_silence_duration_ms: int = 100,
+    ) -> List[Dict[str, int]]:
         pass
 
 
@@ -28,7 +33,7 @@ class SileroVoiceActivityDetection(VoiceActivityDetection):
 
     def find_activity(
         self,
-        audio: np.ndarray,
+        audio: NDArray,
         min_speech_duration_ms: int = 250,
         min_silence_duration_ms: int = 100,
     ) -> List[Dict[str, int]]:
@@ -44,8 +49,8 @@ class SileroVoiceActivityDetection(VoiceActivityDetection):
             speech_pad_ms=250,
             return_seconds=False,
             visualize_probs=False,
-            progress_tracking_callback=None,
-            neg_threshold=None,
+            progress_tracking_callback=None,  # pyright: ignore[reportArgumentType]
+            neg_threshold=None,  # pyright: ignore[reportArgumentType]
             window_size_samples=512,
         )
         return speech_timestamps

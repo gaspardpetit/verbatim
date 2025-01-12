@@ -11,9 +11,9 @@ LOG = logging.getLogger(__name__)
 
 
 class Models:
-    transcriber: Transcriber = None
-    vad: VoiceActivityDetection = None
-    sentence_tokenizer: SentenceTokenizer = None
+    transcriber: Transcriber
+    vad: VoiceActivityDetection
+    sentence_tokenizer: SentenceTokenizer
 
     def __init__(self, device: str, whisper_model_size: str = "large-v3", stream: bool = False):
         # pylint: disable=import-outside-toplevel

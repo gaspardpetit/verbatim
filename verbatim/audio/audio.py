@@ -3,6 +3,7 @@ import math
 import re
 
 import numpy as np
+from numpy.typing import NDArray
 from pydub import AudioSegment
 from scipy.signal import resample
 
@@ -10,33 +11,42 @@ from scipy.signal import resample
 LOG = logging.getLogger(__name__)
 
 
-def format_audio(audio: np.ndarray, from_sampling_rate: int) -> np.ndarray:
+def format_audio(audio: NDArray, from_sampling_rate: int) -> NDArray:
     to_sampling_rate = 16000
 
-    if audio.dtype != np.float32:
+    float_audio: NDArray
+    if audio.dtype == np.float32:
+        float_audio = audio
+    else:
         if audio.dtype == np.int8:
-            audio = audio.astype(np.float32) / 128.0
+            float_audio = audio.astype(np.float32) / 128.0
         elif audio.dtype == np.int16:
-            audio = audio.astype(np.float32) / 32768.0
+            float_audio = audio.astype(np.float32) / 32768.0
         elif audio.dtype == np.int32:
-            audio = audio.astype(np.float32) / 2147483648.0
+            float_audio = audio.astype(np.float32) / 2147483648.0
         else:
-            audio = audio.astype(np.float32)
+            float_audio = audio.astype(np.float32)
 
     # If the audio is stereo, mix it down to mono
-    if audio.ndim > 1:
-        LOG.info(f"Mixing {audio.ndim} channels down to mono.")
-        audio = np.mean(audio, axis=1)
+    mono_audio: NDArray
+    if float_audio.ndim == 1:
+        mono_audio = float_audio
+    else:
+        LOG.info(f"Mixing {float_audio.ndim} channels down to mono.")
+        mono_audio = np.mean(float_audio, axis=1)
 
     # Resample if the audio sample rate is not 16 kHz
-    if from_sampling_rate != to_sampling_rate:
+    resampled_audio: NDArray
+    if from_sampling_rate == to_sampling_rate:
+        resampled_audio = mono_audio
+    else:
         LOG.info(f"Resampling from {from_sampling_rate} Hz to {to_sampling_rate} Hz.")
-        num_samples = int(len(audio) * to_sampling_rate / from_sampling_rate)
+        num_samples = int(len(mono_audio) * to_sampling_rate / from_sampling_rate)
         if num_samples == 0:
             return np.array([], dtype=np.int16)
-        audio = resample(audio, num_samples)
+        resampled_audio = resample(mono_audio, num_samples)  # pyright: ignore[reportAssignmentType]
 
-    return audio.astype(np.float32)
+    return resampled_audio.astype(np.float32)
 
 
 def wav_to_int16(data):

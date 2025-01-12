@@ -8,7 +8,7 @@ import logging
 import os
 import warnings
 from itertools import chain
-from typing import List, Tuple, Union, Callable
+from typing import List, Tuple, Union, Callable, Optional
 
 from .writer import TranscriptWriter, TranscriptWriterConfig
 from ..words import Utterance, Word
@@ -32,9 +32,10 @@ def is_ascending_sequence(seq: List[Union[int, float]], verbose: bool = True) ->
 
     if not is_ascending and verbose:
         first_descending_idx = next((idx for idx, (i, j) in enumerate(zip(seq[:-1], seq[1:])) if i > j), None)
-        LOG.info(
-            f"[Index{first_descending_idx}]:{seq[first_descending_idx]} > " + f"[Index{first_descending_idx + 1}]:{seq[first_descending_idx + 1]}"
-        )
+        if first_descending_idx is not None:
+            LOG.info(
+                f"[Index{first_descending_idx}]:{seq[first_descending_idx]} > " + f"[Index{first_descending_idx + 1}]:{seq[first_descending_idx + 1]}"
+            )
 
     return is_ascending
 
@@ -489,8 +490,8 @@ class AssTranscriptWriter(TranscriptWriter):
     def write(
         self,
         utterance: Utterance,
-        unacknowledged_utterance: List[Utterance] = None,
-        unconfirmed_words: List[Word] = None,
+        unacknowledged_utterance: Optional[List[Utterance]] = None,
+        unconfirmed_words: Optional[List[Word]] = None,
     ):
         self.utterances.append(utterance)
 

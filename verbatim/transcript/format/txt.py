@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TextIO, Union, List
+from typing import TextIO, List, Optional
 
 from colorama import Fore, Style
 
@@ -77,11 +77,12 @@ class TranscriptFormatter:
 
 
 class TextIOTranscriptWriter(TranscriptWriter):
+    out: TextIO
+
     def __init__(
         self,
         *,
         config: TranscriptWriterConfig,
-        out: Union[None, TextIO],
         acknowledged_colours=COLORSCHEME_ACKNOWLEDGED,
         unacknowledged_colours=COLORSCHEME_UNACKNOWLEDGED,
         unconfirmed_colors=COLORSCHEME_UNCONFIRMED,
@@ -89,11 +90,13 @@ class TextIOTranscriptWriter(TranscriptWriter):
     ):
         super().__init__(config)
         self.formatter: TranscriptFormatter = TranscriptFormatter()
-        self.out: TextIO = out
         self.acknowledged_colours = acknowledged_colours
         self.unacknowledged_colours = unacknowledged_colours
         self.unconfirmed_colors = unconfirmed_colors
         self.print_unacknowledged = print_unacknowledged
+
+    def _set_textio(self, out: TextIO):
+        self.out = out
 
     def open(self, path_no_ext: str):
         pass
@@ -104,8 +107,8 @@ class TextIOTranscriptWriter(TranscriptWriter):
     def write(
         self,
         utterance: Utterance,
-        unacknowledged_utterance: List[Utterance] = None,
-        unconfirmed_words: List[Word] = None,
+        unacknowledged_utterance: Optional[List[Utterance]] = None,
+        unconfirmed_words: Optional[List[Word]] = None,
     ):
         self.formatter.format_utterance(utterance=utterance, out=self.out, colours=self.acknowledged_colours)
         if self.print_unacknowledged:
@@ -125,7 +128,6 @@ class TextTranscriptWriter(TextIOTranscriptWriter):
     def __init__(self, config: TranscriptWriterConfig):
         super().__init__(
             config=config,
-            out=None,
             acknowledged_colours=COLORSCHEME_NONE,
             unacknowledged_colours=COLORSCHEME_NONE,
             unconfirmed_colors=COLORSCHEME_NONE,
@@ -133,7 +135,7 @@ class TextTranscriptWriter(TextIOTranscriptWriter):
 
     def open(self, path_no_ext: str):
         # pylint: disable=consider-using-with
-        self.out = open(f"{path_no_ext}.txt", "w", encoding="utf-8")
+        self._set_textio(open(f"{path_no_ext}.txt", "w", encoding="utf-8"))
 
     def close(self):
         self.out.close()

@@ -1,8 +1,8 @@
 import logging
 from abc import abstractmethod
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
-import numpy as np
+from numpy.typing import NDArray
 from ...transcript.words import Word
 
 LOG = logging.getLogger(__name__)
@@ -26,14 +26,14 @@ class WhisperConfig:
 
 class Transcriber:
     @abstractmethod
-    def guess_language(self, audio: np.array, lang: List[str]) -> Tuple[str, float]:
+    def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]:
         pass
 
     @abstractmethod
     def transcribe(
         self,
         *,
-        audio: np.array,
+        audio: NDArray,
         lang: str,
         prompt: str,
         prefix: str,
@@ -42,6 +42,6 @@ class Transcriber:
         whisper_beam_size: int = 3,
         whisper_best_of: int = 3,
         whisper_patience: float = 1.0,
-        whisper_temperatures: List[float] = None,
+        whisper_temperatures: Optional[List[float]] = None,
     ) -> List[Word]:
         pass
