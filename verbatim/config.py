@@ -1,6 +1,7 @@
+from dataclasses import dataclass, field
 import logging
 import os
-from dataclasses import dataclass, field
+import platform
 from typing import Dict, List, Union
 
 from .audio.sources.audiosource import AudioSource
@@ -165,21 +166,34 @@ class Config:
         ]
         self.working_dir = os.getenv("TMPDIR", os.getenv("TEMP", os.getenv("TMP", ".")))
 
-        # pylint: disable=import-outside-toplevel
-        import torch
-
-        if use_cpu or not torch.cuda.is_available():
-            os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
-            LOG.info("Using CPU")
-            self.device = "cpu"
-        else:
-            LOG.info("Using GPU")
-            self.device = "cuda"
+        use_cpu = use_cpu is True
+        self.configure_device(use_cpu=use_cpu)
 
         if stream:
             self.configure_for_low_latency_streaming()
 
         self.configure_output_directory(outdir=outdir, workdir=workdir)
+
+    def configure_device(self, use_cpu: bool):
+        if not use_cpu:
+            # pylint: disable=import-outside-toplevel
+            import torch
+
+            if platform.processor() == "arm" and platform.system() == "Darwin" and torch.backends.mps.is_available():
+                # Check for Apple Silicon and MPS availability
+                LOG.info("Using MPS (Apple Silicon)")
+                self.device = "mps"
+                return
+
+            if torch.cuda.is_available():
+                LOG.info("Using GPU (CUDA)")
+                self.device = "cuda"
+                return
+
+        # CUDA and MPS not available, or CPU explicitely requested
+        LOG.info("Using CPU")
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
+        self.device = "cpu"
 
     def configure_output_directory(self, outdir: str, workdir: str):
         if not os.path.isdir(outdir):
@@ -209,6 +223,6 @@ class Config:
             self.whisper_patience = 3.0
             self.whisper_temperatures = [0, 0.6]
 
-    def configure_languages(self, lang:List[str]) -> "Config":
+    def configure_languages(self, lang: List[str]) -> "Config":
         self.lang = lang
         return self
