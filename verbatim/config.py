@@ -2,14 +2,14 @@ from dataclasses import dataclass, field
 import logging
 import os
 import platform
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
+from types import MappingProxyType
 
 from .audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
 
-
-MULTILANG_PROMPTS: Dict[str, str] = {
+DEFAULT_MULTILANG_PROMPTS = MappingProxyType({
     "en": "This is a sentence.",
     "zh": "这是一个句子。",
     "de": "Dies ist ein Satz.",
@@ -109,8 +109,35 @@ MULTILANG_PROMPTS: Dict[str, str] = {
     "ba": "Был һөйләм.",
     "jw": "Iki ukara.",
     "su": "Ieu mangrupikeun kalimah.",
-}
+})
 
+DEFAULT_HIGHLATENCY_CHUNKTABLE:List[Tuple[float,float]] = [
+    (0.75, 0.20),
+    (0.50, 0.15),
+    (0.25, 0.10),
+    (0.10, 0.05),
+    (0.00, 0.025),
+]
+
+DEFAULT_HIGHLATENCY_WHISPERTEMPERATURES:List[float] = [
+    0,
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    1.0,]
+
+DEFAULT_LOWLATENCY_WHISPERTEMPERATURES:List[float] = [0, 0.6]
+DEFAULT_LOWLATENCY_CHUNKTABLE:List[Tuple[float,float]] = [(0, 0.025)]
+DEFAULT_LANGUAGES = ["en"]
+
+def get_default_working_directory():
+    return os.getenv("TMPDIR", os.getenv("TEMP", os.getenv("TMP", ".")))
 
 @dataclass
 class Config:
@@ -118,114 +145,99 @@ class Config:
     transcribe_latency: int = 16000
     frames_per_buffer: int = 1000
     window_duration: int = 30  # seconds
-    device: str = "cuda"
+    device: str = "auto"
     stream: bool = False
     debug: bool = False
 
     # TRANSCRIPTION
-    lang: List[str] = field(default_factory=list)
-    whisper_prompts: Dict[str, str] = field(default_factory=lambda: MULTILANG_PROMPTS)
-    whisper_beam_size: int = 9
-    whisper_best_of: int = 9
-    whisper_patience: float = 2.0
-    whisper_temperatures: Optional[List[float]] = None
+    lang:List[str] = field(default_factory=lambda: DEFAULT_LANGUAGES)
+    whisper_prompts: Dict[str, str] = field(default_factory=lambda: DEFAULT_MULTILANG_PROMPTS)
+    chunk_table:List[Tuple[float,float]] = field(default_factory=list)
+
+    whisper_beam_size: int = -1
+    whisper_best_of: int = -1
+    whisper_patience: float = -1
+    whisper_temperatures: List[float] = field(default_factory=list)
 
     # OUTPUT
-    working_dir: str = "."
+    working_dir: str = field(default_factory=get_default_working_directory)
+
     output_dir: str = "."
 
     # INPUT
     source_stream: Optional[AudioSource] = None
 
-    def __init__(
-        self,
-        *,
-        outdir: Optional[str] = ".",
-        workdir: Optional[str] = None,
-        use_cpu: Optional[bool] = None,
-        stream: Optional[bool] = False,
-    ):
-        self.chunk_table = [
-            (0.75, 0.20),
-            (0.50, 0.15),
-            (0.25, 0.10),
-            (0.10, 0.05),
-            (0.00, 0.025),
-        ]
-        self.lang = ["en"]
+    def __post_init__(self):
 
-        self.whisper_temperatures = [
-            0,
-            0.1,
-            0.2,
-            0.3,
-            0.4,
-            0.5,
-            0.6,
-            0.7,
-            0.8,
-            0.9,
-            1.0,
-        ]
-        self.working_dir = os.getenv("TMPDIR", os.getenv("TEMP", os.getenv("TMP", ".")))
+        self.configure_device(device=self.device)
 
-        use_cpu = use_cpu is True
-        self.configure_device(use_cpu=use_cpu)
+        self.configure_latency(stream=self.stream)
 
-        if stream:
-            self.configure_for_low_latency_streaming()
-
-        self.configure_output_directory(outdir=outdir or ".", workdir=workdir)
-
-    def configure_device(self, use_cpu: bool):
-        if not use_cpu:
-            # pylint: disable=import-outside-toplevel
-            import torch
-
-            if platform.processor() == "arm" and platform.system() == "Darwin" and torch.backends.mps.is_available():
-                # Check for Apple Silicon and MPS availability
-                LOG.info("Using MPS (Apple Silicon)")
-                self.device = "mps"
-                return
-
-            if torch.cuda.is_available():
-                LOG.info("Using GPU (CUDA)")
-                self.device = "cuda"
-                return
-
-        # CUDA and MPS not available, or CPU explicitely requested
-        LOG.info("Using CPU")
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
-        self.device = "cpu"
-
-    def configure_output_directory(self, outdir: str, workdir: Optional[str]):
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
-        self.output_dir = outdir
-        LOG.info(f"Output directory set to {self.output_dir}")
-
-        # Set the working directory
-        if workdir is None:
-            self.working_dir = os.getenv("TMPDIR", os.getenv("TEMP", os.getenv("TMP", ".")))
-        elif workdir == "":
-            self.working_dir = self.output_dir
-        else:
-            if not os.path.isdir(workdir):
-                os.makedirs(workdir)
-            self.working_dir = workdir
-        LOG.info(f"Working directory set to {self.working_dir}")
-
-    def configure_for_low_latency_streaming(self):
-        self.stream = True
-        if self.stream:
-            self.chunk_table = [
-                (0, 0.025),
-            ]
-            self.whisper_best_of = 3
-            self.whisper_beam_size = 3
-            self.whisper_patience = 3.0
-            self.whisper_temperatures = [0, 0.6]
+        self.configure_output_directory(output_dir=self.output_dir, working_dir=self.working_dir)
 
     def configure_languages(self, lang: List[str]) -> "Config":
         self.lang = lang
         return self
+
+    @staticmethod
+    def detect_device() -> str:
+        # pylint: disable=import-outside-toplevel
+        import torch
+
+        if platform.processor() == "arm" and platform.system() == "Darwin" and torch.backends.mps.is_available():
+            # Check for Apple Silicon and MPS availability
+            return "mps"
+
+        if torch.cuda.is_available():
+            return "cuda"
+
+        return "cpu"
+
+    def configure_device(self, device:str) -> "Config":
+        # Configure device
+        if device == "auto":
+            self.device = Config.detect_device()
+
+        if self.device != "cuda":
+            os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Set CUDA_VISIBLE_DEVICES to -1 to force CPU
+
+        if self.device == "cuda":
+            LOG.info("Using GPU (CUDA)")
+        elif self.device == "mps":
+            LOG.info("Using MPS (Apple Silicon)")
+        else:
+            if device == "auto":
+                LOG.info("No hardware acceleration detected, defaulting to CPU hardware")
+            else:
+                LOG.info("Using CPU")
+
+        return self
+
+    def configure_latency(self, stream:bool) -> "Config":
+        self.stream = stream
+        if len(self.chunk_table) == 0:
+            self.chunk_table = DEFAULT_LOWLATENCY_CHUNKTABLE if stream else DEFAULT_HIGHLATENCY_CHUNKTABLE
+        if len(self.whisper_temperatures) == 0:
+            self.whisper_temperatures = DEFAULT_LOWLATENCY_WHISPERTEMPERATURES if stream else DEFAULT_HIGHLATENCY_WHISPERTEMPERATURES
+        if self.whisper_best_of < 0:
+            self.whisper_best_of = 3 if stream else 9
+        if self.whisper_beam_size < 0:
+            self.whisper_beam_size = 3 if stream else 9
+        if self.whisper_patience < 0:
+            self.whisper_patience = 1.0 if stream else 2.0
+        return self
+
+    def configure_output_directory(self, output_dir:str, working_dir:str=""):
+        self.output_dir = output_dir
+        if not os.path.isdir(self.output_dir):
+            os.makedirs(self.output_dir)
+        LOG.info(f"Output directory set to {self.output_dir}")
+
+        # Set the working directory
+        self.working_dir = working_dir
+        if self.working_dir == "":
+            self.working_dir = self.output_dir
+
+        if not os.path.isdir(self.working_dir):
+            os.makedirs(self.working_dir)
+        LOG.info(f"Working directory set to {self.working_dir}")
