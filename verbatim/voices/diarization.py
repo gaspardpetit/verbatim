@@ -1,13 +1,12 @@
 import logging
+from urllib import parse
+from pathlib import Path
 
 import torch
 from pyannote.audio import Pipeline
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 from pyannote.core.annotation import Annotation
 from pyannote.database.util import load_rttm
-
-from urllib import parse
-from pathlib import Path
 
 
 # Configure logger
