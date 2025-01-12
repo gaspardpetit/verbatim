@@ -1,4 +1,4 @@
-from typing import TextIO, Union, List
+from typing import TextIO, List, Optional
 
 from .writer import TranscriptWriter, TranscriptWriterConfig
 from ..words import Utterance, Word
@@ -40,10 +40,11 @@ class TranscriptFormatter:
 
 
 class JsonTranscriptWriter(TranscriptWriter):
+    out: TextIO
+
     def __init__(self, config: TranscriptWriterConfig):
         super().__init__(config)
         self.formatter: TranscriptFormatter = TranscriptFormatter()
-        self.out: Union[None, TextIO] = None
 
     def open(self, path_no_ext: str):
         # pylint: disable=consider-using-with
@@ -57,8 +58,8 @@ class JsonTranscriptWriter(TranscriptWriter):
     def write(
         self,
         utterance: Utterance,
-        unacknowledged_utterance: List[Utterance] = None,
-        unconfirmed_words: List[Word] = None,
+        unacknowledged_utterance: Optional[List[Utterance]] = None,
+        unconfirmed_words: Optional[List[Word]] = None,
     ):
         self.formatter.format_utterance(utterance=utterance, out=self.out)
         self.out.flush()

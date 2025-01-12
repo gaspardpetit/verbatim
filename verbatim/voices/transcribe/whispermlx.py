@@ -2,9 +2,9 @@
 
 import logging
 import sys
-from typing import List, Tuple, Union
+from typing import List, Tuple, Optional
 
-import numpy as np
+from numpy.typing import NDArray
 
 from ...audio.audio import samples_to_seconds
 from ...transcript.words import Word
@@ -27,7 +27,7 @@ class WhisperMlxTranscriber(Transcriber):
         whisper_beam_size: int = 3,
         whisper_best_of: int = 3,
         whisper_patience: float = 1.0,
-        whisper_temperatures: Union[None, List[float]] = None,
+        whisper_temperatures: Optional[List[float]] = None,
     ):
         if whisper_temperatures is None:
             whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
@@ -38,12 +38,12 @@ class WhisperMlxTranscriber(Transcriber):
         self.whisper_patience = whisper_patience
         self.whisper_temperatures = whisper_temperatures
 
-    def guess_language(self, audio: np.ndarray, lang: List[str]) -> Tuple[str, float]:
+    def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]:
         result = transcribe(
             audio,
             path_or_hf_repo=self.model_path,
             language=None,  # Trigger language detection
-            verbose=None,
+            verbose=None,  # pyright:  ignore[reportOptionalCall]
             task="transcribe",
             no_speech_threshold=0.6,
         )
@@ -63,7 +63,7 @@ class WhisperMlxTranscriber(Transcriber):
     def transcribe(
         self,
         *,
-        audio: np.ndarray,
+        audio: NDArray,
         lang: str,
         prompt: str,
         prefix: str,
@@ -72,7 +72,7 @@ class WhisperMlxTranscriber(Transcriber):
         whisper_beam_size: int = 3,
         whisper_best_of: int = 3,
         whisper_patience: float = 1.0,
-        whisper_temperatures: Union[None, List[float]] = None,
+        whisper_temperatures: Optional[List[float]] = None,
     ) -> List[Word]:
         LOG.info(f"Transcribing audio window: window_ts={window_ts}, audio_ts={audio_ts}")
 
@@ -100,7 +100,8 @@ class WhisperMlxTranscriber(Transcriber):
             # beam_size=whisper_beam_size,
             # patience=whisper_patience, # requires beam_size
             best_of=whisper_best_of,
-            verbose=(True if show_progress else None),  # None = don't even show progress bar
+            verbose=(True if show_progress else None),  # pyright: ignore[reportOptionalCall]
+            # None = don't even show progress bar
             temperature=temperatures,
             no_speech_threshold=0.6,
         )

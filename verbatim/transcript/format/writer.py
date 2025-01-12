@@ -1,6 +1,6 @@
 import dataclasses
 from abc import abstractmethod
-from typing import List
+from typing import List, Optional
 from enum import Enum
 
 from ..words import Utterance, Word
@@ -63,7 +63,7 @@ class TranscriptWriter:
     def write(
         self,
         utterance: Utterance,
-        unacknowledged_utterance: List[Utterance] = None,
-        unconfirmed_words: List[Word] = None,
+        unacknowledged_utterance: Optional[List[Utterance]] = None,
+        unconfirmed_words: Optional[List[Word]] = None,
     ):
         pass

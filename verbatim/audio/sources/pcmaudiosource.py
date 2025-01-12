@@ -2,6 +2,7 @@ import logging
 from typing import BinaryIO
 
 import numpy as np
+from numpy.typing import NDArray
 
 from .audiosource import AudioSource, AudioStream
 
@@ -9,15 +10,15 @@ LOG = logging.getLogger(__name__)
 
 
 class PCMInputStreamAudioStream(AudioStream):
-    source: "PCMInputStreamAudioStream"
+    source: "PCMInputStreamAudioSource"
     _has_more: bool
 
-    def __init__(self, source: "PCMInputStreamAudioStream"):
+    def __init__(self, source: "PCMInputStreamAudioSource"):
         super().__init__(start_offset=0, diarization=None)
         self.source = source
         self._has_more = True
 
-    def next_chunk(self, chunk_length=1) -> np.ndarray:
+    def next_chunk(self, chunk_length=1) -> NDArray:
         # Calculate the number of bytes needed per chunk
         bytes_per_sample = np.dtype(self.source.dtype).itemsize
         bytes_needed = chunk_length * self.source.sampling_rate * self.source.channels * bytes_per_sample
@@ -58,7 +59,7 @@ class PCMInputStreamAudioSource(AudioSource):
         stream: BinaryIO,
         channels: int = 1,
         sampling_rate: int = 16000,
-        dtype=np.int16,
+        dtype: np.dtype = np.dtype(np.int16),
     ):
         super().__init__(source_name=source_name)
         self.stream = stream

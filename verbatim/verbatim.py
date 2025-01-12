@@ -5,9 +5,11 @@ import wave
 import traceback
 from dataclasses import dataclass, field
 from io import StringIO
-from typing import List, Tuple, TextIO, Generator
+from typing import List, Tuple, TextIO, Generator, Optional
 
 import numpy as np
+from numpy.typing import NDArray
+
 from colorama import Fore
 from pyannote.core.annotation import Annotation
 
@@ -105,7 +107,7 @@ class WhisperHistory:
 
 
 class RollingWindow:
-    array: np.array
+    array: NDArray
 
     def __init__(self, window_size, dtype=np.float32):
         self.reset(window_size=window_size, dtype=dtype)
@@ -131,7 +133,7 @@ class State:
     acknowledged_utterances: List[Utterance]
     unacknowledged_utterances: List[Utterance]
     skip_silences: bool = True
-    speaker_embeddings: List = None
+    speaker_embeddings: Optional[List] = None
     working_prefix_no_ext: str = "out"
 
     def __init__(self, config: Config, working_prefix_no_ext: str = "out"):
@@ -163,7 +165,7 @@ class State:
         self.rolling_window.array[-offset:] = 0
         self.window_ts += offset
 
-    def append_audio_to_window(self, audio_chunk: np.array):
+    def append_audio_to_window(self, audio_chunk: NDArray):
         chunk_size = len(audio_chunk)
         window_size = len(self.rolling_window.array)
         if self.audio_ts + chunk_size <= self.window_ts + window_size:
@@ -181,8 +183,8 @@ class State:
 
 
 class Verbatim:
-    state: State = None
-    config: Config = None
+    state: State
+    config: Config
 
     def __init__(self, config: Config, models=None):
         self.config = config
@@ -297,7 +299,7 @@ class Verbatim:
         utterances = Verbatim.align_words_to_sentences(sentences=sentences, window_words=window_words)
         return utterances
 
-    def _guess_language(self, audio: np.array, sample_offset: int, sample_duration: int, lang: List[str]) -> Tuple[str, float]:
+    def _guess_language(self, audio: NDArray, sample_offset: int, sample_duration: int, lang: List[str]) -> Tuple[str, float]:
         lang_samples = audio[sample_offset : sample_offset + sample_duration]
         LOG.info(
             f"Detecting language using samples {sample_offset}({samples_to_seconds(sample_offset)}) "
@@ -381,14 +383,14 @@ class Verbatim:
         unconfirmed_words = [transcript_words[i] for i in range(len(confirmed_words), len(transcript_words))]
         return confirmed_words, unconfirmed_words
 
-    def get_next_number_of_chunks(self):
+    def get_next_number_of_chunks(self) -> int:
         available_chunks = self.config.window_duration - float(self.state.audio_ts - self.state.window_ts) / self.config.sampling_rate
 
         thresholds = self.config.chunk_table
 
         for limit, value in thresholds:
-            limit_sample = limit * self.config.window_duration
-            value_sample = value * self.config.window_duration
+            limit_sample = int(limit * self.config.window_duration)
+            value_sample = int(value * self.config.window_duration)
             if available_chunks >= limit_sample:
                 return value_sample
 
@@ -453,35 +455,35 @@ class Verbatim:
 
         return utterances[0:index], utterances[index:]
 
-    def get_speaker_at(self, time: float, diarization: Annotation):
+    def get_speaker_at(self, time: float, diarization: Optional[Annotation]) -> Optional[str]:
         if diarization is None:
             return None
 
-        for turn, _, speaker in diarization.itertracks(yield_label=True):
+        for turn, _track, speaker in diarization.itertracks(yield_label=True):  # pyright: ignore[reportAssignmentType]
             if turn.end < time:
                 continue
             if turn.start > time:
                 break
-            return speaker
+            return str(speaker)
         return None
 
-    def get_speaker_before(self, time: float, diarization: Annotation):
+    def get_speaker_before(self, time: float, diarization: Annotation) -> Optional[str]:
         last_speaker = None
-        for turn, _, speaker in diarization.itertracks(yield_label=True):
+        for turn, _track, speaker in diarization.itertracks(yield_label=True):  # pyright: ignore[reportAssignmentType]
             if turn.end < time:
                 last_speaker = speaker
                 continue
             if turn.start > time:
                 break
-        return last_speaker
+        return str(last_speaker)
 
-    def get_speaker_after(self, time: float, diarization: Annotation):
-        for turn, _, speaker in diarization.itertracks(yield_label=True):
+    def get_speaker_after(self, time: float, diarization: Annotation) -> Optional[str]:
+        for turn, _track, speaker in diarization.itertracks(yield_label=True):  # pyright: ignore[reportAssignmentType]
             if turn.start > time:
-                return speaker
+                return str(speaker)
         return None
 
-    def assign_speaker(self, utterance: Utterance, diarization: Annotation):
+    def assign_speaker(self, utterance: Utterance, diarization: Optional[Annotation]) -> Optional[str]:
         if diarization is None:
             return None
 
@@ -509,8 +511,9 @@ class Verbatim:
             ]
 
         votes = {}
+        speaker: Optional[str]
         for sample in samples:
-            speaker = self.get_speaker_at(time=sample, diarization=diarization)
+            speaker: Optional[str] = self.get_speaker_at(time=sample, diarization=diarization)
             if speaker:
                 if speaker in votes:
                     votes[speaker] = votes[speaker] + 1
