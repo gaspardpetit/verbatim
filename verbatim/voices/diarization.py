@@ -1,4 +1,6 @@
 import logging
+from urllib import parse
+from pathlib import Path
 
 import torch
 from pyannote.audio import Pipeline
@@ -42,7 +44,10 @@ class Diarization:
             out_rttm_file = "out.rttm"
 
         with ProgressHook() as hook:
-            diarization = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
+            diarization:Annotation = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
+
+        # pyannote expects uri encoded uri, but simply uses the file name which may not be
+        diarization.uri = parse.quote(Path(file_path).stem)
 
         # dump the diarization output to disk using RTTM format
         with open(out_rttm_file, "w", encoding="utf-8") as rttm:
