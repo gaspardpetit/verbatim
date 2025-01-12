@@ -29,9 +29,7 @@ class Word:
         )
 
     @classmethod
-    def from_whisper_cpp_1w_segment(
-        cls, segment: Segment, lang: str, ts_offset: int = 0
-    ) -> "Word":
+    def from_whisper_cpp_1w_segment(cls, segment: Segment, lang: str, ts_offset: int = 0) -> "Word":
         """Creates a Word instance from a WhisperCPP 1-word segment with a timestamp offset."""
         start_ts = seconds_to_samples(segment.t0 / 100) + ts_offset
         end_ts = seconds_to_samples(segment.t1 / 100) + ts_offset

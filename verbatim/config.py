@@ -209,6 +209,6 @@ class Config:
             self.whisper_patience = 3.0
             self.whisper_temperatures = [0, 0.6]
 
-    def configure_languages(self, lang:List[str]) -> "Config":
+    def configure_languages(self, lang: List[str]) -> "Config":
         self.lang = lang
         return self
