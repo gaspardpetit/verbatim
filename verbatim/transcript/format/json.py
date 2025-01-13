@@ -22,6 +22,7 @@ class TranscriptFormatter:
         else:
             out.write(",\n")
         out.write("  {\n")
+        out.write(f'    "id": "{utterance.utterance_id}",\n')
         out.write(f'    "start_sample": {utterance.start_ts}, "start_second": {utterance.start_ts / 16000:.2f},\n')
         out.write(f'    "end_sample": {utterance.end_ts}, "end_second": {utterance.end_ts / 16000:.2f},\n')
         out.write(f'    "speaker": "{utterance.speaker}",\n')
