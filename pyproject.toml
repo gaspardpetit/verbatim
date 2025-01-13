@@ -73,7 +73,7 @@ dependencies = [
     "pillow==10.4.0",
     "pywhispercpp>=1.3.0",
     "mlx-whisper>=0.4.1 ; sys_platform == 'darwin'",
-    "diarizationlm>=0.1.4",
+    "word-levenshtein>=0.0.3",
 ]
 
 [dependency-groups]
