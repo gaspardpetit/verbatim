@@ -1,15 +1,15 @@
 import errno
 import os
 import sys
-from typing import Optional, List, Union
+from typing import List, Optional, Union
 
 import numpy as np
+from pyannote.core.annotation import Annotation
 
+from ...voices.diarize.factory import create_diarizer  # Add this import
+from ..audio import samples_to_seconds, timestr_to_samples
 from .audiosource import AudioSource
 from .sourceconfig import SourceConfig
-from ..audio import samples_to_seconds, timestr_to_samples
-from ...voices.diarize.factory import create_diarizer  # Add this import
-from pyannote.core.annotation import Annotation
 
 
 def convert_to_wav(input_path: str, working_prefix_no_ext: str, preserve_stereo: bool = False) -> str:
@@ -27,7 +27,7 @@ def convert_to_wav(input_path: str, working_prefix_no_ext: str, preserve_stereo:
 def compute_diarization(
     file_path: str,
     device: str,
-    rttm_file: str = None,
+    rttm_file: Optional[str] = None,
     strategy: str = "pyannote",
     nb_speakers: Union[int, None] = None,
 ) -> Annotation:
@@ -149,7 +149,7 @@ def create_audio_source(
         source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
 
     return FileAudioSource(
-        input_source,
+        file=input_source,
         start_sample=start_sample,
         end_sample=stop_sample,
         diarization=source_config.diarization,
@@ -207,7 +207,7 @@ def create_separate_speaker_sources(
         for _speaker, speaker_file in speaker_wav_files.items():
             sources.append(
                 FileAudioSource(
-                    speaker_file,
+                    file=speaker_file,
                     start_sample=start_sample,
                     end_sample=stop_sample,
                     diarization=diarization,

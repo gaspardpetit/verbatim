@@ -1,7 +1,7 @@
 import logging
 import os
 import wave
-from typing import Dict, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -11,7 +11,6 @@ from pyannote.core.annotation import Annotation
 from .audiosource import AudioSource, AudioStream
 from ..audio import format_audio
 from ..audio import convert_mp3_to_wav
-from ...voices.diarization import Diarization
 from ...voices.isolation import VoiceIsolation
 
 LOG = logging.getLogger(__name__)
@@ -78,10 +77,10 @@ class FileAudioStream(AudioStream):
 
 
 class FileAudioSource(AudioSource):
-    diarization: Annotation
+    diarization: Optional[Annotation]
 
     def __init__(
-        self,
+        self, *,
         file: str,
         diarization: Optional[Annotation],
         start_sample: int = 0,
@@ -102,7 +101,7 @@ class FileAudioSource(AudioSource):
         self.start_sample = start_sample
 
     @staticmethod
-    def isolate_voices(file_path: str, out_path_prefix: str = None) -> Tuple[str, str]:
+    def isolate_voices(file_path: str, out_path_prefix: Optional[str] = None) -> Tuple[str, str]:
         LOG.info("Initializing Voice Isolation Model.")
         with VoiceIsolation(log_level=LOG.level) as voice_separator:
             if not out_path_prefix:

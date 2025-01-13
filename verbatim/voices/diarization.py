@@ -1,9 +1,11 @@
 import logging
 import os
+from typing import Optional
 
-from .diarize.factory import create_diarizer
 from pyannote.core.annotation import Annotation
 from pyannote.database.util import load_rttm
+
+from .diarize.factory import create_diarizer
 
 # Configure logger
 LOG = logging.getLogger(__name__)
@@ -38,7 +40,7 @@ class Diarization:
         annotation: Annotation = next(iter(rttms.values()))
         return annotation
 
-    def compute_diarization(self, file_path: str, out_rttm_file: str = None, strategy: str = "pyannote", **kwargs) -> Annotation:
+    def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, strategy: str = "pyannote", **kwargs) -> Annotation:
         """
         Compute diarization using the specified strategy.
 

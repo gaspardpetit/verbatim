@@ -2,14 +2,14 @@ from dataclasses import dataclass, field
 import logging
 import os
 import platform
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple, Mapping
 from types import MappingProxyType
 
 from .audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
 
-DEFAULT_MULTILANG_PROMPTS = MappingProxyType(
+DEFAULT_MULTILANG_PROMPTS:Mapping[str,str] = MappingProxyType(
     {
         "en": "This is a sentence.",
         "zh": "这是一个句子。",
@@ -156,7 +156,7 @@ class Config:
 
     # TRANSCRIPTION
     lang: List[str] = field(default_factory=lambda: DEFAULT_LANGUAGES)
-    whisper_prompts: Dict[str, str] = field(default_factory=lambda: DEFAULT_MULTILANG_PROMPTS)
+    whisper_prompts: Mapping[str, str] = field(default_factory=lambda: DEFAULT_MULTILANG_PROMPTS)
     chunk_table: List[Tuple[float, float]] = field(default_factory=list)
 
     whisper_beam_size: int = -1
