@@ -167,7 +167,13 @@ class State:
         self.rolling_window.array[-offset:] = 0
         self.window_ts += offset
 
-    def append_audio_to_window(self, audio_chunk: NDArray):
+    def append_audio_to_window(self, audio_chunk: np.array):
+        # Convert stereo to mono if necessary
+        LOG.debug(f"Audio chunk shape before mono conversion: {audio_chunk.shape}")
+        if len(audio_chunk.shape) > 1 and audio_chunk.shape[1] > 1:
+            audio_chunk = np.mean(audio_chunk, axis=1)
+        LOG.debug(f"Audio chunk shape after mono conversion: {audio_chunk.shape}")
+
         chunk_size = len(audio_chunk)
         window_size = len(self.rolling_window.array)
         if self.audio_ts + chunk_size <= self.window_ts + window_size:

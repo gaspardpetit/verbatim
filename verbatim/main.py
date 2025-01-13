@@ -136,6 +136,7 @@ def main():
         dest="stop_time",
     )
     parser.add_argument("-o", "--outdir", help="Path to the output directory", default=".")
+    parser.add_argument("--diarization-strategy", choices=["pyannote", "stereo"], default="pyannote", help="Diarization strategy to use")
     parser.add_argument(
         "-d",
         "--diarization",
@@ -305,6 +306,7 @@ def main():
         isolate=args.isolate,
         diarize=args.diarize,
         diarization_file=args.diarization,
+        diarization_strategy=args.diarization_strategy,
     )
 
     from .audio.sources.factory import (
