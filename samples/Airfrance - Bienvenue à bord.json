@@ -1,331 +1,436 @@
-[
-  {
-    "start": 0.00,
-    "end": 2.70,
-    "speaker": "SPEAKER_00",
-    "text": " Madame, Monsieur, bonjour et bienvenue à bord."
-  },
-  {
-    "start": 3.13,
-    "end": 4.89,
-    "speaker": "SPEAKER_01",
-    "text": " Welcome aboard, ladies and gentlemen."
-  },
-  {
-    "start": 6.46,
-    "end": 10.52,
-    "speaker": "SPEAKER_01",
-    "text": " For your safety and comfort, please take a moment to watch the following safety video."
-  },
-  {
-    "start": 10.92,
-    "end": 13.32,
-    "speaker": "SPEAKER_00",
-    "text": " Ce film concerne votre sécurité à bord."
-  },
-  {
-    "start": 13.81,
-    "end": 15.47,
-    "speaker": "SPEAKER_00",
-    "text": " Merci de nous accorder votre attention."
-  },
-  {
-    "start": 16.60,
-    "end": 21.92,
-    "speaker": "SPEAKER_00",
-    "text": " Chaque fois que ce signal est allumé, vous devez attacher votre ceinture pour votre sécurité."
-  },
-  {
-    "start": 23.24,
-    "end": 28.66,
-    "speaker": "SPEAKER_00",
-    "text": " Nous vous recommandons de la maintenir attachée de façon visible lorsque vous êtes à votre siège."
-  },
-  {
-    "start": 29.44,
-    "end": 33.64,
-    "speaker": "SPEAKER_01",
-    "text": " Whenever the seatbelt sign is on, your seatbelt must be securely fastened."
-  },
-  {
-    "start": 34.22,
-    "end": 39.44,
-    "speaker": "SPEAKER_01",
-    "text": " For your safety, we recommend that you keep your seatbelt fastened and visible at all times while seated."
-  },
-  {
-    "start": 42.40,
-    "end": 44.86,
-    "speaker": "SPEAKER_01",
-    "text": " To release the seatbelt, just lift the buckle."
-  },
-  {
-    "start": 45.70,
-    "end": 50.08,
-    "speaker": "SPEAKER_00",
-    "text": " Pour détacher votre ceinture, soulevez la partie supérieure de la boucle."
-  },
-  {
-    "start": 51.31,
-    "end": 55.35,
-    "speaker": "SPEAKER_00",
-    "text": " Il est strictement interdit de fumer dans l'avion, y compris dans les toilettes."
-  },
-  {
-    "start": 56.25,
-    "end": 60.59,
-    "speaker": "SPEAKER_01",
-    "text": " This is a no-smoking flight, and it is strictly prohibited to smoke in the toilets."
-  },
-  {
-    "start": 61.53,
-    "end": 67.21,
-    "speaker": "SPEAKER_00",
-    "text": " En cas de dépressurisation, un masque à oxygène tombera automatiquement à votre portée."
-  },
-  {
-    "start": 67.73,
-    "end": 73.15,
-    "speaker": "SPEAKER_01",
-    "text": " If there is a sudden decrease in cabin pressure, your oxygen mask will drop automatically in front of you."
-  },
-  {
-    "start": 73.58,
-    "end": 76.08,
-    "speaker": "SPEAKER_00",
-    "text": " Tirez sur le masque pour libérer l'oxygène."
-  },
-  {
-    "start": 76.38,
-    "end": 77.86,
-    "speaker": "SPEAKER_00",
-    "text": " Placez-le sur votre visage."
-  },
-  {
-    "start": 78.83,
-    "end": 81.29,
-    "speaker": "SPEAKER_01",
-    "text": " Pull the mask toward you to start the flow of oxygen."
-  },
-  {
-    "start": 81.81,
-    "end": 83.63,
-    "speaker": "SPEAKER_01",
-    "text": " Place the mask over your nose and mouth."
-  },
-  {
-    "start": 84.15,
-    "end": 87.23,
-    "speaker": "SPEAKER_01",
-    "text": " Make sure your own mask is well adjusted before helping others."
-  },
-  {
-    "start": 87.33,
-    "end": 91.63,
-    "speaker": "SPEAKER_00",
-    "text": " Une fois votre masque ajusté, il vous sera possible d'aider d'autres personnes."
-  },
-  {
-    "start": 92.44,
-    "end": 98.38,
-    "speaker": "SPEAKER_00",
-    "text": " En cas d'évacuation, des panneaux lumineux exit vous permettent de localiser les issues de secours."
-  },
-  {
-    "start": 98.58,
-    "end": 102.56,
-    "speaker": "SPEAKER_00",
-    "text": " Repérez maintenant le panneau exit le plus proche de votre siège."
-  },
-  {
-    "start": 102.66,
-    "end": 104.40,
-    "speaker": "SPEAKER_00",
-    "text": " Il peut se trouver derrière vous."
-  },
-  {
-    "start": 104.60,
-    "end": 109.34,
-    "speaker": "SPEAKER_01",
-    "text": " In case of an emergency, the illuminated exit signs will help you locate the exit doors."
-  },
-  {
-    "start": 110.51,
-    "end": 113.05,
-    "speaker": "SPEAKER_01",
-    "text": " Please take a moment now to locate the exit nearest you."
-  },
-  {
-    "start": 113.60,
-    "end": 115.44,
-    "speaker": "SPEAKER_01",
-    "text": " The nearest exit may be behind you."
-  },
-  {
-    "start": 116.19,
-    "end": 122.95,
-    "speaker": "SPEAKER_00",
-    "text": " Les issues de secours sont situées de chaque côté de la cabine, à l'avant, au centre, à l'arrière."
-  },
-  {
-    "start": 124.30,
-    "end": 129.92,
-    "speaker": "SPEAKER_01",
-    "text": " Emergency exits on each side of the cabin are located at the front, in the center, and at the rear."
-  },
-  {
-    "start": 131.08,
-    "end": 134.32,
-    "speaker": "SPEAKER_00",
-    "text": " Pour évacuer l'avion, suivez le marquage lumineux."
-  },
-  {
-    "start": 134.72,
-    "end": 139.26,
-    "speaker": "SPEAKER_01",
-    "text": " In the event of an evacuation, pathway lighting on the floor will guide you to the exits."
-  },
-  {
-    "start": 140.26,
-    "end": 142.84,
-    "speaker": "SPEAKER_00",
-    "text": " Les portes seront ouvertes par l'équipage."
-  },
-  {
-    "start": 143.42,
-    "end": 145.38,
-    "speaker": "SPEAKER_01",
-    "text": " Doors will be opened by the cabin crew."
-  },
-  {
-    "start": 145.62,
-    "end": 148.02,
-    "speaker": "SPEAKER_00",
-    "text": " Les toboggans se déploient automatiquement."
-  },
-  {
-    "start": 148.48,
-    "end": 150.98,
-    "speaker": "SPEAKER_01",
-    "text": " The emergency slides will automatically inflate."
-  },
-  {
-    "start": 151.27,
-    "end": 155.85,
-    "speaker": "SPEAKER_00",
-    "text": " Le gilet de sauvetage est situé sous votre siège ou dans la coudoir centrale."
-  },
-  {
-    "start": 156.63,
-    "end": 159.77,
-    "speaker": "SPEAKER_01",
-    "text": " Your life jacket is under your seat or in the central armrest."
-  },
-  {
-    "start": 160.01,
-    "end": 164.23,
-    "speaker": "SPEAKER_00",
-    "text": " Passez la tête dans l'encolure, attachez et serrez les sangles."
-  },
-  {
-    "start": 165.07,
-    "end": 168.37,
-    "speaker": "SPEAKER_01",
-    "text": " Place it over your head and pull the straps tightly around your waist."
-  },
-  {
-    "start": 169.08,
-    "end": 171.82,
-    "speaker": "SPEAKER_01",
-    "text": " Inflate your life jacket by pulling the red toggles."
-  },
-  {
-    "start": 172.38,
-    "end": 177.82,
-    "speaker": "SPEAKER_00",
-    "text": " Une fois à l'extérieur de l'avion, gonflez votre gilet en tirant sur les poignées rouges."
-  },
-  {
-    "start": 178.53,
-    "end": 180.79,
-    "speaker": "SPEAKER_01",
-    "text": " Do this only when you are outside the aircraft."
-  },
-  {
-    "start": 185.02,
-    "end": 186.50,
-    "speaker": "SPEAKER_00",
-    "text": " Nous allons bientôt décoller."
-  },
-  {
-    "start": 186.93,
-    "end": 190.63,
-    "speaker": "SPEAKER_00",
-    "text": " La tablette doit être rangée et votre dossier redressé."
-  },
-  {
-    "start": 191.31,
-    "end": 198.33,
-    "speaker": "SPEAKER_01",
-    "text": " In preparation for take-off, please make sure your tray table is stowed and secure, and that your seat-back is in the upright position."
-  },
-  {
-    "start": 198.43,
-    "end": 203.51,
-    "speaker": "SPEAKER_00",
-    "text": " L'usage des appareils électroniques est interdit pendant le décollage et l'atterrissage."
-  },
-  {
-    "start": 204.19,
-    "end": 207.91,
-    "speaker": "SPEAKER_01",
-    "text": " The use of electronic devices is prohibited during take-off and landing."
-  },
-  {
-    "start": 208.63,
-    "end": 212.09,
-    "speaker": "SPEAKER_00",
-    "text": " Les téléphones portables doivent rester éteints pendant tout le vol."
-  },
-  {
-    "start": 212.35,
-    "end": 215.89,
-    "speaker": "SPEAKER_01",
-    "text": " Mobile phones must remain switched off for the duration of the flight."
-  },
-  {
-    "start": 216.67,
-    "end": 220.45,
-    "speaker": "SPEAKER_00",
-    "text": " Une notice de sécurité placée devant vous est à votre disposition."
-  },
-  {
-    "start": 221.26,
-    "end": 225.98,
-    "speaker": "SPEAKER_01",
-    "text": " We encourage everyone to read the safety information leaflet located in the seat back pocket."
-  },
-  {
-    "start": 226.63,
-    "end": 227.93,
-    "speaker": "SPEAKER_00",
-    "text": " Merci pour votre attention."
-  },
-  {
-    "start": 228.42,
-    "end": 229.96,
-    "speaker": "SPEAKER_00",
-    "text": " Nous vous souhaitons un bon vol."
-  },
-  {
-    "start": 230.68,
-    "end": 231.76,
-    "speaker": "SPEAKER_01",
-    "text": " Thank you for your attention."
-  },
-  {
-    "start": 232.28,
-    "end": 233.98,
-    "speaker": "SPEAKER_01",
-    "text": " We wish you a very pleasant flight." }
-]
+{
+  "utterances": [
+    {
+      "id": "utt2",
+      "start": 0.0,
+      "end": 2.68,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Madame, Monsieur, bonjour et bienvenue \u00e0 bord."
+    },
+    {
+      "id": "utt5",
+      "start": 3.074,
+      "end": 4.874,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Welcome aboard, ladies and gentlemen."
+    },
+    {
+      "id": "utt7",
+      "start": 6.452,
+      "end": 10.532,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " For your safety and comfort, please take a moment to watch the following safety video."
+    },
+    {
+      "id": "utt8",
+      "start": 11.022,
+      "end": 13.322,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Ce film concerne votre s\u00e9curit\u00e9 \u00e0 bord."
+    },
+    {
+      "id": "utt11",
+      "start": 13.812,
+      "end": 15.512,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Merci de nous accorder votre attention."
+    },
+    {
+      "id": "utt15",
+      "start": 16.578,
+      "end": 21.918,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Chaque fois que ce signal est allum\u00e9, vous devez attacher votre ceinture pour votre s\u00e9curit\u00e9."
+    },
+    {
+      "id": "utt17",
+      "start": 23.24,
+      "end": 28.66,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Nous vous recommandons de la maintenir attach\u00e9e de fa\u00e7on visible lorsque vous \u00eates \u00e0 votre si\u00e8ge."
+    },
+    {
+      "id": "utt19",
+      "start": 29.438,
+      "end": 33.658,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Whenever the seatbelt sign is on, your seatbelt must be securely fastened."
+    },
+    {
+      "id": "utt22",
+      "start": 34.308,
+      "end": 39.428,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " For your safety, we recommend that you keep your seatbelt fastened and visible at all times while seated."
+    },
+    {
+      "id": "utt25",
+      "start": 42.382,
+      "end": 44.862,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " To release the seat belt, just lift the buckle."
+    },
+    {
+      "id": "utt27",
+      "start": 45.704,
+      "end": 50.064,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Pour d\u00e9tacher votre ceinture, soulevez la partie sup\u00e9rieure de la boucle."
+    },
+    {
+      "id": "utt30",
+      "start": 51.29,
+      "end": 55.34994,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Il est strictement interdit de fumer dans l'avion, y compris dans les toilettes."
+    },
+    {
+      "id": "utt33",
+      "start": 56.25594,
+      "end": 60.59594,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " This is a no-smoking flight, and it is strictly prohibited to smoke in the toilets."
+    },
+    {
+      "id": "utt37",
+      "start": 61.53394,
+      "end": 67.23394,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " En cas de d\u00e9pressurisation, un masque \u00e0 oxyg\u00e8ne tombera automatiquement \u00e0 votre port\u00e9e."
+    },
+    {
+      "id": "utt39",
+      "start": 67.72394,
+      "end": 73.14394,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " If there is a sudden decrease in cabin pressure, your oxygen mask will drop automatically in front of you."
+    },
+    {
+      "id": "utt41",
+      "start": 73.60194,
+      "end": 77.88194,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Tirez sur le masque pour lib\u00e9rer l'oxyg\u00e8ne, placez-le sur votre visage."
+    },
+    {
+      "id": "utt42",
+      "start": 78.81994,
+      "end": 81.27994,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Pull the mask toward you to start the flow of oxygen."
+    },
+    {
+      "id": "utt44",
+      "start": 81.73794,
+      "end": 83.63794,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Place the mask over your nose and mouth."
+    },
+    {
+      "id": "utt48",
+      "start": 84.15994,
+      "end": 87.21994,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Make sure your own mask is well adjusted before helping others."
+    },
+    {
+      "id": "utt52",
+      "start": 87.31994,
+      "end": 91.61994,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Une fois votre masque ajust\u00e9, il vous sera possible d'aider d'autres personnes."
+    },
+    {
+      "id": "utt55",
+      "start": 92.42994,
+      "end": 98.42994,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " En cas d'\u00e9vacuation, des panneaux lumineux EXIT vous permettent de localiser les issues de secours."
+    },
+    {
+      "id": "utt58",
+      "start": 98.59994,
+      "end": 102.55994,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Rep\u00e9rez maintenant le panneau EXIT le plus proche de votre si\u00e8ge."
+    },
+    {
+      "id": "utt61",
+      "start": 102.65994,
+      "end": 104.39994,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Il peut se trouver derri\u00e8re vous."
+    },
+    {
+      "id": "utt64",
+      "start": 104.63394,
+      "end": 109.35394,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " In case of an emergency, the illuminated exit signs will help you locate the exit doors."
+    },
+    {
+      "id": "utt69",
+      "start": 110.51594,
+      "end": 113.03594,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Please take a moment now to locate the exit nearest you."
+    },
+    {
+      "id": "utt74",
+      "start": 113.58994,
+      "end": 115.42994,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " The nearest exit may be behind you."
+    },
+    {
+      "id": "utt81",
+      "start": 116.17594,
+      "end": 122.95594,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Les issues de secours sont situ\u00e9es de chaque c\u00f4t\u00e9 de la cabine, \u00e0 l'avant, au centre, \u00e0 l'arri\u00e8re."
+    },
+    {
+      "id": "utt83",
+      "start": 124.27794,
+      "end": 129.91794,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Emergency exits on each side of the cabin are located at the front, in the center, and at the rear."
+    },
+    {
+      "id": "utt86",
+      "start": 131.11194,
+      "end": 134.33194,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Pour \u00e9vacuer l'avion, suivez le marquage lumineux."
+    },
+    {
+      "id": "utt88",
+      "start": 134.72594,
+      "end": 139.26594,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " In the event of an evacuation, pathway lighting on the floor will guide you to the exits."
+    },
+    {
+      "id": "utt92",
+      "start": 140.26794,
+      "end": 143.16794,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " \u00ab Les portes seront ouvertes par l'\u00e9quipage. \u00bb"
+    },
+    {
+      "id": "utt96",
+      "start": 143.40194,
+      "end": 145.38194,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Doors will be opened by the cabin crew."
+    },
+    {
+      "id": "utt100",
+      "start": 145.61594,
+      "end": 148.01594,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Les toboggans se d\u00e9ploient automatiquement."
+    },
+    {
+      "id": "utt102",
+      "start": 148.44194,
+      "end": 150.94194,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " The emergency slides will automatically inflate."
+    },
+    {
+      "id": "utt107",
+      "start": 151.27194,
+      "end": 155.89194,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Le gilet de sauvetage est situ\u00e9 sous votre si\u00e8ge ou dans la coudoir centrale."
+    },
+    {
+      "id": "utt109",
+      "start": 156.63794,
+      "end": 159.77794,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Your life jacket is under your seat or in the central armrest."
+    },
+    {
+      "id": "utt113",
+      "start": 159.87794,
+      "end": 164.23794,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Passez la t\u00eate dans l'encolure, attachez et serrez les sangles."
+    },
+    {
+      "id": "utt115",
+      "start": 165.04794,
+      "end": 168.38794,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Place it over your head and pull the straps tightly around your waist."
+    },
+    {
+      "id": "utt118",
+      "start": 169.03794,
+      "end": 171.83794,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Inflate your life jacket by pulling the red toggles."
+    },
+    {
+      "id": "utt120",
+      "start": 172.39194,
+      "end": 177.79194,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Une fois \u00e0 l'ext\u00e9rieur de l'avion, gonflez votre gilet en tirant sur les poign\u00e9es rouges."
+    },
+    {
+      "id": "utt122",
+      "start": 178.50594,
+      "end": 180.78594,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Do this only when you are outside the aircraft."
+    },
+    {
+      "id": "utt125",
+      "start": 185.05194,
+      "end": 186.51194,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Nous allons bient\u00f4t d\u00e9coller."
+    },
+    {
+      "id": "utt128",
+      "start": 186.90594,
+      "end": 190.64594,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " La tablette doit \u00eatre rang\u00e9e et votre dossier redress\u00e9."
+    },
+    {
+      "id": "utt133",
+      "start": 191.29594,
+      "end": 198.33594,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " In preparation for take-off, please make sure your tray table is stowed and secure, and that your seat-back is in the upright position."
+    },
+    {
+      "id": "utt138",
+      "start": 198.43594,
+      "end": 203.47594,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " L'usage des appareils \u00e9lectroniques est interdit pendant le d\u00e9collage et l'atterrissage."
+    },
+    {
+      "id": "utt140",
+      "start": 204.18994,
+      "end": 207.88994,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " The use of electronic devices is prohibited during take-off and landing."
+    },
+    {
+      "id": "utt144",
+      "start": 208.63594,
+      "end": 212.11594,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Les t\u00e9l\u00e9phones portables doivent rester \u00e9teints pendant tout le vol."
+    },
+    {
+      "id": "utt147",
+      "start": 212.38194,
+      "end": 215.90194,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Mobile phones must remain switched off for the duration of the flight."
+    },
+    {
+      "id": "utt150",
+      "start": 216.67994,
+      "end": 220.45994,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Une notice de s\u00e9curit\u00e9 plac\u00e9e devant vous est \u00e0 votre disposition."
+    },
+    {
+      "id": "utt152",
+      "start": 221.26994,
+      "end": 225.96994,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " We encourage everyone to read the safety information leaflet located in the seat back pocket."
+    },
+    {
+      "id": "utt156",
+      "start": 226.65194,
+      "end": 227.95194,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Merci pour votre attention."
+    },
+    {
+      "id": "utt158",
+      "start": 228.44194,
+      "end": 229.96194,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Nous vous souhaitons un bon vol."
+    },
+    {
+      "id": "utt159",
+      "start": 230.67594,
+      "end": 231.75594,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Thank you for your attention."
+    },
+    {
+      "id": "utt161",
+      "start": 232.27794,
+      "end": 233.97794,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " We wish you a very pleasant flight."
+    }
+  ]
+}
