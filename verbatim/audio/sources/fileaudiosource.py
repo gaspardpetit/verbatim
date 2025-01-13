@@ -51,7 +51,7 @@ class FileAudioStream(AudioStream):
         # Convert to float32
         audio_array = audio_array.astype(np.float32) / 32768.0
 
-        if hasattr(self.source, 'preserve_channels') and self.source.preserve_channels:
+        if hasattr(self.source, "preserve_channels") and self.source.preserve_channels:
             # For diarization purposes, return stereo
             return audio_array
         else:
@@ -63,7 +63,6 @@ class FileAudioStream(AudioStream):
             audio_array = format_audio(audio_array, from_sampling_rate=self.stream.getframerate())
 
             return audio_array
-
 
     def has_more(self):
         current_frame = self.stream.tell()
@@ -80,7 +79,8 @@ class FileAudioSource(AudioSource):
     diarization: Optional[Annotation]
 
     def __init__(
-        self, *,
+        self,
+        *,
         file: str,
         diarization: Optional[Annotation],
         start_sample: int = 0,

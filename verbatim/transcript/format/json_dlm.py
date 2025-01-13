@@ -40,8 +40,8 @@ class JsonDiarizationLMTranscriptWriter(TranscriptWriter):
     def write(
         self,
         utterance: Utterance,
-        unacknowledged_utterance: Union[List[Utterance],None] = None,
-        unconfirmed_words: Union[List[Word],None] = None,
+        unacknowledged_utterance: Union[List[Utterance], None] = None,
+        unconfirmed_words: Union[List[Word], None] = None,
     ):
         text = utterance.text.strip()
         # Convert speaker IDs

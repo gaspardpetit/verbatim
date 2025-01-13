@@ -129,10 +129,9 @@ def create_audio_source(
         elif source_config.diarization_file:
             # Load existing diarization from file
             from ...voices.diarization import Diarization
+
             try:
-                source_config.diarization = Diarization.load_diarization(
-                    rttm_file=source_config.diarization_file
-                )
+                source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
             except (StopIteration, FileNotFoundError):
                 # If the file doesn't exist or is empty, compute new diarization
                 source_config.diarization = compute_diarization(

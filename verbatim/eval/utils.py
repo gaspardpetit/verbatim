@@ -141,7 +141,6 @@ def get_oracle_speakers(hyp_spk: str, hyp_spk_align: str) -> Sequence[int]:
     return hyp_spk_oracle
 
 
-
 # Transcript-Preserving Speaker Transfer (TPST)
 def transcript_preserving_speaker_transfer(src_text: str, src_spk: str, tgt_text: str, tgt_spk: str) -> str:
     """Apply source speakers to target."""
@@ -249,7 +248,7 @@ class JsonUtteranceReader:
     target_speaker_field: str  # If not given, will skip targets.
     po: PromptOptions
     utt: dict[str, str] = dataclasses.field(default_factory=dict)
-    seg_id:int = 0
+    seg_id: int = 0
 
     def generate_utts(self) -> Generator[dict[str, str], None, None]:
         """Generate an utterance from all json files."""
@@ -288,7 +287,8 @@ class JsonUtteranceReader:
             t_speakers = []
 
         yield from self.generate_data_tuple_from_range(
-            utt_id=utt_id, words=words, p_speakers=p_speakers, t_speakers=t_speakers, start=0, end=len(words))
+            utt_id=utt_id, words=words, p_speakers=p_speakers, t_speakers=t_speakers, start=0, end=len(words)
+        )
 
     def generate_data_tuple_from_range(self, *, utt_id, words, p_speakers, t_speakers, start, end) -> Generator[tuple[str, str, str], None, None]:
         """Generate uttid-prompt-target tuples from a range of words."""
@@ -296,9 +296,11 @@ class JsonUtteranceReader:
         estimated_prompt_length = len(self.po.prompt_prefix) + len(" ".join(words[start:end])) + len(self.po.prompt_suffix)
         if estimated_prompt_length > self.po.emit_input_length or estimated_prompt_length > self.po.emit_target_length:
             yield from self.generate_data_tuple_from_range(
-                utt_id=utt_id, words=words, p_speakers=p_speakers, t_speakers=t_speakers, start=start, end=(start + end) // 2)
+                utt_id=utt_id, words=words, p_speakers=p_speakers, t_speakers=t_speakers, start=start, end=(start + end) // 2
+            )
             yield from self.generate_data_tuple_from_range(
-                utt_id=utt_id, words=words, p_speakers=p_speakers, t_speakers=t_speakers, start=(start + end) // 2, end=end)
+                utt_id=utt_id, words=words, p_speakers=p_speakers, t_speakers=t_speakers, start=(start + end) // 2, end=end
+            )
             return
 
         prompt = self.po.prompt_prefix
@@ -334,9 +336,11 @@ class JsonUtteranceReader:
             self.seg_id += 1
         else:
             yield from self.generate_data_tuple_from_range(
-                utt_id=utt_id, words=words, p_speakers=p_speakers, t_speakers=t_speakers, start=start, end=(start + end) // 2)
+                utt_id=utt_id, words=words, p_speakers=p_speakers, t_speakers=t_speakers, start=start, end=(start + end) // 2
+            )
             yield from self.generate_data_tuple_from_range(
-                utt_id=utt_id, words=words, p_speakers=p_speakers, t_speakers=t_speakers, start=(start + end) // 2, end=end)
+                utt_id=utt_id, words=words, p_speakers=p_speakers, t_speakers=t_speakers, start=(start + end) // 2, end=end
+            )
 
 
 def generate_prompts(
@@ -413,7 +417,8 @@ def truncate_suffix_and_tailing_text(text: str, suffix: str) -> str:
     return text
 
 
-def postprocess_completions_for_utt(*,
+def postprocess_completions_for_utt(
+    *,
     utt: dict[str, Any],
     llm_text_field: str = "llm_text",
     llm_speaker_field: str = "llm_spk",

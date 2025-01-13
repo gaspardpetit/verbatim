@@ -9,7 +9,7 @@ from .audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
 
-DEFAULT_MULTILANG_PROMPTS:Mapping[str,str] = MappingProxyType(
+DEFAULT_MULTILANG_PROMPTS: Mapping[str, str] = MappingProxyType(
     {
         "en": "This is a sentence.",
         "zh": "这是一个句子。",

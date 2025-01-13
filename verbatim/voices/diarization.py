@@ -28,7 +28,6 @@ class Diarization:
 
     @staticmethod
     def load_diarization(rttm_file: str):
-
         if not os.path.exists(rttm_file):
             raise FileNotFoundError(f"RTTM file not found: {rttm_file}")
 
