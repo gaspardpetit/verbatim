@@ -56,7 +56,7 @@ class JsonTranscriptWriter(TranscriptWriter):
 
     def open(self, path_no_ext: str):
         # Open the output file
-        # pyline: disable=consider-using-with
+        # pylint: disable=consider-using-with
         self.out = open(f"{path_no_ext}.json", "w", encoding="utf-8")
         self.formatter.open(out=self.out)
 
