@@ -150,7 +150,7 @@ class State:
         self.unacknowledged_utterances = []
         self.speaker_embeddings = []
         self.working_prefix_no_ext = working_prefix_no_ext
-        self.utterance_id: IdProvider = CounterIdProvider(prefix="U")
+        self.utterance_id: IdProvider = CounterIdProvider(prefix="utt")
 
         window_size = self.config.sampling_rate * self.config.window_duration  # Total samples in 30 seconds
         self.rolling_window = RollingWindow(window_size=window_size, dtype=np.float32)  # Initialize empty rolling window
