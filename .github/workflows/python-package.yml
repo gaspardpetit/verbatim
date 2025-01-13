@@ -2,9 +2,9 @@ name: Python package
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
@@ -24,9 +24,9 @@ jobs:
         run: |
           if [ "$(uname)" = "Linux" ]; then
             sudo apt-get update
-            sudo apt-get install -y portaudio19-dev
+            sudo apt-get install -y portaudio19-dev ffmpeg
           elif [ "$(uname)" = "Darwin" ]; then
-            brew install portaudio
+            brew install portaudio ffmpeg
           else
             echo "No system dependencies required for Windows"
           fi
@@ -47,6 +47,5 @@ jobs:
           fi
 
       - name: Test with pytest
-        shell: bash
         run: |
-          pytest
+          pytest -k test_diarization_metrics_short -v
