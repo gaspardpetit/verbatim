@@ -356,18 +356,23 @@ class Verbatim:
                 break
             prefix_text += word.word
         whisper_prompt = self.config.whisper_prompts[lang] if lang in self.config.whisper_prompts else self.config.whisper_prompts["en"]
-        transcript_words = self.models.transcriber.transcribe(
-            audio=self.state.rolling_window.array,
-            lang=lang,
-            prompt=whisper_prompt,
-            prefix=prefix_text,
-            window_ts=self.state.window_ts,
-            audio_ts=self.state.audio_ts,
-            whisper_beam_size=self.config.whisper_beam_size,
-            whisper_best_of=self.config.whisper_best_of,
-            whisper_patience=self.config.whisper_patience,
-            whisper_temperatures=self.config.whisper_temperatures,
-        )
+
+        try:
+            transcript_words = self.models.transcriber.transcribe(
+                audio=self.state.rolling_window.array,
+                lang=lang,
+                prompt=whisper_prompt,
+                prefix=prefix_text,
+                window_ts=self.state.window_ts,
+                audio_ts=self.state.audio_ts,
+                whisper_beam_size=self.config.whisper_beam_size,
+                whisper_best_of=self.config.whisper_best_of,
+                whisper_patience=self.config.whisper_patience,
+                whisper_temperatures=self.config.whisper_temperatures,
+            )
+        except RuntimeError as e:
+            LOG.warning(f"Transcription failed with RuntimeError: {str(e)}. Skipping this chunk.")
+            return [], []
 
         self.state.transcript_candidate_history.advance(self.state.window_ts)
         confirmed_words = self.state.transcript_candidate_history.confirm(
