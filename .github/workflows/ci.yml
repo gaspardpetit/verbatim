@@ -18,6 +18,8 @@ jobs:
       # python-coverage-comment-action branch, and for editing existing
       # comments (to avoid publishing multiple comments in the same PR)
       contents: write
+    env:  # Define environment variables for the entire job
+      HUGGINGFACE_TOKEN: ${{ secrets.TOKEN_HUGGINGFACE }}  # Inject the secret
     steps:
       - uses: actions/checkout@v3
 
