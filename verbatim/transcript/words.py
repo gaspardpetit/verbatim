@@ -44,6 +44,7 @@ class Word:
 
 @dataclass
 class Utterance:
+    utterance_id: str
     speaker: Optional[str]
     start_ts: int
     end_ts: int
@@ -57,8 +58,8 @@ class Utterance:
         return samples_to_seconds(self.end_ts)
 
     @classmethod
-    def from_words(cls, words: List[Word], speaker: Optional[str] = None) -> "Utterance":
+    def from_words(cls, utterance_id: str, words: List[Word], speaker: Optional[str] = None) -> "Utterance":
         start_ts = words[0].start_ts
         end_ts = words[-1].end_ts
         text = "".join([w.word for w in words])
-        return cls(start_ts=start_ts, end_ts=end_ts, words=words, text=text, speaker=speaker)
+        return cls(utterance_id=utterance_id, start_ts=start_ts, end_ts=end_ts, words=words, text=text, speaker=speaker)
