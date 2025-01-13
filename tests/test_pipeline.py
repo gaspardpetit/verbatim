@@ -3,18 +3,18 @@ import sys
 import json
 import unittest
 
-import diarizationlm
-
 from verbatim.config import Config
 from verbatim.verbatim import Verbatim
 from verbatim.audio.sources.audiosource import AudioSource
 from verbatim.audio.sources.sourceconfig import SourceConfig
 from verbatim.audio.sources.factory import create_audio_source
+from verbatim.eval.metrics import compute_metrics_on_json_dict
 from verbatim.transcript.format.writer import TranscriptWriterConfig
 from verbatim.transcript.format.json_dlm import JsonDiarizationLMTranscriptWriter
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
+
 
 class TestPipeline(unittest.TestCase):
     def test_diarization_metrics_short(self):
@@ -24,7 +24,7 @@ class TestPipeline(unittest.TestCase):
         out_file = "tests/data/init.out"
 
         # Load reference data
-        with open(ref_file, 'r', encoding='utf-8') as f:
+        with open(ref_file, "r", encoding="utf-8") as f:
             ref_data = json.load(f)
 
         # Run verbatim pipeline
@@ -44,7 +44,7 @@ class TestPipeline(unittest.TestCase):
         writer.close()
 
         # Load output data
-        with open(f"{out_file}.utt.json", 'r', encoding='utf-8') as f:
+        with open(f"{out_file}.utt.json", "r", encoding="utf-8") as f:
             hyp_data = json.load(f)
 
         # Merge reference data into hypothesis data
@@ -53,7 +53,7 @@ class TestPipeline(unittest.TestCase):
             h_utt["ref_spk"] = r_utt["ref_spk"]
 
         # Calculate metrics
-        result = diarizationlm.compute_metrics_on_json_dict(hyp_data)
+        result = compute_metrics_on_json_dict(hyp_data)
 
         # Check that all error rates are 0.0
         self.assertEqual(result["WER"], 0.0)
@@ -71,7 +71,7 @@ class TestPipeline(unittest.TestCase):
         out_file = "tests/data/test.mp3.out"
 
         # Load reference data
-        with open(ref_file, 'r', encoding='utf-8') as f:
+        with open(ref_file, "r", encoding="utf-8") as f:
             ref_data = json.load(f)
 
         # Run verbatim pipeline
@@ -92,7 +92,7 @@ class TestPipeline(unittest.TestCase):
         writer.close()
 
         # Load output data
-        with open(f"{out_file}.utt.json", 'r', encoding='utf-8') as f:
+        with open(f"{out_file}.utt.json", "r", encoding="utf-8") as f:
             hyp_data = json.load(f)
 
         # Merge reference data into hypothesis data
@@ -101,16 +101,18 @@ class TestPipeline(unittest.TestCase):
             h_utt["ref_spk"] = r_utt["ref_spk"]
 
         # Squash everything into a single utterance
-        hyp_data["utterances"] = [{
-            "utterance_id": "utt0",
-            "hyp_text": " ".join([utt["hyp_text"] for utt in hyp_data["utterances"]]),
-            "hyp_spk": " ".join([utt["hyp_spk"] for utt in hyp_data["utterances"]]),
-            "ref_text": " ".join([utt["ref_text"] for utt in hyp_data["utterances"]]),
-            "ref_spk": " ".join([utt["ref_spk"] for utt in hyp_data["utterances"]]),
-        }]
+        hyp_data["utterances"] = [
+            {
+                "utterance_id": "utt0",
+                "hyp_text": " ".join([utt["hyp_text"] for utt in hyp_data["utterances"]]),
+                "hyp_spk": " ".join([utt["hyp_spk"] for utt in hyp_data["utterances"]]),
+                "ref_text": " ".join([utt["ref_text"] for utt in hyp_data["utterances"]]),
+                "ref_spk": " ".join([utt["ref_spk"] for utt in hyp_data["utterances"]]),
+            }
+        ]
 
         # Calculate metrics
-        result = diarizationlm.compute_metrics_on_json_dict(hyp_data)
+        result = compute_metrics_on_json_dict(hyp_data)
 
         # Check that all error rates are below 10%
         self.assertLess(result["WER"], 0.1)
@@ -120,6 +122,7 @@ class TestPipeline(unittest.TestCase):
 
         # Cleanup
         os.remove(f"{out_file}.utt.json")
+
 
 if __name__ == "__main__":
     unittest.main()
