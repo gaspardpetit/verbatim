@@ -36,4 +36,4 @@ jobs:
 
       - name: Analyse the code with Pylint
         run: |
-          pylint $(git ls-files '*.py')
+          pylint verbatim $(git ls-files 'tests/*.py')

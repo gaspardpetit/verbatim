@@ -135,7 +135,8 @@ def get_oracle_speakers(hyp_spk: str, hyp_spk_align: str) -> Sequence[int]:
                 # This is useful for the update_hyp_text_in_utt_dict() function.
                 hyp_spk_oracle[i] = 1 if i == 0 else hyp_spk_oracle[i - 1]
             continue
-        assert row_index[align_value - 1] == align_value - 1
+        if row_index[align_value - 1] != align_value - 1:
+            raise ValueError(f"Alignment mismatch at index {align_value - 1}: " f"expected {align_value - 1}, got {row_index[align_value - 1]}")
         hyp_spk_oracle[i] = col_index[align_value - 1] + 1
 
     return hyp_spk_oracle
@@ -279,10 +280,21 @@ class JsonUtteranceReader:
         # Get the fields from the utterance.
         words = discard_empty_str_and_remove_boundary_white_space(utt[self.text_field].split(" "))
         p_speakers = discard_empty_str_and_remove_boundary_white_space(utt[self.input_speaker_field].split(" "))
-        assert len(words) == len(p_speakers)
+
+        # Check for length mismatch between words and p_speakers
+        if len(words) != len(p_speakers):
+            raise ValueError(
+                f"Mismatch between words and input speakers: " f"{len(words)} words, {len(p_speakers)} input speakers in utterance {utt_id}."
+            )
+
         if self.target_speaker_field:
             t_speakers = discard_empty_str_and_remove_boundary_white_space(utt[self.target_speaker_field].split(" "))
-            assert len(words) == len(t_speakers)
+
+            # Check for length mismatch between words and t_speakers
+            if len(words) != len(t_speakers):
+                raise ValueError(
+                    f"Mismatch between words and target speakers: " f"{len(words)} words, {len(t_speakers)} target speakers in utterance {utt_id}."
+                )
         else:
             t_speakers = []
 

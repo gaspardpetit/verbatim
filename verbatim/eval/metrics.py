@@ -126,7 +126,10 @@ def compute_wer(hyp_text: str, ref_text: str) -> tuple[UtteranceMetrics, list[tu
                 result.wer_sub += 1
 
     result.wer_total = result.wer_correct + result.wer_sub + result.wer_delete
-    assert result.wer_total == len(ref_words)
+
+    if result.wer_total != len(ref_words):
+        raise ValueError(f"WER total mismatch: expected {len(ref_words)}, got {result.wer_total}. " f"Check the alignment and input normalization.")
+
     return result, align
 
 

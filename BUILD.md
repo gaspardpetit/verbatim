@@ -138,13 +138,13 @@ You can add `--no-dev` to `uv export` to ignore the dev dependencies.
 
 ```
 # pip install ruff
-ruff check $(git ls-files '*.py') # try `ruff check --fix $(git ls-files '*.py')`if you see some failures
+ruff check verbatim tests # try `ruff check --fix verbatim tests`if you see some failures
 # pip install pylint
-pylint $(git ls-files '*.py')
+pylint verbatim $(git ls-files 'tests/*.py')
 # pip install flake8
-flake8 --count --select=E9,F63,F7,F82 --show-source --statistics $(git ls-files '*.py')
-flake8 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics $(git ls-files '*.py')
+flake8 --count --select=E9,F63,F7,F82 --show-source --statistics verbatim tests
+flake8 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics verbatim tests
 # pip install bandit
-bandit $(git ls-files '*.py')
+bandit -r verbatim tests
 ```
 
