@@ -167,7 +167,13 @@ class State:
         self.rolling_window.array[-offset:] = 0
         self.window_ts += offset
 
-    def append_audio_to_window(self, audio_chunk: NDArray):
+    def append_audio_to_window(self, audio_chunk: np.array):
+        # Convert stereo to mono if necessary
+        LOG.debug(f"Audio chunk shape before mono conversion: {audio_chunk.shape}")
+        if len(audio_chunk.shape) > 1 and audio_chunk.shape[1] > 1:
+            audio_chunk = np.mean(audio_chunk, axis=1)
+        LOG.debug(f"Audio chunk shape after mono conversion: {audio_chunk.shape}")
+
         chunk_size = len(audio_chunk)
         window_size = len(self.rolling_window.array)
         if self.audio_ts + chunk_size <= self.window_ts + window_size:
@@ -350,18 +356,23 @@ class Verbatim:
                 break
             prefix_text += word.word
         whisper_prompt = self.config.whisper_prompts[lang] if lang in self.config.whisper_prompts else self.config.whisper_prompts["en"]
-        transcript_words = self.models.transcriber.transcribe(
-            audio=self.state.rolling_window.array,
-            lang=lang,
-            prompt=whisper_prompt,
-            prefix=prefix_text,
-            window_ts=self.state.window_ts,
-            audio_ts=self.state.audio_ts,
-            whisper_beam_size=self.config.whisper_beam_size,
-            whisper_best_of=self.config.whisper_best_of,
-            whisper_patience=self.config.whisper_patience,
-            whisper_temperatures=self.config.whisper_temperatures,
-        )
+
+        try:
+            transcript_words = self.models.transcriber.transcribe(
+                audio=self.state.rolling_window.array,
+                lang=lang,
+                prompt=whisper_prompt,
+                prefix=prefix_text,
+                window_ts=self.state.window_ts,
+                audio_ts=self.state.audio_ts,
+                whisper_beam_size=self.config.whisper_beam_size,
+                whisper_best_of=self.config.whisper_best_of,
+                whisper_patience=self.config.whisper_patience,
+                whisper_temperatures=self.config.whisper_temperatures,
+            )
+        except RuntimeError as e:
+            LOG.warning(f"Transcription failed with RuntimeError: {str(e)}. Skipping this chunk.")
+            return [], []
 
         self.state.transcript_candidate_history.advance(self.state.window_ts)
         confirmed_words = self.state.transcript_candidate_history.confirm(

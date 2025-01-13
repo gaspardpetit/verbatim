@@ -1,25 +1,51 @@
 import errno
 import os
 import sys
-from typing import Optional, List
+from typing import Optional, List, Union
 
 import numpy as np
 
 from .audiosource import AudioSource
 from .sourceconfig import SourceConfig
 from ..audio import samples_to_seconds, timestr_to_samples
+from ...voices.diarize.factory import create_diarizer  # Add this import
+from pyannote.core.annotation import Annotation
 
 
-def convert_to_wav(input_path: str, working_prefix_no_ext: str) -> str:
+def convert_to_wav(input_path: str, working_prefix_no_ext: str, preserve_stereo: bool = False) -> str:
     # pylint: disable=import-outside-toplevel
     from .ffmpegfileaudiosource import PyAVAudioSource
     from .wavsink import WavSink
 
-    temp_file_audio_source = PyAVAudioSource(file_path=input_path)
+    temp_file_audio_source = PyAVAudioSource(file_path=input_path, preserve_channels=preserve_stereo)
 
     converted_path = working_prefix_no_ext + ".wav"
-    WavSink.dump_to_wav(audio_source=temp_file_audio_source, output_path=converted_path)
+    WavSink.dump_to_wav(audio_source=temp_file_audio_source, output_path=converted_path, preserve_stereo=preserve_stereo)
     return converted_path
+
+
+def compute_diarization(
+    file_path: str,
+    device: str,
+    rttm_file: str = None,
+    strategy: str = "pyannote",
+    nb_speakers: Union[int, None] = None,
+) -> Annotation:
+    """
+    Compute diarization for an audio file using the specified strategy.
+
+    Args:
+        file_path: Path to audio file
+        device: Device to use ('cpu' or 'cuda')
+        rttm_file: Optional path to save RTTM file
+        strategy: Diarization strategy ('pyannote' or 'stereo')
+        nb_speakers: Optional number of speakers
+
+        PyAnnote Annotation object
+    """
+    diarizer = create_diarizer(strategy=strategy, device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN"))
+
+    return diarizer.compute_diarization(file_path=file_path, out_rttm_file=rttm_file, nb_speakers=nb_speakers)
 
 
 def create_audio_source(
@@ -69,9 +95,14 @@ def create_audio_source(
                 file_path=input_source,
                 start_time=samples_to_seconds(start_sample),
                 end_time=samples_to_seconds(stop_sample) if stop_sample else None,
+                preserve_channels=source_config.diarization_strategy == "stereo",
             )
 
-        input_source = convert_to_wav(input_path=input_source, working_prefix_no_ext=working_prefix_no_ext)
+        input_source = convert_to_wav(
+            input_path=input_source,
+            working_prefix_no_ext=working_prefix_no_ext,
+            preserve_stereo=source_config.diarization_strategy == "stereo",
+        )
 
         return create_audio_source(
             source_config=source_config,
@@ -87,12 +118,30 @@ def create_audio_source(
         if source_config.isolate is not None:
             input_source, _noise_path = FileAudioSource.isolate_voices(file_path=input_source, out_path_prefix=working_prefix_no_ext)
         if source_config.diarize is not None:
-            source_config.diarization = FileAudioSource.compute_diarization(
+            # Compute new diarization
+            source_config.diarization = compute_diarization(
                 file_path=input_source,
-                rttm_file=source_config.diarization_file,
                 device=device,
+                rttm_file=source_config.diarization_file,
+                strategy=source_config.diarization_strategy,
                 nb_speakers=source_config.diarize,
             )
+        elif source_config.diarization_file:
+            # Load existing diarization from file
+            from ...voices.diarization import Diarization
+            try:
+                source_config.diarization = Diarization.load_diarization(
+                    rttm_file=source_config.diarization_file
+                )
+            except (StopIteration, FileNotFoundError):
+                # If the file doesn't exist or is empty, compute new diarization
+                source_config.diarization = compute_diarization(
+                    file_path=input_source,
+                    device=device,
+                    rttm_file=source_config.diarization_file,
+                    strategy=source_config.diarization_strategy,
+                    nb_speakers=source_config.diarize,
+                )
 
     if source_config.diarization_file:
         from ...voices.diarization import Diarization
@@ -104,6 +153,7 @@ def create_audio_source(
         start_sample=start_sample,
         end_sample=stop_sample,
         diarization=source_config.diarization,
+        preserve_channels=source_config.diarization_strategy == "stereo",
     )
 
 
@@ -152,6 +202,7 @@ def create_separate_speaker_sources(
             out_rttm_file=source_config.diarization_file,
             out_speaker_wav_prefix=working_prefix_no_ext,
             nb_speakers=nb_speakers,
+            diarization_strategy=source_config.diarization_strategy,
         )
         for _speaker, speaker_file in speaker_wav_files.items():
             sources.append(

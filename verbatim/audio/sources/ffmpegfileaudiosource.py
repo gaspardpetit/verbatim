@@ -41,6 +41,8 @@ class PyAVAudioStream(AudioStream):
             raise ValueError("No audio streams found in file.")
 
         self._stream = audio_streams[0]
+        LOG.info(f"Audio stream channels: {self._stream.channels}")
+        LOG.info(f"Preserve channels: {self.source.preserve_channels}")
         self._stream.thread_type = "AUTO"  # allow FFmpeg to use threading if beneficial
 
         # If you want to force a certain sample format, channel layout, etc.,
@@ -87,7 +89,7 @@ class PyAVAudioStream(AudioStream):
 
         resampler = av.audio.resampler.AudioResampler(  # pyright: ignore[reportAttributeAccessIssue]
             format="flt",  # float32
-            layout="mono",  # 1 channel
+            layout="stereo" if self.source.preserve_channels else "mono",  # 1 channel
             rate=16000,  # target samplerate
         )
 
@@ -124,6 +126,10 @@ class PyAVAudioStream(AudioStream):
 
         # For consistency, let's return a float32 numpy array shape (N,)
         audio_array = audio_array.astype(np.float32, copy=False)
+
+        if self.source.preserve_channels:
+            # Reshape to (samples, channels) if stereo
+            audio_array = audio_array.reshape(-1, 2)
 
         return audio_array
 
@@ -165,18 +171,21 @@ class PyAVAudioSource(AudioSource):
         target_sample_rate: int = 16000,
         start_time: float = 0.0,
         end_time: Optional[float] = None,
+        preserve_channels: bool = False,
     ):
         """
         :param file_path: Path/URL to audio file
         :param target_sample_rate: Desired sample rate for output (e.g. 16k)
         :param start_time: Seek to this time (seconds) before reading
         :param end_time: Stop reading after this time (seconds) from start
+        :param preserve_channels: If True, return audio as-is (no channel mixing)
         """
         super().__init__(source_name=file_path)
         self.file_path = file_path
         self.target_sample_rate = target_sample_rate
         self.start_time = start_time
         self.end_time = end_time
+        self.preserve_channels = preserve_channels
 
     def open(self):
         return PyAVAudioStream(source=self)
