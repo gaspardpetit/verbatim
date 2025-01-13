@@ -28,7 +28,7 @@ class TestPipeline(unittest.TestCase):
             ref_data = json.load(f)
 
         # Run verbatim pipeline
-        config: Config = Config(use_cpu=True).configure_languages(["en"])
+        config: Config = Config(device="cpu").configure_languages(["en"])
         audio_source: AudioSource = create_audio_source(input_source=test_file, device=config.device)
         verbatim: Verbatim = Verbatim(config=config)
 
@@ -75,7 +75,7 @@ class TestPipeline(unittest.TestCase):
             ref_data = json.load(f)
 
         # Run verbatim pipeline
-        config: Config = Config(use_cpu=True).configure_languages(["fr", "en"])
+        config: Config = Config(device="cpu").configure_languages(["fr", "en"])
         source_config = SourceConfig(diarize=2)
         audio_source: AudioSource = create_audio_source(input_source=test_file, device=config.device, source_config=source_config)
         verbatim: Verbatim = Verbatim(config=config)
