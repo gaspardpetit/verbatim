@@ -33,6 +33,23 @@ jobs:
             echo "No system dependencies required for Windows"
           fi
 
+      - name: Create .coveragerc dynamically
+        run: |
+          echo "[run]" > .coveragerc
+          echo "relative_files = true" >> .coveragerc
+          echo "source = verbatim" >> .coveragerc
+          echo "branch = true" >> .coveragerc
+          echo "omit = " >> .coveragerc
+          echo "    tests/*" >> .coveragerc
+          echo "[report]" >> .coveragerc
+          echo "show_missing = true" >> .coveragerc
+          echo "exclude_lines = " >> .coveragerc
+          echo "    if __name__ == .__main__.:" >> .coveragerc
+          echo "    if debug" >> .coveragerc
+          echo "[html]" >> .coveragerc
+          echo "directory = coverage_html_report" >> .coveragerc
+          echo "title = Code Coverage Report" >> .coveragerc
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
