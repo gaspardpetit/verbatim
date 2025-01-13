@@ -44,7 +44,7 @@ class Diarization:
             out_rttm_file = "out.rttm"
 
         with ProgressHook() as hook:
-            diarization:Annotation = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
+            diarization: Annotation = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
 
         # pyannote expects uri encoded uri, but simply uses the file name which may not be
         diarization.uri = parse.quote(Path(file_path).stem)

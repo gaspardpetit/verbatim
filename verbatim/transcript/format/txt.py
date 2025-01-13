@@ -114,7 +114,7 @@ class TextIOTranscriptWriter(TranscriptWriter):
                     self.formatter.format_utterance(utterance=unack, out=self.out, colours=self.unconfirmed_colors)
             if unconfirmed_words and len(unconfirmed_words) > 0:
                 self.formatter.format_utterance(
-                    utterance=Utterance.from_words(unconfirmed_words),
+                    utterance=Utterance.from_words(utterance_id="", words=unconfirmed_words),
                     out=self.out,
                     colours=self.unconfirmed_colors,
                 )
