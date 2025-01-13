@@ -44,18 +44,25 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
+            pip install coverage pytest
           else
             echo "No requirements.txt found, skipping dependencies installation"
           fi
 
       - name: Launch tests & generate report
-        run: pytest
+        run: coverage run -m pytest
+
+      - name: Generate coverage report
+        run: |
+          coverage xml -o coverage.xml
+          coverage report
 
       - name: Coverage comment
         id: coverage_comment
         uses: py-cov-action/python-coverage-comment-action@v3
         with:
           GITHUB_TOKEN: ${{ github.token }}
+          COVERAGE_PATH: .
 
       - name: Store Pull Request comment to be posted
         uses: actions/upload-artifact@v3
