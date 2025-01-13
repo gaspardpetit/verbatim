@@ -2,6 +2,8 @@ import logging
 import queue
 
 import numpy as np
+from numpy.typing import NDArray
+
 import pyaudio
 import sounddevice as sd
 
@@ -49,7 +51,7 @@ class MicAudioStreamSoundDevice(AudioStream):
             self.stream.close()
             LOG.info("Audio stream closed.")
 
-    def next_chunk(self, chunk_length=1) -> np.ndarray:
+    def next_chunk(self, chunk_length=1) -> NDArray:
         """Fetch all available audio data from the queue without blocking."""
         frames = []
         while not self.audio_queue.empty():
@@ -98,7 +100,7 @@ class MicAudioStreamPyAudio(AudioStream):
             frames_per_buffer=self.source.frames_per_buffer,
         )
 
-    def next_chunk(self, chunk_length=1) -> np.ndarray:
+    def next_chunk(self, chunk_length=1) -> NDArray:
         LOG.info(f"Recording {chunk_length} seconds of audio.")
         frames = []
         # Read exactly chunk_length seconds of audio

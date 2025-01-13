@@ -124,6 +124,16 @@ uv export --no-hashes > .\requirements.txt
 uv export --no-hashes --extra cuda_gpu > .\requirements-gpu.txt
 ```
 
+On windows, make sure the output is in utf-8, not utf-16 is it would be by default:
+
+```{powershell}
+uv export --no-hashes | Out-File -FilePath .\requirements.txt -Encoding utf8
+uv export --no-hashes --extra cuda_gpu | Out-File -FilePath .\requirements-gpu.txt -Encoding utf8
+```
+
+You can add `--no-dev` to `uv export` to ignore the dev dependencies.
+
+
 # Before submitting a change request
 
 ```

@@ -2,6 +2,7 @@ from typing import Optional
 import logging
 
 import numpy as np
+from numpy.typing import NDArray
 
 # pylint: disable=c-extension-no-member
 import av
@@ -21,10 +22,9 @@ class PyAVAudioStream(AudioStream):
         self.source = source
 
         # Internals
-        self._container: av.container.InputContainer = None
         # pylint: disable=c-extension-no-member
-        self._stream: av.audio.stream.AudioStream = None
-        self._frame_iter = None
+        self._container: av.container.InputContainer = None  # pyright: ignore[reportAttributeAccessIssue]
+        self._stream: av.audio.stream.AudioStream = None  # pyright: ignore[reportAttributeAccessIssue]
 
         # Buffer for leftover samples (when frames don't line up exactly with chunk size)
         self._sample_buffer = np.array([], dtype=np.float32)
@@ -60,11 +60,15 @@ class PyAVAudioStream(AudioStream):
 
         # We create a generator that decodes frames from the audio stream
         # This is the raw frames from the container
-        self._frame_iter = self._container.decode(self._stream)
+        frame_iter = self._container.decode(self._stream)
+        if frame_iter is None:
+            raise RuntimeError("Frame iterator is not initialized. Decoding cannot proceed.")
+        self._frame_iter = frame_iter
+
         self._done_decoding = False
         self._closed = False
 
-    def next_chunk(self, chunk_length=1) -> np.ndarray:
+    def next_chunk(self, chunk_length=1) -> NDArray:
         """
         Return `chunk_length` seconds of audio as a NumPy array, shape (N,) or (N,1).
         If not enough data is available, decode more frames from PyAV.
@@ -81,7 +85,7 @@ class PyAVAudioStream(AudioStream):
         # How many samples do we need?
         needed_samples = int(chunk_length * self.source.target_sample_rate)
 
-        resampler = av.audio.resampler.AudioResampler(
+        resampler = av.audio.resampler.AudioResampler(  # pyright: ignore[reportAttributeAccessIssue]
             format="flt",  # float32
             layout="mono",  # 1 channel
             rate=16000,  # target samplerate
@@ -109,7 +113,7 @@ class PyAVAudioStream(AudioStream):
                     break
 
             # Resample to your desired format
-            new_frames: list[av.audio.frame.AudioFrame] = resampler.resample(frame)
+            new_frames: list[av.audio.frame.AudioFrame] = resampler.resample(frame)  # pyright: ignore[reportAttributeAccessIssue]
             for new_frame in new_frames:
                 new_frame = new_frame.to_ndarray().astype(np.float32, copy=False).squeeze()
                 self._sample_buffer = np.concatenate([self._sample_buffer, new_frame])

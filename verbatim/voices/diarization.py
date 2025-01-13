@@ -1,4 +1,7 @@
 import logging
+from typing import Union
+from urllib import parse
+from pathlib import Path
 
 import torch
 from pyannote.audio import Pipeline
@@ -9,6 +12,8 @@ from pyannote.database.util import load_rttm
 
 # Configure logger
 LOG = logging.getLogger(__name__)
+
+UNKNOWN_SPEAKER = "SPEAKER"
 
 
 class Diarization:
@@ -37,12 +42,15 @@ class Diarization:
         return annotation
 
     # pylint: disable=unused-argument
-    def compute_diarization(self, file_path: str, out_rttm_file: str = None, nb_speakers: int = None) -> Annotation:
+    def compute_diarization(self, file_path: str, out_rttm_file: Union[None, str] = None, nb_speakers: Union[None, int] = None) -> Annotation:
         if not out_rttm_file:
             out_rttm_file = "out.rttm"
 
         with ProgressHook() as hook:
-            diarization = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
+            diarization: Annotation = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
+
+        # pyannote expects uri encoded uri, but simply uses the file name which may not be
+        diarization.uri = parse.quote(Path(file_path).stem)
 
         # dump the diarization output to disk using RTTM format
         with open(out_rttm_file, "w", encoding="utf-8") as rttm:

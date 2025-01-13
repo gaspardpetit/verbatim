@@ -1,15 +1,15 @@
 from abc import abstractmethod
-from typing import Union
+from typing import Optional
 
 from pyannote.core.annotation import Annotation
-import numpy as np
+from numpy.typing import NDArray
 
 
 class AudioStream:
     start_offset: int = 0
-    diarization: Union[None, Annotation] = None
+    diarization: Optional[Annotation] = None
 
-    def __init__(self, start_offset: int, diarization: Union[None, Annotation]):
+    def __init__(self, start_offset: int, diarization: Optional[Annotation]):
         self.start_offset = start_offset
         self.diarization = diarization
 
@@ -25,7 +25,7 @@ class AudioStream:
         pass
 
     @abstractmethod
-    def next_chunk(self, chunk_length=1) -> np.ndarray:
+    def next_chunk(self, chunk_length=1) -> NDArray:
         pass
 
     @abstractmethod

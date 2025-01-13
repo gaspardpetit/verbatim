@@ -1,14 +1,14 @@
-from typing import List
+from typing import List, Optional
 
 from .writer import TranscriptWriter, TranscriptWriterConfig
 from ..words import Utterance, Word
 
 
 class MultiTranscriptWriter(TranscriptWriter):
-    def __init__(self, writers: List[TranscriptWriter] = None):
+    def __init__(self, writers: Optional[List[TranscriptWriter]] = None):
         super().__init__(config=TranscriptWriterConfig())
         self.writers = []
-        if writers:
+        if writers is not None:
             self.writers += writers
 
     def get_extension(self):
@@ -25,8 +25,8 @@ class MultiTranscriptWriter(TranscriptWriter):
     def write(
         self,
         utterance: Utterance,
-        unacknowledged_utterance: List[Utterance] = None,
-        unconfirmed_words: List[Word] = None,
+        unacknowledged_utterance: Optional[List[Utterance]] = None,
+        unconfirmed_words: Optional[List[Word]] = None,
     ):
         for w in self.writers:
             w.write(

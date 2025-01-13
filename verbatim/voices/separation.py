@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Optional
 
 import numpy as np
 import scipy.io.wavfile
@@ -51,9 +51,9 @@ class SpeakerSeparation:
         self,
         *,
         file_path: str,
-        out_rttm_file: str = None,
+        out_rttm_file: Optional[str] = None,
         out_speaker_wav_prefix="",
-        nb_speakers: int = None,
+        nb_speakers: Optional[int] = None,
     ) -> Tuple[Annotation, Dict[str, str]]:
         if not out_rttm_file:
             out_rttm_file = "out.rttm"

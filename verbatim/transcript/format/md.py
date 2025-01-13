@@ -1,4 +1,4 @@
-from typing import TextIO, Union, List
+from typing import TextIO, Union, List, Optional
 from enum import Enum
 import numpy as np
 
@@ -12,6 +12,7 @@ from .writer import (
 )
 from ..formatting import format_milliseconds
 from ..words import Utterance, Word
+from ...voices.diarization import UNKNOWN_SPEAKER
 
 
 class Style(Enum):
@@ -124,7 +125,7 @@ class TranscriptFormatter:
 
         elif self.timestamp_style == TimestampStyle.minute:
             if self.last_ts is None or start_ts - self.last_ts >= 60 * 16000:
-                self.last_ts = ((start_ts / 16000) // 60) * 60 * 16000
+                self.last_ts = ((start_ts // 16000) // 60) * 60 * 16000
                 md.bold(f"[{format_milliseconds(start_ts * 1000 / 16000)}]")
                 md.append("\n\n")
 
@@ -216,9 +217,9 @@ class TranscriptFormatter:
     def format_utterance(self, utterance: Utterance, out: TextIO):
         md: MarkdownText = MarkdownText()
         self._format_timestamp(md=md, start_ts=utterance.start_ts, end_ts=utterance.end_ts)
-        self._format_speaker(md=md, speaker=utterance.speaker)
+        self._format_speaker(md=md, speaker=utterance.speaker or UNKNOWN_SPEAKER)
 
-        percentile_25 = np.percentile([w.probability for w in utterance.words], 25)
+        percentile_25 = float(np.percentile([w.probability for w in utterance.words], 25))
 
         # pylint: disable=superfluous-parens
         for i, w in enumerate(utterance.words):
@@ -234,6 +235,8 @@ class TranscriptFormatter:
 
 
 class MarkdownTranscriptWriter(TranscriptWriter):
+    out: TextIO
+
     def __init__(self, config: TranscriptWriterConfig):
         super().__init__(config)
         self.formatter: TranscriptFormatter = TranscriptFormatter(
@@ -242,7 +245,6 @@ class MarkdownTranscriptWriter(TranscriptWriter):
             speaker_style=config.speaker_style,
             probability_style=config.probability_style,
         )
-        self.out: Union[None, TextIO] = None
 
     def open(self, path_no_ext: str):
         # pylint: disable=consider-using-with
@@ -254,8 +256,8 @@ class MarkdownTranscriptWriter(TranscriptWriter):
     def write(
         self,
         utterance: Utterance,
-        unacknowledged_utterance: List[Utterance] = None,
-        unconfirmed_words: List[Word] = None,
+        unacknowledged_utterance: Optional[List[Utterance]] = None,
+        unconfirmed_words: Optional[List[Word]] = None,
     ):
         self.formatter.format_utterance(utterance=utterance, out=self.out)
         self.out.flush()

@@ -1,7 +1,8 @@
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
-import numpy as np
+from numpy.typing import NDArray
+
 from faster_whisper import WhisperModel
 from ...audio.audio import samples_to_seconds
 from ...transcript.words import Word
@@ -19,7 +20,7 @@ class FasterWhisperTranscriber(Transcriber):
         whisper_beam_size: int = 3,
         whisper_best_of: int = 3,
         whisper_patience: float = 1.0,
-        whisper_temperatures: List[float] = None,
+        whisper_temperatures: Optional[List[float]] = None,
     ):
         if whisper_temperatures is None:
             whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
@@ -43,7 +44,7 @@ class FasterWhisperTranscriber(Transcriber):
         self.whisper_patience = whisper_patience
         self.whisper_temperatures = whisper_temperatures
 
-    def guess_language(self, audio: np.array, lang: List[str]) -> Tuple[str, float]:
+    def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]:
         language, language_probability, all_language_probs = self.whisper_model.detect_language(audio=audio)
         if language in lang:
             LOG.info(f"detected '{language}' with probability {language_probability}")
@@ -63,7 +64,7 @@ class FasterWhisperTranscriber(Transcriber):
     def transcribe(
         self,
         *,
-        audio: np.array,
+        audio: NDArray,
         lang: str,
         prompt: str,
         prefix: str,
@@ -72,7 +73,7 @@ class FasterWhisperTranscriber(Transcriber):
         whisper_beam_size: int = 3,
         whisper_best_of: int = 3,
         whisper_patience: float = 1.0,
-        whisper_temperatures: List[float] = None,
+        whisper_temperatures: Optional[List[float]] = None,
     ) -> List[Word]:
         LOG.info(f"Transcription Prefix: {prefix}")
         if whisper_temperatures is None:

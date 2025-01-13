@@ -267,9 +267,9 @@ def main():
         return  # Exit if the version option is specified
 
     config: Config = Config(
-        use_cpu=args.cpu,
-        outdir=args.outdir,
-        workdir=args.workdir,
+        device="cpu" if args.cpu else "auto",
+        output_dir=args.outdir,
+        working_dir=args.workdir,
         stream=args.stream,
     )
 

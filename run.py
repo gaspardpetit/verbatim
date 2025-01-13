@@ -3,12 +3,14 @@ from verbatim.main import main
 
 sys.argv = [
     "run.py",
-    "samples/voices.wav",
+    "samples/Airfrance - Bienvenue à bord.wav",
+    "-v",
     "-w",
     "out",
     "--language",
     "en",
     "fr",
+    "--diarize",
     "--txt",
     "--md",
     "--json",

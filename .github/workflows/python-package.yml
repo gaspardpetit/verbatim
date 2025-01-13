@@ -8,10 +8,11 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.9", "3.10", "3.11"]
 
     steps:
@@ -19,9 +20,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install system dependencies
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y portaudio19-dev ffmpeg
+          if [ "$(uname)" = "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y portaudio19-dev ffmpeg
+          elif [ "$(uname)" = "Darwin" ]; then
+            brew install portaudio ffmpeg
+          else
+            echo "No system dependencies required for Windows"
+          fi
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -29,13 +37,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
+        shell: bash
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest
-          ls -lr
-          ls -l 'requirements.txt'
-          pip install -r requirements.txt || echo "No requirements.txt found, skipping dependencies installation"
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            echo "No requirements.txt found, skipping dependencies installation"
+          fi
 
-      - name: Test with pytest (and short audio only)
+      - name: Test with pytest
         run: |
           pytest -k test_diarization_metrics_short -v

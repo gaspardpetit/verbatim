@@ -51,4 +51,4 @@ class SaTSentenceTokenizer(SentenceTokenizer):
         self.sat_sm.half().to(device)
 
     def split(self, text: str) -> List[str]:
-        return self.sat_sm.split(text)
+        return self.sat_sm.split(text)  # pyright: ignore[reportReturnType]

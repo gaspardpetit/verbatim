@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 from faster_whisper.transcribe import Word as WhisperWord
 from pywhispercpp.model import Segment
@@ -29,9 +29,7 @@ class Word:
         )
 
     @classmethod
-    def from_whisper_cpp_1w_segment(
-        cls, segment: Segment, lang: str, ts_offset: int = 0
-    ) -> "Word":
+    def from_whisper_cpp_1w_segment(cls, segment: Segment, lang: str, ts_offset: int = 0) -> "Word":
         """Creates a Word instance from a WhisperCPP 1-word segment with a timestamp offset."""
         start_ts = seconds_to_samples(segment.t0 / 100) + ts_offset
         end_ts = seconds_to_samples(segment.t1 / 100) + ts_offset
@@ -46,7 +44,8 @@ class Word:
 
 @dataclass
 class Utterance:
-    speaker: str
+    utterance_id: str
+    speaker: Optional[str]
     start_ts: int
     end_ts: int
     text: str
@@ -59,8 +58,8 @@ class Utterance:
         return samples_to_seconds(self.end_ts)
 
     @classmethod
-    def from_words(cls, words: List[Word], speaker: str = None) -> "Utterance":
+    def from_words(cls, utterance_id: str, words: List[Word], speaker: Optional[str] = None) -> "Utterance":
         start_ts = words[0].start_ts
         end_ts = words[-1].end_ts
         text = "".join([w.word for w in words])
-        return cls(start_ts=start_ts, end_ts=end_ts, words=words, text=text, speaker=speaker)
+        return cls(utterance_id=utterance_id, start_ts=start_ts, end_ts=end_ts, words=words, text=text, speaker=speaker)

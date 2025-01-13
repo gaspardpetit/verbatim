@@ -1,9 +1,10 @@
 import logging
-from typing import List, Union
+from typing import List, Union, Optional
 from enum import Enum
 import numpy as np
 
-from docx import Document
+import docx
+from docx.document import Document
 from docx.text.paragraph import Paragraph
 from docx.text.run import Run
 
@@ -17,6 +18,7 @@ from .writer import (
 )
 from ..words import Utterance, Word
 from ..formatting import format_milliseconds
+from ...voices.diarization import UNKNOWN_SPEAKER
 
 
 LOG = logging.getLogger(__name__)
@@ -74,7 +76,7 @@ class DocxFormatter:
 
         elif self.timestamp_style == TimestampStyle.minute:
             if self.last_ts is None or start_ts - self.last_ts >= 60 * 16000:
-                self.last_ts = ((start_ts / 16000) // 60) * 60 * 16000
+                self.last_ts = ((start_ts // 16000) // 60) * 60 * 16000
                 md.bold(f"[{format_milliseconds(start_ts * 1000 / 16000)}]")
                 md.append("\n")
 
@@ -151,9 +153,9 @@ class DocxFormatter:
         paragraph: Paragraph = out.add_paragraph()
         md: DocxParagraph = DocxParagraph(paragraph=paragraph)
         self._format_timestamp(md=md, start_ts=utterance.start_ts, end_ts=utterance.end_ts)
-        self._format_speaker(md=md, speaker=utterance.speaker)
+        self._format_speaker(md=md, speaker=utterance.speaker or UNKNOWN_SPEAKER)
 
-        percentile_25 = np.percentile([w.probability for w in utterance.words], 25)
+        percentile_25: float = float(np.percentile([w.probability for w in utterance.words], 25))
 
         # pylint: disable=superfluous-parens
         for i, w in enumerate(utterance.words):
@@ -175,7 +177,7 @@ def write_docx(
     language_style: LanguageStyle,
     output_file: str,
 ) -> None:
-    doc = Document()
+    doc = docx.Document()
 
     formatter: DocxFormatter = DocxFormatter(
         speaker_style=speaker_style,
@@ -191,10 +193,12 @@ def write_docx(
 
 
 class DocxTranscriptWriter(TranscriptWriter):
+    output_file: str
+    utterances: List[Utterance]
+
     def __init__(self, config: TranscriptWriterConfig):
         super().__init__(config)
         self.utterances = []
-        self.output_file = None
 
     def open(self, path_no_ext: str):
         self.output_file = f"{path_no_ext}.docx"
@@ -202,8 +206,8 @@ class DocxTranscriptWriter(TranscriptWriter):
     def write(
         self,
         utterance: Utterance,
-        unacknowledged_utterance: List[Utterance] = None,
-        unconfirmed_words: List[Word] = None,
+        unacknowledged_utterance: Optional[List[Utterance]] = None,
+        unconfirmed_words: Optional[List[Word]] = None,
     ):
         self.utterances.append(utterance)
 
