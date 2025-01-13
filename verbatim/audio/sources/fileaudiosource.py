@@ -49,10 +49,22 @@ class FileAudioStream(AudioStream):
         if len(audio_array) == 0:
             return audio_array
 
-        audio_array = format_audio(audio_array, from_sampling_rate=self.stream.getframerate())
+        # Convert to float32
+        audio_array = audio_array.astype(np.float32) / 32768.0
 
-        LOG.info("Finished reading audio chunk from file.")
-        return audio_array
+        if hasattr(self.source, 'preserve_channels') and self.source.preserve_channels:
+            # For diarization purposes, return stereo
+            return audio_array
+        else:
+            # For transcription, convert to mono by averaging channels
+            if audio_array.shape[1] > 1:
+                audio_array = np.mean(audio_array, axis=1)
+
+            # Apply any additional formatting (resampling, etc.)
+            audio_array = format_audio(audio_array, from_sampling_rate=self.stream.getframerate())
+
+            return audio_array
+
 
     def has_more(self):
         current_frame = self.stream.tell()
@@ -66,9 +78,7 @@ class FileAudioStream(AudioStream):
 
 
 class FileAudioSource(AudioSource):
-    diarization: Optional[Annotation]
-    speaker_audio: Dict[str, NDArray]
-    stream: wave.Wave_read
+    diarization: Annotation
 
     def __init__(
         self,
@@ -76,10 +86,12 @@ class FileAudioSource(AudioSource):
         diarization: Optional[Annotation],
         start_sample: int = 0,
         end_sample: Optional[int] = None,
+        preserve_channels: bool = False,
     ):
         super().__init__(source_name=file)
         self.file_path = file
         self.diarization = diarization
+        self.preserve_channels = preserve_channels
         file_path_no_ext, file_path_ext = os.path.splitext(self.file_path)
         if file_path_ext in COMPATIBLE_FORMATS:
             # Convert mp3 to wav
@@ -90,15 +102,7 @@ class FileAudioSource(AudioSource):
         self.start_sample = start_sample
 
     @staticmethod
-    def compute_diarization(file_path: str, device: str, rttm_file: Optional[str] = None, nb_speakers: Optional[int] = None) -> Annotation:
-        if nb_speakers == 0:
-            nb_speakers = None
-        with Diarization(device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN", "")) as diarization:
-            annotation = diarization.compute_diarization(file_path=file_path, out_rttm_file=rttm_file, nb_speakers=nb_speakers)
-            return annotation
-
-    @staticmethod
-    def isolate_voices(file_path: str, out_path_prefix: Optional[str] = None) -> Tuple[str, str]:
+    def isolate_voices(file_path: str, out_path_prefix: str = None) -> Tuple[str, str]:
         LOG.info("Initializing Voice Isolation Model.")
         with VoiceIsolation(log_level=LOG.level) as voice_separator:
             if not out_path_prefix:
