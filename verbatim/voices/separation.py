@@ -55,7 +55,7 @@ class SpeakerSeparation:
         file_path: str,
         out_rttm_file: Optional[str] = None,
         out_speaker_wav_prefix="",
-        nb_speakers: int = None,
+        nb_speakers: Optional[int] = None,
         diarization_strategy: str = "pyannote",
     ) -> Tuple[Annotation, Dict[str, str]]:
         """

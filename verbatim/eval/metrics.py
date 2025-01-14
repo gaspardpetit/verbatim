@@ -3,16 +3,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import dataclasses
-from typing import Any, Dict, Optional
-import numpy as np
-from scipy import optimize
-import tqdm
 import logging
+from typing import Any, Dict, Optional
 
+import numpy as np
+import tqdm
 import word_levenshtein as levenshtein
+from scipy import optimize
 
 from . import utils
-
 
 LOG = logging.getLogger(__name__)
 
@@ -22,7 +21,7 @@ def calculate_metrics(hyp_data: Dict, ref_data: Dict) -> Dict:
     data = {}
 
     # Validate speaker-text alignment
-    for i, utt in enumerate(ref_data["utterances"]):
+    for _i, utt in enumerate(ref_data["utterances"]):
         if len(utt["ref_text"].split()) != len(utt["ref_spk"].split()):
             raise ValueError(
                 f"Utterance {utt['utterance_id']} has mismatched lengths:\n"
@@ -127,7 +126,10 @@ def compute_wer(hyp_text: str, ref_text: str) -> tuple[UtteranceMetrics, list[tu
                 result.wer_sub += 1
 
     result.wer_total = result.wer_correct + result.wer_sub + result.wer_delete
-    assert result.wer_total == len(ref_words)
+
+    if result.wer_total != len(ref_words):
+        raise ValueError(f"WER total mismatch: expected {len(ref_words)}, got {result.wer_total}. " f"Check the alignment and input normalization.")
+
     return result, align
 
 
@@ -173,7 +175,7 @@ def compute_utterance_metrics(
             hyp_spk_list_align.append(hyp_spk_list[j])
 
     # Build cost matrix.
-    max_spk = max(max(ref_spk_list_align), max(hyp_spk_list_align))
+    max_spk = max(*ref_spk_list_align, *hyp_spk_list_align)
     cost_matrix = np.zeros((max_spk, max_spk), dtype=int)
     for aligned, original in zip(ref_spk_list_align, hyp_spk_list_align):
         cost_matrix[aligned - 1, original - 1] += 1

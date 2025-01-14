@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 import logging
 from pyannote.core.annotation import Annotation
 
@@ -9,7 +10,7 @@ class DiarizationStrategy(ABC):
     """Base class for all diarization strategies"""
 
     @abstractmethod
-    def compute_diarization(self, file_path: str, out_rttm_file: str = None, **kwargs) -> Annotation:
+    def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, **kwargs) -> Annotation:
         """
         Compute speaker diarization for the given audio file.
 
@@ -21,7 +22,6 @@ class DiarizationStrategy(ABC):
         Returns:
             PyAnnote Annotation object containing speaker segments
         """
-        pass
 
     def save_rttm(self, annotation: Annotation, out_rttm_file: str):
         """Save annotation to RTTM file"""

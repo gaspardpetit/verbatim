@@ -167,6 +167,7 @@ class PyAVAudioSource(AudioSource):
 
     def __init__(
         self,
+        *,
         file_path: str,
         target_sample_rate: int = 16000,
         start_time: float = 0.0,
