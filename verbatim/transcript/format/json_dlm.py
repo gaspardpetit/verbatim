@@ -1,5 +1,5 @@
 import json
-from typing import List, TextIO, Union, Dict
+from typing import List, TextIO, Union, Dict, Optional
 
 from .writer import TranscriptWriter, TranscriptWriterConfig
 from ..words import Utterance, Word
@@ -14,7 +14,7 @@ class JsonDiarizationLMTranscriptWriter(TranscriptWriter):
         self.speaker_map: Dict[str, str] = {}
         self.next_speaker_id = 1
 
-    def _get_speaker_id(self, speaker: str) -> str:
+    def _get_speaker_id(self, speaker: Optional[str]) -> str:
         """Convert SPEAKER_XX format to simple numbered format (1, 2, 3, etc)"""
         if not speaker:
             return "1"  # Default speaker ID
@@ -26,6 +26,7 @@ class JsonDiarizationLMTranscriptWriter(TranscriptWriter):
 
     def open(self, path_no_ext: str):
         print(f"Opening {path_no_ext}.utt.json")
+        # pylint: disable=consider-using-with
         self.out = open(f"{path_no_ext}.utt.json", "w", encoding="utf-8")
         self.utterances = []
         self.utterance_counter = 0
@@ -39,8 +40,8 @@ class JsonDiarizationLMTranscriptWriter(TranscriptWriter):
     def write(
         self,
         utterance: Utterance,
-        unacknowledged_utterance: Union[List[Utterance],None] = None,
-        unconfirmed_words: Union[List[Word],None] = None,
+        unacknowledged_utterance: Union[List[Utterance], None] = None,
+        unconfirmed_words: Union[List[Word], None] = None,
     ):
         text = utterance.text.strip()
         # Convert speaker IDs

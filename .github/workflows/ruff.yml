@@ -46,4 +46,4 @@ jobs:
 
       - name: Analyse the code with Ruff
         run: |
-          ruff check $(git ls-files '*.py')
+          ruff check verbatim tests

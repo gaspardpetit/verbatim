@@ -10,6 +10,7 @@ from .base import DiarizationStrategy
 
 LOG = logging.getLogger(__name__)
 
+
 class StereoDiarization(DiarizationStrategy):
     def __init__(self, energy_ratio_threshold: float = 1.1):
         self.energy_ratio_threshold = energy_ratio_threshold
@@ -72,13 +73,12 @@ class StereoDiarization(DiarizationStrategy):
 
         if out_rttm_file:
             # Make sure the directory exists
-            os.makedirs(os.path.dirname(out_rttm_file) or '.', exist_ok=True)
-            with open(out_rttm_file, 'w', encoding='utf-8') as f:
+            os.makedirs(os.path.dirname(out_rttm_file) or ".", exist_ok=True)
+            with open(out_rttm_file, "w", encoding="utf-8") as f:
                 for segment, track, label in annotation.itertracks(yield_label=True):
                     # RTTM format:
                     # Type File_ID Channel_ID Start Duration Speaker_Type Score Speaker_Name
-                    f.write(f"SPEAKER {uri} 1 {segment.start:.3f} {segment.duration:.3f} "
-                           f"<NA> <NA> {label} <NA> <NA>\n")
+                    f.write(f"SPEAKER {uri} 1 {segment.start:.3f} {segment.duration:.3f} " f"<NA> <NA> {label} <NA> <NA>\n")
 
             LOG.info(f"Wrote diarization to RTTM file: {out_rttm_file}")
 
