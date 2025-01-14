@@ -270,7 +270,7 @@ def main():
     config: Config = Config(
         device="cpu" if args.cpu else "auto",
         output_dir=args.outdir,
-        working_dir=args.workdir,
+        working_dir=args.workdir if args.workdir is not None else "",
         stream=args.stream,
     )
 

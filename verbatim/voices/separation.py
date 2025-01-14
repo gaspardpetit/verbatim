@@ -100,7 +100,7 @@ class SpeakerSeparation:
         else:
             # Use PyAnnote's neural separation for mono files
             with ProgressHook() as hook:
-                diarization, sources = self.pipeline(file_path, hook=hook)
+                diarization, sources = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
 
             # Save diarization to RTTM file
             with open(out_rttm_file, "w", encoding="utf-8") as rttm:

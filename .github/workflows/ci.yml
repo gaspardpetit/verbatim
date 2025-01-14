@@ -19,7 +19,7 @@ jobs:
       # comments (to avoid publishing multiple comments in the same PR)
       contents: write
     env:  # Define environment variables for the entire job
-      HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}  # Inject the secret
+      HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}  # Inject HuggingFace token to pull gated models
     steps:
       - uses: actions/checkout@v3
 

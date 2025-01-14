@@ -170,6 +170,17 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-out/
+# VS Code
 .vscode
+
+# Project-specific
+out/
+
+# For private audio samples
+samples/private
+
+# Mac OS X
+.DS_Store
+
+# Temporary files
 tmp
