@@ -170,8 +170,18 @@ class State:
     def append_audio_to_window(self, audio_chunk: NDArray):
         # Convert stereo to mono if necessary
         LOG.debug(f"Audio chunk shape before mono conversion: {audio_chunk.shape}")
+
+        # Handle empty audio chunks
+        if audio_chunk.size == 0:
+            LOG.debug("Received empty audio chunk, skipping")
+            return
+
         if len(audio_chunk.shape) > 1 and audio_chunk.shape[1] > 1:
             audio_chunk = np.mean(audio_chunk, axis=1)
+
+        # Ensure the array is 1D
+        audio_chunk = audio_chunk.ravel()
+
         LOG.debug(f"Audio chunk shape after mono conversion: {audio_chunk.shape}")
 
         chunk_size = len(audio_chunk)
@@ -559,7 +569,10 @@ class Verbatim:
         None,
         None,
     ]:
-        while True:
+        max_retries = 3
+        retry_count = 0
+
+        while retry_count < max_retries:
             # minimum number of samples to attempt transcription
             min_audio_duration_samples = 16000
             min_speech_duration_ms = 500
@@ -575,65 +588,83 @@ class Verbatim:
             if self.state.audio_ts - self.state.window_ts < min_audio_duration_samples:
                 return
 
-            if self.config.debug:
-                self.dump_window_to_file(filename=f"{self.state.working_prefix_no_ext}-debug_window.wav")  # Dump current window for debugging
+            try:
+                if self.config.debug:
+                    self.dump_window_to_file(filename=f"{self.state.working_prefix_no_ext}-debug_window.wav")  # Dump current window for debugging
 
-            confirmed_words, unconfirmed_words = self.transcribe_window()
-            self.state.unconfirmed_words = unconfirmed_words
-            if len(confirmed_words) > 0:
-                utterances = self.words_to_sentences(
-                    word_tokenizer=self.models.sentence_tokenizer,
-                    window_words=confirmed_words,
-                    id_provider=self.state.utterance_id,
-                )
-                acknowledged_utterances, confirmed_utterances = self.acknowledge_utterances(utterances=utterances)
+                confirmed_words, unconfirmed_words = self.transcribe_window()
 
-                if audio_stream.diarization:
-                    for acknowledged_utterance in acknowledged_utterances:
-                        acknowledged_utterance.speaker = self.assign_speaker(acknowledged_utterance, audio_stream.diarization)
+                if not confirmed_words and not unconfirmed_words:
+                    LOG.warning("No words were transcribed int this window.")
+                    self.state.advance_audio_window(min_audio_duration_samples)
+                    retry_count += 1
+                    continue
 
-                self.state.acknowledged_utterances += acknowledged_utterances
-                self.state.unacknowledged_utterances = confirmed_utterances
-
-                for i, utterance in enumerate(acknowledged_utterances):
-                    yield (
-                        utterance,
-                        acknowledged_utterances[i + 1 :] + confirmed_utterances,
-                        unconfirmed_words,
+                self.state.unconfirmed_words = unconfirmed_words
+                if len(confirmed_words) > 0:
+                    utterances = self.words_to_sentences(
+                        word_tokenizer=self.models.sentence_tokenizer,
+                        window_words=confirmed_words,
+                        id_provider=self.state.utterance_id,
                     )
+                    acknowledged_utterances, confirmed_utterances = self.acknowledge_utterances(utterances=utterances)
 
-                if len(acknowledged_utterances) > 0:
-                    for u in acknowledged_utterances:
-                        self.state.acknowledged_words += u.words
+                    if audio_stream.diarization:
+                        for acknowledged_utterance in acknowledged_utterances:
+                            acknowledged_utterance.speaker = self.assign_speaker(acknowledged_utterance, audio_stream.diarization)
 
-                    # utterances are split at short pauses, advance a bit to avoid repeating the last word
-                    # but not too much as to skip the first word of the next utterance
-                    utterance_padding_ms = 100
-                    utterance_padding_samples = utterance_padding_ms * 16000 // 1000
+                    self.state.acknowledged_utterances += acknowledged_utterances
+                    self.state.unacknowledged_utterances = confirmed_utterances
 
-                    self.state.acknowledged_ts = acknowledged_utterances[-1].end_ts + utterance_padding_samples
+                    for i, utterance in enumerate(acknowledged_utterances):
+                        yield (
+                            utterance,
+                            acknowledged_utterances[i + 1 :] + confirmed_utterances,
+                            unconfirmed_words,
+                        )
+
+                    if len(acknowledged_utterances) > 0:
+                        for u in acknowledged_utterances:
+                            self.state.acknowledged_words += u.words
+
+                        # utterances are split at short pauses, advance a bit to avoid repeating the last word
+                        # but not too much as to skip the first word of the next utterance
+                        utterance_padding_ms = 100
+                        utterance_padding_samples = utterance_padding_ms * 16000 // 1000
+
+                        self.state.acknowledged_ts = acknowledged_utterances[-1].end_ts + utterance_padding_samples
+                        self.state.skip_silences = True
+                else:
+                    acknowledged_utterances = []
+                    confirmed_utterances = []
+
+                outstr = StringIO()
+                self.pretty_print_transcript(
+                    acknowledged_utterances=[],
+                    unacknowledged_utterances=confirmed_utterances,
+                    unconfirmed_words=unconfirmed_words,
+                    file=outstr,
+                )
+                LOG.info(outstr.getvalue())
+
+                self.state.acknowledged_words = WhisperHistory.advance_transcript(
+                    timestamp=self.state.window_ts, transcript=self.state.acknowledged_words
+                )
+
+                if self.state.acknowledged_ts > self.state.window_ts:
+                    shift_amount = self.state.acknowledged_ts - self.state.window_ts
+                    self.state.advance_audio_window(shift_amount)
                     self.state.skip_silences = True
-            else:
-                acknowledged_utterances = []
-                confirmed_utterances = []
 
-            outstr = StringIO()
-            self.pretty_print_transcript(
-                acknowledged_utterances=[],
-                unacknowledged_utterances=confirmed_utterances,
-                unconfirmed_words=unconfirmed_words,
-                file=outstr,
-            )
-            LOG.info(outstr.getvalue())
-
-            self.state.acknowledged_words = WhisperHistory.advance_transcript(
-                timestamp=self.state.window_ts, transcript=self.state.acknowledged_words
-            )
-
-            if self.state.acknowledged_ts > self.state.window_ts:
-                shift_amount = self.state.acknowledged_ts - self.state.window_ts
-                self.state.advance_audio_window(shift_amount)
-                self.state.skip_silences = True
+            except Exception as e:
+                LOG.error(f"Error processing audio window: {e}")
+                retry_count += 1
+                self.state.advance_audio_window(min_audio_duration_samples)
+                if retry_count >= max_retries:
+                    LOG.error("Max retries reached, skipping this audio section.")
+                    self.state.append_audio_to_window(self.state.audio_ts - self.state.window_ts)
+                    break
+                continue
 
             if len(acknowledged_utterances) <= 1:
                 break
@@ -645,6 +676,12 @@ class Verbatim:
         next_chunk = self.get_next_number_of_chunks()
         LOG.debug(f"capturing {next_chunk} chunks of audio")
         audio_array = audio_source.next_chunk(next_chunk)
+
+        # Add validation check
+        if audio_array is None or audio_array.size == 0:
+            LOG.warning("Received empty audio chunk")
+            return False
+
         self.state.append_audio_to_window(audio_array)
         return True
 
