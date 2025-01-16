@@ -93,6 +93,7 @@ class TranscriptFormatter:
         elif self.timestamp_style == TimestampStyle.minute:
             if self.last_ts is None or start_ts - self.last_ts >= 60 * 16000:
                 self.last_ts = ((start_ts // 16000) // 60) * 60 * 16000
+                out.write("\n")
                 out.write(colours.color_timestamp)
                 out.write(f"[{format_milliseconds(start_ts * 1000 / 16000)}]")
                 out.write(colours.color_reset)
