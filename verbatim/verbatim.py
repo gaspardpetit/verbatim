@@ -28,6 +28,13 @@ from .transcript.format.txt import (
     COLORSCHEME_UNCONFIRMED,
 )
 
+from .transcript.format.writer import (
+    SpeakerStyle,
+    TimestampStyle,
+    ProbabilityStyle,
+    LanguageStyle,
+)
+
 # pylint: disable=unused-import
 from .voices.transcribe.transcribe import APPEND_PUNCTUATIONS, PREPEND_PUNCTUATIONS
 
@@ -423,7 +430,12 @@ class Verbatim:
         unconfirmed_words: List[Word],
         file: TextIO = sys.stdout,
     ):
-        formatter: TranscriptFormatter = TranscriptFormatter()
+        formatter: TranscriptFormatter = TranscriptFormatter(
+            speaker_style=SpeakerStyle.always,
+            timestamp_style=TimestampStyle.range,
+            probability_style=ProbabilityStyle.word,
+            language_style=LanguageStyle.always
+            )
         file.write(
             f"[{samples_to_seconds(self.state.window_ts)}/"
             f"{samples_to_seconds(self.state.audio_ts - self.state.acknowledged_ts)}/"
