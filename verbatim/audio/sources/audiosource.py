@@ -1,11 +1,11 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Optional
 
 from pyannote.core.annotation import Annotation
 from numpy.typing import NDArray
 
 
-class AudioStream:
+class AudioStream(ABC):
     start_offset: int = 0
     diarization: Optional[Annotation] = None
 
@@ -37,7 +37,7 @@ class AudioStream:
         pass
 
 
-class AudioSource:
+class AudioSource(ABC):
     source_name: str = ""
 
     def __init__(self, source_name: str):
