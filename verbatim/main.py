@@ -151,7 +151,9 @@ def main():
     )
     parser.add_argument(
         "--separate",
-        action="store_true",
+        nargs="?",
+        action=OptionalValueAction,
+        default=None,
         help="Enables speaker voice separation and process each speaker separately",
     )
     parser.add_argument(
@@ -324,6 +326,7 @@ def main():
     audio_sources: List[AudioSource] = []
     if args.separate:
         audio_sources += create_separate_speaker_sources(
+            strategy=args.separate or "pyannote",
             source_config=source_config,
             device=config.device,
             input_source=source_path,

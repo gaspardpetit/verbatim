@@ -4,24 +4,35 @@ from typing import Tuple, Dict, Optional
 import numpy as np
 import scipy.io.wavfile
 import torch
+
 from pyannote.audio import Pipeline
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 from pyannote.core.annotation import Annotation
 
-from ..audio.audio import wav_to_int16
-from .diarize.factory import create_diarizer
+from .separate import SeparationStrategy
+
+from ...audio.audio import wav_to_int16
+from ..diarize.factory import create_diarizer
 
 # Configure logger
 LOG = logging.getLogger(__name__)
 
 
-class SpeakerSeparation:
-    def __init__(self, device: str, huggingface_token: str):
+class PyannoteSpeakerSeparation(SeparationStrategy):
+    def __init__(
+            self,
+            device: str,
+            huggingface_token: str,
+            separation_model="pyannote/speech-separation-ami-1.0",
+            diarization_strategy: str = "pyannote",
+            **kwargs):
+        super().__init__()
         LOG.info("Initializing Separation Pipeline.")
+        self.diarization_strategy = diarization_strategy
         self.device = device
         self.huggingface_token = huggingface_token
         self.pipeline = Pipeline.from_pretrained(
-            "pyannote/speech-separation-ami-1.0",
+            checkpoint_path=separation_model,
             use_auth_token=self.huggingface_token,
         )
         hyper_parameters = {
@@ -41,7 +52,7 @@ class SpeakerSeparation:
 
         self.pipeline.to(torch.device(device))
 
-    def __enter__(self) -> "SpeakerSeparation":
+    def __enter__(self) -> "PyannoteSpeakerSeparation":
         return self
 
     def __exit__(self, ex_type, ex_value, ex_traceback):
@@ -56,7 +67,6 @@ class SpeakerSeparation:
         out_rttm_file: Optional[str] = None,
         out_speaker_wav_prefix="",
         nb_speakers: Optional[int] = None,
-        diarization_strategy: str = "pyannote",
     ) -> Tuple[Annotation, Dict[str, str]]:
         """
         Separate speakers in an audio file.
@@ -66,7 +76,6 @@ class SpeakerSeparation:
             out_rttm_file: Path to output RTTM file
             out_speaker_wav_prefix: Prefix for output WAV files
             nb_speakers: Optional number of speakers
-            diarization_strategy: Diarization strategy to use ('pyannote' or 'stereo')
 
         Returns:
             Tuple of (diarization annotation, dictionary mapping speaker IDs to WAV files)
@@ -75,7 +84,7 @@ class SpeakerSeparation:
             out_rttm_file = "out.rttm"
 
         # For stereo strategy, we might want to handle separation differently
-        if diarization_strategy == "stereo":
+        if self.diarization_strategy == "stereo":
             # For stereo files, we can simply split the channels
             sample_rate, audio_data = scipy.io.wavfile.read(file_path)
             if audio_data.ndim != 2 or audio_data.shape[1] != 2:
