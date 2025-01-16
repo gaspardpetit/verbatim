@@ -16,7 +16,7 @@ LOG = logging.getLogger(__name__)
 class MicAudioStreamSoundDevice(AudioStream):
     source: "MicAudioSourceSoundDevice"
     audio_queue: queue.Queue
-    stream = None
+    stream:sd.InputStream
 
     def __init__(self, source: "MicAudioSourceSoundDevice"):
         super().__init__(start_offset=0, diarization=None)
@@ -71,6 +71,11 @@ class MicAudioStreamSoundDevice(AudioStream):
 
     def has_more(self):
         return True
+
+    def get_nchannels(self) -> int:
+        stream:sd.InputStream = self.stream
+        idevice, odevice = stream.channels
+        return idevice
 
 
 class MicAudioSourceSoundDevice(AudioSource):

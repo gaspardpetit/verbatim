@@ -32,6 +32,10 @@ class AudioStream:
     def close(self):
         pass
 
+    @abstractmethod
+    def get_nchannels(self) -> int:
+        pass
+
 
 class AudioSource:
     source_name: str = ""
