@@ -34,6 +34,8 @@ COLORSCHEME_ACKNOWLEDGED = ColorScheme(
     color_speaker=Fore.LIGHTBLUE_EX,
     color_language=Fore.LIGHTYELLOW_EX,
     color_text=Fore.LIGHTGREEN_EX,
+    color_text_lowconfidence = Fore.LIGHTYELLOW_EX,
+    color_text_verylowconfidence = Fore.LIGHTRED_EX,
     color_reset=Style.RESET_ALL,
 )
 
@@ -42,6 +44,8 @@ COLORSCHEME_UNACKNOWLEDGED = ColorScheme(
     color_speaker=Fore.BLUE,
     color_language=Fore.YELLOW,
     color_text=Fore.GREEN,
+    color_text_lowconfidence = Fore.LIGHTYELLOW_EX,
+    color_text_verylowconfidence = Fore.LIGHTRED_EX,
     color_reset=Style.RESET_ALL,
 )
 
@@ -50,6 +54,8 @@ COLORSCHEME_UNCONFIRMED = ColorScheme(
     color_speaker=Fore.BLUE,
     color_language=Fore.YELLOW,
     color_text=Fore.LIGHTBLACK_EX,
+    color_text_lowconfidence = Fore.LIGHTBLACK_EX,
+    color_text_verylowconfidence = Fore.LIGHTBLACK_EX,
     color_reset=Style.RESET_ALL,
 )
 
@@ -59,6 +65,8 @@ COLORSCHEME_NONE = ColorScheme(
     color_language="",
     color_text="",
     color_reset="",
+    color_text_lowconfidence = "",
+    color_text_verylowconfidence = "",
 )
 
 
@@ -178,7 +186,9 @@ class TranscriptFormatter:
             out.write(word)
             out.write(colours.color_reset)
         else:
+            out.write(colours.color_text)
             out.write(word)
+            out.write(colours.color_reset)
 
     def format_utterance(self, utterance: Utterance, out: TextIO, colours: ColorScheme):
         self._format_timestamp(out=out, start_ts=utterance.start_ts, end_ts=utterance.end_ts, colours=colours)
@@ -196,7 +206,7 @@ class TranscriptFormatter:
                 utterance_probability=percentile_25,
                 colours=colours
             )
-        out.write("\n\n")
+        out.write("\n")
 
 class TextIOTranscriptWriter(TranscriptWriter):
     out: TextIO
