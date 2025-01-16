@@ -1,5 +1,5 @@
 import logging
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import List
 import re
 from wtpsplit import SaT
@@ -8,7 +8,7 @@ from wtpsplit import SaT
 LOG = logging.getLogger(__name__)
 
 
-class SentenceTokenizer:
+class SentenceTokenizer(ABC):
     @abstractmethod
     def split(self, text: str) -> List[str]:
         pass

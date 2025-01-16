@@ -1,5 +1,5 @@
 import logging
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import List, Tuple, Optional
 
 from numpy.typing import NDArray
@@ -24,7 +24,7 @@ class WhisperConfig:
         self.compression_ratio_threshold = 2.4
 
 
-class Transcriber:
+class Transcriber(ABC):
     @abstractmethod
     def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]:
         pass
