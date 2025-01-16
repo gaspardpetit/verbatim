@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple, Dict, Optional
+from typing import List, Optional
 
 import numpy as np
 import scipy.io.wavfile
@@ -7,10 +7,10 @@ import torch
 
 from pyannote.audio import Pipeline
 from pyannote.audio.pipelines.utils.hook import ProgressHook
-from pyannote.core.annotation import Annotation
 
 from .separate import SeparationStrategy
 
+from ...audio.sources.fileaudiosource import FileAudioSource
 from ...audio.audio import wav_to_int16
 from ..diarize.factory import create_diarizer
 
@@ -67,7 +67,9 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         out_rttm_file: Optional[str] = None,
         out_speaker_wav_prefix="",
         nb_speakers: Optional[int] = None,
-    ) -> Tuple[Annotation, Dict[str, str]]:
+        start_sample: int = 0,
+        end_sample: Optional[int] = None,
+    ) -> List[FileAudioSource]:
         """
         Separate speakers in an audio file.
 
@@ -80,6 +82,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         Returns:
             Tuple of (diarization annotation, dictionary mapping speaker IDs to WAV files)
         """
+        separated_sources: List[FileAudioSource] = []
         if not out_rttm_file:
             out_rttm_file = "out.rttm"
 
@@ -95,16 +98,20 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             diarization = diarizer.compute_diarization(file_path=file_path, out_rttm_file=out_rttm_file, nb_speakers=nb_speakers)
 
             # Split channels into separate files
-            speaker_wav_files = {}
             for channel, speaker in enumerate(["SPEAKER_0", "SPEAKER_1"]):
                 channel_data = audio_data[:, channel]
                 if channel_data.dtype != np.int16:
                     channel_data = wav_to_int16(channel_data)
                 file_name = f"{out_speaker_wav_prefix}-{speaker}.wav" if out_speaker_wav_prefix else f"{speaker}.wav"
-                speaker_wav_files[speaker] = file_name
                 scipy.io.wavfile.write(file_name, sample_rate, channel_data)
-
-            return diarization, speaker_wav_files
+                separated_sources.append(
+                        FileAudioSource(
+                            file=file_name,
+                            start_sample=start_sample,
+                            end_sample=end_sample,
+                            diarization=diarization,
+                        )
+                )
 
         else:
             # Use PyAnnote's neural separation for mono files
@@ -116,16 +123,22 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
                 diarization.write_rttm(rttm)
 
             # Save separated sources to WAV files
-            speaker_wav_files = {}
             for s, speaker in enumerate(diarization.labels()):
                 if s < sources.data.shape[1]:
                     speaker_data = sources.data[:, s]
                     if speaker_data.dtype != np.int16:
                         speaker_data = wav_to_int16(speaker_data)
                     file_name = f"{out_speaker_wav_prefix}-{speaker}.wav" if out_speaker_wav_prefix else f"{speaker}.wav"
-                    speaker_wav_files[speaker] = file_name
                     scipy.io.wavfile.write(file_name, 16000, speaker_data)
+                    separated_sources.append(
+                        FileAudioSource(
+                            file=file_name,
+                            start_sample=start_sample,
+                            end_sample=end_sample,
+                            diarization=diarization,
+                        )
+                    )
                 else:
                     LOG.debug(f"Skipping speaker {s} as it is out of bounds.")
 
-            return diarization, speaker_wav_files
+        return separated_sources

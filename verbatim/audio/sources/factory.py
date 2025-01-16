@@ -197,10 +197,6 @@ def create_separate_speaker_sources(
     start_sample: int = timestr_to_samples(start_time) if start_time else 0
     stop_sample: Optional[int] = timestr_to_samples(stop_time) if stop_time else None
 
-    from .fileaudiosource import FileAudioSource
-
-    sources: List[AudioSource] = []
-
     from ...voices.separate.factory import create_separator
 
     with create_separator(
@@ -208,20 +204,13 @@ def create_separate_speaker_sources(
         device=device,
         huggingface_token=os.getenv("HUGGINGFACE_TOKEN", ""),
         diarization_strategy=source_config.diarization_strategy) as separation:
-        diarization, speaker_wav_files = separation.separate_speakers(
+        sources = separation.separate_speakers(
             file_path=input_source,
             out_rttm_file=source_config.diarization_file,
             out_speaker_wav_prefix=working_prefix_no_ext,
             nb_speakers=nb_speakers,
+            start_sample=start_sample,
+            end_sample=stop_sample
         )
-        for _speaker, speaker_file in speaker_wav_files.items():
-            sources.append(
-                FileAudioSource(
-                    file=speaker_file,
-                    start_sample=start_sample,
-                    end_sample=stop_sample,
-                    diarization=diarization,
-                )
-            )
 
     return sources
