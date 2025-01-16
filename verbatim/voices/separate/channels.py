@@ -1,10 +1,13 @@
 import logging
-from typing import Tuple, Dict, Optional
+from typing import List, Optional
 import scipy.io.wavfile
 import numpy as np
 from pyannote.core.annotation import Annotation
+from pyannote.core.segment import Segment
 
 from .separate import SeparationStrategy
+from ...audio.sources.audiosource import AudioSource
+from ...audio.sources.fileaudiosource import FileAudioSource
 
 from ...audio.audio import wav_to_int16
 
@@ -23,7 +26,9 @@ class ChannelSeparation(SeparationStrategy):
         out_rttm_file: Optional[str] = None,
         out_speaker_wav_prefix="",
         nb_speakers: Optional[int] = None,
-    ) -> Tuple[Annotation, Dict[str, str]]:
+        start_sample: int = 0,
+        end_sample: Optional[int] = None,
+    ) -> List[AudioSource]:
         """
         Separate speakers based on audio channels.
 
@@ -48,11 +53,8 @@ class ChannelSeparation(SeparationStrategy):
         num_channels = audio_data.shape[1]
         LOG.info(f"Detected {num_channels} channel(s) in the audio file.")
 
-        # Create diarization annotation
-        annotation = Annotation()
-        speaker_wav_files = {}
-
         # Process each channel
+        results:List[AudioSource] = []
         for channel_idx in range(num_channels):
             speaker_label = f"SPEAKER_{channel_idx}"
 
@@ -73,17 +75,22 @@ class ChannelSeparation(SeparationStrategy):
             # Save the channel as a mono WAV file
             LOG.info(f"Saving channel {channel_idx} to file: {file_name}")
             scipy.io.wavfile.write(file_name, sample_rate, channel_data)
-            
-            # Add to speaker file mapping
-            speaker_wav_files[speaker_label] = file_name
 
             # Update annotation (simplified example)
-            annotation[0, len(channel_data) / sample_rate] = speaker_label
+            annotation = Annotation()
+            annotation[Segment(0, len(channel_data) / sample_rate)] = speaker_label
+            results.append(FileAudioSource(
+                file=file_name,
+                diarization=annotation,
+                start_sample=start_sample,
+                end_sample=end_sample
+            ))
 
-        # Optionally save RTTM file
-        if out_rttm_file:
-            LOG.info(f"Saving RTTM file: {out_rttm_file}")
-            with open(out_rttm_file, "w", encoding="utf-8") as rttm:
-                annotation.write_rttm(rttm)
+            # Optionally save RTTM file
+            if out_rttm_file:
+                speaker_out_rttm_file = f"{out_rttm_file}-{speaker_label}.rttm"
+                LOG.info(f"Saving RTTM file: {speaker_out_rttm_file}")
+                with open(speaker_out_rttm_file, "w", encoding="utf-8") as rttm:
+                    annotation.write_rttm(rttm)
 
-        return annotation, speaker_wav_files
+        return results
