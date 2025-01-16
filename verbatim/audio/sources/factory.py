@@ -203,7 +203,11 @@ def create_separate_speaker_sources(
 
     from ...voices.separate.factory import create_separator
 
-    with create_separator(strategy=strategy, device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN", ""), diarization_strategy=source_config.diarization_strategy) as separation:
+    with create_separator(
+        strategy=strategy,
+        device=device,
+        huggingface_token=os.getenv("HUGGINGFACE_TOKEN", ""),
+        diarization_strategy=source_config.diarization_strategy) as separation:
         diarization, speaker_wav_files = separation.separate_speakers(
             file_path=input_source,
             out_rttm_file=source_config.diarization_file,
