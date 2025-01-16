@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Optional
 
 import numpy as np
 import soundfile as sf
@@ -28,7 +29,7 @@ class StereoDiarization(DiarizationStrategy):
             return "SPEAKER_1"
         return "UNKNOWN"
 
-    def compute_diarization(self, file_path: str, out_rttm_file: str = None, **kwargs) -> Annotation:
+    def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, **kwargs) -> Annotation:
         """
         Compute diarization based on stereo channel energy differences.
 
@@ -75,7 +76,7 @@ class StereoDiarization(DiarizationStrategy):
             # Make sure the directory exists
             os.makedirs(os.path.dirname(out_rttm_file) or ".", exist_ok=True)
             with open(out_rttm_file, "w", encoding="utf-8") as f:
-                for segment, track, label in annotation.itertracks(yield_label=True):
+                for segment, _track, label in annotation.itertracks(yield_label=True):  # pyright: ignore[reportAssignmentType]
                     # RTTM format:
                     # Type File_ID Channel_ID Start Duration Speaker_Type Score Speaker_Name
                     f.write(f"SPEAKER {uri} 1 {segment.start:.3f} {segment.duration:.3f} " f"<NA> <NA> {label} <NA> <NA>\n")
