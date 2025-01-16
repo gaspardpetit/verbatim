@@ -163,6 +163,7 @@ def create_audio_source(
 
 def create_separate_speaker_sources(
     *,
+    strategy: str = "pyannote",
     input_source: str,
     device: str,
     source_config: SourceConfig = SourceConfig(),
@@ -177,6 +178,7 @@ def create_separate_speaker_sources(
         converted_input_source = convert_to_wav(input_path=input_source, working_prefix_no_ext=working_prefix_no_ext, preserve_channels=True)
         return create_separate_speaker_sources(
             input_source=converted_input_source,
+            strategy=strategy,
             device=device,
             source_config=source_config,
             start_time=start_time,
@@ -195,18 +197,22 @@ def create_separate_speaker_sources(
     start_sample: int = timestr_to_samples(start_time) if start_time else 0
     stop_sample: Optional[int] = timestr_to_samples(stop_time) if stop_time else None
 
-    from ...voices.separation import SpeakerSeparation
     from .fileaudiosource import FileAudioSource
 
     sources: List[AudioSource] = []
 
-    with SpeakerSeparation(device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN", "")) as separation:
+    from ...voices.separate.factory import create_separator
+
+    with create_separator(
+        strategy=strategy,
+        device=device,
+        huggingface_token=os.getenv("HUGGINGFACE_TOKEN", ""),
+        diarization_strategy=source_config.diarization_strategy) as separation:
         diarization, speaker_wav_files = separation.separate_speakers(
             file_path=input_source,
             out_rttm_file=source_config.diarization_file,
             out_speaker_wav_prefix=working_prefix_no_ext,
             nb_speakers=nb_speakers,
-            diarization_strategy=source_config.diarization_strategy,
         )
         for _speaker, speaker_file in speaker_wav_files.items():
             sources.append(
