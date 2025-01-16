@@ -3,6 +3,8 @@ import os
 import sys
 import wave
 import traceback
+import math
+
 from dataclasses import dataclass, field
 from io import StringIO
 from typing import List, Tuple, TextIO, Generator, Optional
@@ -168,6 +170,10 @@ class State:
         self.window_ts += offset
 
     def append_audio_to_window(self, audio_chunk: NDArray):
+        if audio_chunk.size == 0:
+            LOG.warning("Received empty audio chunk, skipping.")
+            return
+
         # Convert stereo to mono if necessary
         LOG.debug(f"Audio chunk shape before mono conversion: {audio_chunk.shape}")
         if len(audio_chunk.shape) > 1 and audio_chunk.shape[1] > 1:
@@ -403,7 +409,7 @@ class Verbatim:
 
         for limit, value in thresholds:
             limit_sample = int(limit * self.config.window_duration)
-            value_sample = int(value * self.config.window_duration)
+            value_sample = math.ceil(value * self.config.window_duration)
             if available_chunks >= limit_sample:
                 return value_sample
 
