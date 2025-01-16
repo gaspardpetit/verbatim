@@ -1,5 +1,5 @@
 import logging
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Dict, List
 import warnings
 
@@ -12,7 +12,7 @@ from silero_vad import get_speech_timestamps, load_silero_vad
 LOG = logging.getLogger(__name__)
 
 
-class VoiceActivityDetection:
+class VoiceActivityDetection(ABC):
     @abstractmethod
     def find_activity(
         self,
