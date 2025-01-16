@@ -1,8 +1,8 @@
 import logging
-from typing import Tuple, Dict, Optional
+from typing import List, Optional
 from abc import ABC, abstractmethod
 
-from pyannote.core.annotation import Annotation
+from ...audio.sources.audiosource import AudioSource
 
 # Configure logger
 LOG = logging.getLogger(__name__)
@@ -25,5 +25,7 @@ class SeparationStrategy(ABC):
         out_rttm_file: Optional[str] = None,
         out_speaker_wav_prefix="",
         nb_speakers: Optional[int] = None,
-    ) -> Tuple[Annotation, Dict[str, str]]:
+        start_sample: int = 0,
+        end_sample: Optional[int] = None,
+    ) -> List[AudioSource]:
         pass
