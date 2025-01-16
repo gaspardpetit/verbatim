@@ -74,7 +74,7 @@ class MicAudioStreamSoundDevice(AudioStream):
 
     def get_nchannels(self) -> int:
         stream:sd.InputStream = self.stream
-        idevice, odevice = stream.channels
+        idevice, _odevice = stream.channels
         return idevice
 
 
@@ -92,14 +92,15 @@ class MicAudioStreamPyAudio(AudioStream):
     source: "MicAudioSourcePyAudio"
     p: pyaudio.PyAudio
     stream: pyaudio.Stream
+    nchannels:int = 1
 
-    def __init__(self, source: "MicAudioSourcePyAudio"):
+    def __init__(self, source: "MicAudioSourcePyAudio", nchannels:int = 1):
         super().__init__(start_offset=0, diarization=None)
         self.source = source
         self.p: pyaudio.PyAudio = pyaudio.PyAudio()
         self.stream: pyaudio.Stream = self.p.open(
             format=pyaudio.paInt16,
-            channels=1,
+            channels=nchannels,
             rate=self.source.sampling_rate,
             input=True,
             frames_per_buffer=self.source.frames_per_buffer,
@@ -130,6 +131,9 @@ class MicAudioStreamPyAudio(AudioStream):
 
     def has_more(self):
         return True
+
+    def get_nchannels(self) -> int:
+        return self.nchannels
 
 
 class MicAudioSourcePyAudio(AudioSource):
