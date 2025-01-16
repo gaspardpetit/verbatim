@@ -12,15 +12,15 @@ from .audiosource import AudioSource
 from .sourceconfig import SourceConfig
 
 
-def convert_to_wav(input_path: str, working_prefix_no_ext: str, preserve_stereo: bool = False) -> str:
+def convert_to_wav(input_path: str, working_prefix_no_ext: str, preserve_channels: bool = False) -> str:
     # pylint: disable=import-outside-toplevel
     from .ffmpegfileaudiosource import PyAVAudioSource
     from .wavsink import WavSink
 
-    temp_file_audio_source = PyAVAudioSource(file_path=input_path, preserve_channels=preserve_stereo)
+    temp_file_audio_source = PyAVAudioSource(file_path=input_path, preserve_channels=preserve_channels)
 
     converted_path = working_prefix_no_ext + ".wav"
-    WavSink.dump_to_wav(audio_source=temp_file_audio_source, output_path=converted_path, preserve_stereo=preserve_stereo)
+    WavSink.dump_to_wav(audio_source=temp_file_audio_source, output_path=converted_path, preserve_channels=preserve_channels)
     return converted_path
 
 
@@ -98,10 +98,15 @@ def create_audio_source(
                 preserve_channels=source_config.diarization_strategy == "stereo",
             )
 
+        if source_config.diarization_strategy == "stereo":
+            preserve_channels = True
+        else:
+            preserve_channels = False
+
         input_source = convert_to_wav(
             input_path=input_source,
             working_prefix_no_ext=working_prefix_no_ext,
-            preserve_stereo=source_config.diarization_strategy == "stereo",
+            preserve_channels=preserve_channels,
         )
 
         return create_audio_source(
@@ -169,7 +174,7 @@ def create_separate_speaker_sources(
     # pylint: disable=import-outside-toplevel
 
     if os.path.splitext(input_source)[-1] != ".wav":
-        converted_input_source = convert_to_wav(input_path=input_source, working_prefix_no_ext=working_prefix_no_ext)
+        converted_input_source = convert_to_wav(input_path=input_source, working_prefix_no_ext=working_prefix_no_ext, preserve_channels=True)
         return create_separate_speaker_sources(
             input_source=converted_input_source,
             device=device,

@@ -20,6 +20,7 @@ COMPATIBLE_FORMATS = [".mp3", ".m4a"]
 
 class FileAudioStream(AudioStream):
     source: "FileAudioSource"
+    stream:wave.Wave_read
 
     def __init__(self, source: "FileAudioSource", diarization: Optional[Annotation]):
         super().__init__(start_offset=source.start_sample, diarization=diarization)
@@ -73,6 +74,9 @@ class FileAudioStream(AudioStream):
 
     def close(self):
         self.stream.close()
+
+    def get_nchannels(self) -> int:
+        return self.stream.getnchannels()
 
 
 class FileAudioSource(AudioSource):
