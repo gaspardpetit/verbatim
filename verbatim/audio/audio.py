@@ -4,7 +4,6 @@ import re
 
 import numpy as np
 from numpy.typing import NDArray
-from pydub import AudioSegment
 from scipy.signal import resample
 
 # Configure logger
@@ -126,10 +125,3 @@ def timestr_to_samples(timestr: str, sample_rate: int = 16000) -> int:
 
     # Convert to sample index
     return int(total_seconds * sample_rate)
-
-
-def convert_mp3_to_wav(input_mp3, output_wav):
-    # Load the mp3 file
-    audio = AudioSegment.from_mp3(input_mp3)
-    # Export the audio as wav
-    audio.export(output_wav, format="wav")

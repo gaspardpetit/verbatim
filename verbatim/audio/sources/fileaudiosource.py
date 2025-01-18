@@ -10,7 +10,7 @@ from pyannote.core.annotation import Annotation
 
 from .audiosource import AudioSource, AudioStream
 from ..audio import format_audio
-from ..audio import convert_mp3_to_wav
+from ..sources.factory import convert_to_wav
 from ...voices.isolation import VoiceIsolation
 
 LOG = logging.getLogger(__name__)
@@ -97,9 +97,8 @@ class FileAudioSource(AudioSource):
         self.preserve_channels = preserve_channels
         file_path_no_ext, file_path_ext = os.path.splitext(self.file_path)
         if file_path_ext in COMPATIBLE_FORMATS:
-            # Convert mp3 to wav
-            wav_file_path = f"{file_path_no_ext}.wav"
-            convert_mp3_to_wav(self.file_path, wav_file_path)
+            # Convert encoded audio to wav
+            wav_file_path = convert_to_wav(input_path=self.file_path, working_prefix_no_ext=file_path_no_ext,  preserve_channels=preserve_channels)
             self.file_path = wav_file_path
         self.end_sample = end_sample
         self.start_sample = start_sample
