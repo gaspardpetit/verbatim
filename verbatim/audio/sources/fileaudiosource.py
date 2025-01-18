@@ -10,7 +10,7 @@ from pyannote.core.annotation import Annotation
 
 from .audiosource import AudioSource, AudioStream
 from ..audio import format_audio
-from ..sources.factory import convert_to_wav
+from ..convert import convert_to_wav
 from ...voices.isolation import VoiceIsolation
 
 LOG = logging.getLogger(__name__)
