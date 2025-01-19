@@ -1,7 +1,10 @@
+from typing import Optional
+
 import torch
 from pyannote.audio import Pipeline
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 from pyannote.core.annotation import Annotation
+
 from .base import DiarizationStrategy
 
 
@@ -21,7 +24,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
             self.pipeline.instantiate({})
             self.pipeline.to(torch.device(self.device))
 
-    def compute_diarization(self, file_path: str, out_rttm_file: str = None, **kwargs) -> Annotation:
+    def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, nb_speakers:Optional[int] = None, **kwargs) -> Annotation:
         """
         Compute diarization using PyAnnote.
 
@@ -31,7 +34,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
         self.initialize_pipeline()
 
         with ProgressHook() as hook:
-            diarization = self.pipeline(file_path, hook=hook, num_speakers=kwargs.get("nb_speakers"))
+            diarization = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
 
         if out_rttm_file:
             self.save_rttm(diarization, out_rttm_file)
