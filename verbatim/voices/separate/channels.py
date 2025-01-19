@@ -15,7 +15,7 @@ from ...audio.audio import wav_to_int16
 LOG = logging.getLogger(__name__)
 
 class ChannelSeparation(SeparationStrategy):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs): # pylint: disable=unused-argument
         super().__init__()
         LOG.info("Initializing Channel-Based Separator.")
 
@@ -25,7 +25,7 @@ class ChannelSeparation(SeparationStrategy):
         file_path: str,
         out_rttm_file: Optional[str] = None,
         out_speaker_wav_prefix="",
-        nb_speakers: Optional[int] = None,
+        nb_speakers: Optional[int] = None, # pylint: disable=unused-argument
         start_sample: int = 0,
         end_sample: Optional[int] = None,
     ) -> List[AudioSource]:

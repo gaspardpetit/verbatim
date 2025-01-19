@@ -8,21 +8,9 @@ from pyannote.core.annotation import Annotation
 
 from ...voices.diarize.factory import create_diarizer  # Add this import
 from ..audio import samples_to_seconds, timestr_to_samples
+from ..convert import convert_to_wav
 from .audiosource import AudioSource
 from .sourceconfig import SourceConfig
-
-
-def convert_to_wav(input_path: str, working_prefix_no_ext: str, preserve_channels: bool = False) -> str:
-    # pylint: disable=import-outside-toplevel
-    from .ffmpegfileaudiosource import PyAVAudioSource
-    from .wavsink import WavSink
-
-    temp_file_audio_source = PyAVAudioSource(file_path=input_path, preserve_channels=preserve_channels)
-
-    converted_path = working_prefix_no_ext + ".wav"
-    WavSink.dump_to_wav(audio_source=temp_file_audio_source, output_path=converted_path, preserve_channels=preserve_channels)
-    return converted_path
-
 
 def compute_diarization(
     file_path: str,
