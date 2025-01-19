@@ -311,9 +311,17 @@ def main():
 
     from .audio.sources.sourceconfig import SourceConfig
 
+    diarize = args.diarize
+    if args.diarize == "":
+        diarize = 0
+    elif args.diarize is None:
+        diarize = None
+    else:
+        diarize = int(args.diarize)
+
     source_config: SourceConfig = SourceConfig(
         isolate=args.isolate,
-        diarize=args.diarize,
+        diarize=diarize,
         diarization_file=args.diarization,
         diarization_strategy=args.diarization_strategy,
     )
