@@ -7,7 +7,7 @@ import math
 
 from dataclasses import dataclass, field
 from io import StringIO
-from typing import List, Tuple, TextIO, Generator, Optional, Dict
+from typing import List, Tuple, TextIO, Generator, Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -421,7 +421,9 @@ class Verbatim:
                             if word.lang != test_lang:
                                 break
                             alt_prefix_text += word.word
-                        alt_whisper_prompt = self.config.whisper_prompts[test_lang] if test_lang in self.config.whisper_prompts else self.config.whisper_prompts["en"]
+                        alt_whisper_prompt = (
+                            self.config.whisper_prompts[test_lang] if test_lang in self.config.whisper_prompts
+                            else self.config.whisper_prompts["en"])
                         alt_transcript_words = self.models.transcriber.transcribe(
                             audio=self.state.rolling_window.array[0:self.state.audio_ts - self.state.window_ts],
                             lang=test_lang,
