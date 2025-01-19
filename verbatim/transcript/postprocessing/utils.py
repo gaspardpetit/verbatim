@@ -1,4 +1,3 @@
-import difflib
 from typing import List, Dict
 
 import termcolor
