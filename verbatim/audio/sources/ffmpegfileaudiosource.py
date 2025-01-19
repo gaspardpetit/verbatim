@@ -154,6 +154,9 @@ class PyAVAudioStream(AudioStream):
         self._done_decoding = True
         self._sample_buffer = np.array([], dtype=np.float32)
 
+    def get_nchannels(self) -> int:
+        return self._stream.channels
+
 
 class PyAVAudioSource(AudioSource):
     """

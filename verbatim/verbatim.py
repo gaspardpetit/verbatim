@@ -3,6 +3,8 @@ import os
 import sys
 import wave
 import traceback
+import math
+
 from dataclasses import dataclass, field
 from io import StringIO
 from typing import List, Tuple, TextIO, Generator, Optional
@@ -24,6 +26,13 @@ from .transcript.format.txt import (
     COLORSCHEME_ACKNOWLEDGED,
     COLORSCHEME_UNACKNOWLEDGED,
     COLORSCHEME_UNCONFIRMED,
+)
+
+from .transcript.format.writer import (
+    SpeakerStyle,
+    TimestampStyle,
+    ProbabilityStyle,
+    LanguageStyle,
 )
 
 # pylint: disable=unused-import
@@ -168,6 +177,10 @@ class State:
         self.window_ts += offset
 
     def append_audio_to_window(self, audio_chunk: NDArray):
+        if audio_chunk.size == 0:
+            LOG.warning("Received empty audio chunk, skipping.")
+            return
+
         # Convert stereo to mono if necessary
         LOG.debug(f"Audio chunk shape before mono conversion: {audio_chunk.shape}")
 
@@ -413,7 +426,7 @@ class Verbatim:
 
         for limit, value in thresholds:
             limit_sample = int(limit * self.config.window_duration)
-            value_sample = int(value * self.config.window_duration)
+            value_sample = math.ceil(value * self.config.window_duration)
             if available_chunks >= limit_sample:
                 return value_sample
 
@@ -427,7 +440,12 @@ class Verbatim:
         unconfirmed_words: List[Word],
         file: TextIO = sys.stdout,
     ):
-        formatter: TranscriptFormatter = TranscriptFormatter()
+        formatter: TranscriptFormatter = TranscriptFormatter(
+            speaker_style=SpeakerStyle.always,
+            timestamp_style=TimestampStyle.range,
+            probability_style=ProbabilityStyle.word,
+            language_style=LanguageStyle.always
+            )
         file.write(
             f"[{samples_to_seconds(self.state.window_ts)}/"
             f"{samples_to_seconds(self.state.audio_ts - self.state.acknowledged_ts)}/"

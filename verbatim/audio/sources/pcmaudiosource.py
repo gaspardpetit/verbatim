@@ -45,6 +45,9 @@ class PCMInputStreamAudioStream(AudioStream):
     def has_more(self) -> bool:
         return self._has_more
 
+    def get_nchannels(self) -> int:
+        return self.source.channels
+
 
 class PCMInputStreamAudioSource(AudioSource):
     stream: BinaryIO

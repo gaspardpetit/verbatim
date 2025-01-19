@@ -1,5 +1,5 @@
 import dataclasses
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import List, Optional
 from enum import Enum
 
@@ -47,7 +47,7 @@ class TranscriptWriterConfig:
     verbose: bool = False
 
 
-class TranscriptWriter:
+class TranscriptWriter(ABC):
     def __init__(self, config: TranscriptWriterConfig):
         self.config = config
 

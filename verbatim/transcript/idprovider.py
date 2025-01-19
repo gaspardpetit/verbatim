@@ -1,7 +1,7 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 
-class IdProvider:
+class IdProvider(ABC):
     def __init__(self):
         pass
 

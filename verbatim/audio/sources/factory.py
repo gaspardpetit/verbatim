@@ -8,21 +8,9 @@ from pyannote.core.annotation import Annotation
 
 from ...voices.diarize.factory import create_diarizer  # Add this import
 from ..audio import samples_to_seconds, timestr_to_samples
+from ..convert import convert_to_wav
 from .audiosource import AudioSource
 from .sourceconfig import SourceConfig
-
-
-def convert_to_wav(input_path: str, working_prefix_no_ext: str, preserve_stereo: bool = False) -> str:
-    # pylint: disable=import-outside-toplevel
-    from .ffmpegfileaudiosource import PyAVAudioSource
-    from .wavsink import WavSink
-
-    temp_file_audio_source = PyAVAudioSource(file_path=input_path, preserve_channels=preserve_stereo)
-
-    converted_path = working_prefix_no_ext + ".wav"
-    WavSink.dump_to_wav(audio_source=temp_file_audio_source, output_path=converted_path, preserve_stereo=preserve_stereo)
-    return converted_path
-
 
 def compute_diarization(
     file_path: str,
@@ -98,10 +86,15 @@ def create_audio_source(
                 preserve_channels=source_config.diarization_strategy == "stereo",
             )
 
+        if source_config.diarization_strategy == "stereo":
+            preserve_channels = True
+        else:
+            preserve_channels = False
+
         input_source = convert_to_wav(
             input_path=input_source,
             working_prefix_no_ext=working_prefix_no_ext,
-            preserve_stereo=source_config.diarization_strategy == "stereo",
+            preserve_channels=preserve_channels,
         )
 
         return create_audio_source(
@@ -158,6 +151,7 @@ def create_audio_source(
 
 def create_separate_speaker_sources(
     *,
+    strategy: str = "pyannote",
     input_source: str,
     device: str,
     source_config: SourceConfig = SourceConfig(),
@@ -169,9 +163,10 @@ def create_separate_speaker_sources(
     # pylint: disable=import-outside-toplevel
 
     if os.path.splitext(input_source)[-1] != ".wav":
-        converted_input_source = convert_to_wav(input_path=input_source, working_prefix_no_ext=working_prefix_no_ext)
+        converted_input_source = convert_to_wav(input_path=input_source, working_prefix_no_ext=working_prefix_no_ext, preserve_channels=True)
         return create_separate_speaker_sources(
             input_source=converted_input_source,
+            strategy=strategy,
             device=device,
             source_config=source_config,
             start_time=start_time,
@@ -190,27 +185,20 @@ def create_separate_speaker_sources(
     start_sample: int = timestr_to_samples(start_time) if start_time else 0
     stop_sample: Optional[int] = timestr_to_samples(stop_time) if stop_time else None
 
-    from ...voices.separation import SpeakerSeparation
-    from .fileaudiosource import FileAudioSource
+    from ...voices.separate.factory import create_separator
 
-    sources: List[AudioSource] = []
-
-    with SpeakerSeparation(device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN", "")) as separation:
-        diarization, speaker_wav_files = separation.separate_speakers(
+    with create_separator(
+        strategy=strategy,
+        device=device,
+        huggingface_token=os.getenv("HUGGINGFACE_TOKEN", ""),
+        diarization_strategy=source_config.diarization_strategy) as separation:
+        sources = separation.separate_speakers(
             file_path=input_source,
             out_rttm_file=source_config.diarization_file,
             out_speaker_wav_prefix=working_prefix_no_ext,
             nb_speakers=nb_speakers,
-            diarization_strategy=source_config.diarization_strategy,
+            start_sample=start_sample,
+            end_sample=stop_sample
         )
-        for _speaker, speaker_file in speaker_wav_files.items():
-            sources.append(
-                FileAudioSource(
-                    file=speaker_file,
-                    start_sample=start_sample,
-                    end_sample=stop_sample,
-                    diarization=diarization,
-                )
-            )
 
     return sources

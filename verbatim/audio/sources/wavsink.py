@@ -6,7 +6,7 @@ from .audiosource import AudioSource
 
 class WavSink:
     @staticmethod
-    def dump_to_wav(audio_source: AudioSource, output_path: str, sample_rate: int = 16000, preserve_stereo: bool = False):
+    def dump_to_wav(audio_source: AudioSource, output_path: str, sample_rate: int = 16000, preserve_channels: bool = False):
         """
         Dump the entire audio content from PyAVAudioSource to a .wav file.
         """
@@ -15,7 +15,7 @@ class WavSink:
             # pylint: disable=no-member
             with wave.open(output_path, "w") as wav_file:
                 # Set WAV parameters
-                num_channels = 2 if preserve_stereo else 1  # Stereo or mono
+                num_channels = audio_stream.get_nchannels() if preserve_channels else 1  # Stereo or mono
                 sample_width = 2  # 16-bit PCM
                 frame_rate = sample_rate  # Target sample rate
                 wav_file.setnchannels(num_channels)
