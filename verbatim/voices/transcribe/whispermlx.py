@@ -83,14 +83,17 @@ class WhisperMlxTranscriber(Transcriber):
         temperatures = tuple(whisper_temperatures) if isinstance(whisper_temperatures, list) else (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
         show_progress = LOG.getEffectiveLevel() <= logging.INFO
 
+        LOG.info(f"Transcribing with temperatures: {temperatures}")
+        LOG.info(f"Transcribing with prefix: {prefix}")
+
         result = transcribe(
             audio,
             task="transcribe",
             path_or_hf_repo=self.model_path,
             language=lang,
             initial_prompt=prompt if prompt else None,
+            prefix=prefix if prefix else None,
             word_timestamps=True,
-            best_of=whisper_best_of,
             verbose=(True if show_progress else None),
             temperature=temperatures,
             no_speech_threshold=0.6,
