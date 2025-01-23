@@ -10,7 +10,7 @@ from scipy.signal import resample
 LOG = logging.getLogger(__name__)
 
 
-def format_audio(audio: NDArray, from_sampling_rate: int) -> NDArray:
+def format_audio(audio: NDArray, from_sampling_rate: int, to_sampling_rate: int = 16000, preserve_channels: bool = False) -> NDArray:
     to_sampling_rate = 16000
 
     float_audio: NDArray
@@ -26,24 +26,21 @@ def format_audio(audio: NDArray, from_sampling_rate: int) -> NDArray:
         else:
             float_audio = audio.astype(np.float32)
 
-    # If the audio is stereo, mix it down to mono
-    mono_audio: NDArray
-    if float_audio.ndim == 1:
-        mono_audio = float_audio
-    else:
-        LOG.info(f"Mixing {float_audio.ndim} channels down to mono.")
-        mono_audio = np.mean(float_audio, axis=1)
+    # Decide whether to mix down to mono
+    if not preserve_channels and float_audio.ndim > 1:
+        # Mix down to mono
+        LOG.info(f"Mixing {float_audio.ndim} channels down to mono for VAD.")
+        float_audio = np.mean(float_audio, axis=1)
 
-    # Resample if the audio sample rate is not 16 kHz
-    resampled_audio: NDArray
-    if from_sampling_rate == to_sampling_rate:
-        resampled_audio = mono_audio
-    else:
+    # Resample if necessary
+    if from_sampling_rate != to_sampling_rate:
         LOG.info(f"Resampling from {from_sampling_rate} Hz to {to_sampling_rate} Hz.")
-        num_samples = int(len(mono_audio) * to_sampling_rate / from_sampling_rate)
+        num_samples = int(len(float_audio) * to_sampling_rate / from_sampling_rate)
         if num_samples == 0:
-            return np.array([], dtype=np.int16)
-        resampled_audio = resample(mono_audio, num_samples)  # pyright: ignore[reportAssignmentType]
+            return np.array([], dtype=np.float32)
+        resampled_audio = resample(float_audio, num_samples)
+    else:
+        resampled_audio = float_audio
 
     return resampled_audio.astype(np.float32)
 
