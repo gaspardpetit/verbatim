@@ -94,7 +94,6 @@ def seconds_to_timestr(seconds:float) -> str:
 
     return f"[{hour_part:02}:{minute_part:02}:{second_part:02}.{ms_part:03}]"
 
-import re
 
 def timestr_to_samples(timestr: str, sample_rate: int = 16000) -> int:
     """
