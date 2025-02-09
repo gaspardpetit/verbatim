@@ -332,7 +332,7 @@ def main():
     )
 
     audio_sources: List[AudioSource] = []
-    
+
     if args.separate:
         # perform the transcription by combining the transcript of
         # multiple audio sources separated from a single one
