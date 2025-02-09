@@ -332,7 +332,10 @@ def main():
     )
 
     audio_sources: List[AudioSource] = []
+    
     if args.separate:
+        # perform the transcription by combining the transcript of
+        # multiple audio sources separated from a single one
         audio_sources += create_separate_speaker_sources(
             strategy=args.separate or "pyannote",
             source_config=source_config,
@@ -363,6 +366,7 @@ def main():
     all_utterances: List[Utterance] = []
     transcriber = Verbatim(config)
     for audio_source in audio_sources:
+        LOG.info(f"Transcribing from audio source: {audio_source.source_name}")
         writer: TranscriptWriter = configure_writers(
             write_config,
             output_formats=output_formats,
@@ -380,6 +384,7 @@ def main():
                 )
                 all_utterances.append(utterance)
         writer.close()
+        LOG.info(f"Done transcribing from audio source: {audio_source.source_name}")
 
     if len(audio_sources) > 1:
         sorted_utterances: List[Utterance] = sorted(all_utterances, key=lambda x: x.start_ts)
