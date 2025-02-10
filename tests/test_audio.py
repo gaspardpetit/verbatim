@@ -84,7 +84,7 @@ class TestAudioProcessing(unittest.TestCase):
         self.assertEqual(seconds_to_timestr(59.999), "[00:00:59.999]")
 
     def test_sample_to_timestr(self):
-        from verbatim.audio.audio import sample_to_timestr, seconds_to_timestr, seconds_to_samples
+        from verbatim.audio.audio import sample_to_timestr
         self.assertEqual(sample_to_timestr(32000, 16000), "[00:00:02.000]")
         self.assertEqual(sample_to_timestr(8000, 16000), "[00:00:00.500]")
         self.assertEqual(sample_to_timestr(44100, 44100), "[00:00:01.000]")

@@ -146,4 +146,3 @@ def timestr_to_samples(timestr: str, sample_rate: int = 16000) -> int:
     total_seconds = hours * 3600 + minutes * 60 + seconds + fraction
 
     return int(total_seconds * sample_rate)
-
