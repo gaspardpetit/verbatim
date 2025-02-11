@@ -54,7 +54,7 @@ class WhisperHistory:
 
     @staticmethod
     def advance_transcript(timestamp: int, transcript: List[Word]) -> List[Word]:
-        return [w for w in transcript if w.end_ts > timestamp]
+        return [w for w in transcript if w.end_ts >= timestamp]
 
     def advance(self, timestamp: int):
         self.transcript_history = [self.advance_transcript(timestamp, transcript) for transcript in self.transcript_history]
@@ -634,6 +634,7 @@ class Verbatim:
     def process_audio_window(
         self, audio_stream: AudioStream
     ) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
+
         while True:
             # minimum number of samples to attempt transcription
             min_audio_duration_samples = 16000
@@ -723,19 +724,31 @@ class Verbatim:
             self,
             diarization:Optional[Annotation]
             ) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
+
+        # As the attention window advances, we may not be able to acknowledge
+        # all utterances and words; When they fall behind, the best we can do
+        # is return them as acknowledge.
+
         flushed_utterances = []
+
+        # First, try to acknowledge "full" utterances that may not have been acknowledged
         while len(self.state.unacknowledged_utterances) > 0:
-            if self.state.unacknowledged_utterances[0].end_ts > self.state.window_ts:
+            # Stop when we reached the window_ts
+            # Note that the == case is frequent, whisper can generate several words with timestamp 0 -> 0
+            if self.state.unacknowledged_utterances[0].end_ts >= self.state.window_ts:
                 break
             utterance = self.state.unacknowledged_utterances.pop(0)
             utterance.speaker = self.assign_speaker(utterance, diarization)
             yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
 
+        # If there is a partial utterance overflowing, acknowledge words from it
         if len(self.state.unacknowledged_utterances) > 0:
             flushed_utterances_words = []
             partial_utterance = self.state.unacknowledged_utterances[0]
             while len(partial_utterance.words) > 0:
-                if partial_utterance.words[0].end_ts > self.state.window_ts:
+                # Stop when we reached the window_ts
+                # Note that the == case is frequent, whisper can generate several words with timestamp 0 -> 0
+                if partial_utterance.words[0].end_ts >= self.state.window_ts:
                     break
                 flushed_word = partial_utterance.words.pop(0)
                 flushed_utterances_words.append(flushed_word)
@@ -746,18 +759,21 @@ class Verbatim:
                 utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
                 utterance.speaker = self.assign_speaker(utterance, diarization)
                 yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
-        else:
-            flushed_utterances_words = []
-            while len(self.state.unconfirmed_words) > 0:
-                if self.state.unconfirmed_words[0].end_ts > self.state.window_ts:
-                    break
-                flushed_word = self.state.unconfirmed_words.pop(0)
-                flushed_utterances_words.append(flushed_word)
 
-            if len(flushed_utterances_words) > 0:
-                utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
-                utterance.speaker = self.assign_speaker(utterance, diarization)
-                yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
+        # If there are unconfirmed words falling behind, acknowledge them
+        flushed_utterances_words = []
+        while len(self.state.unconfirmed_words) > 0:
+            # Stop when we reached the window_ts
+            # Note that the == case is frequent, whisper can generate several words with timestamp 0 -> 0
+            if self.state.unconfirmed_words[0].end_ts >= self.state.window_ts:
+                break
+            flushed_word = self.state.unconfirmed_words.pop(0)
+            flushed_utterances_words.append(flushed_word)
+
+        if len(flushed_utterances_words) > 0:
+            utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
+            utterance.speaker = self.assign_speaker(utterance, diarization)
+            yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
 
         if len(flushed_utterances_words) > 0:
             flushed_utterances.append(Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words))
