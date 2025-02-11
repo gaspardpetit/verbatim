@@ -8,7 +8,7 @@ import json
 import os
 import unittest
 
-from verbatim.eval import metrics
+from verbatim.eval.diarizationlm import metrics
 
 
 class MetricsTest(unittest.TestCase):
