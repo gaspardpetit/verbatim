@@ -1,0 +1,4866 @@
+{
+  "utterances": [
+    {
+      "id": "utt2",
+      "start": 0.0,
+      "end": 2.68,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Madame, Monsieur, bonjour et bienvenue \u00e0 bord.",
+      "words": [
+        {
+          "text": " Madame,",
+          "lang": "fr",
+          "prob": 0.9072,
+          "start": 0.0,
+          "end": 0.36
+        },
+        {
+          "text": " Monsieur,",
+          "lang": "fr",
+          "prob": 0.9722,
+          "start": 0.48,
+          "end": 0.78
+        },
+        {
+          "text": " bonjour",
+          "lang": "fr",
+          "prob": 0.9695,
+          "start": 0.92,
+          "end": 1.52
+        },
+        {
+          "text": " et",
+          "lang": "fr",
+          "prob": 0.9839,
+          "start": 1.52,
+          "end": 1.72
+        },
+        {
+          "text": " bienvenue",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 1.72,
+          "end": 2.36
+        },
+        {
+          "text": " \u00e0",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 2.36,
+          "end": 2.5
+        },
+        {
+          "text": " bord.",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 2.5,
+          "end": 2.68
+        }
+      ]
+    },
+    {
+      "id": "utt5",
+      "start": 3.074,
+      "end": 4.894,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Welcome aboard, ladies and gentlemen.",
+      "words": [
+        {
+          "text": " Welcome",
+          "lang": "en",
+          "prob": 0.9712,
+          "start": 3.074,
+          "end": 3.514
+        },
+        {
+          "text": " aboard,",
+          "lang": "en",
+          "prob": 0.9966,
+          "start": 3.514,
+          "end": 3.814
+        },
+        {
+          "text": " ladies",
+          "lang": "en",
+          "prob": 0.9849,
+          "start": 4.054,
+          "end": 4.334
+        },
+        {
+          "text": " and",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 4.334,
+          "end": 4.594
+        },
+        {
+          "text": " gentlemen.",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 4.594,
+          "end": 4.894
+        }
+      ]
+    },
+    {
+      "id": "utt10",
+      "start": 6.472,
+      "end": 10.512,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " For your safety and comfort, please take a moment to watch the following safety video.",
+      "words": [
+        {
+          "text": " For",
+          "lang": "en",
+          "prob": 0.9121,
+          "start": 6.472,
+          "end": 6.712
+        },
+        {
+          "text": " your",
+          "lang": "en",
+          "prob": 0.9961,
+          "start": 6.712,
+          "end": 6.872
+        },
+        {
+          "text": " safety",
+          "lang": "en",
+          "prob": 0.9961,
+          "start": 6.872,
+          "end": 7.172
+        },
+        {
+          "text": " and",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 7.172,
+          "end": 7.312
+        },
+        {
+          "text": " comfort,",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 7.312,
+          "end": 7.632
+        },
+        {
+          "text": " please",
+          "lang": "en",
+          "prob": 0.9961,
+          "start": 7.792,
+          "end": 8.232
+        },
+        {
+          "text": " take",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 8.232,
+          "end": 8.452
+        },
+        {
+          "text": " a",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 8.452,
+          "end": 8.592
+        },
+        {
+          "text": " moment",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 8.592,
+          "end": 8.792
+        },
+        {
+          "text": " to",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 8.792,
+          "end": 8.952
+        },
+        {
+          "text": " watch",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 8.952,
+          "end": 9.152
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.9961,
+          "start": 9.152,
+          "end": 9.352
+        },
+        {
+          "text": " following",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 9.352,
+          "end": 9.692
+        },
+        {
+          "text": " safety",
+          "lang": "en",
+          "prob": 0.959,
+          "start": 9.692,
+          "end": 10.112
+        },
+        {
+          "text": " video.",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 10.112,
+          "end": 10.512
+        }
+      ]
+    },
+    {
+      "id": "utt15",
+      "start": 10.938,
+      "end": 13.318,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Ce film concerne votre s\u00e9curit\u00e9 \u00e0 bord.",
+      "words": [
+        {
+          "text": " Ce",
+          "lang": "fr",
+          "prob": 0.9214,
+          "start": 10.938,
+          "end": 11.258
+        },
+        {
+          "text": " film",
+          "lang": "fr",
+          "prob": 0.9956,
+          "start": 11.258,
+          "end": 11.558
+        },
+        {
+          "text": " concerne",
+          "lang": "fr",
+          "prob": 0.998,
+          "start": 11.558,
+          "end": 12.218
+        },
+        {
+          "text": " votre",
+          "lang": "fr",
+          "prob": 0.998,
+          "start": 12.218,
+          "end": 12.378
+        },
+        {
+          "text": " s\u00e9curit\u00e9",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 12.378,
+          "end": 12.798
+        },
+        {
+          "text": " \u00e0",
+          "lang": "fr",
+          "prob": 0.9976,
+          "start": 12.798,
+          "end": 13.098
+        },
+        {
+          "text": " bord.",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 13.098,
+          "end": 13.318
+        }
+      ]
+    },
+    {
+      "id": "utt20",
+      "start": 13.808,
+      "end": 15.508,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Merci de nous accorder votre attention.",
+      "words": [
+        {
+          "text": " Merci",
+          "lang": "fr",
+          "prob": 0.7725,
+          "start": 13.808,
+          "end": 14.248
+        },
+        {
+          "text": " de",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 14.248,
+          "end": 14.428
+        },
+        {
+          "text": " nous",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 14.428,
+          "end": 14.548
+        },
+        {
+          "text": " accorder",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 14.548,
+          "end": 14.908
+        },
+        {
+          "text": " votre",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 14.908,
+          "end": 15.108
+        },
+        {
+          "text": " attention.",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 15.108,
+          "end": 15.508
+        }
+      ]
+    },
+    {
+      "id": "utt23",
+      "start": 16.638,
+      "end": 21.918,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Chaque fois que ce signal est allum\u00e9, vous devez attacher votre ceinture pour votre s\u00e9curit\u00e9.",
+      "words": [
+        {
+          "text": " Chaque",
+          "lang": "fr",
+          "prob": 0.9849,
+          "start": 16.638,
+          "end": 17.058
+        },
+        {
+          "text": " fois",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 17.058,
+          "end": 17.278
+        },
+        {
+          "text": " que",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 17.278,
+          "end": 17.538
+        },
+        {
+          "text": " ce",
+          "lang": "fr",
+          "prob": 0.9976,
+          "start": 17.538,
+          "end": 17.658
+        },
+        {
+          "text": " signal",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 17.658,
+          "end": 18.018
+        },
+        {
+          "text": " est",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 18.018,
+          "end": 18.218
+        },
+        {
+          "text": " allum\u00e9,",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 18.218,
+          "end": 18.738
+        },
+        {
+          "text": " vous",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 18.758,
+          "end": 19.198
+        },
+        {
+          "text": " devez",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 19.198,
+          "end": 19.478
+        },
+        {
+          "text": " attacher",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 19.478,
+          "end": 19.938
+        },
+        {
+          "text": " votre",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 19.938,
+          "end": 20.098
+        },
+        {
+          "text": " ceinture",
+          "lang": "fr",
+          "prob": 0.9997,
+          "start": 20.098,
+          "end": 20.738
+        },
+        {
+          "text": " pour",
+          "lang": "fr",
+          "prob": 0.9922,
+          "start": 20.738,
+          "end": 21.158
+        },
+        {
+          "text": " votre",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 21.158,
+          "end": 21.398
+        },
+        {
+          "text": " s\u00e9curit\u00e9.",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 21.398,
+          "end": 21.918
+        }
+      ]
+    },
+    {
+      "id": "utt25",
+      "start": 23.24,
+      "end": 28.66,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Nous vous recommandons de la maintenir attach\u00e9e de fa\u00e7on visible lorsque vous \u00eates \u00e0 votre si\u00e8ge.",
+      "words": [
+        {
+          "text": " Nous",
+          "lang": "fr",
+          "prob": 0.8379,
+          "start": 23.24,
+          "end": 23.54
+        },
+        {
+          "text": " vous",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 23.54,
+          "end": 23.7
+        },
+        {
+          "text": " recommandons",
+          "lang": "fr",
+          "prob": 0.9993,
+          "start": 23.7,
+          "end": 24.38
+        },
+        {
+          "text": " de",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 24.38,
+          "end": 24.46
+        },
+        {
+          "text": " la",
+          "lang": "fr",
+          "prob": 0.998,
+          "start": 24.46,
+          "end": 24.54
+        },
+        {
+          "text": " maintenir",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 24.54,
+          "end": 25.06
+        },
+        {
+          "text": " attach\u00e9e",
+          "lang": "fr",
+          "prob": 0.9888,
+          "start": 25.06,
+          "end": 25.66
+        },
+        {
+          "text": " de",
+          "lang": "fr",
+          "prob": 0.5815,
+          "start": 25.66,
+          "end": 25.98
+        },
+        {
+          "text": " fa\u00e7on",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 25.98,
+          "end": 26.22
+        },
+        {
+          "text": " visible",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 26.22,
+          "end": 26.7
+        },
+        {
+          "text": " lorsque",
+          "lang": "fr",
+          "prob": 0.9961,
+          "start": 26.7,
+          "end": 27.4
+        },
+        {
+          "text": " vous",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 27.4,
+          "end": 27.62
+        },
+        {
+          "text": " \u00eates",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 27.62,
+          "end": 27.82
+        },
+        {
+          "text": " \u00e0",
+          "lang": "fr",
+          "prob": 0.9976,
+          "start": 27.82,
+          "end": 27.96
+        },
+        {
+          "text": " votre",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 27.96,
+          "end": 28.08
+        },
+        {
+          "text": " si\u00e8ge.",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 28.08,
+          "end": 28.66
+        }
+      ]
+    },
+    {
+      "id": "utt27",
+      "start": 29.438,
+      "end": 33.658,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Whenever the seatbelt sign is on, your seatbelt must be securely fastened.",
+      "words": [
+        {
+          "text": " Whenever",
+          "lang": "en",
+          "prob": 0.8657,
+          "start": 29.438,
+          "end": 29.858
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.9956,
+          "start": 29.858,
+          "end": 30.078
+        },
+        {
+          "text": " seatbelt",
+          "lang": "en",
+          "prob": 0.8896,
+          "start": 30.078,
+          "end": 30.498
+        },
+        {
+          "text": " sign",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 30.498,
+          "end": 30.718
+        },
+        {
+          "text": " is",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 30.718,
+          "end": 30.898
+        },
+        {
+          "text": " on,",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 30.898,
+          "end": 31.138
+        },
+        {
+          "text": " your",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 31.258,
+          "end": 31.638
+        },
+        {
+          "text": " seatbelt",
+          "lang": "en",
+          "prob": 0.9934,
+          "start": 31.638,
+          "end": 32.098
+        },
+        {
+          "text": " must",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 32.098,
+          "end": 32.338
+        },
+        {
+          "text": " be",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 32.338,
+          "end": 32.618
+        },
+        {
+          "text": " securely",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 32.618,
+          "end": 32.958
+        },
+        {
+          "text": " fastened.",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 32.958,
+          "end": 33.658
+        }
+      ]
+    },
+    {
+      "id": "utt30",
+      "start": 34.308,
+      "end": 39.428,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " For your safety, we recommend that you keep your seatbelt fastened and visible at all times while seated.",
+      "words": [
+        {
+          "text": " For",
+          "lang": "en",
+          "prob": 0.9399,
+          "start": 34.308,
+          "end": 34.548
+        },
+        {
+          "text": " your",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 34.548,
+          "end": 34.688
+        },
+        {
+          "text": " safety,",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 34.688,
+          "end": 35.088
+        },
+        {
+          "text": " we",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 35.248,
+          "end": 35.608
+        },
+        {
+          "text": " recommend",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 35.608,
+          "end": 35.988
+        },
+        {
+          "text": " that",
+          "lang": "en",
+          "prob": 0.9976,
+          "start": 35.988,
+          "end": 36.228
+        },
+        {
+          "text": " you",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 36.228,
+          "end": 36.348
+        },
+        {
+          "text": " keep",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 36.348,
+          "end": 36.628
+        },
+        {
+          "text": " your",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 36.628,
+          "end": 36.768
+        },
+        {
+          "text": " seatbelt",
+          "lang": "en",
+          "prob": 0.9204,
+          "start": 36.768,
+          "end": 37.148
+        },
+        {
+          "text": " fastened",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 37.148,
+          "end": 37.688
+        },
+        {
+          "text": " and",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 37.688,
+          "end": 37.788
+        },
+        {
+          "text": " visible",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 37.788,
+          "end": 38.028
+        },
+        {
+          "text": " at",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 38.028,
+          "end": 38.308
+        },
+        {
+          "text": " all",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 38.308,
+          "end": 38.448
+        },
+        {
+          "text": " times",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 38.448,
+          "end": 38.848
+        },
+        {
+          "text": " while",
+          "lang": "en",
+          "prob": 0.9961,
+          "start": 38.848,
+          "end": 39.088
+        },
+        {
+          "text": " seated.",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 39.088,
+          "end": 39.428
+        }
+      ]
+    },
+    {
+      "id": "utt32",
+      "start": 42.382,
+      "end": 44.862,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " To release the seatbelt, just lift the buckle.",
+      "words": [
+        {
+          "text": " To",
+          "lang": "en",
+          "prob": 0.9399,
+          "start": 42.382,
+          "end": 42.622
+        },
+        {
+          "text": " release",
+          "lang": "en",
+          "prob": 0.9976,
+          "start": 42.622,
+          "end": 42.862
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.9966,
+          "start": 42.862,
+          "end": 43.062
+        },
+        {
+          "text": " seatbelt,",
+          "lang": "en",
+          "prob": 0.8347,
+          "start": 43.062,
+          "end": 43.422
+        },
+        {
+          "text": " just",
+          "lang": "en",
+          "prob": 0.9956,
+          "start": 43.542,
+          "end": 43.942
+        },
+        {
+          "text": " lift",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 43.942,
+          "end": 44.342
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 44.342,
+          "end": 44.582
+        },
+        {
+          "text": " buckle.",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 44.582,
+          "end": 44.862
+        }
+      ]
+    },
+    {
+      "id": "utt34",
+      "start": 45.704,
+      "end": 50.084,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Pour d\u00e9tacher votre ceinture, soulevez la partie sup\u00e9rieure de la boucle.",
+      "words": [
+        {
+          "text": " Pour",
+          "lang": "fr",
+          "prob": 0.9492,
+          "start": 45.704,
+          "end": 46.004
+        },
+        {
+          "text": " d\u00e9tacher",
+          "lang": "fr",
+          "prob": 0.9993,
+          "start": 46.004,
+          "end": 46.604
+        },
+        {
+          "text": " votre",
+          "lang": "fr",
+          "prob": 0.9971,
+          "start": 46.604,
+          "end": 46.804
+        },
+        {
+          "text": " ceinture,",
+          "lang": "fr",
+          "prob": 0.9997,
+          "start": 46.804,
+          "end": 47.584
+        },
+        {
+          "text": " soulevez",
+          "lang": "fr",
+          "prob": 0.9971,
+          "start": 47.604,
+          "end": 48.344
+        },
+        {
+          "text": " la",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 48.344,
+          "end": 48.484
+        },
+        {
+          "text": " partie",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 48.484,
+          "end": 48.704
+        },
+        {
+          "text": " sup\u00e9rieure",
+          "lang": "fr",
+          "prob": 0.9993,
+          "start": 48.704,
+          "end": 49.464
+        },
+        {
+          "text": " de",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 49.464,
+          "end": 49.644
+        },
+        {
+          "text": " la",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 49.644,
+          "end": 49.744
+        },
+        {
+          "text": " boucle.",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 49.744,
+          "end": 50.084
+        }
+      ]
+    },
+    {
+      "id": "utt38",
+      "start": 51.278,
+      "end": 55.33794,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Il est strictement interdit de fumer dans l'avion, y compris dans les toilettes.",
+      "words": [
+        {
+          "text": " Il",
+          "lang": "fr",
+          "prob": 0.8936,
+          "start": 51.278,
+          "end": 51.598
+        },
+        {
+          "text": " est",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 51.598,
+          "end": 51.698
+        },
+        {
+          "text": " strictement",
+          "lang": "fr",
+          "prob": 0.9978,
+          "start": 51.698,
+          "end": 52.258
+        },
+        {
+          "text": " interdit",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 52.258,
+          "end": 52.778
+        },
+        {
+          "text": " de",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 52.778,
+          "end": 52.858
+        },
+        {
+          "text": " fumer",
+          "lang": "fr",
+          "prob": 0.9988,
+          "start": 52.858,
+          "end": 53.178
+        },
+        {
+          "text": " dans",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 53.178,
+          "end": 53.318
+        },
+        {
+          "text": " l",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 53.318,
+          "end": 53.418
+        },
+        {
+          "text": "'avion,",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 53.418,
+          "end": 53.798
+        },
+        {
+          "text": " y",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 53.798,
+          "end": 54.158
+        },
+        {
+          "text": " compris",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 54.158,
+          "end": 54.518
+        },
+        {
+          "text": " dans",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 54.518,
+          "end": 54.738
+        },
+        {
+          "text": " les",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 54.738,
+          "end": 54.818
+        },
+        {
+          "text": " toilettes.",
+          "lang": "fr",
+          "prob": 0.9998,
+          "start": 54.818,
+          "end": 55.33794
+        }
+      ]
+    },
+    {
+      "id": "utt42",
+      "start": 56.24394,
+      "end": 60.52394,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " This is a no-smoking flight, and it is strictly prohibited to smoke in the toilets.",
+      "words": [
+        {
+          "text": " This",
+          "lang": "en",
+          "prob": 0.8062,
+          "start": 56.24394,
+          "end": 56.54394
+        },
+        {
+          "text": " is",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 56.54394,
+          "end": 56.70394
+        },
+        {
+          "text": " a",
+          "lang": "en",
+          "prob": 0.9868,
+          "start": 56.70394,
+          "end": 56.78394
+        },
+        {
+          "text": " no",
+          "lang": "en",
+          "prob": 0.9888,
+          "start": 56.78394,
+          "end": 56.96394
+        },
+        {
+          "text": "-smoking",
+          "lang": "en",
+          "prob": 0.9087,
+          "start": 56.96394,
+          "end": 57.32394
+        },
+        {
+          "text": " flight,",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 57.32394,
+          "end": 57.54394
+        },
+        {
+          "text": " and",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 57.80394,
+          "end": 58.26394
+        },
+        {
+          "text": " it",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 58.26394,
+          "end": 58.40394
+        },
+        {
+          "text": " is",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 58.40394,
+          "end": 58.54394
+        },
+        {
+          "text": " strictly",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 58.54394,
+          "end": 58.76394
+        },
+        {
+          "text": " prohibited",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 58.76394,
+          "end": 59.30394
+        },
+        {
+          "text": " to",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 59.30394,
+          "end": 59.64394
+        },
+        {
+          "text": " smoke",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 59.64394,
+          "end": 59.94394
+        },
+        {
+          "text": " in",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 59.94394,
+          "end": 60.12394
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 60.12394,
+          "end": 60.20394
+        },
+        {
+          "text": " toilets.",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 60.20394,
+          "end": 60.52394
+        }
+      ]
+    },
+    {
+      "id": "utt47",
+      "start": 61.52594,
+      "end": 67.24594,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " En cas de d\u00e9pressurisation, un masque \u00e0 oxyg\u00e8ne tombera automatiquement \u00e0 votre port\u00e9e.",
+      "words": [
+        {
+          "text": " En",
+          "lang": "fr",
+          "prob": 0.7871,
+          "start": 61.52594,
+          "end": 61.74594
+        },
+        {
+          "text": " cas",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 61.74594,
+          "end": 62.00594
+        },
+        {
+          "text": " de",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 62.00594,
+          "end": 62.20594
+        },
+        {
+          "text": " d\u00e9pressurisation,",
+          "lang": "fr",
+          "prob": 0.9889,
+          "start": 62.20594,
+          "end": 63.18594
+        },
+        {
+          "text": " un",
+          "lang": "fr",
+          "prob": 0.9976,
+          "start": 63.42594,
+          "end": 63.80594
+        },
+        {
+          "text": " masque",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 63.80594,
+          "end": 64.22594
+        },
+        {
+          "text": " \u00e0",
+          "lang": "fr",
+          "prob": 0.9971,
+          "start": 64.22594,
+          "end": 64.28594
+        },
+        {
+          "text": " oxyg\u00e8ne",
+          "lang": "fr",
+          "prob": 0.9964,
+          "start": 64.28594,
+          "end": 64.86594
+        },
+        {
+          "text": " tombera",
+          "lang": "fr",
+          "prob": 0.9987,
+          "start": 64.86594,
+          "end": 65.48594
+        },
+        {
+          "text": " automatiquement",
+          "lang": "fr",
+          "prob": 0.9993,
+          "start": 65.48594,
+          "end": 66.28594
+        },
+        {
+          "text": " \u00e0",
+          "lang": "fr",
+          "prob": 0.998,
+          "start": 66.28594,
+          "end": 66.50594
+        },
+        {
+          "text": " votre",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 66.50594,
+          "end": 66.68594
+        },
+        {
+          "text": " port\u00e9e.",
+          "lang": "fr",
+          "prob": 0.9907,
+          "start": 66.68594,
+          "end": 67.24594
+        }
+      ]
+    },
+    {
+      "id": "utt49",
+      "start": 67.73594,
+      "end": 73.13594,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " If there is a sudden decrease in cabin pressure, your oxygen mask will drop automatically in front of you.",
+      "words": [
+        {
+          "text": " If",
+          "lang": "en",
+          "prob": 0.9502,
+          "start": 67.73594,
+          "end": 68.03594
+        },
+        {
+          "text": " there",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 68.03594,
+          "end": 68.17594
+        },
+        {
+          "text": " is",
+          "lang": "en",
+          "prob": 0.9966,
+          "start": 68.17594,
+          "end": 68.33594
+        },
+        {
+          "text": " a",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 68.33594,
+          "end": 68.43594
+        },
+        {
+          "text": " sudden",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 68.43594,
+          "end": 68.69594
+        },
+        {
+          "text": " decrease",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 68.69594,
+          "end": 68.99594
+        },
+        {
+          "text": " in",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 68.99594,
+          "end": 69.31594
+        },
+        {
+          "text": " cabin",
+          "lang": "en",
+          "prob": 0.9917,
+          "start": 69.31594,
+          "end": 69.49594
+        },
+        {
+          "text": " pressure,",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 69.49594,
+          "end": 69.79594
+        },
+        {
+          "text": " your",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 70.07594,
+          "end": 70.51594
+        },
+        {
+          "text": " oxygen",
+          "lang": "en",
+          "prob": 0.9849,
+          "start": 70.51594,
+          "end": 70.91594
+        },
+        {
+          "text": " mask",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 70.91594,
+          "end": 71.19594
+        },
+        {
+          "text": " will",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 71.19594,
+          "end": 71.49594
+        },
+        {
+          "text": " drop",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 71.49594,
+          "end": 71.77594
+        },
+        {
+          "text": " automatically",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 71.77594,
+          "end": 72.27594
+        },
+        {
+          "text": " in",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 72.27594,
+          "end": 72.61594
+        },
+        {
+          "text": " front",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 72.61594,
+          "end": 72.79594
+        },
+        {
+          "text": " of",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 72.79594,
+          "end": 72.95594
+        },
+        {
+          "text": " you.",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 72.95594,
+          "end": 73.13594
+        }
+      ]
+    },
+    {
+      "id": "utt52",
+      "start": 73.59394,
+      "end": 76.07394,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Tirez sur le masque pour lib\u00e9rer l'oxyg\u00e8ne.",
+      "words": [
+        {
+          "text": " Tirez",
+          "lang": "fr",
+          "prob": 0.8293,
+          "start": 73.59394,
+          "end": 74.05394
+        },
+        {
+          "text": " sur",
+          "lang": "fr",
+          "prob": 0.9854,
+          "start": 74.05394,
+          "end": 74.25394
+        },
+        {
+          "text": " le",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 74.25394,
+          "end": 74.43394
+        },
+        {
+          "text": " masque",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 74.43394,
+          "end": 74.85394
+        },
+        {
+          "text": " pour",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 74.85394,
+          "end": 75.01394
+        },
+        {
+          "text": " lib\u00e9rer",
+          "lang": "fr",
+          "prob": 0.9998,
+          "start": 75.01394,
+          "end": 75.47394
+        },
+        {
+          "text": " l",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 75.47394,
+          "end": 75.57394
+        },
+        {
+          "text": "'oxyg\u00e8ne.",
+          "lang": "fr",
+          "prob": 0.9999,
+          "start": 75.57394,
+          "end": 76.07394
+        }
+      ]
+    },
+    {
+      "id": "utt55",
+      "start": 76.37194,
+      "end": 77.95194,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Placez-le sur votre visage.",
+      "words": [
+        {
+          "text": " Placez",
+          "lang": "fr",
+          "prob": 0.6565,
+          "start": 76.37194,
+          "end": 76.91194
+        },
+        {
+          "text": "-le",
+          "lang": "fr",
+          "prob": 0.99,
+          "start": 76.91194,
+          "end": 76.99194
+        },
+        {
+          "text": " sur",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 76.99194,
+          "end": 77.13194
+        },
+        {
+          "text": " votre",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 77.13194,
+          "end": 77.33194
+        },
+        {
+          "text": " visage.",
+          "lang": "fr",
+          "prob": 0.9998,
+          "start": 77.33194,
+          "end": 77.95194
+        }
+      ]
+    },
+    {
+      "id": "utt58",
+      "start": 78.82594,
+      "end": 81.28594,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Pull the mask toward you to start the flow of oxygen.",
+      "words": [
+        {
+          "text": " Pull",
+          "lang": "en",
+          "prob": 0.8525,
+          "start": 78.82594,
+          "end": 79.08594
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.9849,
+          "start": 79.08594,
+          "end": 79.20594
+        },
+        {
+          "text": " mask",
+          "lang": "en",
+          "prob": 0.9912,
+          "start": 79.20594,
+          "end": 79.46594
+        },
+        {
+          "text": " toward",
+          "lang": "en",
+          "prob": 0.6924,
+          "start": 79.46594,
+          "end": 79.66594
+        },
+        {
+          "text": " you",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 79.66594,
+          "end": 79.90594
+        },
+        {
+          "text": " to",
+          "lang": "en",
+          "prob": 0.9946,
+          "start": 79.90594,
+          "end": 80.06594
+        },
+        {
+          "text": " start",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 80.06594,
+          "end": 80.32594
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 80.32594,
+          "end": 80.48594
+        },
+        {
+          "text": " flow",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 80.48594,
+          "end": 80.72594
+        },
+        {
+          "text": " of",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 80.72594,
+          "end": 80.92594
+        },
+        {
+          "text": " oxygen.",
+          "lang": "en",
+          "prob": 0.9912,
+          "start": 80.92594,
+          "end": 81.28594
+        }
+      ]
+    },
+    {
+      "id": "utt62",
+      "start": 81.80794,
+      "end": 83.64794,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Place the mask over your nose and mouth.",
+      "words": [
+        {
+          "text": " Place",
+          "lang": "en",
+          "prob": 0.9263,
+          "start": 81.80794,
+          "end": 82.12794
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.9927,
+          "start": 82.12794,
+          "end": 82.26794
+        },
+        {
+          "text": " mask",
+          "lang": "en",
+          "prob": 0.9937,
+          "start": 82.26794,
+          "end": 82.50794
+        },
+        {
+          "text": " over",
+          "lang": "en",
+          "prob": 0.9946,
+          "start": 82.50794,
+          "end": 82.72794
+        },
+        {
+          "text": " your",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 82.72794,
+          "end": 82.88794
+        },
+        {
+          "text": " nose",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 82.88794,
+          "end": 83.14794
+        },
+        {
+          "text": " and",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 83.14794,
+          "end": 83.34794
+        },
+        {
+          "text": " mouth.",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 83.34794,
+          "end": 83.64794
+        }
+      ]
+    },
+    {
+      "id": "utt67",
+      "start": 84.13794,
+      "end": 87.21794,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Make sure your own mask is well adjusted before helping others.",
+      "words": [
+        {
+          "text": " Make",
+          "lang": "en",
+          "prob": 0.8682,
+          "start": 84.13794,
+          "end": 84.47794
+        },
+        {
+          "text": " sure",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 84.47794,
+          "end": 84.61794
+        },
+        {
+          "text": " your",
+          "lang": "en",
+          "prob": 0.9785,
+          "start": 84.61794,
+          "end": 84.77794
+        },
+        {
+          "text": " own",
+          "lang": "en",
+          "prob": 0.9858,
+          "start": 84.77794,
+          "end": 84.97794
+        },
+        {
+          "text": " mask",
+          "lang": "en",
+          "prob": 0.9951,
+          "start": 84.97794,
+          "end": 85.29794
+        },
+        {
+          "text": " is",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 85.29794,
+          "end": 85.43794
+        },
+        {
+          "text": " well",
+          "lang": "en",
+          "prob": 0.9951,
+          "start": 85.43794,
+          "end": 85.63794
+        },
+        {
+          "text": " adjusted",
+          "lang": "en",
+          "prob": 0.7207,
+          "start": 85.63794,
+          "end": 86.07794
+        },
+        {
+          "text": " before",
+          "lang": "en",
+          "prob": 0.9844,
+          "start": 86.07794,
+          "end": 86.41794
+        },
+        {
+          "text": " helping",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 86.41794,
+          "end": 86.77794
+        },
+        {
+          "text": " others.",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 86.77794,
+          "end": 87.21794
+        }
+      ]
+    },
+    {
+      "id": "utt72",
+      "start": 87.31794,
+      "end": 91.61794,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Une fois votre masque ajust\u00e9, il vous sera possible d'aider d'autres personnes.",
+      "words": [
+        {
+          "text": " Une",
+          "lang": "fr",
+          "prob": 0.9634,
+          "start": 87.31794,
+          "end": 87.77794
+        },
+        {
+          "text": " fois",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 87.77794,
+          "end": 87.95794
+        },
+        {
+          "text": " votre",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 87.95794,
+          "end": 88.15794
+        },
+        {
+          "text": " masque",
+          "lang": "fr",
+          "prob": 0.9998,
+          "start": 88.15794,
+          "end": 88.59794
+        },
+        {
+          "text": " ajust\u00e9,",
+          "lang": "fr",
+          "prob": 0.9907,
+          "start": 88.59794,
+          "end": 89.13794
+        },
+        {
+          "text": " il",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 89.17794,
+          "end": 89.61794
+        },
+        {
+          "text": " vous",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 89.61794,
+          "end": 89.73794
+        },
+        {
+          "text": " sera",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 89.73794,
+          "end": 89.99794
+        },
+        {
+          "text": " possible",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 89.99794,
+          "end": 90.43794
+        },
+        {
+          "text": " d",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 90.43794,
+          "end": 90.71794
+        },
+        {
+          "text": "'aider",
+          "lang": "fr",
+          "prob": 0.9998,
+          "start": 90.71794,
+          "end": 90.97794
+        },
+        {
+          "text": " d",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 90.97794,
+          "end": 91.01794
+        },
+        {
+          "text": "'autres",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 91.01794,
+          "end": 91.15794
+        },
+        {
+          "text": " personnes.",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 91.15794,
+          "end": 91.61794
+        }
+      ]
+    },
+    {
+      "id": "utt76",
+      "start": 92.42794,
+      "end": 98.46794,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " En cas d'\u00e9vacuation, des panneaux lumineux EXIT vous permettent de localiser les issues de secours.",
+      "words": [
+        {
+          "text": " En",
+          "lang": "fr",
+          "prob": 0.9272,
+          "start": 92.42794,
+          "end": 92.70794
+        },
+        {
+          "text": " cas",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 92.70794,
+          "end": 92.92794
+        },
+        {
+          "text": " d",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 92.92794,
+          "end": 93.02794
+        },
+        {
+          "text": "'\u00e9vacuation,",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 93.02794,
+          "end": 93.78794
+        },
+        {
+          "text": " des",
+          "lang": "fr",
+          "prob": 0.9849,
+          "start": 93.92794,
+          "end": 94.36794
+        },
+        {
+          "text": " panneaux",
+          "lang": "fr",
+          "prob": 0.9997,
+          "start": 94.36794,
+          "end": 94.74794
+        },
+        {
+          "text": " lumineux",
+          "lang": "fr",
+          "prob": 0.9993,
+          "start": 94.74794,
+          "end": 95.16794
+        },
+        {
+          "text": " EXIT",
+          "lang": "fr",
+          "prob": 0.8113,
+          "start": 95.16794,
+          "end": 95.60794
+        },
+        {
+          "text": " vous",
+          "lang": "fr",
+          "prob": 0.9956,
+          "start": 95.60794,
+          "end": 96.06794
+        },
+        {
+          "text": " permettent",
+          "lang": "fr",
+          "prob": 0.9993,
+          "start": 96.06794,
+          "end": 96.70794
+        },
+        {
+          "text": " de",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 96.70794,
+          "end": 96.82794
+        },
+        {
+          "text": " localiser",
+          "lang": "fr",
+          "prob": 0.998,
+          "start": 96.82794,
+          "end": 97.38794
+        },
+        {
+          "text": " les",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 97.38794,
+          "end": 97.52794
+        },
+        {
+          "text": " issues",
+          "lang": "fr",
+          "prob": 0.9839,
+          "start": 97.52794,
+          "end": 97.78794
+        },
+        {
+          "text": " de",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 97.78794,
+          "end": 97.94794
+        },
+        {
+          "text": " secours.",
+          "lang": "fr",
+          "prob": 0.9993,
+          "start": 97.94794,
+          "end": 98.46794
+        }
+      ]
+    },
+    {
+      "id": "utt79",
+      "start": 98.57394,
+      "end": 102.55394,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Rep\u00e9rez maintenant le panneau EXIT le plus proche de votre si\u00e8ge.",
+      "words": [
+        {
+          "text": " Rep\u00e9rez",
+          "lang": "fr",
+          "prob": 0.9717,
+          "start": 98.57394,
+          "end": 99.21394
+        },
+        {
+          "text": " maintenant",
+          "lang": "fr",
+          "prob": 0.998,
+          "start": 99.21394,
+          "end": 99.51394
+        },
+        {
+          "text": " le",
+          "lang": "fr",
+          "prob": 0.9946,
+          "start": 99.51394,
+          "end": 100.13394
+        },
+        {
+          "text": " panneau",
+          "lang": "fr",
+          "prob": 0.9993,
+          "start": 100.13394,
+          "end": 100.53394
+        },
+        {
+          "text": " EXIT",
+          "lang": "fr",
+          "prob": 0.6135,
+          "start": 100.53394,
+          "end": 100.89394
+        },
+        {
+          "text": " le",
+          "lang": "fr",
+          "prob": 0.9897,
+          "start": 100.89394,
+          "end": 101.11394
+        },
+        {
+          "text": " plus",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 101.11394,
+          "end": 101.33394
+        },
+        {
+          "text": " proche",
+          "lang": "fr",
+          "prob": 0.9998,
+          "start": 101.33394,
+          "end": 101.73394
+        },
+        {
+          "text": " de",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 101.73394,
+          "end": 101.81394
+        },
+        {
+          "text": " votre",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 101.81394,
+          "end": 101.97394
+        },
+        {
+          "text": " si\u00e8ge.",
+          "lang": "fr",
+          "prob": 0.9998,
+          "start": 101.97394,
+          "end": 102.55394
+        }
+      ]
+    },
+    {
+      "id": "utt82",
+      "start": 102.65394,
+      "end": 104.39394,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Il peut se trouver derri\u00e8re vous.",
+      "words": [
+        {
+          "text": " Il",
+          "lang": "fr",
+          "prob": 0.8423,
+          "start": 102.65394,
+          "end": 102.87394
+        },
+        {
+          "text": " peut",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 102.87394,
+          "end": 103.03394
+        },
+        {
+          "text": " se",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 103.03394,
+          "end": 103.19394
+        },
+        {
+          "text": " trouver",
+          "lang": "fr",
+          "prob": 0.9971,
+          "start": 103.19394,
+          "end": 103.57394
+        },
+        {
+          "text": " derri\u00e8re",
+          "lang": "fr",
+          "prob": 0.998,
+          "start": 103.57394,
+          "end": 104.03394
+        },
+        {
+          "text": " vous.",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 104.03394,
+          "end": 104.39394
+        }
+      ]
+    },
+    {
+      "id": "utt89",
+      "start": 104.62794,
+      "end": 109.34794,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " In case of an emergency, the illuminated exit signs will help you locate the exit doors.",
+      "words": [
+        {
+          "text": " In",
+          "lang": "en",
+          "prob": 0.96,
+          "start": 104.62794,
+          "end": 104.88794
+        },
+        {
+          "text": " case",
+          "lang": "en",
+          "prob": 0.9956,
+          "start": 104.88794,
+          "end": 105.08794
+        },
+        {
+          "text": " of",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 105.08794,
+          "end": 105.30794
+        },
+        {
+          "text": " an",
+          "lang": "en",
+          "prob": 0.9961,
+          "start": 105.30794,
+          "end": 105.38794
+        },
+        {
+          "text": " emergency,",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 105.38794,
+          "end": 105.74794
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 106.04794,
+          "end": 106.48794
+        },
+        {
+          "text": " illuminated",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 106.48794,
+          "end": 106.84794
+        },
+        {
+          "text": " exit",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 106.84794,
+          "end": 107.26794
+        },
+        {
+          "text": " signs",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 107.26794,
+          "end": 107.56794
+        },
+        {
+          "text": " will",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 107.56794,
+          "end": 107.94794
+        },
+        {
+          "text": " help",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 107.94794,
+          "end": 108.12794
+        },
+        {
+          "text": " you",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 108.12794,
+          "end": 108.28794
+        },
+        {
+          "text": " locate",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 108.28794,
+          "end": 108.62794
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 108.62794,
+          "end": 108.84794
+        },
+        {
+          "text": " exit",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 108.84794,
+          "end": 109.02794
+        },
+        {
+          "text": " doors.",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 109.02794,
+          "end": 109.34794
+        }
+      ]
+    },
+    {
+      "id": "utt96",
+      "start": 110.50994,
+      "end": 113.02994,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Please take a moment now to locate the exit nearest to you.",
+      "words": [
+        {
+          "text": " Please",
+          "lang": "en",
+          "prob": 0.8823,
+          "start": 110.50994,
+          "end": 110.76994
+        },
+        {
+          "text": " take",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 110.76994,
+          "end": 110.92994
+        },
+        {
+          "text": " a",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 110.92994,
+          "end": 111.06994
+        },
+        {
+          "text": " moment",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 111.06994,
+          "end": 111.24994
+        },
+        {
+          "text": " now",
+          "lang": "en",
+          "prob": 0.9917,
+          "start": 111.24994,
+          "end": 111.44994
+        },
+        {
+          "text": " to",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 111.44994,
+          "end": 111.66994
+        },
+        {
+          "text": " locate",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 111.66994,
+          "end": 111.96994
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 111.96994,
+          "end": 112.16994
+        },
+        {
+          "text": " exit",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 112.16994,
+          "end": 112.40994
+        },
+        {
+          "text": " nearest",
+          "lang": "en",
+          "prob": 0.9946,
+          "start": 112.40994,
+          "end": 112.72994
+        },
+        {
+          "text": " to",
+          "lang": "en",
+          "prob": 0.9946,
+          "start": 112.72994,
+          "end": 112.73012
+        },
+        {
+          "text": " you.",
+          "lang": "en",
+          "prob": 0.8491,
+          "start": 112.73012,
+          "end": 113.02994
+        }
+      ]
+    },
+    {
+      "id": "utt102",
+      "start": 113.64794,
+      "end": 115.44794,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " The nearest exit may be behind you.",
+      "words": [
+        {
+          "text": " The",
+          "lang": "en",
+          "prob": 0.8677,
+          "start": 113.64794,
+          "end": 113.86794
+        },
+        {
+          "text": " nearest",
+          "lang": "en",
+          "prob": 0.9932,
+          "start": 113.86794,
+          "end": 114.02794
+        },
+        {
+          "text": " exit",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 114.02794,
+          "end": 114.38794
+        },
+        {
+          "text": " may",
+          "lang": "en",
+          "prob": 0.9937,
+          "start": 114.38794,
+          "end": 114.70794
+        },
+        {
+          "text": " be",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 114.70794,
+          "end": 114.88794
+        },
+        {
+          "text": " behind",
+          "lang": "en",
+          "prob": 0.9912,
+          "start": 114.88794,
+          "end": 115.14794
+        },
+        {
+          "text": " you.",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 115.14794,
+          "end": 115.44794
+        }
+      ]
+    },
+    {
+      "id": "utt108",
+      "start": 116.19394,
+      "end": 122.95394,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Les issues de secours sont situ\u00e9es de chaque c\u00f4t\u00e9 de la cabine, \u00e0 l'avant, au centre, \u00e0 l'arri\u00e8re.",
+      "words": [
+        {
+          "text": " Les",
+          "lang": "fr",
+          "prob": 0.749,
+          "start": 116.19394,
+          "end": 116.51394
+        },
+        {
+          "text": " issues",
+          "lang": "fr",
+          "prob": 0.9561,
+          "start": 116.51394,
+          "end": 116.81394
+        },
+        {
+          "text": " de",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 116.81394,
+          "end": 116.97394
+        },
+        {
+          "text": " secours",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 116.97394,
+          "end": 117.47394
+        },
+        {
+          "text": " sont",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 117.47394,
+          "end": 117.69394
+        },
+        {
+          "text": " situ\u00e9es",
+          "lang": "fr",
+          "prob": 0.9753,
+          "start": 117.69394,
+          "end": 118.17394
+        },
+        {
+          "text": " de",
+          "lang": "fr",
+          "prob": 0.9951,
+          "start": 118.17394,
+          "end": 118.27394
+        },
+        {
+          "text": " chaque",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 118.27394,
+          "end": 118.41394
+        },
+        {
+          "text": " c\u00f4t\u00e9",
+          "lang": "fr",
+          "prob": 0.9971,
+          "start": 118.41394,
+          "end": 118.89394
+        },
+        {
+          "text": " de",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 118.89394,
+          "end": 119.15394
+        },
+        {
+          "text": " la",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 119.15394,
+          "end": 119.21394
+        },
+        {
+          "text": " cabine,",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 119.21394,
+          "end": 119.73394
+        },
+        {
+          "text": " \u00e0",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 119.77394,
+          "end": 120.35394
+        },
+        {
+          "text": " l",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 120.35394,
+          "end": 120.45394
+        },
+        {
+          "text": "'avant,",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 120.45394,
+          "end": 120.71394
+        },
+        {
+          "text": " au",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 120.87394,
+          "end": 121.49394
+        },
+        {
+          "text": " centre,",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 121.49394,
+          "end": 122.03394
+        },
+        {
+          "text": " \u00e0",
+          "lang": "fr",
+          "prob": 0.998,
+          "start": 122.17394,
+          "end": 122.55394
+        },
+        {
+          "text": " l",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 122.55394,
+          "end": 122.69394
+        },
+        {
+          "text": "'arri\u00e8re.",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 122.69394,
+          "end": 122.95394
+        }
+      ]
+    },
+    {
+      "id": "utt110",
+      "start": 124.27594,
+      "end": 129.91594,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Emergency exits on each side of the cabin are located at the front, in the center, and at the rear.",
+      "words": [
+        {
+          "text": " Emergency",
+          "lang": "en",
+          "prob": 0.9385,
+          "start": 124.27594,
+          "end": 124.79594
+        },
+        {
+          "text": " exits",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 124.79594,
+          "end": 125.23594
+        },
+        {
+          "text": " on",
+          "lang": "en",
+          "prob": 0.9888,
+          "start": 125.23594,
+          "end": 125.65594
+        },
+        {
+          "text": " each",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 125.65594,
+          "end": 125.91594
+        },
+        {
+          "text": " side",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 125.91594,
+          "end": 126.13594
+        },
+        {
+          "text": " of",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 126.13594,
+          "end": 126.27594
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 126.27594,
+          "end": 126.31594
+        },
+        {
+          "text": " cabin",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 126.31594,
+          "end": 126.67594
+        },
+        {
+          "text": " are",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 126.67594,
+          "end": 127.11594
+        },
+        {
+          "text": " located",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 127.11594,
+          "end": 127.55594
+        },
+        {
+          "text": " at",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 127.55594,
+          "end": 127.77594
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 127.77594,
+          "end": 127.83594
+        },
+        {
+          "text": " front,",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 127.83594,
+          "end": 128.09594
+        },
+        {
+          "text": " in",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 128.23594,
+          "end": 128.53594
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 128.53594,
+          "end": 128.65594
+        },
+        {
+          "text": " center,",
+          "lang": "en",
+          "prob": 0.8457,
+          "start": 128.65594,
+          "end": 128.97594
+        },
+        {
+          "text": " and",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 129.07594,
+          "end": 129.43594
+        },
+        {
+          "text": " at",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 129.43594,
+          "end": 129.55594
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 129.55594,
+          "end": 129.69594
+        },
+        {
+          "text": " rear.",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 129.69594,
+          "end": 129.91594
+        }
+      ]
+    },
+    {
+      "id": "utt114",
+      "start": 131.10994,
+      "end": 134.32994,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Pour \u00e9vacuer l'avion, suivez le marquage lumineux.",
+      "words": [
+        {
+          "text": " Pour",
+          "lang": "fr",
+          "prob": 0.9341,
+          "start": 131.10994,
+          "end": 131.38994
+        },
+        {
+          "text": " \u00e9vacuer",
+          "lang": "fr",
+          "prob": 0.9998,
+          "start": 131.38994,
+          "end": 132.00994
+        },
+        {
+          "text": " l",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 132.00994,
+          "end": 132.12994
+        },
+        {
+          "text": "'avion,",
+          "lang": "fr",
+          "prob": 0.9998,
+          "start": 132.12994,
+          "end": 132.48994
+        },
+        {
+          "text": " suivez",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 132.50994,
+          "end": 133.20994
+        },
+        {
+          "text": " le",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 133.20994,
+          "end": 133.28994
+        },
+        {
+          "text": " marquage",
+          "lang": "fr",
+          "prob": 0.9977,
+          "start": 133.28994,
+          "end": 133.80994
+        },
+        {
+          "text": " lumineux.",
+          "lang": "fr",
+          "prob": 0.9993,
+          "start": 133.80994,
+          "end": 134.32994
+        }
+      ]
+    },
+    {
+      "id": "utt116",
+      "start": 134.72394,
+      "end": 139.22394,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " In the event of an evacuation, pathway lighting on the floor will guide you to the exits.",
+      "words": [
+        {
+          "text": " In",
+          "lang": "en",
+          "prob": 0.9346,
+          "start": 134.72394,
+          "end": 135.00394
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 135.00394,
+          "end": 135.06394
+        },
+        {
+          "text": " event",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 135.06394,
+          "end": 135.32394
+        },
+        {
+          "text": " of",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 135.32394,
+          "end": 135.48394
+        },
+        {
+          "text": " an",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 135.48394,
+          "end": 135.58394
+        },
+        {
+          "text": " evacuation,",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 135.58394,
+          "end": 135.88394
+        },
+        {
+          "text": " pathway",
+          "lang": "en",
+          "prob": 0.9922,
+          "start": 136.34394,
+          "end": 136.98394
+        },
+        {
+          "text": " lighting",
+          "lang": "en",
+          "prob": 0.9966,
+          "start": 136.98394,
+          "end": 137.38394
+        },
+        {
+          "text": " on",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 137.38394,
+          "end": 137.60394
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 1.0,
+          "start": 137.60394,
+          "end": 137.68394
+        },
+        {
+          "text": " floor",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 137.68394,
+          "end": 137.96394
+        },
+        {
+          "text": " will",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 137.96394,
+          "end": 138.24394
+        },
+        {
+          "text": " guide",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 138.24394,
+          "end": 138.58394
+        },
+        {
+          "text": " you",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 138.58394,
+          "end": 138.72394
+        },
+        {
+          "text": " to",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 138.72394,
+          "end": 138.84394
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 138.84394,
+          "end": 138.92394
+        },
+        {
+          "text": " exits.",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 138.92394,
+          "end": 139.22394
+        }
+      ]
+    },
+    {
+      "id": "utt119",
+      "start": 140.25794,
+      "end": 142.87794,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Les portes seront ouvertes par l'\u00e9quipage.",
+      "words": [
+        {
+          "text": " Les",
+          "lang": "fr",
+          "prob": 0.9365,
+          "start": 140.25794,
+          "end": 140.59794
+        },
+        {
+          "text": " portes",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 140.59794,
+          "end": 141.13794
+        },
+        {
+          "text": " seront",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 141.13794,
+          "end": 141.35794
+        },
+        {
+          "text": " ouvertes",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 141.35794,
+          "end": 142.03794
+        },
+        {
+          "text": " par",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 142.03794,
+          "end": 142.17794
+        },
+        {
+          "text": " l",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 142.17794,
+          "end": 142.29794
+        },
+        {
+          "text": "'\u00e9quipage.",
+          "lang": "fr",
+          "prob": 0.9999,
+          "start": 142.29794,
+          "end": 142.87794
+        }
+      ]
+    },
+    {
+      "id": "utt122",
+      "start": 143.39994,
+      "end": 145.37994,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Doors will be opened by the cabin crew.",
+      "words": [
+        {
+          "text": " Doors",
+          "lang": "en",
+          "prob": 0.8853,
+          "start": 143.39994,
+          "end": 143.91994
+        },
+        {
+          "text": " will",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 143.91994,
+          "end": 143.97994
+        },
+        {
+          "text": " be",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 143.97994,
+          "end": 144.17994
+        },
+        {
+          "text": " opened",
+          "lang": "en",
+          "prob": 0.9966,
+          "start": 144.17994,
+          "end": 144.45994
+        },
+        {
+          "text": " by",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 144.45994,
+          "end": 144.71994
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 144.71994,
+          "end": 144.81994
+        },
+        {
+          "text": " cabin",
+          "lang": "en",
+          "prob": 0.9966,
+          "start": 144.81994,
+          "end": 145.07994
+        },
+        {
+          "text": " crew.",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 145.07994,
+          "end": 145.37994
+        }
+      ]
+    },
+    {
+      "id": "utt127",
+      "start": 145.61394,
+      "end": 148.01394,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Les toboggans se d\u00e9ploient automatiquement.",
+      "words": [
+        {
+          "text": " Les",
+          "lang": "fr",
+          "prob": 0.9419,
+          "start": 145.61394,
+          "end": 145.89394
+        },
+        {
+          "text": " toboggans",
+          "lang": "fr",
+          "prob": 0.9906,
+          "start": 145.89394,
+          "end": 146.51394
+        },
+        {
+          "text": " se",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 146.51394,
+          "end": 146.65394
+        },
+        {
+          "text": " d\u00e9ploient",
+          "lang": "fr",
+          "prob": 0.9989,
+          "start": 146.65394,
+          "end": 147.21394
+        },
+        {
+          "text": " automatiquement.",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 147.21394,
+          "end": 148.01394
+        }
+      ]
+    },
+    {
+      "id": "utt130",
+      "start": 148.47194,
+      "end": 150.95194,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " The emergency slides will automatically inflate.",
+      "words": [
+        {
+          "text": " The",
+          "lang": "en",
+          "prob": 0.9297,
+          "start": 148.47194,
+          "end": 148.71194
+        },
+        {
+          "text": " emergency",
+          "lang": "en",
+          "prob": 0.9692,
+          "start": 148.71194,
+          "end": 148.99194
+        },
+        {
+          "text": " slides",
+          "lang": "en",
+          "prob": 0.9927,
+          "start": 148.99194,
+          "end": 149.41194
+        },
+        {
+          "text": " will",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 149.41194,
+          "end": 149.77194
+        },
+        {
+          "text": " automatically",
+          "lang": "en",
+          "prob": 0.9961,
+          "start": 149.77194,
+          "end": 150.19194
+        },
+        {
+          "text": " inflate.",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 150.19194,
+          "end": 150.95194
+        }
+      ]
+    },
+    {
+      "id": "utt135",
+      "start": 151.28194,
+      "end": 155.88194,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Le gilet de sauvetage est situ\u00e9 sous votre si\u00e8ge ou dans l'accoudoir central.",
+      "words": [
+        {
+          "text": " Le",
+          "lang": "fr",
+          "prob": 0.9106,
+          "start": 151.28194,
+          "end": 151.58194
+        },
+        {
+          "text": " gilet",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 151.58194,
+          "end": 151.92194
+        },
+        {
+          "text": " de",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 151.92194,
+          "end": 151.98194
+        },
+        {
+          "text": " sauvetage",
+          "lang": "fr",
+          "prob": 0.9996,
+          "start": 151.98194,
+          "end": 152.62194
+        },
+        {
+          "text": " est",
+          "lang": "fr",
+          "prob": 0.998,
+          "start": 152.62194,
+          "end": 152.90194
+        },
+        {
+          "text": " situ\u00e9",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 152.90194,
+          "end": 153.38194
+        },
+        {
+          "text": " sous",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 153.38194,
+          "end": 153.54194
+        },
+        {
+          "text": " votre",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 153.54194,
+          "end": 153.76194
+        },
+        {
+          "text": " si\u00e8ge",
+          "lang": "fr",
+          "prob": 0.9998,
+          "start": 153.76194,
+          "end": 154.40194
+        },
+        {
+          "text": " ou",
+          "lang": "fr",
+          "prob": 0.9941,
+          "start": 154.40194,
+          "end": 154.56194
+        },
+        {
+          "text": " dans",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 154.56194,
+          "end": 154.78194
+        },
+        {
+          "text": " l'",
+          "lang": "fr",
+          "prob": 0.9746,
+          "start": 154.78194,
+          "end": 154.90194
+        },
+        {
+          "text": "accoudoir",
+          "lang": "fr",
+          "prob": 0.9414,
+          "start": 154.90194,
+          "end": 155.28194
+        },
+        {
+          "text": " central.",
+          "lang": "fr",
+          "prob": 0.9998,
+          "start": 155.28194,
+          "end": 155.88194
+        }
+      ]
+    },
+    {
+      "id": "utt137",
+      "start": 156.62794,
+      "end": 159.76794,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Your life jacket is under your seat or in the central armrest.",
+      "words": [
+        {
+          "text": " Your",
+          "lang": "en",
+          "prob": 0.7002,
+          "start": 156.62794,
+          "end": 156.94794
+        },
+        {
+          "text": " life",
+          "lang": "en",
+          "prob": 0.9834,
+          "start": 156.94794,
+          "end": 157.12794
+        },
+        {
+          "text": " jacket",
+          "lang": "en",
+          "prob": 0.9673,
+          "start": 157.12794,
+          "end": 157.38794
+        },
+        {
+          "text": " is",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 157.38794,
+          "end": 157.68794
+        },
+        {
+          "text": " under",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 157.68794,
+          "end": 157.90794
+        },
+        {
+          "text": " your",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 157.90794,
+          "end": 158.08794
+        },
+        {
+          "text": " seat",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 158.08794,
+          "end": 158.38794
+        },
+        {
+          "text": " or",
+          "lang": "en",
+          "prob": 0.9565,
+          "start": 158.38794,
+          "end": 158.72794
+        },
+        {
+          "text": " in",
+          "lang": "en",
+          "prob": 0.9976,
+          "start": 158.72794,
+          "end": 158.86794
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 158.86794,
+          "end": 158.96794
+        },
+        {
+          "text": " central",
+          "lang": "en",
+          "prob": 0.9956,
+          "start": 158.96794,
+          "end": 159.26794
+        },
+        {
+          "text": " armrest.",
+          "lang": "en",
+          "prob": 0.9934,
+          "start": 159.26794,
+          "end": 159.76794
+        }
+      ]
+    },
+    {
+      "id": "utt141",
+      "start": 160.00194,
+      "end": 164.22194,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Passez la t\u00eate dans l'encolure, attachez et serrez les sangles.",
+      "words": [
+        {
+          "text": " Passez",
+          "lang": "fr",
+          "prob": 0.959,
+          "start": 160.00194,
+          "end": 160.46194
+        },
+        {
+          "text": " la",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 160.46194,
+          "end": 160.56194
+        },
+        {
+          "text": " t\u00eate",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 160.56194,
+          "end": 160.80194
+        },
+        {
+          "text": " dans",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 160.80194,
+          "end": 161.16194
+        },
+        {
+          "text": " l",
+          "lang": "fr",
+          "prob": 0.9976,
+          "start": 161.16194,
+          "end": 161.22194
+        },
+        {
+          "text": "'encolure,",
+          "lang": "fr",
+          "prob": 0.985,
+          "start": 161.22194,
+          "end": 161.74194
+        },
+        {
+          "text": " attachez",
+          "lang": "fr",
+          "prob": 0.9944,
+          "start": 161.94194,
+          "end": 162.96194
+        },
+        {
+          "text": " et",
+          "lang": "fr",
+          "prob": 0.9951,
+          "start": 162.96194,
+          "end": 163.14194
+        },
+        {
+          "text": " serrez",
+          "lang": "fr",
+          "prob": 0.9998,
+          "start": 163.14194,
+          "end": 163.64194
+        },
+        {
+          "text": " les",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 163.64194,
+          "end": 163.74194
+        },
+        {
+          "text": " sangles.",
+          "lang": "fr",
+          "prob": 0.9944,
+          "start": 163.74194,
+          "end": 164.22194
+        }
+      ]
+    },
+    {
+      "id": "utt143",
+      "start": 165.06394,
+      "end": 168.38394,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Place it over your head and pull the straps tightly around your waist.",
+      "words": [
+        {
+          "text": " Place",
+          "lang": "en",
+          "prob": 0.9741,
+          "start": 165.06394,
+          "end": 165.42394
+        },
+        {
+          "text": " it",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 165.42394,
+          "end": 165.54394
+        },
+        {
+          "text": " over",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 165.54394,
+          "end": 165.68394
+        },
+        {
+          "text": " your",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 165.68394,
+          "end": 165.84394
+        },
+        {
+          "text": " head",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 165.84394,
+          "end": 166.14394
+        },
+        {
+          "text": " and",
+          "lang": "en",
+          "prob": 0.9858,
+          "start": 166.14394,
+          "end": 166.44394
+        },
+        {
+          "text": " pull",
+          "lang": "en",
+          "prob": 0.9976,
+          "start": 166.44394,
+          "end": 166.62394
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 166.62394,
+          "end": 166.78394
+        },
+        {
+          "text": " straps",
+          "lang": "en",
+          "prob": 0.9941,
+          "start": 166.78394,
+          "end": 167.02394
+        },
+        {
+          "text": " tightly",
+          "lang": "en",
+          "prob": 0.9976,
+          "start": 167.02394,
+          "end": 167.44394
+        },
+        {
+          "text": " around",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 167.44394,
+          "end": 167.82394
+        },
+        {
+          "text": " your",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 167.82394,
+          "end": 168.02394
+        },
+        {
+          "text": " waist.",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 168.02394,
+          "end": 168.38394
+        }
+      ]
+    },
+    {
+      "id": "utt147",
+      "start": 169.03394,
+      "end": 171.83394,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Inflate your life jacket by pulling the red toggles.",
+      "words": [
+        {
+          "text": " Inflate",
+          "lang": "en",
+          "prob": 0.9937,
+          "start": 169.03394,
+          "end": 169.55394
+        },
+        {
+          "text": " your",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 169.55394,
+          "end": 169.67394
+        },
+        {
+          "text": " life",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 169.67394,
+          "end": 169.87394
+        },
+        {
+          "text": " jacket",
+          "lang": "en",
+          "prob": 0.9785,
+          "start": 169.87394,
+          "end": 170.11394
+        },
+        {
+          "text": " by",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 170.11394,
+          "end": 170.47394
+        },
+        {
+          "text": " pulling",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 170.47394,
+          "end": 170.77394
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 170.77394,
+          "end": 170.95394
+        },
+        {
+          "text": " red",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 170.95394,
+          "end": 171.17394
+        },
+        {
+          "text": " toggles.",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 171.17394,
+          "end": 171.83394
+        }
+      ]
+    },
+    {
+      "id": "utt151",
+      "start": 172.38794,
+      "end": 177.80794,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Une fois \u00e0 l'ext\u00e9rieur de l'avion, gonflez votre gilet en tirant sur les poign\u00e9es rouges.",
+      "words": [
+        {
+          "text": " Une",
+          "lang": "fr",
+          "prob": 0.9399,
+          "start": 172.38794,
+          "end": 172.74794
+        },
+        {
+          "text": " fois",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 172.74794,
+          "end": 173.04794
+        },
+        {
+          "text": " \u00e0",
+          "lang": "fr",
+          "prob": 0.9561,
+          "start": 173.04794,
+          "end": 173.16794
+        },
+        {
+          "text": " l",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 173.16794,
+          "end": 173.16794
+        },
+        {
+          "text": "'ext\u00e9rieur",
+          "lang": "fr",
+          "prob": 0.9989,
+          "start": 173.16794,
+          "end": 173.66794
+        },
+        {
+          "text": " de",
+          "lang": "fr",
+          "prob": 0.9961,
+          "start": 173.66794,
+          "end": 173.88794
+        },
+        {
+          "text": " l",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 173.88794,
+          "end": 173.98794
+        },
+        {
+          "text": "'avion,",
+          "lang": "fr",
+          "prob": 0.9997,
+          "start": 173.98794,
+          "end": 174.34794
+        },
+        {
+          "text": " gonflez",
+          "lang": "fr",
+          "prob": 0.9889,
+          "start": 174.36794,
+          "end": 175.24794
+        },
+        {
+          "text": " votre",
+          "lang": "fr",
+          "prob": 0.998,
+          "start": 175.24794,
+          "end": 175.42794
+        },
+        {
+          "text": " gilet",
+          "lang": "fr",
+          "prob": 0.9989,
+          "start": 175.42794,
+          "end": 175.98794
+        },
+        {
+          "text": " en",
+          "lang": "fr",
+          "prob": 0.9927,
+          "start": 175.98794,
+          "end": 176.18794
+        },
+        {
+          "text": " tirant",
+          "lang": "fr",
+          "prob": 0.998,
+          "start": 176.18794,
+          "end": 176.76794
+        },
+        {
+          "text": " sur",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 176.76794,
+          "end": 176.92794
+        },
+        {
+          "text": " les",
+          "lang": "fr",
+          "prob": 0.9966,
+          "start": 176.92794,
+          "end": 177.06794
+        },
+        {
+          "text": " poign\u00e9es",
+          "lang": "fr",
+          "prob": 0.9889,
+          "start": 177.06794,
+          "end": 177.40794
+        },
+        {
+          "text": " rouges.",
+          "lang": "fr",
+          "prob": 0.9958,
+          "start": 177.40794,
+          "end": 177.80794
+        }
+      ]
+    },
+    {
+      "id": "utt153",
+      "start": 178.52194,
+      "end": 180.74194,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Do this only when you are outside the aircraft.",
+      "words": [
+        {
+          "text": " Do",
+          "lang": "en",
+          "prob": 0.9214,
+          "start": 178.52194,
+          "end": 178.80194
+        },
+        {
+          "text": " this",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 178.80194,
+          "end": 178.94194
+        },
+        {
+          "text": " only",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 178.94194,
+          "end": 179.24194
+        },
+        {
+          "text": " when",
+          "lang": "en",
+          "prob": 0.9966,
+          "start": 179.24194,
+          "end": 179.64194
+        },
+        {
+          "text": " you",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 179.64194,
+          "end": 179.76194
+        },
+        {
+          "text": " are",
+          "lang": "en",
+          "prob": 0.9907,
+          "start": 179.76194,
+          "end": 179.86194
+        },
+        {
+          "text": " outside",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 179.86194,
+          "end": 180.24194
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 180.24194,
+          "end": 180.48194
+        },
+        {
+          "text": " aircraft.",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 180.48194,
+          "end": 180.74194
+        }
+      ]
+    },
+    {
+      "id": "utt156",
+      "start": 185.03994,
+      "end": 186.51994,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Nous allons bient\u00f4t d\u00e9coller.",
+      "words": [
+        {
+          "text": " Nous",
+          "lang": "fr",
+          "prob": 0.8994,
+          "start": 185.03994,
+          "end": 185.35994
+        },
+        {
+          "text": " allons",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 185.35994,
+          "end": 185.55994
+        },
+        {
+          "text": " bient\u00f4t",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 185.55994,
+          "end": 185.87994
+        },
+        {
+          "text": " d\u00e9coller.",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 185.87994,
+          "end": 186.51994
+        }
+      ]
+    },
+    {
+      "id": "utt159",
+      "start": 186.91394,
+      "end": 190.63394,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " La tablette doit \u00eatre rang\u00e9e et votre dossier redress\u00e9.",
+      "words": [
+        {
+          "text": " La",
+          "lang": "fr",
+          "prob": 0.8818,
+          "start": 186.91394,
+          "end": 187.21394
+        },
+        {
+          "text": " tablette",
+          "lang": "fr",
+          "prob": 0.9968,
+          "start": 187.21394,
+          "end": 187.71394
+        },
+        {
+          "text": " doit",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 187.71394,
+          "end": 187.83394
+        },
+        {
+          "text": " \u00eatre",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 187.83394,
+          "end": 188.01394
+        },
+        {
+          "text": " rang\u00e9e",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 188.01394,
+          "end": 188.67394
+        },
+        {
+          "text": " et",
+          "lang": "fr",
+          "prob": 0.9736,
+          "start": 188.67394,
+          "end": 189.21394
+        },
+        {
+          "text": " votre",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 189.21394,
+          "end": 189.47394
+        },
+        {
+          "text": " dossier",
+          "lang": "fr",
+          "prob": 1.0,
+          "start": 189.47394,
+          "end": 190.03394
+        },
+        {
+          "text": " redress\u00e9.",
+          "lang": "fr",
+          "prob": 0.9954,
+          "start": 190.03394,
+          "end": 190.63394
+        }
+      ]
+    },
+    {
+      "id": "utt162",
+      "start": 191.28394,
+      "end": 198.32394,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " In preparation for take-off, please make sure your tray table is stowed and secure and that your seat back is in the upright position.",
+      "words": [
+        {
+          "text": " In",
+          "lang": "en",
+          "prob": 0.8125,
+          "start": 191.28394,
+          "end": 191.58394
+        },
+        {
+          "text": " preparation",
+          "lang": "en",
+          "prob": 0.9883,
+          "start": 191.58394,
+          "end": 191.96394
+        },
+        {
+          "text": " for",
+          "lang": "en",
+          "prob": 0.9956,
+          "start": 191.96394,
+          "end": 192.26394
+        },
+        {
+          "text": " take",
+          "lang": "en",
+          "prob": 0.9961,
+          "start": 192.26394,
+          "end": 192.48394
+        },
+        {
+          "text": "-off,",
+          "lang": "en",
+          "prob": 0.6772,
+          "start": 192.48394,
+          "end": 192.82394
+        },
+        {
+          "text": " please",
+          "lang": "en",
+          "prob": 0.9883,
+          "start": 192.86394,
+          "end": 193.38394
+        },
+        {
+          "text": " make",
+          "lang": "en",
+          "prob": 0.9966,
+          "start": 193.38394,
+          "end": 193.60394
+        },
+        {
+          "text": " sure",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 193.60394,
+          "end": 193.84394
+        },
+        {
+          "text": " your",
+          "lang": "en",
+          "prob": 0.9814,
+          "start": 193.84394,
+          "end": 194.06394
+        },
+        {
+          "text": " tray",
+          "lang": "en",
+          "prob": 0.9888,
+          "start": 194.06394,
+          "end": 194.32394
+        },
+        {
+          "text": " table",
+          "lang": "en",
+          "prob": 0.9927,
+          "start": 194.32394,
+          "end": 194.62394
+        },
+        {
+          "text": " is",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 194.62394,
+          "end": 194.98394
+        },
+        {
+          "text": " stowed",
+          "lang": "en",
+          "prob": 0.9927,
+          "start": 194.98394,
+          "end": 195.34387
+        },
+        {
+          "text": " and",
+          "lang": "en",
+          "prob": 0.9956,
+          "start": 195.34387,
+          "end": 195.46394
+        },
+        {
+          "text": " secure",
+          "lang": "en",
+          "prob": 0.981,
+          "start": 195.46394,
+          "end": 195.72394
+        },
+        {
+          "text": " and",
+          "lang": "en",
+          "prob": 0.5049,
+          "start": 195.72394,
+          "end": 196.30394
+        },
+        {
+          "text": " that",
+          "lang": "en",
+          "prob": 0.9946,
+          "start": 196.30394,
+          "end": 196.56394
+        },
+        {
+          "text": " your",
+          "lang": "en",
+          "prob": 0.9976,
+          "start": 196.56394,
+          "end": 196.74394
+        },
+        {
+          "text": " seat",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 196.74394,
+          "end": 196.92394
+        },
+        {
+          "text": " back",
+          "lang": "en",
+          "prob": 0.5591,
+          "start": 196.92394,
+          "end": 197.12394
+        },
+        {
+          "text": " is",
+          "lang": "en",
+          "prob": 0.9976,
+          "start": 197.12394,
+          "end": 197.40394
+        },
+        {
+          "text": " in",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 197.40394,
+          "end": 197.54394
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 197.54394,
+          "end": 197.66394
+        },
+        {
+          "text": " upright",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 197.66394,
+          "end": 197.92394
+        },
+        {
+          "text": " position.",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 197.92394,
+          "end": 198.32394
+        }
+      ]
+    },
+    {
+      "id": "utt167",
+      "start": 198.42394,
+      "end": 203.46394,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " L'usage des appareils \u00e9lectroniques est interdit pendant le d\u00e9collage et l'atterrissage.",
+      "words": [
+        {
+          "text": " L",
+          "lang": "fr",
+          "prob": 0.9175,
+          "start": 198.42394,
+          "end": 198.92394
+        },
+        {
+          "text": "'usage",
+          "lang": "fr",
+          "prob": 0.9953,
+          "start": 198.92394,
+          "end": 199.32394
+        },
+        {
+          "text": " des",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 199.32394,
+          "end": 199.40394
+        },
+        {
+          "text": " appareils",
+          "lang": "fr",
+          "prob": 0.9998,
+          "start": 199.40394,
+          "end": 199.82394
+        },
+        {
+          "text": " \u00e9lectroniques",
+          "lang": "fr",
+          "prob": 0.9992,
+          "start": 199.82394,
+          "end": 200.46394
+        },
+        {
+          "text": " est",
+          "lang": "fr",
+          "prob": 0.998,
+          "start": 200.46394,
+          "end": 200.60394
+        },
+        {
+          "text": " interdit",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 200.60394,
+          "end": 201.14394
+        },
+        {
+          "text": " pendant",
+          "lang": "fr",
+          "prob": 0.9917,
+          "start": 201.14394,
+          "end": 201.60394
+        },
+        {
+          "text": " le",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 201.60394,
+          "end": 201.74394
+        },
+        {
+          "text": " d\u00e9collage",
+          "lang": "fr",
+          "prob": 0.9982,
+          "start": 201.74394,
+          "end": 202.48388
+        },
+        {
+          "text": " et",
+          "lang": "fr",
+          "prob": 0.9976,
+          "start": 202.48388,
+          "end": 202.80394
+        },
+        {
+          "text": " l",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 202.80394,
+          "end": 202.90394
+        },
+        {
+          "text": "'atterrissage.",
+          "lang": "fr",
+          "prob": 0.9996,
+          "start": 202.90394,
+          "end": 203.46394
+        }
+      ]
+    },
+    {
+      "id": "utt169",
+      "start": 204.24194,
+      "end": 207.84194,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " The use of electronic devices is prohibited during take-off and landing.",
+      "words": [
+        {
+          "text": " The",
+          "lang": "en",
+          "prob": 0.9463,
+          "start": 204.24194,
+          "end": 204.50194
+        },
+        {
+          "text": " use",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 204.50194,
+          "end": 204.64194
+        },
+        {
+          "text": " of",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 204.64194,
+          "end": 204.82194
+        },
+        {
+          "text": " electronic",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 204.82194,
+          "end": 205.08194
+        },
+        {
+          "text": " devices",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 205.08194,
+          "end": 205.62194
+        },
+        {
+          "text": " is",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 205.62194,
+          "end": 206.02194
+        },
+        {
+          "text": " prohibited",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 206.02194,
+          "end": 206.38194
+        },
+        {
+          "text": " during",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 206.38194,
+          "end": 206.88194
+        },
+        {
+          "text": " take",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 206.88194,
+          "end": 207.16194
+        },
+        {
+          "text": "-off",
+          "lang": "en",
+          "prob": 0.7163,
+          "start": 207.16194,
+          "end": 207.40194
+        },
+        {
+          "text": " and",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 207.40194,
+          "end": 207.54194
+        },
+        {
+          "text": " landing.",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 207.54194,
+          "end": 207.84194
+        }
+      ]
+    },
+    {
+      "id": "utt172",
+      "start": 208.68394,
+      "end": 212.12394,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Les t\u00e9l\u00e9phones portables doivent rester \u00e9teints pendant tout le vol.",
+      "words": [
+        {
+          "text": " Les",
+          "lang": "fr",
+          "prob": 0.8301,
+          "start": 208.68394,
+          "end": 209.04394
+        },
+        {
+          "text": " t\u00e9l\u00e9phones",
+          "lang": "fr",
+          "prob": 0.9966,
+          "start": 209.04394,
+          "end": 209.50394
+        },
+        {
+          "text": " portables",
+          "lang": "fr",
+          "prob": 0.9983,
+          "start": 209.50394,
+          "end": 210.08394
+        },
+        {
+          "text": " doivent",
+          "lang": "fr",
+          "prob": 0.9976,
+          "start": 210.08394,
+          "end": 210.28394
+        },
+        {
+          "text": " rester",
+          "lang": "fr",
+          "prob": 0.998,
+          "start": 210.28394,
+          "end": 210.62394
+        },
+        {
+          "text": " \u00e9teints",
+          "lang": "fr",
+          "prob": 0.9993,
+          "start": 210.62394,
+          "end": 211.22394
+        },
+        {
+          "text": " pendant",
+          "lang": "fr",
+          "prob": 0.998,
+          "start": 211.22394,
+          "end": 211.46394
+        },
+        {
+          "text": " tout",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 211.46394,
+          "end": 211.72394
+        },
+        {
+          "text": " le",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 211.72394,
+          "end": 211.84394
+        },
+        {
+          "text": " vol.",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 211.84394,
+          "end": 212.12394
+        }
+      ]
+    },
+    {
+      "id": "utt174",
+      "start": 212.35794,
+      "end": 215.87794,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Mobile phones must remain switched off for the duration of the flight.",
+      "words": [
+        {
+          "text": " Mobile",
+          "lang": "en",
+          "prob": 0.8623,
+          "start": 212.35794,
+          "end": 212.73794
+        },
+        {
+          "text": " phones",
+          "lang": "en",
+          "prob": 0.9897,
+          "start": 212.73794,
+          "end": 213.17794
+        },
+        {
+          "text": " must",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 213.17794,
+          "end": 213.55794
+        },
+        {
+          "text": " remain",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 213.55794,
+          "end": 213.83794
+        },
+        {
+          "text": " switched",
+          "lang": "en",
+          "prob": 0.9966,
+          "start": 213.83794,
+          "end": 214.23794
+        },
+        {
+          "text": " off",
+          "lang": "en",
+          "prob": 0.9966,
+          "start": 214.23794,
+          "end": 214.63794
+        },
+        {
+          "text": " for",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 214.63794,
+          "end": 214.79794
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 214.79794,
+          "end": 214.89794
+        },
+        {
+          "text": " duration",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 214.89794,
+          "end": 215.21794
+        },
+        {
+          "text": " of",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 215.21794,
+          "end": 215.51794
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.9946,
+          "start": 215.51794,
+          "end": 215.61794
+        },
+        {
+          "text": " flight.",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 215.61794,
+          "end": 215.87794
+        }
+      ]
+    },
+    {
+      "id": "utt178",
+      "start": 216.68794,
+      "end": 220.44794,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Une notice de s\u00e9curit\u00e9 plac\u00e9e devant vous est \u00e0 votre disposition.",
+      "words": [
+        {
+          "text": " Une",
+          "lang": "fr",
+          "prob": 0.8647,
+          "start": 216.68794,
+          "end": 217.00794
+        },
+        {
+          "text": " notice",
+          "lang": "fr",
+          "prob": 0.9951,
+          "start": 217.00794,
+          "end": 217.36794
+        },
+        {
+          "text": " de",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 217.36794,
+          "end": 217.56794
+        },
+        {
+          "text": " s\u00e9curit\u00e9",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 217.56794,
+          "end": 217.88794
+        },
+        {
+          "text": " plac\u00e9e",
+          "lang": "fr",
+          "prob": 0.9941,
+          "start": 217.88794,
+          "end": 218.60794
+        },
+        {
+          "text": " devant",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 218.60794,
+          "end": 218.86794
+        },
+        {
+          "text": " vous",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 218.86794,
+          "end": 219.14794
+        },
+        {
+          "text": " est",
+          "lang": "fr",
+          "prob": 0.9907,
+          "start": 219.14794,
+          "end": 219.62794
+        },
+        {
+          "text": " \u00e0",
+          "lang": "fr",
+          "prob": 0.999,
+          "start": 219.62794,
+          "end": 219.76794
+        },
+        {
+          "text": " votre",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 219.76794,
+          "end": 219.88794
+        },
+        {
+          "text": " disposition.",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 219.88794,
+          "end": 220.44794
+        }
+      ]
+    },
+    {
+      "id": "utt180",
+      "start": 221.25794,
+      "end": 225.95794,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " We encourage everyone to read the safety information leaflet located in the seat back pocket.",
+      "words": [
+        {
+          "text": " We",
+          "lang": "en",
+          "prob": 0.9536,
+          "start": 221.25794,
+          "end": 221.63794
+        },
+        {
+          "text": " encourage",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 221.63794,
+          "end": 221.91794
+        },
+        {
+          "text": " everyone",
+          "lang": "en",
+          "prob": 0.9976,
+          "start": 221.91794,
+          "end": 222.35794
+        },
+        {
+          "text": " to",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 222.35794,
+          "end": 222.67794
+        },
+        {
+          "text": " read",
+          "lang": "en",
+          "prob": 0.9995,
+          "start": 222.67794,
+          "end": 222.87794
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 222.87794,
+          "end": 223.03794
+        },
+        {
+          "text": " safety",
+          "lang": "en",
+          "prob": 0.9526,
+          "start": 223.03794,
+          "end": 223.35794
+        },
+        {
+          "text": " information",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 223.35794,
+          "end": 223.63794
+        },
+        {
+          "text": " leaflet",
+          "lang": "en",
+          "prob": 0.998,
+          "start": 223.63794,
+          "end": 224.27794
+        },
+        {
+          "text": " located",
+          "lang": "en",
+          "prob": 0.9849,
+          "start": 224.27794,
+          "end": 224.75794
+        },
+        {
+          "text": " in",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 224.75794,
+          "end": 225.09794
+        },
+        {
+          "text": " the",
+          "lang": "en",
+          "prob": 0.999,
+          "start": 225.09794,
+          "end": 225.17794
+        },
+        {
+          "text": " seat",
+          "lang": "en",
+          "prob": 0.9976,
+          "start": 225.17794,
+          "end": 225.35794
+        },
+        {
+          "text": " back",
+          "lang": "en",
+          "prob": 0.6484,
+          "start": 225.35794,
+          "end": 225.53794
+        },
+        {
+          "text": " pocket.",
+          "lang": "en",
+          "prob": 0.9985,
+          "start": 225.53794,
+          "end": 225.95794
+        }
+      ]
+    },
+    {
+      "id": "utt184",
+      "start": 226.63994,
+      "end": 227.95994,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Merci pour votre attention.",
+      "words": [
+        {
+          "text": " Merci",
+          "lang": "fr",
+          "prob": 0.9692,
+          "start": 226.63994,
+          "end": 227.13994
+        },
+        {
+          "text": " pour",
+          "lang": "fr",
+          "prob": 0.9946,
+          "start": 227.13994,
+          "end": 227.41994
+        },
+        {
+          "text": " votre",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 227.41994,
+          "end": 227.59994
+        },
+        {
+          "text": " attention.",
+          "lang": "fr",
+          "prob": 0.9995,
+          "start": 227.59994,
+          "end": 227.95994
+        }
+      ]
+    },
+    {
+      "id": "utt186",
+      "start": 228.44994,
+      "end": 229.96994,
+      "speaker": "SPEAKER_00",
+      "language": "fr",
+      "text": " Nous vous souhaitons un bon vol.",
+      "words": [
+        {
+          "text": " Nous",
+          "lang": "fr",
+          "prob": 0.8887,
+          "start": 228.44994,
+          "end": 228.72994
+        },
+        {
+          "text": " vous",
+          "lang": "fr",
+          "prob": 0.9985,
+          "start": 228.72994,
+          "end": 228.84994
+        },
+        {
+          "text": " souhaitons",
+          "lang": "fr",
+          "prob": 0.9974,
+          "start": 228.84994,
+          "end": 229.32994
+        },
+        {
+          "text": " un",
+          "lang": "fr",
+          "prob": 0.9956,
+          "start": 229.32994,
+          "end": 229.42994
+        },
+        {
+          "text": " bon",
+          "lang": "fr",
+          "prob": 0.9863,
+          "start": 229.42994,
+          "end": 229.60994
+        },
+        {
+          "text": " vol.",
+          "lang": "fr",
+          "prob": 0.9976,
+          "start": 229.60994,
+          "end": 229.96994
+        }
+      ]
+    },
+    {
+      "id": "utt187",
+      "start": 230.68394,
+      "end": 231.72394,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Thank you for your attention.",
+      "words": [
+        {
+          "text": " Thank",
+          "lang": "en",
+          "prob": 0.9175,
+          "start": 230.68394,
+          "end": 231.00394
+        },
+        {
+          "text": " you",
+          "lang": "en",
+          "prob": 0.9966,
+          "start": 231.00394,
+          "end": 231.14394
+        },
+        {
+          "text": " for",
+          "lang": "en",
+          "prob": 0.9966,
+          "start": 231.14394,
+          "end": 231.28394
+        },
+        {
+          "text": " your",
+          "lang": "en",
+          "prob": 0.9878,
+          "start": 231.28394,
+          "end": 231.40394
+        },
+        {
+          "text": " attention.",
+          "lang": "en",
+          "prob": 0.9966,
+          "start": 231.40394,
+          "end": 231.72394
+        }
+      ]
+    },
+    {
+      "id": "utt189",
+      "start": 232.27794,
+      "end": 233.97794,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " We wish you a very pleasant flight.",
+      "words": [
+        {
+          "text": " We",
+          "lang": "en",
+          "prob": 0.8843,
+          "start": 232.27794,
+          "end": 232.55794
+        },
+        {
+          "text": " wish",
+          "lang": "en",
+          "prob": 0.9941,
+          "start": 232.55794,
+          "end": 232.75794
+        },
+        {
+          "text": " you",
+          "lang": "en",
+          "prob": 0.9971,
+          "start": 232.75794,
+          "end": 232.91794
+        },
+        {
+          "text": " a",
+          "lang": "en",
+          "prob": 0.9927,
+          "start": 232.91794,
+          "end": 233.01794
+        },
+        {
+          "text": " very",
+          "lang": "en",
+          "prob": 0.9922,
+          "start": 233.01794,
+          "end": 233.29794
+        },
+        {
+          "text": " pleasant",
+          "lang": "en",
+          "prob": 0.9951,
+          "start": 233.29794,
+          "end": 233.65794
+        },
+        {
+          "text": " flight.",
+          "lang": "en",
+          "prob": 0.585,
+          "start": 233.65794,
+          "end": 233.97794
+        }
+      ]
+    }
+  ]
+}
