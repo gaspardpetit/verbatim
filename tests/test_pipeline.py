@@ -8,7 +8,7 @@ from verbatim.verbatim import Verbatim
 from verbatim.audio.sources.audiosource import AudioSource
 from verbatim.audio.sources.sourceconfig import SourceConfig
 from verbatim.audio.sources.factory import create_audio_source
-from verbatim.eval.metrics import compute_metrics_on_json_dict
+from verbatim.eval.diarizationlm.metrics import compute_metrics_on_json_dict
 from verbatim.transcript.format.writer import TranscriptWriterConfig
 from verbatim.transcript.format.json_dlm import JsonDiarizationLMTranscriptWriter
 

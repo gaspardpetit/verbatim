@@ -74,6 +74,8 @@ dependencies = [
     "pywhispercpp>=1.3.0",
     "mlx-whisper>=0.4.1 ; sys_platform == 'darwin'",
     "word-levenshtein>=0.0.3",
+    "openai>=1.59.8",
+    "datasets>=3.2.0",
 ]
 
 [dependency-groups]

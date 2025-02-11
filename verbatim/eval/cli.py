@@ -2,7 +2,7 @@ import argparse
 import json
 import logging
 
-from verbatim.eval.metrics import calculate_metrics, format_metrics
+from verbatim.eval.diarizationlm.metrics import calculate_metrics, format_metrics
 
 LOG = logging.getLogger(__name__)
 

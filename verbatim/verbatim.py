@@ -338,13 +338,14 @@ class Verbatim:
         )
         return self.models.transcriber.guess_language(audio=lang_samples, lang=lang)
 
-    def guess_language(self, timestamp: int):
+    # returns the language guessed, the proability and the number of samples used to guess
+    def guess_language(self, timestamp: int) -> Tuple[str, float, int]:
         if len(self.config.lang) == 0:
             LOG.warning("Language is not set - defaulting to english")
-            return "en"
+            return ("en", 1.0, 0)
 
         if len(self.config.lang) == 1:
-            return self.config.lang[0]
+            return (self.config.lang[0], 1.0, 0)
 
         lang_sample_start = max(0, timestamp - self.state.window_ts)
         available_samples = self.state.audio_ts - self.state.window_ts - lang_sample_start
@@ -362,7 +363,7 @@ class Verbatim:
             # retry with larger sample
             lang_samples_size = min(2 * lang_samples_size, available_samples)
 
-        return lang
+        return (lang, prob, lang_samples_size)
 
     def transcribe_window(self) -> Tuple[List[Word], List[Word]]:
         LOG.info("Starting transcription of audio chunk.")
@@ -372,7 +373,7 @@ class Verbatim:
         LOG.info(f"Valid audio range: 0.0 - {samples_to_seconds(self.state.audio_ts - self.state.window_ts)}")
 
         acknowledged_words_in_window = WhisperHistory.advance_transcript(timestamp=self.state.window_ts, transcript=self.state.acknowledged_words)
-        lang = self.guess_language(timestamp=max(0, self.state.acknowledged_ts))
+        lang, _prob, used_samples_for_language = self.guess_language(timestamp=max(0, self.state.acknowledged_ts))
         prefix_text = ""
         for word in [w for u in self.state.unacknowledged_utterances for w in u.words]:
             if word.lang != lang:
@@ -382,7 +383,7 @@ class Verbatim:
 
         try:
             transcript_words = self.models.transcriber.transcribe(
-                audio=self.state.rolling_window.array,
+                audio=self.state.rolling_window.array[0:self.state.audio_ts - self.state.window_ts],
                 lang=lang,
                 prompt=whisper_prompt,
                 prefix=prefix_text,
@@ -396,6 +397,66 @@ class Verbatim:
         except RuntimeError as e:
             LOG.warning(f"Transcription failed with RuntimeError: {str(e)}. Skipping this chunk.")
             return [], []
+
+        if len(transcript_words) > 0 and len(self.config.lang) > 1:
+            # make sure that the first word detected is within the audio samples used
+            # to guess the language; otherwise, language might have been guess from a short utterance such
+            # as "hmm hmm" followed by a pause and then actual words
+
+            if transcript_words[0].start_ts >= self.state.window_ts + used_samples_for_language:
+                # So the words detected are not part of the samples evaluated when guessing the language
+                # in this unfortunate situation, we could simply perform language detected on the range of
+                # words detected, but there is an non-zero chance that the transcription skipped words in
+                # because we suggested the wrong langauge. So instead, we try the following:
+                # 1. Transcribe in each of the supported language;
+                # 2. Confirm with language detection that we used the appropriate language
+                # 3. if langauge detection does not match, ignore the transcripton
+                # 4. within the transcription that matched, process the one that starts with the earliest timestamp
+
+                best_first_word_ts = self.state.audio_ts
+                best_transcript = transcript_words
+                best_lang = lang
+                for test_lang in self.config.lang:
+                    if test_lang == lang:
+                        first_word_ts = transcript_words[0].start_ts
+                        confirmed_lang, _prob, _used_samples_for_language = self.guess_language(timestamp=max(0, first_word_ts))
+                        if confirmed_lang == test_lang:
+                            if transcript_words[0].start_ts < best_first_word_ts:
+                                best_first_word_ts = transcript_words[0].start_ts
+                                best_transcript = transcript_words
+                                best_lang = lang
+                    else:
+                        alt_prefix_text = ""
+                        for word in [w for u in self.state.unacknowledged_utterances for w in u.words]:
+                            if word.lang != test_lang:
+                                break
+                            alt_prefix_text += word.word
+                        alt_whisper_prompt = (
+                            self.config.whisper_prompts[test_lang] if test_lang in self.config.whisper_prompts
+                            else self.config.whisper_prompts["en"])
+                        alt_transcript_words = self.models.transcriber.transcribe(
+                            audio=self.state.rolling_window.array[0:self.state.audio_ts - self.state.window_ts],
+                            lang=test_lang,
+                            prompt=alt_whisper_prompt,
+                            prefix=alt_prefix_text,
+                            window_ts=self.state.window_ts,
+                            audio_ts=self.state.audio_ts,
+                            whisper_beam_size=self.config.whisper_beam_size,
+                            whisper_best_of=self.config.whisper_best_of,
+                            whisper_patience=self.config.whisper_patience,
+                            whisper_temperatures=self.config.whisper_temperatures,
+                        )
+                        if len(alt_transcript_words) > 0:
+                            first_word_ts = alt_transcript_words[0].start_ts
+                            confirmed_lang, _prob, _used_samples_for_language = self.guess_language(timestamp=max(0, first_word_ts))
+                            if confirmed_lang == test_lang:
+                                if alt_transcript_words[0].start_ts < best_first_word_ts:
+                                    best_first_word_ts = alt_transcript_words[0].start_ts
+                                    best_transcript = alt_transcript_words
+                                    best_lang = test_lang
+                lang = best_lang
+                transcript_words = best_transcript
+
 
         self.state.transcript_candidate_history.advance(self.state.window_ts)
         confirmed_words = self.state.transcript_candidate_history.confirm(

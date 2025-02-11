@@ -117,7 +117,7 @@ def create_audio_source(
                 device=device,
                 rttm_file=source_config.diarization_file,
                 strategy=source_config.diarization_strategy,
-                nb_speakers=source_config.diarize,
+                nb_speakers=source_config.diarize if source_config.diarize != 0 else None,
             )
         elif source_config.diarization_file:
             # Load existing diarization from file
