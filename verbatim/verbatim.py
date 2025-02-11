@@ -723,8 +723,18 @@ class Verbatim:
             self,
             diarization:Optional[Annotation]
             ) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
+
+        # As the attention window advances, we may not be able to acknowledge
+        # all utterances and words; When they fall behind, the best we can do
+        # is return them as acknowledge.
+
+
+
         flushed_utterances = []
+
+        # First, try to acknowledge "full" utterances that may not have been acknowledged
         while len(self.state.unacknowledged_utterances) > 0:
+            # Stop when we reached the window_ts
             if self.state.unacknowledged_utterances[0].end_ts > self.state.window_ts:
                 break
             utterance = self.state.unacknowledged_utterances.pop(0)
@@ -735,6 +745,7 @@ class Verbatim:
             flushed_utterances_words = []
             partial_utterance = self.state.unacknowledged_utterances[0]
             while len(partial_utterance.words) > 0:
+                # Stop when we reached the window_ts
                 if partial_utterance.words[0].end_ts > self.state.window_ts:
                     break
                 flushed_word = partial_utterance.words.pop(0)
@@ -747,8 +758,10 @@ class Verbatim:
                 utterance.speaker = self.assign_speaker(utterance, diarization)
                 yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
         else:
+            # If there are unconfirmed words falling behind, acknowledge them
             flushed_utterances_words = []
             while len(self.state.unconfirmed_words) > 0:
+                # Stop when we reached the window_ts
                 if self.state.unconfirmed_words[0].end_ts > self.state.window_ts:
                     break
                 flushed_word = self.state.unconfirmed_words.pop(0)
