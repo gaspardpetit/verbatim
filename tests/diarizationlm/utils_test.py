@@ -6,8 +6,9 @@
 
 import os
 import unittest
-from diarizationlm import utils
 import datasets
+
+from verbatim.eval.diarizationlm import utils
 
 
 class UtilsTest(unittest.TestCase):
@@ -538,7 +539,7 @@ class UtilsTest(unittest.TestCase):
                 "<speaker:2> good morning hi there",
             ],
         }
-        utils.postprocess_completions_for_utt(utt_dict)
+        utils.postprocess_completions_for_utt(utt=utt_dict)
         self.assertEqual("hello how are you good morning hi there", utt_dict["llm_text"])
         self.assertEqual("1 1 1 1 2 2 2 2", utt_dict["llm_spk"])
         self.assertEqual("1 1 1 2 2", utt_dict["hyp_spk_llm"])
@@ -554,7 +555,7 @@ class UtilsTest(unittest.TestCase):
             ],
         }
         po = utils.PromptOptions(completion_suffix=" END")
-        utils.postprocess_completions_for_utt(utt_dict, po=po)
+        utils.postprocess_completions_for_utt(utt=utt_dict, po=po)
         self.assertEqual("hello how are you good morning hi there", utt_dict["llm_text"])
         self.assertEqual("1 1 1 1 2 2 2 2", utt_dict["llm_spk"])
         self.assertEqual("1 1 1 2 2", utt_dict["hyp_spk_llm"])
@@ -570,7 +571,7 @@ class UtilsTest(unittest.TestCase):
             ],
         }
         po = utils.PromptOptions(completion_suffix=" END")
-        utils.postprocess_completions_for_utt(utt_dict, po=po)
+        utils.postprocess_completions_for_utt(utt=utt_dict, po=po)
         self.assertEqual("hello how are you good morning hi there", utt_dict["llm_text"])
         self.assertEqual("1 1 1 1 2 2 2 2", utt_dict["llm_spk"])
         self.assertEqual("1 1 1 2 2", utt_dict["hyp_spk_llm"])
