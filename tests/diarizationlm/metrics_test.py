@@ -195,7 +195,7 @@ class MetricsTest(unittest.TestCase):
 
     def test_compute_metrics_on_json_file(self):
         json_file = os.path.join("testdata", "example_data.json")
-        with open(json_file, "rt") as f:
+        with open(file=json_file, mode="rt", encoding="utf-8") as f:
             json_dict = json.load(f)
         result = metrics.compute_metrics_on_json_dict(json_dict)
         self.assertEqual(len(result["utterances"]), 2)
@@ -207,7 +207,7 @@ class MetricsTest(unittest.TestCase):
 
     def test_compute_metrics_on_json_file_oracle(self):
         json_file = os.path.join("testdata", "example_data.json")
-        with open(json_file, "rt") as f:
+        with open(file=json_file, mode="rt", encoding="utf-8") as f:
             json_dict = json.load(f)
         result = metrics.compute_metrics_on_json_dict(json_dict, hyp_spk_field="hyp_spk_oracle")
         self.assertEqual(len(result["utterances"]), 2)
@@ -220,7 +220,7 @@ class MetricsTest(unittest.TestCase):
 
     def test_compute_metrics_on_json_file_degraded(self):
         json_file = os.path.join("testdata", "example_data.json")
-        with open(json_file, "rt") as f:
+        with open(file=json_file, mode="rt", encoding="utf-8") as f:
             json_dict = json.load(f)
         result = metrics.compute_metrics_on_json_dict(json_dict, ref_spk_field="ref_spk_degraded")
         self.assertEqual(len(result["utterances"]), 2)

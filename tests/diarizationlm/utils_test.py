@@ -12,6 +12,7 @@ from verbatim.eval.diarizationlm import utils
 
 
 class UtilsTest(unittest.TestCase):
+    # pylint: disable=too-many-public-methods
     def test_normalize_text(self):
         text = 'Hello,  HI, "how_are_you?" Good.'
         expected = "hello hi howareyou good"
@@ -600,11 +601,13 @@ class UtilsTest(unittest.TestCase):
             " you. <speaker:2> my name"
         )
         hyp = (
-            "<speaker:1> Hello, how are you doing <speaker:2> today? I am doing" " well. What about <speaker:1> you? I'm doing well, too. Thank you."
+            "<speaker:1> Hello, how are you doing <speaker:2> today? I am doing"
+            " well. What about <speaker:1> you? I'm doing well, too. Thank you."
         )
         transferred = utils.transfer_llm_completion(llm_completion, hyp)
         self.assertEqual(
-            "<speaker:1> Hello, how are you doing today? <speaker:2> I am doing" " well. What about you? <speaker:1> I'm doing well, too. Thank you.",
+            "<speaker:1> Hello, how are you doing today? <speaker:2> I am doing"
+            " well. What about you? <speaker:1> I'm doing well, too. Thank you.",
             transferred,
         )
 
