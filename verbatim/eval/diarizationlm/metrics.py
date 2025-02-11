@@ -291,9 +291,6 @@ def compute_metrics_on_json_dict(
 
     if compute_diarization_metrics:
         result_dict["WDER"] = final_wder_sub / final_wder_total
-        if final_cpwer_total == 0:
-            result_dict["cpWER"] = 0
-        else:
-            result_dict["cpWER"] = (final_cpwer_sub + final_cpwer_delete + final_cpwer_insert) / final_cpwer_total
+        result_dict["cpWER"] = (final_cpwer_sub + final_cpwer_delete + final_cpwer_insert) / final_cpwer_total
         result_dict["SpkCntMAE"] = final_speaker_count_absolute_error_total / len(result_dict["utterances"])
     return result_dict
