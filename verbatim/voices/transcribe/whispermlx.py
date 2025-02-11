@@ -116,6 +116,7 @@ class WhisperMlxTranscriber(Transcriber):
                 LOG.warning("Transcription returned no valid results, no segments found")
                 return []
 
+        # pylint: disable=broad-exception-caught
         except Exception as e:
             LOG.error(f"Error during transcription: {e}")
             return []
