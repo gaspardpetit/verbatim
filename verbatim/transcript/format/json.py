@@ -1,3 +1,4 @@
+import os
 import json
 from typing import TextIO, List, Optional
 
@@ -37,6 +38,8 @@ class TranscriptFormatter:
                     "text": word.word,
                     "lang": word.lang,
                     "prob": round(word.probability, 4),
+                    "start": round(word.start_ts / 16000, 5),
+                    "end": round(word.end_ts / 16000, 5)
                 }
                 for word in utterance.words
             ]
@@ -45,6 +48,70 @@ class TranscriptFormatter:
 
         # Use json.dumps to write the formatted JSON
         out.write(indented_lines)
+
+class TranscriptParser:
+    def __init__(self, sample_rate: int = 16000):
+        """
+        :param sample_rate: The number of samples per second used to convert
+                            the floating-point seconds back into integer sample counts.
+        """
+        self.sample_rate = sample_rate
+
+    def parse(self, in_file: TextIO) -> List[Utterance]:
+        """
+        Parses a JSON transcript (following the structure produced by TranscriptFormatter)
+        and returns a list of Utterance objects.
+
+        :param in_file: A file-like object to read the JSON transcript from.
+        :return: List of Utterance objects.
+        """
+        # Load the JSON data.
+        data = json.load(in_file)
+
+        # Retrieve the list of utterance dictionaries; default to empty list if not present.
+        utt_dicts = data.get("utterances", [])
+        utterances: List[Utterance] = []
+
+        for utt in utt_dicts:
+            # Retrieve basic fields.
+            utterance_id = utt.get("id")
+            speaker = utt.get("speaker")  # Can be None
+            text = utt.get("text", "")
+
+            # The "start" and "end" are stored in seconds (with rounding).
+            start_sec = utt.get("start", 0.0)
+            end_sec = utt.get("end", 0.0)
+            # Convert seconds back to sample counts.
+            start_ts = int(round(start_sec * self.sample_rate))
+            end_ts = int(round(end_sec * self.sample_rate))
+
+            # Process the words if they exist.
+            words: List[Word] = []
+            for wd in utt.get("words", []):
+                if not isinstance(wd, dict):
+                    continue
+                # Note: the JSON key is "text" but our Word expects attribute 'word'.
+                word_obj = Word(
+                    word=wd.get("text", ""),
+                    lang=wd.get("lang", ""),
+                    probability=wd.get("prob", 0.0),
+                    start_ts=int(wd.get("start", start_sec) * self.sample_rate),
+                    end_ts=int(wd.get("end", end_ts) * self.sample_rate),
+                )
+                words.append(word_obj)
+
+            # Create the Utterance object.
+            utterance = Utterance(
+                utterance_id=utterance_id,
+                speaker=speaker,
+                start_ts=start_ts,
+                end_ts=end_ts,
+                text=text,
+                words=words
+            )
+            utterances.append(utterance)
+
+        return utterances
 
 
 class JsonTranscriptWriter(TranscriptWriter):
@@ -72,3 +139,18 @@ class JsonTranscriptWriter(TranscriptWriter):
     ):
         self.formatter.format_utterance(utterance=utterance, out=self.out)
         self.out.flush()
+
+def save_utterances(path:str, utterance:List[Utterance], config:Optional[TranscriptWriterConfig]):
+    if config is None:
+        config = TranscriptWriterConfig()
+    writer:JsonTranscriptWriter = JsonTranscriptWriter(config=config)
+    writer.open(path_no_ext=os.path.splitext(path)[0])
+    for u in utterance:
+        writer.write(u)
+    writer.close()
+
+def read_utterances(path: str) -> List[Utterance]:
+    parser = TranscriptParser()
+    with open(path, 'r', encoding='utf-8') as file:
+        utterances = parser.parse(file)
+    return utterances

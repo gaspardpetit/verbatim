@@ -9,7 +9,7 @@ from numpy.typing import NDArray
 from pyannote.core.annotation import Annotation
 
 from .audiosource import AudioSource, AudioStream
-from ..audio import format_audio
+from ..audio import format_audio, sample_to_timestr
 from ..convert import convert_to_wav
 from ...voices.isolation import VoiceIsolation
 
@@ -38,7 +38,10 @@ class FileAudioStream(AudioStream):
         self.stream.setpos(int(file_sample_pos))
 
     def next_chunk(self, chunk_length=1) -> NDArray:
-        LOG.info(f"Reading {chunk_length} seconds of audio from file.")
+        current_frame = self.stream.tell()
+        LOG.info(f"Reading {chunk_length} seconds of audio at "
+                 f"{sample_to_timestr(current_frame, self.stream.getframerate())} "
+                 f"from {self.source.file_path}.")
         frames = self.stream.readframes(int(self.stream.getframerate() * chunk_length))
         sample_width = self.stream.getsampwidth()
         n_channels = self.stream.getnchannels()

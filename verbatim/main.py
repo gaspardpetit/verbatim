@@ -21,7 +21,6 @@ LOG = logging.getLogger(__name__)
 # Get the package name dynamically
 PACKAGE_NAME = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 
-
 def load_env_file(env_path=".env"):
     """
     Load environment variables from a .env file.
@@ -254,6 +253,13 @@ def main():
         action="store_true",
         help="Enable high-accuracy mode that simply chunks audio at pauses and transcribes each chunk separately but multiple times",
     )
+    parser.add_argument(
+        "-e",
+        "--eval",
+        nargs="?",
+        default=None,
+        help="Path to reference json file",
+    )
 
     args = parser.parse_args()
     # Set logging level based on verbosity
@@ -338,7 +344,10 @@ def main():
     )
 
     audio_sources: List[AudioSource] = []
+
     if args.separate:
+        # perform the transcription by combining the transcript of
+        # multiple audio sources separated from a single one
         audio_sources += create_separate_speaker_sources(
             strategy=args.separate or "pyannote",
             source_config=source_config,
@@ -370,6 +379,7 @@ def main():
     all_utterances: List[Utterance] = []
     transcriber = Verbatim(config)
     for audio_source in audio_sources:
+        LOG.info(f"Transcribing from audio source: {audio_source.source_name}")
         writer: TranscriptWriter = configure_writers(
             write_config,
             output_formats=output_formats,
@@ -387,6 +397,7 @@ def main():
                 )
                 all_utterances.append(utterance)
         writer.close()
+        LOG.info(f"Done transcribing from audio source: {audio_source.source_name}")
 
     if len(audio_sources) > 1:
         sorted_utterances: List[Utterance] = sorted(all_utterances, key=lambda x: x.start_ts)
@@ -396,6 +407,13 @@ def main():
             writer.write(utterance=sorted_utterance)
         writer.close()
 
+    if args.eval is not None:
+        from verbatim.transcript.format.json import read_utterances
+        from verbatim.eval.compare import compute_metrics
+        sorted_utterances:List[Utterance] = sorted(all_utterances, key=lambda x: x.start_ts)
+        ref_utterances:List[Utterance] = read_utterances(args.eval)
+        metrics = compute_metrics(sorted_utterances, ref_utterances)
+        print(metrics)
 
 if __name__ == "__main__":
     sys.argv = [
