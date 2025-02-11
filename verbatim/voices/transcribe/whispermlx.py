@@ -76,35 +76,50 @@ class WhisperMlxTranscriber(Transcriber):
     ) -> List[Word]:
         LOG.info(f"Transcribing audio window: window_ts={window_ts}, audio_ts={audio_ts}")
 
-        if whisper_temperatures is None:
-            whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+        # Add check for empty or invalid audio
+        if audio.size == 0 or audio is None:
+            LOG.warning("Empty or invalid audio chunk received")
+            return []
 
-        # When whisper_temperatures is of type list
-        if isinstance(whisper_temperatures, list):
-            # Transform into tuple of floats
-            temperatures = tuple(whisper_temperatures)
-        else:
-            temperatures = whisper_temperatures
+        try:
+            if whisper_temperatures is None:
+                whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
 
-        # Set up transcription options
-        show_progress = LOG.getEffectiveLevel() <= logging.INFO
+            # When whisper_temperatures is of type list
+            if isinstance(whisper_temperatures, list):
+                # Transform into tuple of floats
+                temperatures = tuple(whisper_temperatures)
+            else:
+                temperatures = whisper_temperatures
 
-        result = transcribe(
-            audio,
-            task="transcribe",
-            path_or_hf_repo=self.model_path,
-            language=lang,
-            initial_prompt=prompt if prompt else None,
-            word_timestamps=True,
-            # Not yet implemented in MLX Whisper, see https://github.com/ml-explore/mlx-examples/issues/846
-            # beam_size=whisper_beam_size,
-            # patience=whisper_patience, # requires beam_size
-            best_of=whisper_best_of,
-            verbose=(True if show_progress else None),  # pyright: ignore[reportOptionalCall]
-            # None = don't even show progress bar
-            temperature=temperatures,
-            no_speech_threshold=0.6,
-        )
+            # Set up transcription options
+            show_progress = LOG.getEffectiveLevel() <= logging.INFO
+
+            result = transcribe(
+                audio,
+                task="transcribe",
+                path_or_hf_repo=self.model_path,
+                language=lang,
+                initial_prompt=prompt if prompt else None,
+                word_timestamps=True,
+                # Not yet implemented in MLX Whisper, see https://github.com/ml-explore/mlx-examples/issues/846
+                # beam_size=whisper_beam_size,
+                # patience=whisper_patience, # requires beam_size
+                best_of=whisper_best_of,
+                verbose=(True if show_progress else None),  # pyright: ignore[reportOptionalCall]
+                # None = don't even show progress bar
+                temperature=temperatures,
+                no_speech_threshold=0.6,
+            )
+
+            if not result or "segments" not in result:
+                LOG.warning("Transcription returned no valid results, no segments found")
+                return []
+
+        # pylint: disable=broad-exception-caught
+        except Exception as e:
+            LOG.error(f"Error during transcription: {e}")
+            return []
 
         # Convert results to Word objects
         transcript_words: List[Word] = []
