@@ -249,6 +249,11 @@ def main():
         help="Set the timestamp format: 'none' for no timestamps, 'start' for start time, 'range' for start and end times",
     )
     parser.add_argument(
+        "--chunked",
+        action="store_true",
+        help="Enable high-accuracy mode that simply chunks audio at pauses and transcribes each chunk separately but multiple times",
+    )
+    parser.add_argument(
         "-e",
         "--eval",
         nargs="?",
@@ -280,6 +285,7 @@ def main():
         output_dir=args.outdir,
         working_dir=args.workdir if args.workdir is not None else "",
         stream=args.stream,
+        chunked=args.chunked,
     )
 
     source_path = args.input
@@ -363,6 +369,7 @@ def main():
                 working_prefix_no_ext=working_prefix_no_ext,
                 output_prefix_no_ext=output_prefix_no_ext,
                 stream=config.stream,
+                chunked=config.chunked,
             )
         )
 

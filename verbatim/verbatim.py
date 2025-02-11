@@ -1,3 +1,4 @@
+import difflib
 import logging
 import os
 import sys
@@ -14,11 +15,14 @@ from numpy.typing import NDArray
 
 from colorama import Fore
 from pyannote.core.annotation import Annotation
+from transformers.agents import search
+
+from verbatim.audio.sources.sourceconfig import SourceConfig
 
 from .audio.sources.audiosource import AudioStream
 from .transcript.words import Word, Utterance
 from .transcript.idprovider import IdProvider, CounterIdProvider
-from .audio.audio import samples_to_seconds
+from .audio.audio import format_audio, samples_to_seconds
 from .config import Config
 from .models import Models
 from .transcript.format.txt import (
@@ -727,7 +731,7 @@ class Verbatim:
         self.state.append_audio_to_window(audio_array)
         return True
 
-    def transcribe(
+    def _transcribe_streaming(
         self, audio_stream: AudioStream, working_prefix_no_ext: str = "out"
     ) -> Generator[
         Tuple[Utterance, List[Utterance], List[Word]],
@@ -830,3 +834,225 @@ class Verbatim:
                 )
                 unconfirmed_utterance.speaker = self.assign_speaker(unconfirmed_utterance, audio_stream.diarization)
                 yield unconfirmed_utterance, [], []
+
+    def _normalized_levenshtein(self, s1: str, s2: str) -> float:
+        return difflib.SequenceMatcher(None, s1, s2).ratio()
+
+    def _transcribe_chunked(
+        self,
+        audio_stream: AudioStream,
+        working_prefix_no_ext: str = "out"
+    ) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
+        """
+        Transcribe audio using a chunked, high-accuracy mode.
+        """
+        MIN_CHUNK_DURATION = 30 * 16000  # 30 seconds
+        MAX_CHUNK_DURATION = 90 * 16000  # 90 seconds
+
+        if audio_stream.get_nchannels() == 2:
+            LOG.info("Stereo audio detected")
+
+        # Initialize lists to store chunks
+        full_audio_chunks = []
+        vad_search_audio_chunks = []
+
+        while audio_stream.has_more():
+            chunk = audio_stream.next_chunk(180)
+            if len(chunk) == 0:
+                break
+
+            # Resample the chunk to 16 kHz, preserving channels for full audio
+            resampled_chunk = format_audio(
+                chunk,
+                from_sampling_rate=self.config.sampling_rate,
+                to_sampling_rate=self.config.sampling_rate,
+                preserve_channels=True
+            )
+            full_audio_chunks.append(resampled_chunk)
+
+            # For VAD, create a mono version
+            vad_chunk = format_audio(
+                chunk,
+                from_sampling_rate=self.config.sampling_rate,
+                to_sampling_rate=self.config.sampling_rate,
+                preserve_channels=False
+            )
+            vad_search_audio_chunks.append(vad_chunk)
+
+        # Concatenate the audio chunks
+        full_audio = np.concatenate(full_audio_chunks, axis=0)
+        vad_search_audio = np.concatenate(vad_search_audio_chunks, axis=0)
+
+        # Find chunk boundaries using VAD
+        chunk_boundaries = [0]
+        current_pos = 0
+        while current_pos < len(vad_search_audio):
+            # Define search window for next chunk boundary
+            search_start = current_pos + MIN_CHUNK_DURATION
+            search_end = min(current_pos + MAX_CHUNK_DURATION, len(full_audio))
+
+            if search_start >= len(full_audio):
+                break
+            if search_end - search_start < MIN_CHUNK_DURATION:
+                chunk_boundaries.append(len(full_audio))
+                break
+
+            # Define audio for VAD (mono)
+            LOG.info(f"Searching for chunk boundary between {samples_to_seconds(search_start)}s and {samples_to_seconds(search_end)}s")
+
+            # Find voice activity (be very conservative)
+            voice_segments = self.models.vad.find_activity(
+                audio=vad_search_audio[search_start:search_end],
+                min_speech_duration_ms=50,
+                min_silence_duration_ms=200,
+                speech_pad_ms=500,
+            )
+
+            # Find largest gap between voice segments
+            max_gap_length = 0
+            if len(voice_segments) > 1:
+                best_boundary = search_start
+                for i in range(len(voice_segments) - 1):
+                    LOG.info(f"Gap between {samples_to_seconds(voice_segments[i]['end'] + search_start)} and {samples_to_seconds(voice_segments[i + 1]['start'] + search_start)}")
+                    gap_length = voice_segments[i + 1]["start"] - voice_segments[i]["end"]
+                    LOG.info(f"Gap length: {samples_to_seconds(gap_length)}s")
+                    if gap_length > max_gap_length:
+                        max_gap_length = gap_length
+                        best_boundary = search_start + voice_segments[i]["end"]
+                    LOG.info(f'Removing gap from "full_audio"...')
+                    full_audio[search_start + voice_segments[i]["end"]:search_start + voice_segments[i + 1]["start"]] = 0
+                chunk_boundaries.append(best_boundary)
+                current_pos = best_boundary
+            else:
+                # If no clear speech segments found, just use the midpoint
+                mid_point = search_start + (search_end - search_start) // 2
+                chunk_boundaries.append(mid_point)
+                current_pos = mid_point
+
+            LOG.info(f"Found largest gap at {samples_to_seconds(chunk_boundaries[-1])}s with length {samples_to_seconds(max_gap_length)}s")
+
+        # Process each chunk
+        for i in range(len(chunk_boundaries) - 1):
+            start = chunk_boundaries[i]
+            end = chunk_boundaries[i + 1]
+            LOG.info(f"Transcribing chunk between {samples_to_seconds(start)}s and {samples_to_seconds(end)}s")
+            chunk_audio = full_audio[start:end]
+
+            # Get multiple transcriptions
+            transcriptions = []
+
+            # Whisper temperatures
+            temps_list = [
+                [0.0, 0.1, 0.2, 0.4],
+                [0.2, 0.4, 0.6, 0.8],
+            ]
+
+            # Handle stereo vs mono
+            if len(chunk_audio.shape) > 1 and chunk_audio.shape[1] > 1:
+                # Process stereo audio
+                # Split stereo audio into left and right channels
+                mixed = np.mean(chunk_audio, axis=1)
+                left_channel = chunk_audio[:, 0]
+                right_channel = chunk_audio[:, 1]
+                # Transcibe each channel deterministically
+                for audio in [left_channel, right_channel]:
+                    words = self.models.transcriber.transcribe(
+                        audio=audio,
+                        lang=self.config.lang[0],
+                        prompt="",
+                        prefix="",
+                        window_ts=start,
+                        audio_ts=end,
+                        whisper_temperatures=temps_list[0]
+                    )
+                    transcriptions.append(words)
+                # Transcribe mixed audio with all whisper temperatures in temps_list
+                for temps in temps_list:
+                    words = self.models.transcriber.transcribe(
+                        audio=mixed,
+                        lang=self.config.lang[0],
+                        prompt="",
+                        prefix="",
+                        window_ts=start,
+                        audio_ts=end,
+                        whisper_temperatures=temps
+                    )
+                    transcriptions.append(words)
+            else:
+                # process mono audio
+                LOG.info(f"Transcribing mono audio with all available temperatures.")
+                for temps in temps_list:
+                    words = self.models.transcriber.transcribe(
+                        audio=chunk_audio,
+                        lang=self.config.lang[0],
+                        prompt="",
+                        prefix="",
+                        window_ts=start,
+                        audio_ts=end,
+                        whisper_temperatures=temps
+                    )
+                    transcriptions.append(words)
+
+            # Collect and deduplicate words with timestamps from each transcription
+            transcription_words_list = []
+            for words in transcriptions:
+                deduped_words = []
+                seen_word_times = set()
+                for word in words:
+                    word_identifier = (word.word.lower(), word.start_ts)
+                    if word_identifier not in seen_word_times:
+                        deduped_words.append(word)
+                        seen_word_times.add(word_identifier)
+                transcription_words_list.append(deduped_words)
+
+            # Build a mapping from word keys to transcription indices and word instances
+            word_occurrences = {}  # key: (word_text, approximate_start_ts), value: {'indices': set(), 'words': list()}
+            time_bin_size = 0.5 * 16000  # Adjust as needed
+
+            for idx, words in enumerate(transcription_words_list):
+                for word in words:
+                    word_text = word.word.lower()
+                    # Approximate the start timestamp to the nearest time bin
+                    approximate_start_ts = int(word.start_ts / time_bin_size)
+                    word_key = (word_text, approximate_start_ts)
+                    if word_key not in word_occurrences:
+                        word_occurrences[word_key] = {'indices': set(), 'words': []}
+                    word_occurrences[word_key]['indices'].add(idx)
+                    word_occurrences[word_key]['words'].append(word)
+
+            num_transcriptions = len(transcriptions)
+
+            # Confirm words that appear in at least half of the transcriptions
+            confirmed_words = []
+            for word_key, occurrence in word_occurrences.items():
+                if len(occurrence['indices']) >= num_transcriptions / 2:
+                    occurrence['words'].sort(key=lambda w: w.start_ts)
+                    confirmed_word = occurrence['words'][0]
+                    confirmed_words.append(confirmed_word)
+
+            # Sort confirmed words by start time
+            confirmed_words.sort(key=lambda w: w.start_ts)
+
+            # Now, generate utterances from confirmed words
+            utterances = self.words_to_sentences(
+                word_tokenizer=self.models.sentence_tokenizer,
+                window_words=confirmed_words,
+                id_provider=self.state.utterance_id
+            )
+
+            for utt in utterances:
+                utt.speaker = self.assign_speaker(utt, audio_stream.diarization)
+                yield utt, [], []
+
+    def transcribe(
+        self,
+        audio_stream: AudioStream,
+        working_prefix_no_ext: str = "out"
+    ) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
+        """Modified transcribe function to handle both modes"""
+
+        if self.config.chunked:
+            yield from self._transcribe_chunked(audio_stream, working_prefix_no_ext)
+        else:
+            # Original streaming transcription logic
+            yield from self._transcribe_streaming(audio_stream, working_prefix_no_ext)

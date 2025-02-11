@@ -9,6 +9,7 @@ from numpy.typing import NDArray
 from ...audio.audio import samples_to_seconds
 from ...transcript.words import Word
 from .transcribe import Transcriber
+from verbatim.config import Config
 
 if sys.platform == "darwin":
     # pylint: disable=import-error
@@ -79,15 +80,11 @@ class WhisperMlxTranscriber(Transcriber):
         if whisper_temperatures is None:
             whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
 
-        # When whisper_temperatures is of type list
-        if isinstance(whisper_temperatures, list):
-            # Transform into tuple of floats
-            temperatures = tuple(whisper_temperatures)
-        else:
-            temperatures = whisper_temperatures
-
-        # Set up transcription options
+        temperatures = tuple(whisper_temperatures) if isinstance(whisper_temperatures, list) else (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
         show_progress = LOG.getEffectiveLevel() <= logging.INFO
+
+        LOG.info(f"Transcribing with temperatures: {temperatures}")
+        LOG.info(f"Transcribing with prefix: {prefix}")
 
         result = transcribe(
             audio,
@@ -95,54 +92,44 @@ class WhisperMlxTranscriber(Transcriber):
             path_or_hf_repo=self.model_path,
             language=lang,
             initial_prompt=prompt if prompt else None,
+            prefix=prefix if prefix else None,
             word_timestamps=True,
-            # Not yet implemented in MLX Whisper, see https://github.com/ml-explore/mlx-examples/issues/846
-            # beam_size=whisper_beam_size,
-            # patience=whisper_patience, # requires beam_size
-            best_of=whisper_best_of,
-            verbose=(True if show_progress else None),  # pyright: ignore[reportOptionalCall]
-            # None = don't even show progress bar
+            verbose=(True if show_progress else None),
             temperature=temperatures,
             no_speech_threshold=0.6,
         )
 
-        # Convert results to Word objects
         transcript_words: List[Word] = []
         current_segment_lang = lang
+        last_end = window_ts
 
         # Process segments and words
         for segment in result["segments"]:
-            # Check if segment has a different language
             segment_lang = segment.get("language", lang)
             if segment_lang != current_segment_lang:
                 LOG.info(f"Language switch detected: {current_segment_lang} -> {segment_lang}")
                 current_segment_lang = segment_lang
 
+            segment_words = []
             for word_data in segment.get("words", []):
-                # Create Word object with correct language tag and timestamp offset
-                start_ts = int(word_data["start"] * 16000) + window_ts
-                end_ts = int(word_data["end"] * 16000) + window_ts
+                start_ts = int(word_data["start"] * Config.sampling_rate) + window_ts
+                end_ts = int(word_data["end"] * Config.sampling_rate) + window_ts
 
-                # Validate timestamps
+                # Adjust timestamps if invalid
                 if end_ts <= start_ts:
-                    LOG.warning(f"Invalid timestamps for word '{word_data['word']}': start={start_ts}, end={end_ts}")
-                    continue
+                    start_ts = last_end
+                    end_ts = start_ts + max(1600, len(word_data["word"].strip()) * 100)
 
-                if end_ts > audio_ts:
-                    LOG.debug(f"Skipping word '{word_data['word']}' as it ends after audio_ts")
-                    continue
-
-                # Create Word object with timestamp offset
-                word = Word(
-                    start_ts=int(word_data["start"] * 16000) + window_ts,
-                    end_ts=int(word_data["end"] * 16000) + window_ts,
-                    word=word_data["word"],
-                    probability=word_data.get("probability", 1.0),
-                    lang=current_segment_lang,
-                )
-
-                # Log word timetamp comparison
-                LOG.info(f"Word '{word.word}': end_ts={word.end_ts}, audio_ts={audio_ts}")
-                transcript_words.append(word)
+                # Only include word if timestamps are valid and within range
+                if start_ts >= window_ts and end_ts <= audio_ts and end_ts > start_ts:
+                    word = Word(
+                        start_ts=start_ts,
+                        end_ts=end_ts,
+                        word=word_data["word"],
+                        probability=word_data.get("probability", 1.0),
+                        lang=current_segment_lang,
+                    )
+                    transcript_words.append(word)
+                    last_end = end_ts
 
         return transcript_words

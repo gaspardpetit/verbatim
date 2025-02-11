@@ -153,6 +153,7 @@ class Config:
     device: str = "auto"
     stream: bool = False
     debug: bool = False
+    chunked: bool = False
 
     # TRANSCRIPTION
     lang: List[str] = field(default_factory=lambda: DEFAULT_LANGUAGES)

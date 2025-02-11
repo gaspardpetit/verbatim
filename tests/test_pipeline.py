@@ -38,7 +38,7 @@ class TestPipeline(unittest.TestCase):
 
         # Process audio
         with audio_source.open() as audio_stream:
-            for utterance, _unack_utterances, _unconfirmed_words in verbatim.transcribe(audio_stream=audio_stream):
+            for utterance, _unack_utterances, _unconfirmed_words in verbatim._transcribe_streaming(audio_stream=audio_stream):
                 writer.write(utterance=utterance)
 
         writer.close()
@@ -86,7 +86,7 @@ class TestPipeline(unittest.TestCase):
 
         # Process audio
         with audio_source.open() as audio_stream:
-            for acknowledged_utterance, _confirmed_utterance, _unconfirmed_words in verbatim.transcribe(audio_stream=audio_stream):
+            for acknowledged_utterance, _confirmed_utterance, _unconfirmed_words in verbatim._transcribe_streaming(audio_stream=audio_stream):
                 writer.write(utterance=acknowledged_utterance)
 
         writer.close()

@@ -46,6 +46,7 @@ def create_audio_source(
     output_prefix_no_ext: str = "out",
     working_prefix_no_ext: str = "out",
     stream: bool = False,
+    chunked: bool = False,
 ) -> AudioSource:
     # pylint: disable=import-outside-toplevel
 
@@ -77,19 +78,16 @@ def create_audio_source(
     from .ffmpegfileaudiosource import PyAVAudioSource
     from .fileaudiosource import FileAudioSource
 
+    preserve_channels = (source_config.diarization_strategy == "stereo" or chunked)
+
     if os.path.splitext(input_source)[-1] != ".wav":
         if not (not stream and (source_config.isolate is not None or source_config.diarize is not None)):
             return PyAVAudioSource(
                 file_path=input_source,
                 start_time=samples_to_seconds(start_sample),
                 end_time=samples_to_seconds(stop_sample) if stop_sample else None,
-                preserve_channels=source_config.diarization_strategy == "stereo",
+                preserve_channels=preserve_channels,
             )
-
-        if source_config.diarization_strategy == "stereo":
-            preserve_channels = True
-        else:
-            preserve_channels = False
 
         input_source = convert_to_wav(
             input_path=input_source,
@@ -105,6 +103,8 @@ def create_audio_source(
             stop_time=stop_time,
             working_prefix_no_ext=working_prefix_no_ext,
             output_prefix_no_ext=output_prefix_no_ext,
+            stream=stream,
+            chunked=chunked,
         )
 
     if not stream:
@@ -145,7 +145,7 @@ def create_audio_source(
         start_sample=start_sample,
         end_sample=stop_sample,
         diarization=source_config.diarization,
-        preserve_channels=source_config.diarization_strategy == "stereo",
+        preserve_channels=preserve_channels,
     )
 
 
