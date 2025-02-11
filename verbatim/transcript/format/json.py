@@ -48,7 +48,7 @@ class TranscriptFormatter:
 
         # Use json.dumps to write the formatted JSON
         out.write(indented_lines)
-       
+
 class TranscriptParser:
     def __init__(self, sample_rate: int = 16000):
         """

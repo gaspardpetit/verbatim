@@ -21,7 +21,6 @@ LOG = logging.getLogger(__name__)
 # Get the package name dynamically
 PACKAGE_NAME = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 
-
 def load_env_file(env_path=".env"):
     """
     Load environment variables from a .env file.
@@ -249,6 +248,13 @@ def main():
         default=LanguageStyle.change,
         help="Set the timestamp format: 'none' for no timestamps, 'start' for start time, 'range' for start and end times",
     )
+    parser.add_argument(
+        "-e",
+        "--eval",
+        nargs="?",
+        default=None,
+        help="Path to reference json file",
+    )
 
     args = parser.parse_args()
     # Set logging level based on verbosity
@@ -394,6 +400,13 @@ def main():
             writer.write(utterance=sorted_utterance)
         writer.close()
 
+    if args.eval is not None:
+        from verbatim.transcript.format.json import read_utterances
+        from verbatim.eval.compare import compute_metrics
+        sorted_utterances:List[Utterance] = sorted(all_utterances, key=lambda x: x.start_ts)
+        ref_utterances:List[Utterance] = read_utterances(args.eval)
+        metrics = compute_metrics(sorted_utterances, ref_utterances)
+        print(metrics)
 
 if __name__ == "__main__":
     sys.argv = [

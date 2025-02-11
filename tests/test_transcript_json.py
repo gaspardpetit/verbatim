@@ -5,13 +5,10 @@ import tempfile
 import unittest
 
 from verbatim.transcript.words import Word, Utterance
-from verbatim.transcript.format.txt import TranscriptWriterConfig
-from verbatim.transcript.format.writer import TranscriptWriter
 
 from verbatim.transcript.format.json import (
     TranscriptFormatter,
     TranscriptParser,
-    JsonTranscriptWriter,
     save_utterances,
     read_utterances,
 )
