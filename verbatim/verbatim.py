@@ -54,7 +54,7 @@ class WhisperHistory:
 
     @staticmethod
     def advance_transcript(timestamp: int, transcript: List[Word]) -> List[Word]:
-        return [w for w in transcript if w.end_ts > timestamp]
+        return [w for w in transcript if w.end_ts >= timestamp]
 
     def advance(self, timestamp: int):
         self.transcript_history = [self.advance_transcript(timestamp, transcript) for transcript in self.transcript_history]
@@ -634,6 +634,7 @@ class Verbatim:
     def process_audio_window(
         self, audio_stream: AudioStream
     ) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
+
         while True:
             # minimum number of samples to attempt transcription
             min_audio_duration_samples = 16000
@@ -728,25 +729,26 @@ class Verbatim:
         # all utterances and words; When they fall behind, the best we can do
         # is return them as acknowledge.
 
-
-
         flushed_utterances = []
 
         # First, try to acknowledge "full" utterances that may not have been acknowledged
         while len(self.state.unacknowledged_utterances) > 0:
             # Stop when we reached the window_ts
-            if self.state.unacknowledged_utterances[0].end_ts > self.state.window_ts:
+            # Note that the == case is frequent, whisper can generate several words with timestamp 0 -> 0
+            if self.state.unacknowledged_utterances[0].end_ts >= self.state.window_ts:
                 break
             utterance = self.state.unacknowledged_utterances.pop(0)
             utterance.speaker = self.assign_speaker(utterance, diarization)
             yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
 
+        # If there is a partial utterance overflowing, acknowledge words from it
         if len(self.state.unacknowledged_utterances) > 0:
             flushed_utterances_words = []
             partial_utterance = self.state.unacknowledged_utterances[0]
             while len(partial_utterance.words) > 0:
                 # Stop when we reached the window_ts
-                if partial_utterance.words[0].end_ts > self.state.window_ts:
+                # Note that the == case is frequent, whisper can generate several words with timestamp 0 -> 0
+                if partial_utterance.words[0].end_ts >= self.state.window_ts:
                     break
                 flushed_word = partial_utterance.words.pop(0)
                 flushed_utterances_words.append(flushed_word)
@@ -762,7 +764,8 @@ class Verbatim:
         flushed_utterances_words = []
         while len(self.state.unconfirmed_words) > 0:
             # Stop when we reached the window_ts
-            if self.state.unconfirmed_words[0].end_ts > self.state.window_ts:
+            # Note that the == case is frequent, whisper can generate several words with timestamp 0 -> 0
+            if self.state.unconfirmed_words[0].end_ts >= self.state.window_ts:
                 break
             flushed_word = self.state.unconfirmed_words.pop(0)
             flushed_utterances_words.append(flushed_word)
