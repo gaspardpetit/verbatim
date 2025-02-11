@@ -757,20 +757,20 @@ class Verbatim:
                 utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
                 utterance.speaker = self.assign_speaker(utterance, diarization)
                 yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
-        else:
-            # If there are unconfirmed words falling behind, acknowledge them
-            flushed_utterances_words = []
-            while len(self.state.unconfirmed_words) > 0:
-                # Stop when we reached the window_ts
-                if self.state.unconfirmed_words[0].end_ts > self.state.window_ts:
-                    break
-                flushed_word = self.state.unconfirmed_words.pop(0)
-                flushed_utterances_words.append(flushed_word)
 
-            if len(flushed_utterances_words) > 0:
-                utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
-                utterance.speaker = self.assign_speaker(utterance, diarization)
-                yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
+        # If there are unconfirmed words falling behind, acknowledge them
+        flushed_utterances_words = []
+        while len(self.state.unconfirmed_words) > 0:
+            # Stop when we reached the window_ts
+            if self.state.unconfirmed_words[0].end_ts > self.state.window_ts:
+                break
+            flushed_word = self.state.unconfirmed_words.pop(0)
+            flushed_utterances_words.append(flushed_word)
+
+        if len(flushed_utterances_words) > 0:
+            utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
+            utterance.speaker = self.assign_speaker(utterance, diarization)
+            yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
 
         if len(flushed_utterances_words) > 0:
             flushed_utterances.append(Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words))
