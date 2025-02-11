@@ -1,3 +1,4 @@
+# Originally from https://github.com/google/speaker-id/blob/master/DiarizationLM/diarizationlm/utils.py
 # SPDX-FileCopyrightText: 2025 Quan Wang and Yiling Huang and Guanlong Zhao and Evan Clark and Wei Xia and Hank Liao
 #
 # SPDX-License-Identifier: Apache-2.0
