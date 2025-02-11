@@ -46,7 +46,7 @@ jobs:
         run: |
           python -m venv .venv
           if [ "$RUNNER_OS" == "Windows" ]; then
-            .venv\Scripts\activate.bat
+            .venv/Scripts/activate.bat
           else
             source .venv/bin/activate
           fi
@@ -56,7 +56,7 @@ jobs:
       - name: Build package
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
-            .venv\Scripts\activate.bat
+            .venv/Scripts/activate.bat
           else
             source .venv/bin/activate
           fi

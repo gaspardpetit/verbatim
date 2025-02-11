@@ -36,7 +36,7 @@ jobs:
         run: |
           python -m venv .venv
           if [ "$RUNNER_OS" == "Windows" ]; then
-            .venv\Scripts\activate.bat
+            .venv/Scripts/activate.bat
           else
             source .venv/bin/activate
           fi
@@ -51,7 +51,7 @@ jobs:
       - name: Analyse the code with Pylint
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
-            .venv\Scripts\activate.bat
+            .venv/Scripts/activate.bat
           else
             source .venv/bin/activate
           fi

@@ -36,7 +36,7 @@ jobs:
         run: |
           python -m venv .venv
           if [ "$RUNNER_OS" == "Windows" ]; then
-            .venv\Scripts\activate.bat
+            .venv/Scripts/activate.bat
           else
             source .venv/bin/activate
           fi
@@ -51,7 +51,7 @@ jobs:
       - name: Install Bandit
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
-            .venv\Scripts\activate.bat
+            .venv/Scripts/activate.bat
           else
             source .venv/bin/activate
           fi
@@ -60,7 +60,7 @@ jobs:
       - name: Run Bandit Security Analysis
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
-            .venv\Scripts\activate.bat
+            .venv/Scripts/activate.bat
           else
             source .venv/bin/activate
           fi
