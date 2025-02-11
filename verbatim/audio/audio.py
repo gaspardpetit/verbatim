@@ -79,15 +79,26 @@ def wav_to_int16(data):
 def samples_to_seconds(index: int) -> float:
     return index / 16000
 
-
 def seconds_to_samples(seconds: float) -> int:
     return int(seconds * 16000)
+
+def sample_to_timestr(sample:int, sample_rate:int):
+    seconds:float = sample / sample_rate
+    return seconds_to_timestr(seconds=seconds)
+
+def seconds_to_timestr(seconds:float) -> str:
+    hour_part = math.floor(seconds // 3600)
+    minute_part = math.floor((seconds % 3600) // 60)
+    second_part = math.floor(seconds % 60)
+    ms_part = round((seconds - math.floor(seconds)) * 1000)  # Extract only milliseconds
+
+    return f"[{hour_part:02}:{minute_part:02}:{second_part:02}.{ms_part:03}]"
 
 
 def timestr_to_samples(timestr: str, sample_rate: int = 16000) -> int:
     """
     Converts a time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms
-    (milliseconds optional) to the corresponding sample index.
+    (where the fractional part represents fractional seconds) to the corresponding sample index.
 
     Args:
         timestr (str): Time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms.
@@ -96,32 +107,42 @@ def timestr_to_samples(timestr: str, sample_rate: int = 16000) -> int:
     Returns:
         int: The corresponding sample index.
     """
-    # Define regex patterns for specific formats
-    hh_mm_ss_ms_pattern = re.compile(r"^(?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$")
-    mm_ss_ms_pattern = re.compile(r"^(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$")
-    ss_ms_pattern = re.compile(r"^(?P<seconds>\d+)(?:\.(?P<milliseconds>\d+))?$")
+    # Define regex patterns for specific formats.
+    # Here, we capture the fractional part as a sequence of digits.
+    hh_mm_ss_ms_pattern = re.compile(
+        r"^(?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<fraction>\d+))?$"
+    )
+    mm_ss_ms_pattern = re.compile(
+        r"^(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<fraction>\d+))?$"
+    )
+    ss_ms_pattern = re.compile(
+        r"^(?P<seconds>\d+)(?:\.(?P<fraction>\d+))?$"
+    )
 
-    # Match the input against patterns
-    if match := hh_mm_ss_ms_pattern.match(timestr.strip()):
+    timestr = timestr.strip()
+
+    if match := hh_mm_ss_ms_pattern.match(timestr):
         hours = int(match.group("hours"))
         minutes = int(match.group("minutes"))
         seconds = int(match.group("seconds"))
-        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
-    elif match := mm_ss_ms_pattern.match(timestr.strip()):
+        fraction_str = match.group("fraction") if match.group("fraction") else "0"
+    elif match := mm_ss_ms_pattern.match(timestr):
         hours = 0
         minutes = int(match.group("minutes"))
         seconds = int(match.group("seconds"))
-        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
-    elif match := ss_ms_pattern.match(timestr.strip()):
+        fraction_str = match.group("fraction") if match.group("fraction") else "0"
+    elif match := ss_ms_pattern.match(timestr):
         hours = 0
         minutes = 0
         seconds = int(match.group("seconds"))
-        milliseconds = int(match.group("milliseconds")) if match.group("milliseconds") else 0
+        fraction_str = match.group("fraction") if match.group("fraction") else "0"
     else:
         raise ValueError(f"Invalid time string format: {timestr}")
 
-    # Calculate total time in seconds
-    total_seconds = hours * 3600 + minutes * 60 + seconds + milliseconds / 1000.0
+    # Interpret the fractional part correctly.
+    # If fraction_str has N digits, then it represents fraction_str / (10 ** N) seconds.
+    fraction = int(fraction_str) / (10 ** len(fraction_str)) if fraction_str else 0.0
 
-    # Convert to sample index
+    total_seconds = hours * 3600 + minutes * 60 + seconds + fraction
+
     return int(total_seconds * sample_rate)
