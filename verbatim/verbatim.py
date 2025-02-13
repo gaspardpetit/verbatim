@@ -170,12 +170,15 @@ class State:
             return
         LOG.debug(
             f"Shifting rolling window by {offset} samples ({samples_to_seconds(offset)}s) "
-            f"to offset {self.window_ts + offset} ({samples_to_seconds(self.window_ts + offset)}s)."
+            f"to offset {self.window_ts + offset} ({samples_to_seconds(self.window_ts + offset)}s); "
+            f"Window now has {samples_to_seconds(self.audio_ts - self.window_ts)} seconds of audio."
         )
 
         self.rolling_window.array = np.roll(self.rolling_window.array, -offset)
         self.rolling_window.array[-offset:] = 0
         self.window_ts += offset
+
+        LOG.info(f"Window now has {samples_to_seconds(self.audio_ts - self.window_ts)} seconds of audio.")
 
     def append_audio_to_window(self, audio_chunk: NDArray):
         if audio_chunk.size == 0:
@@ -215,7 +218,7 @@ class Verbatim:
             models = Models(device=config.device, stream=config.stream)
         self.models = models
 
-    def skip_leading_silence(self, min_speech_duration_ms: int = 500) -> int:
+    def skip_leading_silence(self, max_skip:int, min_speech_duration_ms: int = 500) -> int:
         min_speech_duration_ms = 750
         min_speech_duration_samples = 16000 * min_speech_duration_ms // 1000
         audio_samples = self.state.audio_ts - self.state.window_ts
@@ -225,13 +228,19 @@ class Verbatim:
         )
         LOG.debug(f"Voice segments: {voice_segments}")
         if len(voice_segments) == 0:
-            LOG.info(f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f} and {samples_to_seconds(self.state.audio_ts):.2f}")
-
             # preserve a bit of audio at the end that may have been too short just because it is truncated
             padding = min_speech_duration_samples
             remaining_audio = self.state.audio_ts - self.state.window_ts - padding
-            self.state.advance_audio_window(remaining_audio)
+            advance_to = remaining_audio
+            # pylint: disable=consider-using-min-builtin
+            if max_skip < advance_to:
+                advance_to = max_skip
+            LOG.info(
+                f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f}"
+                f" and {samples_to_seconds(self.state.window_ts + advance_to):.2f}"
+            )
 
+            self.state.advance_audio_window(remaining_audio)
             return self.state.audio_ts
 
         voice_start = voice_segments[0]["start"]
@@ -240,11 +249,15 @@ class Verbatim:
 
         # skip leading silences
         if voice_start > 0:
+            # pylint: disable=consider-using-min-builtin
+            advance_to = voice_start
+            if max_skip < advance_to:
+                advance_to = max_skip
             LOG.info(
                 f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f}"
-                f" and {samples_to_seconds(self.state.window_ts + voice_start):.2f}"
+                f" and {samples_to_seconds(self.state.window_ts + advance_to):.2f}"
             )
-            self.state.advance_audio_window(voice_start)
+            self.state.advance_audio_window(advance_to)
             return voice_length + self.state.window_ts
 
         return voice_length + self.state.window_ts
@@ -643,7 +656,12 @@ class Verbatim:
             enable_vad = True
             if enable_vad and self.state.skip_silences:
                 self.state.skip_silences = False
-                self.skip_leading_silence(min_speech_duration_ms=min_speech_duration_ms)
+                next_ts = self.state.audio_ts
+                if len(self.state.unacknowledged_utterances) > 0:
+                    next_ts = min(next_ts, self.state.unacknowledged_utterances[0].start_ts)
+                if len(self.state.unconfirmed_words) > 0:
+                    next_ts = min(next_ts, self.state.unconfirmed_words[0].start_ts)
+                self.skip_leading_silence(min_speech_duration_ms=min_speech_duration_ms, max_skip=next_ts-self.state.window_ts)
                 if self.state.audio_ts - self.state.window_ts < min_audio_duration_samples:
                     # we skipped all available audio - keep skipping silences and do nothing else for now
                     self.state.skip_silences = True
