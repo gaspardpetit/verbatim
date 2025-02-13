@@ -700,8 +700,15 @@ class Verbatim:
                     # but not too much as to skip the first word of the next utterance
                     utterance_padding_ms = 100
                     utterance_padding_samples = utterance_padding_ms * 16000 // 1000
+                    skip_to = acknowledged_utterances[-1].end_ts + utterance_padding_samples
 
-                    self.state.acknowledged_ts = acknowledged_utterances[-1].end_ts + utterance_padding_samples
+                    # try to skip ahead, but don't skip beyond the next detected word
+                    if len(self.state.unacknowledged_utterances) > 0 and skip_to > self.state.unacknowledged_utterances[0].start_ts:
+                        skip_to = self.state.unacknowledged_utterances[0].start_ts
+                    if len(self.state.unconfirmed_words) > 0 and skip_to > self.state.unconfirmed_words[0].start_ts:
+                        skip_to = self.state.unconfirmed_words[0].start_ts
+
+                    self.state.acknowledged_ts = skip_to
                     self.state.skip_silences = True
             else:
                 acknowledged_utterances = []
