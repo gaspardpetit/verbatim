@@ -148,6 +148,50 @@ def create_audio_source(
         preserve_channels=source_config.diarization_strategy == "stereo",
     )
 
+def create_joint_speaker_sources(
+    *,
+    strategy: str = "pyannote",
+    input_source: str,
+    device: str,
+    source_config: SourceConfig = SourceConfig(),
+    start_time: Optional[str] = None,
+    stop_time: Optional[str] = None,
+    output_prefix_no_ext: str = "out",
+    working_prefix_no_ext: str = "out",
+) -> List[AudioSource]:
+    # pylint: disable=import-outside-toplevel
+
+    if os.path.splitext(input_source)[-1] != ".wav":
+        converted_input_source = convert_to_wav(input_path=input_source, working_prefix_no_ext=working_prefix_no_ext, preserve_channels=True)
+        return create_joint_speaker_sources(
+            input_source=converted_input_source,
+            strategy=strategy,
+            device=device,
+            source_config=source_config,
+            start_time=start_time,
+            stop_time=stop_time,
+            output_prefix_no_ext=output_prefix_no_ext,
+            working_prefix_no_ext=working_prefix_no_ext,
+        )
+
+    if source_config.diarization_file == "" or (source_config.diarize is not None and source_config.diarization_file is None):
+        source_config.diarization_file = output_prefix_no_ext + ".rttm"
+
+    nb_speakers = source_config.diarize
+    if nb_speakers == 0:
+        nb_speakers = None
+
+    start_sample: int = timestr_to_samples(start_time) if start_time else 0
+    stop_sample: Optional[int] = timestr_to_samples(stop_time) if stop_time else None
+
+    annotation:Annotation = compute_diarization(
+        file_path=input_source,
+        device=device,
+        rttm_file=source_config.diarization_file,
+        strategy=strategy, nb_speakers=nb_speakers)
+
+    from ..sources.fileaudiosource import FileAudioSource
+    return [FileAudioSource(file=input_source, diarization=annotation, start_sample=start_sample, end_sample=stop_sample)]
 
 def create_separate_speaker_sources(
     *,
