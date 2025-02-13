@@ -21,7 +21,7 @@ from .transcript.idprovider import IdProvider, CounterIdProvider
 from .audio.audio import samples_to_seconds
 from .config import Config
 from .models import Models
-from .transcript.sentences import SentenceTokenizer
+from .transcript.sentences import SentenceTokenizer, SilenceSentenceTokenizer
 from .transcript.format.txt import (
     TranscriptFormatter,
     COLORSCHEME_ACKNOWLEDGED,
@@ -680,6 +680,12 @@ class Verbatim:
                     window_words=confirmed_words,
                     id_provider=self.state.utterance_id,
                 )
+
+                window_duration = samples_to_seconds(self.state.audio_ts - self.state.window_ts)
+                if window_duration > 25 and len(utterances) == 1:
+                    utterances = self.words_to_sentences(
+                        word_tokenizer=SilenceSentenceTokenizer(), window_words=confirmed_words, id_provider=self.state.utterance_id)
+
                 acknowledged_utterances, confirmed_utterances = self.acknowledge_utterances(utterances=utterances)
 
                 if audio_stream.diarization:
