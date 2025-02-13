@@ -103,7 +103,11 @@ class SilenceSentenceTokenizer(SentenceTokenizer):
             seconds_from_start = samples_to_seconds(right_word.start_ts - first_word.start_ts)
             silence_duration = samples_to_seconds(right_word.start_ts - left_word.end_ts)
 
-            distance_cost = distance_energy(val=seconds_from_start, min_val=self.min_duration, max_val=self.max_duration, ideal_val=self.target_duration)
+            distance_cost = distance_energy(
+                val=seconds_from_start,
+                min_val=self.min_duration,
+                max_val=self.max_duration,
+                ideal_val=self.target_duration)
             silence_cost = silence_energy(duration=silence_duration, max_duration=self.max_duration)
             word_cost = word_energy(left_word=left_word.word, right_word=right_word.word)
             energy = self.distance_weight * distance_cost + self.silence_weight * silence_cost + self.word_weight * word_cost
