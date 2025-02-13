@@ -21,6 +21,7 @@ from .transcript.idprovider import IdProvider, CounterIdProvider
 from .audio.audio import samples_to_seconds
 from .config import Config
 from .models import Models
+from .transcript.sentences import SentenceTokenizer
 from .transcript.format.txt import (
     TranscriptFormatter,
     COLORSCHEME_ACKNOWLEDGED,
@@ -308,13 +309,12 @@ class Verbatim:
         return result
 
     @staticmethod
-    def words_to_sentences(word_tokenizer, window_words: List[Word], id_provider: IdProvider) -> list[Utterance]:
+    def words_to_sentences(word_tokenizer:SentenceTokenizer, window_words: List[Word], id_provider: IdProvider) -> list[Utterance]:
         sentences = []
         if len(window_words) == 0:
             return []
 
-        window_text = "".join([w.word for w in window_words])
-        for tok in word_tokenizer.split(window_text):
+        for tok in word_tokenizer.split(words=window_words):
             sentences += [tok]
 
         utterances = Verbatim.align_words_to_sentences(id_provider=id_provider, sentences=sentences, window_words=window_words)
