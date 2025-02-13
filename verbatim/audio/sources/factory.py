@@ -184,7 +184,12 @@ def create_joint_speaker_sources(
     start_sample: int = timestr_to_samples(start_time) if start_time else 0
     stop_sample: Optional[int] = timestr_to_samples(stop_time) if stop_time else None
 
-    annotation:Annotation = compute_diarization(file_path=input_source, device=device, rttm_file=source_config.diarization_file, strategy=strategy, nb_speakers=nb_speakers)
+    annotation:Annotation = compute_diarization(
+        file_path=input_source,
+        device=device,
+        rttm_file=source_config.diarization_file,
+        strategy=strategy, nb_speakers=nb_speakers)
+
     from ..sources.fileaudiosource import FileAudioSource
     return [FileAudioSource(file=input_source, diarization=annotation, start_sample=start_sample, end_sample=stop_sample)]
 
