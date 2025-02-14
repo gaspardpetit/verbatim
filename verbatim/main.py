@@ -15,54 +15,12 @@ from .transcript.format.writer import (
     ProbabilityStyle,
     LanguageStyle,
 )
+from .env import load_env_file
 
 LOG = logging.getLogger(__name__)
 
 # Get the package name dynamically
 PACKAGE_NAME = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
-
-def load_env_file(env_path=".env"):
-    """
-    Load environment variables from a .env file.
-
-    Parameters:
-    - env_path (str): The path to the .env file. Default is '.env'.
-
-    Returns:
-    - bool: True if the file was successfully loaded, False otherwise.
-    """
-    if not os.path.isfile(env_path):
-        print(f"File '{env_path}' does not exist.")
-        return False
-
-    try:
-        with open(env_path, "r", encoding="utf-8") as file:
-            for line in file:
-                line = line.strip()
-                # Skip empty lines and comments
-                if not line or line.startswith("#"):
-                    continue
-
-                # Ensure the line contains a key-value pair
-                if "=" not in line:
-                    print(f"Ignored invalid line: '{line}'")
-                    continue
-
-                # Split the key and value
-                key, value = line.split("=", 1)
-                key = key.strip()
-                value = value.strip()
-
-                # Set the environment variable
-                os.environ[key] = value
-
-        LOG.info(f"Environment variables from '{env_path}' loaded successfully.")
-        return True
-    # pylint: disable=broad-exception-caught
-    except Exception as e:
-        print(f"Error while loading '{env_path}': {e}")
-        return False
-
 
 def configure_writers(
     write_config: TranscriptWriterConfig,
@@ -262,6 +220,7 @@ def main():
     log_level = log_levels[min(args.verbose, len(log_levels) - 1)]
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
+
     logging.basicConfig(
         stream=sys.stderr,
         level=log_level,

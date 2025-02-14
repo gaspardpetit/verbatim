@@ -159,6 +159,7 @@ pystoi==0.4.1
 pytest==8.3.4
 python-dateutil==2.9.0.post0
 python-docx==1.1.2
+python-dotenv==1.0.1
 pytorch-lightning==2.5.0.post0
 pytorch-metric-learning==2.8.1
 pytorch-ranger==0.1.1
