@@ -76,6 +76,7 @@ dependencies = [
     "word-levenshtein>=0.0.3",
     "openai>=1.59.8",
     "datasets>=3.2.0",
+    "python-dotenv>=1.0.1",
 ]
 
 [dependency-groups]
