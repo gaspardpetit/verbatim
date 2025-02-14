@@ -9,17 +9,27 @@
 
 For high quality multilingual speech to text.
 
-## Installation
+# Installation
 
-### Prerequisites
+## Prerequisites
+- [Python](https://www.python.org/) version 3.9 to 3.11
+- [Astral UV](https://github.com/astral-sh/uv) for development
 
-#### FFMpeg
-FFMpeg is needed to process encoded audio files. This may be done from your package manager on Linux  (ex. `sudo apt install ffmpeg`) or from [Chocolatey](https://community.chocolatey.org/packages/ffmpeg) on Windows.
+### Portaudio
 
-#### Torch with Cuda Support
-If the tool falls back to CPU instead of GPU, you may need to reinstall the torch dependency with Cuda support. Refer to the following instructions: [https://pytorch.org/get-started/locally/](https://pytorch.org/get-started/locally/)
+Portaudio is used on macOS and Linux for accessing the microphone when doing live transcription. To install:
 
-### Installing
+Install on Linux:
+```bash
+ sudo apt install portaudio19-dev
+```
+
+Install on macOS:
+```bash
+ brew install portaudio
+```
+
+## Installing
 
 Install from PyPI:
 ```
@@ -31,8 +41,11 @@ Install the latest from git:
 pip install git+https://github.com/gaspardpetit/verbatim.git
 ```
 
-## HuggingFace Token
-This project requires access to the pyannote models which are gated:
+### Torch with Cuda Support
+If the tool falls back to CPU instead of GPU, you may need to reinstall the torch dependency with Cuda support. Refer to the following instructions: [https://pytorch.org/get-started/locally/](https://pytorch.org/get-started/locally/)
+
+# HuggingFace Token
+For diarization, this project requires access to the pyannote models which are gated:
 
 1. Create an account on [Hugging Face](https://huggingface.co/)
 2. Request access to the model at https://huggingface.co/pyannote/speaker-diarization-3.1
@@ -42,13 +55,12 @@ This project requires access to the pyannote models which are gated:
 
 Instead of setting `HUGGINGFACE_TOKEN` environment variable, you may prefer to set the value using a `.env` file in the current directory like this:
 
-#### .env
+## .env
 ```bash
 HUGGINGFACE_TOKEN=hf_******
 ```
 
-
-## Usage (from terminal)
+# Usage (from terminal)
 
 Simple usage
 ```bash
@@ -75,6 +87,7 @@ Save file in a specific directory
 verbatim audio_file.mp3 -o ./output/
 ```
 
+For see the [detailed terminal documentation](doc/verbatim-cli.md) for additional examples and options.
 
 ## Usage (from Docker)
 The tool can also be used within a docker container. This can be particularly convenient, in the context where the audio and transcription is confidential, to ensure that the tool is completely offline since docker using `--network none`
@@ -95,7 +108,6 @@ docker run --network none \
     verbatim /data/audio.mp3 -o /data/out --languages en fr
 ```
 
-
 ## Usage (from python)
 
 ```python 
@@ -111,108 +123,39 @@ pipeline.execute()
 
 The project is organized to be modular, such that individual components can be used outside the full pipeline, and the pipeline can be customized to use custom stages. For example, to use a custom diarization stage:
 
-
 ```python
-from verbatim.speaker_diarization import DiarizeSpeakers
-from verbatim import Context, Pipeline
-my_cursom_diarization: DiarizeSpeakers = get_custom_diarization_stage()  
+from verbatim.audio.sources.sourceconfig import SourceConfig
+from verbatim.audio.sources.factory import create_audio_source
+source = create_audio_source(input_source="samples/Airfrance - Bienvenue à bord.wav", device="cuda", source_config=SourceConfig(diarize=2))
 
-context: Context = Context(
-    languages=["en", "fr"],
-    nb_speakers=2,
-    source_file="audio.mp3",
-    out_dir="out")
-pipeline: Pipeline = Pipeline(
-    context=context, 
-    diarize_speakers=my_cursom_diarization)
-pipeline.execute()
+from verbatim.config import Config
+from verbatim.verbatim import Verbatim
+verbatim = Verbatim(config=Config(lang=["en", "fr"], output_dir="out"))
+
+with source.open() as stream:
+    for utterance, _unack_utterance, _unconfirmed_word in verbatim.transcribe(audio_stream=stream):
+        print(utterance.text)
 ```
+
+# Contributing
 
 This project aims at finding the best implementation for each stage and glue them together. Contributions with new implementations are welcome.
 
-Each component may also be used independently, for example:
+Refer to the [build instructions](BUILD.md) to learn how to modify and test this project before submitting a pull request.
 
-#### Separating Voice from Noise
+# Architecture
+Refer to the [architecture details](doc/architecture.md) for further information on how Verbatim works.
 
-Using MDX:
-```python
-from verbatim.voice_isolation import IsolateVoicesMDX
-IsolateVoicesMDX().execute(
-    audio_file_path="original.mp3",
-    voice_file_path="voice.wav")
-```
+# Objectives
 
-Using Demucs:
-```python
-from verbatim.voice_isolation import IsolateVoicesDemucs
-IsolateVoicesDemucs().execute(
-    audio_file_path="original.mp3",
-    voice_file_path="voice.wav")
-```
+## High Quality
+Most design decisions in this project favour higher confidence over performance, including multiple passes in several parts to improve analysis. The main motivation for this project was to provide a robust transcription solution that would handle conversations in multiple languages. Most commercial and open-source solutions either expect the user to set the language to be used for the translation or will rely on a short audio sample (ex. the first 10-30 seconds) to detect the language and expect the entire conversation to remain in this language.
 
-#### Diarization
-Using Pyannote:
-```python
-from verbatim.speaker_diarization import DiarizeSpeakersPyannote
-DiarizeSpeakersPyannote().execute(
-    voice_file_path="voice.wav", 
-    diarization_file="dia.rttm",
-    max_speakers=4)
-```
+In most solution, a change in language during a conversation either results in gibberish or missing text.
 
-Using SpeechBrain:
-```python
-from verbatim.speaker_diarization import DiarizeSpeakersSpeechBrain
-DiarizeSpeakersSpeechBrain().execute(
-    voice_file_path="voice.wav", 
-    diarization_file="dia.rttm",
-    max_speakers=4)
-```
+By contrast, Verbatim will continuously test for language switching during the conversation. Although the primary focus was on multi-language support, it turns out that the iterative architecture that was developped for multi-language also provides improvements on single-language conversations. Utterances are considered in short segments and analyzed multiple time until Verbatim has built confidence that the text is accurate.
 
-#### Speech to Text
-
-Using FasterWhisper:
-```python
-from verbatim.wav_conversion import ConvertToWav
-from verbatim.speech_transcription import TranscribeSpeechFasterWhisper
-TranscribeSpeechFasterWhisper().execute_segment(
-        speech_segment_float32_16khz=ConvertToWav.load_float32_16khz_mono_audio("audio.mp3"),
-        language="fr")
-```
-
-Using OpenAI Whisper:
-```python
-from verbatim.wav_conversion import ConvertToWav
-from verbatim.speech_transcription import TranscribeSpeechWhisper
-transcript = TranscribeSpeechWhisper().execute_segment(
-    speech_segment_float32_16khz=ConvertToWav.load_float32_16khz_mono_audio("audio.mp3"),
-    language="fr")
-```
-
-#### Transcription to Document
-
-Saving to .docx:
-```python
-from verbatim.transcript_writing import WriteTranscriptDocx
-WriteTranscriptDocx().execute(
-    transcript=transcript,
-    output_file="out.docx")
-```
-
-Saving to .ass:
-```python
-from verbatim.transcript_writing import WriteTranscriptAss
-WriteTranscriptAss().execute(
-    transcript=transcript,
-    output_file="out.ass")
-```
-
-## Objectives
-
-### High Quality
-Many design decisions favour higher confidence over performance, including multiple passes in several parts to improve analysis.
-
-### Language support
+## Language support
 
 Languages supported by [openai/whisper](https://github.com/openai/whisper) using the [whisper-large-v3](https://huggingface.co/openai/whisper-large-v3) model should also work, including: Afrikaans, Arabic, Armenian, Azerbaijani, Belarusian, Bosnian, Bulgarian, Catalan, Chinese, Croatian, Czech, Danish, Dutch, English, Estonian, Finnish, French, Galician, German, Greek, Hebrew, Hindi, Hungarian, Icelandic, Indonesian, Italian, Japanese, Kannada, Kazakh, Korean, Latvian, Lithuanian, Macedonian, Malay, Marathi, Maori, Nepali, Norwegian, Persian, Polish, Portuguese, Romanian, Russian, Serbian, Slovak, Slovenian, Spanish, Swahili, Swedish, Tagalog, Tamil, Thai, Turkish, Ukrainian, Urdu, Vietnamese, and Welsh
 
@@ -236,13 +179,16 @@ For audit purposes, the audio that was removed because it was considered *backgr
 ### Optional GPU Acceleration (on a 12GB VRAM Budget)
 The current objective is to limit the VRAM requirements to 12GB, allowing cards such as NVidia RTX 4070 to accelerate the processing.
 
-Verbatim will run on CPU, but processing should be expected to be slow.
+Verbatim will also run on CPU, but processing should be expected to be slow.
 
 ### Long Audio Support (2h+)
 The main use case for Verbatim is transcription of meeting. Consequently, it is designed to work with files containing at least 2 hours of audio.
 
 ### Audio Conversion
 A variety of audio formats is support as input, including raw, compressed audio or even video files containing audio tracks. Any format supported by [ffmpeg](https://ffmpeg.org/) is accepted.
+
+### Streaming
+Verbatim can also be used with streaming audio. For this purpose, a low-latency mode can be enabled, at the cost of suboptimal quality.
 
 ### Offline processing
 100% offline to ensure confidentiality. The docker image may be executed with `--network none` to ensure that nothing reaches out.
@@ -252,38 +198,7 @@ The output includes
 - a subtitle track rendered over the original audio to review the results.
 - a Word document identifying low-confidence words, speaker and timestamps to quickly jump to relevant sections and ensure no part has been omitted
 
-## Processing Pipeline
-
-![doc/architecture.svg](doc/img/Architecture.svg)
-
-### 1. Ingestion 🔊
-Audio Files are converted ◌⃯ to raw audio using [ffmpeg](https://ffmpeg.org/). 
-
-### 2. Voice Isolation 🗩
-
-The voices are isolated using [karaokenerds/python-audio-separator](https://github.com/karaokenerds/python-audio-separator).
-
-### 3. Diarization 🖹
-
-Speakers are identified using [pyannote](https://github.com/pyannote). A diarizaton timeline is created with each speaker being assigned speech periods. When known, it is possible to set the number of speaker in advance for better results.
-
-### 4. Language detection
-
-The language used in each section of the diarization is identified using [SYSTRAN/faster-whisper](https://github.com/SYSTRAN/faster-whisper). For sections that fail to detect properly, the process is repeated with widening windows until the language can be determined with an acceptable level of certainty.
-
-### 5. Speech to Text ✎
-
-We use [SYSTRAN/faster-whisper](https://github.com/SYSTRAN/faster-whisper) for translation, using the [whisper-large-v3](https://huggingface.co/openai/whisper-large-v3) model which support mixture of language. It is still necessary to segment the audio, otherwise whisper eventually switches to translating instead of transcribing when the language requested does not match the speech.
-
-Whisper provides state-of-the-art transcription, but it is prone to hallucinations. A short audio segment may generate speech that does not exist with high level of certainty, making hallucinations difficult to detect. To reduce the likelihood of these occuranges, the audio track is split into multiple audio tracks, one for each `speaker`x`language` pair. Voice activity detection (VAD) is then performed using [speechbrain](https://github.com/speechbrain/speechbrain) to identify large audio segments that can be processed together without compromising word timestamp quality.
-
-We use a different VAD for speaker diarization than speech-to-text processing. [pyannote](https://github.com/pyannote)'s VAD seemed more granular and better suited to identify short segments that may involve change in language or speaker, while [speechbrain](https://github.com/speechbrain/speechbrain)'s VAD seems more conservative, preferring larger segments, making it better suited for grouping large audio segments for speech-to-text while still allowing to skip large sections of silence.
-
-### 6. Output
-
-The output document is a Microsoft Word document which reflects many decisions of the pipeline. In particular, words with low confidence are highlighted for review. SubStation Alpha Subtitles are also provided, based on the implementation of [jianfch/stable-ts](https://github.com/jianfch/stable-ts).
-
-## Sample
+# Sample
 
 Consider the following audio file obtained from [universal-soundbank](https://universal-soundbank.com/sounds/12374.mp3) including a mixture of French and English:
 
@@ -374,8 +289,7 @@ A direct use of whisper on an audio clip like this one results in many errors. S
 
   <tr>
     <td>❌</td>
-    <td>Pour détacher votre selleure, soulevez la partie supérieure de la
-        boucle.</td>
+    <td>Pour détacher votre selleure, soulevez la partie supérieure de la boucle.</td>
     <td>To release the seatbelt, just lift the buckle.</td>
   </tr>
 
@@ -500,7 +414,7 @@ A direct use of whisper on an audio clip like this one results in many errors. S
   <tr>
     <td>✅</td>
     <td>Le gilet de sauvetage est situé sous votre siège ou dans la coudoir centrale.</td>
-    <td>Le gilet de sauvetage est situé sous votre siège ou dans la coudoir centrale.</td>
+    <td>Le gilet de sauvetage est situé sous votre siège ou dans l'accoudoir central.</td>
   </tr>
 
   <tr>
