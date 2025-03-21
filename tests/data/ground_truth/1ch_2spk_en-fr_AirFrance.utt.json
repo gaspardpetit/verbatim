@@ -1,0 +1,276 @@
+{
+  "utterances": [
+    {
+      "utterance_id": "utt0",
+      "ref_text": "Madame, Monsieur, bonjour et bienvenue à bord.",
+      "ref_spk": "1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt1",
+      "ref_text": "Welcome aboard, ladies and gentlemen.",
+      "ref_spk": "2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt2",
+      "ref_text": "For your safety and comfort, please take a moment to watch the following safety video.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt3",
+      "ref_text": "Ce film concerne votre sécurité à bord.",
+      "ref_spk": "1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt4",
+      "ref_text": "Merci de nous accorder votre attention.",
+      "ref_spk": "1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt5",
+      "ref_text": "Chaque fois que ce signal est allumé, vous devez attacher votre ceinture pour votre sécurité.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt6",
+      "ref_text": "Nous vous recommandons de la maintenir attachée, de façon visible, lorsque vous êtes à votre siège.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt7",
+      "ref_text": "Whenever the seatbelt sign is on,",
+      "ref_spk": "2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt8",
+      "ref_text": "Your seatbelt must be securely fastened.",
+      "ref_spk": "2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt9",
+      "ref_text": "For your safety, we recommend that you keep your seatbelt fastened and visible at all times while seated.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt10",
+      "ref_text": "To release the seatbelt, just lift the buckle.",
+      "ref_spk": "2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt11",
+      "ref_text": "Pour détacher votre ceinture, soulevez la partie supérieure de la boucle.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt12",
+      "ref_text": "Il est strictement interdit de fumer dans l'avion, y compris dans les toilettes.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt13",
+      "ref_text": "This is a no-smoking flight, and it is strictly prohibited to smoke in the toilets.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt14",
+      "ref_text": "En cas de dépressurisation, un masque à oxygène tombera automatiquement à votre portée.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt15",
+      "ref_text": "If there is a sudden decrease in cabin pressure, your oxygen mask will drop automatically in front of you.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt16",
+      "ref_text": "Tirez sur le masque pour libérer l'oxygène, placez-le sur votre visage.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt17",
+      "ref_text": "Pull the mask toward you to start the flow of oxygen.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt18",
+      "ref_text": "Place the mask over your nose and mouth.",
+      "ref_spk": "2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt19",
+      "ref_text": "Make sure your own mask is well adjusted before helping others.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt20",
+      "ref_text": "Une fois votre masque ajusté, il vous sera possible d'aider d'autres personnes.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt21",
+      "ref_text": "En cas d'évacuation, des panneaux lumineux EXIT vous permettent de localiser les issues de secours.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt22",
+      "ref_text": "Repérez maintenant le panneau exit le plus proche de votre siège.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt23",
+      "ref_text": "Il peut se trouver derrière vous.",
+      "ref_spk": "1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt24",
+      "ref_text": "In case of an emergency, the illuminated exit signs will help you locate the exit doors.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt25",
+      "ref_text": "Please take a moment now to locate the exit nearest you.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt26",
+      "ref_text": "The nearest exit may be behind you.",
+      "ref_spk": "2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt27",
+      "ref_text": "Les issues de secours sont situées de chaque côté de la cabine, à l'avant, au centre, à l'arrière.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt28",
+      "ref_text": "Emergency exits on each side of the cabin are located at the front, in the center, and at the rear.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt29",
+      "ref_text": "Pour évacuer l'avion, suivez le marquage lumineux.",
+      "ref_spk": "1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt30",
+      "ref_text": "In the event of an evacuation, pathway lighting on the floor will guide you to the exits.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt31",
+      "ref_text": "Les portes seront ouvertes par l'équipage.",
+      "ref_spk": "1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt32",
+      "ref_text": "Doors will be opened by the cabin crew.",
+      "ref_spk": "2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt33",
+      "ref_text": "Les toboggans se déploient automatiquement.",
+      "ref_spk": "1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt34",
+      "ref_text": "The emergency slides will automatically inflate.",
+      "ref_spk": "2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt35",
+      "ref_text": "Le gilet de sauvetage est situé sous votre siège ou dans la coudoir centrale.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt36",
+      "ref_text": "Your life jacket is under your seat or in the central armrest.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt37",
+      "ref_text": "Passez la tête dans l'encolure, attachez et serrez les sangles.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt38",
+      "ref_text": "Place it over your head and pull the straps tightly around your waist.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt39",
+      "ref_text": "Inflate your life jacket by pulling the red toggles.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt40",
+      "ref_text": "Une fois à l'extérieur de l'avion, gonflez votre gilet en tirant sur les poignées rouges.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt41",
+      "ref_text": "Do this only when you are outside the aircraft.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt42",
+      "ref_text": "Nous allons bientôt décoller.",
+      "ref_spk": "1 1 1 1"
+    },
+    {
+      "utterance_id": "utt43",
+      "ref_text": "La tablette doit être rangée et votre dossier redressé.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt44",
+      "ref_text": "In preparation for take-off, please make sure your tray table is stowed and secure, and that your seat-back is in the upright position.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt45",
+      "ref_text": "L'usage des appareils électroniques est interdit pendant le décollage et l'atterrissage.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt46",
+      "ref_text": "The use of electronic devices is prohibited during take-off and landing.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt47",
+      "ref_text": "Les téléphones portables doivent rester éteints pendant tout le vol.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt48",
+      "ref_text": "Mobile phones must remain switched off for the duration of the flight.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt49",
+      "ref_text": "Une notice de sécurité placée devant vous est à votre disposition.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt50",
+      "hyp_text": "We encourage",
+      "hyp_spk": "2 2",
+      "ref_text": "",
+      "ref_spk": ""
+    },
+    {
+      "utterance_id": "utt51",
+      "ref_text": "everyone to read the safety information leaflet located in the seat back pocket.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2 2 2"
+    },
+    {
+      "utterance_id": "utt52",
+      "ref_text": "Merci pour votre attention. Nous vous souhaitons un bon vol.",
+      "ref_spk": "1 1 1 1 1 1 1 1 1 1"
+    },
+    {
+      "utterance_id": "utt53",
+      "ref_text": "Thank you for your attention. We wish you a very pleasant flight.",
+      "ref_spk": "2 2 2 2 2 2 2 2 2 2 2 2"
+    }
+  ]
+}

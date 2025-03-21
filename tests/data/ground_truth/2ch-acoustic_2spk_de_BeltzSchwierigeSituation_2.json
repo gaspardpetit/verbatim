@@ -1,0 +1,525 @@
+{
+  "utterances": [
+    {
+      "id": "utt2",
+      "start": 2.598,
+      "end": 3.358,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Guten Tag"
+    },
+    {
+      "id": "utt3",
+      "start": 3.358,
+      "end": 3.998,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Herr Kroll."
+    },
+    {
+      "id": "utt8",
+      "start": 3.998,
+      "end": 6.858,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Herr Rüdiger, ich bin eigentlich nur gekommen heute, um zu sagen, FreulichFreulichFreulichFreulichdas war es für mich."
+    },
+    {
+      "id": "utt13",
+      "start": 6.898,
+      "end": 7.998,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich werde die Therapie abbrechen."
+    },
+    {
+      "id": "utt20",
+      "start": 7.998,
+      "end": 9.438,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Das hat alles überhaupt keinen Sinn."
+    },
+    {
+      "id": "utt25",
+      "start": 9.96,
+      "end": 14.54,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich, ich, ich, ich, ich, ich wollte mich im Grunde nur sagen, das war es für mich."
+    },
+    {
+      "id": "utt32",
+      "start": 14.64,
+      "end": 18.1,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Danke und ich will das abbrechen."
+    },
+    {
+      "id": "utt38",
+      "start": 18.38,
+      "end": 23.3,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Okay, also erstmal danke, dass Sie überhaupt gekommen sind, auch wenn Sie so aktiviert sind."
+    },
+    {
+      "id": "utt39",
+      "start": 21.212,
+      "end": 21.517,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ja."
+    },
+    {
+      "id": "utt43",
+      "start": 23.4,
+      "end": 28.1,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Darf ich Sie bitten, wenn Sie jetzt schon mal da sind, dass wir uns versuchen, das zusammen anzuschauen?"
+    },
+    {
+      "id": "utt48",
+      "start": 28.12,
+      "end": 30.24,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": "Nee, eben nicht! Nein, ich kann das nicht mehr anschauen."
+    },
+    {
+      "id": "utt56",
+      "start": 30.34,
+      "end": 36.44,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich, ich, ich, ich, ich, ich, ich, ich, Herr Rüdiger, Sie machen das ja, Sie geben sich ja wirklich Mühe, aber es hat überhaupt keinen Sinn."
+    },
+    {
+      "id": "utt61",
+      "start": 36.5,
+      "end": 30.411,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich habe heute wieder eine Situation gehabt, wo ich dachte: Scheiße, nichts gelernt."
+    },
+    {
+      "id": "utt63",
+      "start": 39.84,
+      "end": 41.78,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Überhaupt nicht, ich kann diese Stühle auch nicht mehr sehen."
+    },
+    {
+      "id": "utt64",
+      "start": 42.066,
+      "end": 42.838,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Okay, kommen sie."
+    },
+    {
+      "id": "utt76",
+      "start": 41.84,
+      "end": 43.94,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich weiß nicht mehr, was das soll. Wirklich nicht."
+    },
+    {
+      "id": "utt90",
+      "start": 43.24,
+      "end": 43.58,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Herr Kroll,"
+    },
+    {
+      "id": "utt94",
+      "start": 43.58,
+      "end": 44.38,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ist ja alles okay. Ist ja alles okay."
+    },
+    {
+      "id": "utt95",
+      "start": 45.54,
+      "end": 46.78,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Jetzt sind Sie schon mal da."
+    },
+    {
+      "id": "utt111",
+      "start": 46.84,
+      "end": 47.24,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Da kommen Sie her."
+    },
+    {
+      "id": "utt112",
+      "start": 47.3,
+      "end": 47.98,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Nein, ich will jetzt..."
+    },
+    {
+      "id": "utt118",
+      "start": 47.98,
+      "end": 48.7,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Bitte, bitte, bitte. bitte."
+    },
+    {
+      "id": "utt119",
+      "start": 48.92,
+      "end": 50.42,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Nein, das hat doch keinen Sinn."
+    },
+    {
+      "id": "utt119",
+      "start": 50.204,
+      "end": 51.031,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Geben Sie mir fünf Minuten."
+    },
+    {
+      "id": "utt124",
+      "start": 50.46,
+      "end": 54.858,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich, ich will... fünf Minuten. ich ich ich. Jetzt bereue ich schon, dass ich gekommen bin. Ich wollte..."
+    },
+    {
+      "id": "utt136",
+      "start": 52.2,
+      "end": 55.8,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Herr Koll, wir haben zusammen,  wir haben zusammen gearbeitet."
+    },
+    {
+      "id": "utt139",
+      "start": 55.9,
+      "end": 64.104,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich habe ja auch jetzt eine Beziehung zu Ihnen aufgebaut und ich möchte gerne, dass Sie mir diese fünf Minuten geben, dass wir fünf Minuten schauen, was hier eigentlich los ist. Okay?"
+    },
+    {
+      "id": "utt150",
+      "start": 66.01994,
+      "end": 69.44,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Herr Rüdiger, wirklich, dass Sie auch nicht einfach mal loslassen können."
+    },
+    {
+      "id": "utt162",
+      "start": 69.54,
+      "end": 70.8,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Entschuldigung, das tut mir leid."
+    },
+    {
+      "id": "utt173",
+      "start": 70.82,
+      "end": 71.72,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Das ist alles okay."
+    },
+    {
+      "id": "utt174",
+      "start": 72.48,
+      "end": 74.54,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Wozu Sie mich schon wieder treiben?"
+    },
+    {
+      "id": "utt181",
+      "start": 74.6,
+      "end": 75.68,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich will das jetzt nicht."
+    },
+    {
+      "id": "utt193",
+      "start": 75.76,
+      "end": 76.44,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich kann das nicht."
+    },
+    {
+      "id": "utt194",
+      "start": 76.7,
+      "end": 78.56,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Lassen Sie uns hier mal zusammen hinstellen."
+    },
+    {
+      "id": "utt208",
+      "start": 78.66,
+      "end": 79.94,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Wir gucken uns das jetzt mal zusammen an."
+    },
+    {
+      "id": "utt212",
+      "start": 80.33994,
+      "end": 81.65,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " 5 Minuten. Okay?"
+    },
+    {
+      "id": "utt213",
+      "start": 81.62,
+      "end": 83.4,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Vorsicht, wenn überhaupt, dann komme ich selbst, ja?"
+    },
+    {
+      "id": "utt220",
+      "start": 83.5,
+      "end": 86.64,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Also gut, was... ich gebe Ihnen fünf Minuten, ja?"
+    },
+    {
+      "id": "utt224",
+      "start": 87.04,
+      "end": 87.7,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Kommen Sie zu mir."
+    },
+    {
+      "id": "utt225",
+      "start": 88.54,
+      "end": 90.92,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Wir sind jetzt hier zusammen und schauen uns mal an."
+    },
+    {
+      "id": "utt235",
+      "start": 91.2,
+      "end": 93.14,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Da ist der Herr Kroll, da ist der Herr Rüdiger."
+    },
+    {
+      "id": "utt245",
+      "start": 93.24,
+      "end": 93.74,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Kommen Sie zu mir."
+    },
+    {
+      "id": "utt246",
+      "start": 93.8,
+      "end": 94.34,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Was ist denn da passiert?"
+    },
+    {
+      "id": "utt256",
+      "start": 94.34,
+      "end": 96.08,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich kann mich jetzt gar nicht konzentrieren so schnell auf was."
+    },
+    {
+      "id": "utt260",
+      "start": 96.16,
+      "end": 97.5,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Wo ist Herr Kroll, wo ist Herr Rüdiger?"
+    },
+    {
+      "id": "utt269",
+      "start": 97.862,
+      "end": 98.542,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Kommen Sie zu mir."
+    },
+    {
+      "id": "utt270",
+      "start": 98.602,
+      "end": 99.042,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja, gut."
+    },
+    {
+      "id": "utt281",
+      "start": 99.142,
+      "end": 99.762,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Noch ein bisschen näher."
+    },
+    {
+      "id": "utt283",
+      "start": 100.342,
+      "end": 100.642,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja, okay."
+    },
+    {
+      "id": "utt285",
+      "start": 101.102,
+      "end": 103.662,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich möchte, dass wir uns das von außen anschauen, als sei das jetzt ein Film."
+    },
+    {
+      "id": "utt288",
+      "start": 103.762,
+      "end": 109.142,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Da ist ein Film, da ist ein Therapieraum, da kommt der Herr Kroll rein, da ist der Herr Rüdiger."
+    },
+    {
+      "id": "utt288",
+      "start": 104.054,
+      "end": 104.5,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja."
+    },
+
+    {
+      "id": "utt296",
+      "start": 110.74194,
+      "end": 113.982,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Was ist passiert, dass der Herr Kroll so aktiviert ist?"
+    },
+    {
+      "id": "utt304",
+      "start": 114.082,
+      "end": 114.522,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Was war da los?"
+    },
+    {
+      "id": "utt305",
+      "start": 117.14194,
+      "end": 118.842,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich weiß nicht, ob ich Ihnen das jetzt wirklich noch..."
+    },
+    {
+      "id": "utt314",
+      "start": 118.942,
+      "end": 120.322,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Es ist wieder passiert."
+    },
+    {
+      "id": "utt322",
+      "start": 120.422,
+      "end": 122.382,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich wurde wieder mal verarscht, ja?"
+    },
+    {
+      "id": "utt328",
+      "start": 122.482,
+      "end": 126.642,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Und ich bin sofort explodiert und es hat überhaupt nichts gebracht, was wir bisher gemacht haben."
+    },
+    {
+      "id": "utt332",
+      "start": 126.702,
+      "end": 128.962,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Es geht also gar nicht um den Herrn Rüdiger, sondern wer hat Sie verarscht?"
+    },
+    {
+      "id": "utt339",
+      "start": 129.062,
+      "end": 129.722,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Sabine."
+    },
+    {
+      "id": "utt340",
+      "start": 129.962,
+      "end": 131.702,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Sabine, okay, dann setzen wir mal Sabine dahin."
+    },
+    {
+      "id": "utt345",
+      "start": 132.792,
+      "end": 136.632,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Sabine hat den Leo verarscht."
+    },
+    {
+      "id": "utt349",
+      "start": 136.712,
+      "end": 137.072,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja."
+    },
+    {
+      "id": "utt351",
+      "start": 137.852,
+      "end": 139.632,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Okay, so, jetzt nehmen Sie mal Abstand."
+    },
+    {
+      "id": "utt353",
+      "start": 140.272,
+      "end": 142.292,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Wenn das so einfach wäre, würde ich das ja machen."
+    }
+  ]
+}

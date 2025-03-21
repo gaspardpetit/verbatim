@@ -1,0 +1,260 @@
+{
+  "utterances": [
+    {
+      "id": "utt3",
+      "start": 0.23,
+      "end": 5.31,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": "Ja, herzlich willkommen an der Ambulanz am Otto-Selz-Institut."
+    },
+    {
+      "id": "utt7",
+      "start": 5.70994,
+      "end": 6.80994,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Haben Sie gut hierher gefunden?"
+    },
+    {
+      "id": "utt15",
+      "start": 8.30994,
+      "end": 8.54994,
+      "speaker": "SPEAKER_1",
+      "language": "de",
+      "text": " Ja,"
+    },
+    {
+      "id": "utt17",
+      "start": 8.54994,
+      "end": 12.32994,
+      "speaker": "SPEAKER_1",
+      "language": "de",
+      "text": " Hab gut hergefunden, mit der Straßenbahn gefahren, war okay."
+    },
+    {
+      "id": "utt23",
+      "start": 12.54994,
+      "end": 13.06994,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Okay,"
+    },
+    {
+      "id": "utt25",
+      "start": 13.18994,
+      "end": 16.08994,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Haben Sie einen längeren Anfahrtsweg?"
+    },
+    {
+      "id": "utt28",
+      "start": 16.62994,
+      "end": 17.64994,
+      "speaker": "SPEAKER_1",
+      "language": "de",
+      "text": " Es geht."
+    },
+    {
+      "id": "utt39",
+      "start": 18.13994,
+      "end": 20.75994,
+      "speaker": "SPEAKER_1",
+      "language": "de",
+      "text": " Ich komme aus der Neckarstadt."
+    },
+    {
+      "id": "utt52",
+      "start": 21.98187,
+      "end": 24.08194,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": "Aus der Neckarstadt, das ist überschaubar."
+    },
+    {
+      "id": "utt63",
+      "start": 25.09994,
+      "end": 30.41994,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Ja, heute ist ja unser erstes Gespräch, unser erster Termin."
+    },
+    {
+      "id": "utt73",
+      "start": 30.47994,
+      "end": 32.29994,
+      "speaker": "SPEAKER_1",
+      "language": "de",
+      "text": " Ja, ich war auch ein bisschen aufgeregt."
+    },
+    {
+      "id": "utt76",
+      "start": 32.41994,
+      "end": 37.05994,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Ja, das kann ich nachvollziehen, wenn man da den Schritt das erste Mal geht."
+    },
+    {
+      "id": "utt84",
+      "start": 37.15994,
+      "end": 39.35994,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Haben Sie schon Erfahrung mit Psychotherapie?"
+    },
+    {
+      "id": "utt92",
+      "start": 39.56194,
+      "end": 40.26194,
+      "speaker": "SPEAKER_1",
+      "language": "de",
+      "text": " Nee, noch nie."
+    },
+    {
+      "id": "utt93",
+      "start": 40.68194,
+      "end": 41.46194,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Noch nie."
+    },
+    {
+      "id": "utt99",
+      "start": 41.76194,
+      "end": 45.14194,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Dann kann ich nachvollziehen, dass das vielleicht ein aufregender Schritt war."
+    },
+    {
+      "id": "utt103",
+      "start": 45.84188,
+      "end": 50.22194,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Ja, tatsächlich geht es heute darum, dass wir uns beide erstmal ein bisschen kennenlernen."
+    },
+    {
+      "id": "utt107",
+      "start": 50.28194,
+      "end": 62.22194,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Ich habe tatsächlich sehr viele Fragen primär an Sie, einfach um zu gucken, was Sie hierher führt mit der Frage im Hintergrund, ob wir die richtigen Ansprechpartner sind, Ihnen zu helfen."
+    },
+    {
+      "id": "utt110",
+      "start": 62.46194,
+      "end": 66.30194,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Und gleichzeitig haben Sie wahrscheinlich auch einige Fragen an uns."
+    },
+    {
+      "id": "utt111",
+      "start": 66.884,
+      "end": 67.912,
+      "speaker": "SPEAKER_1",
+      "language": "de",
+      "text": " Das stimmt, ja."
+    },
+    {
+      "id": "utt112",
+      "start": 66.40194,
+      "end": 69.80194,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Da können Sie diese dann auch gerne stellen."
+    },
+    {
+      "id": "utt113",
+      "start": 70.513,
+      "end": 71.367,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Super"
+    },
+    {
+      "id": "utt116",
+      "start": 74.28187,
+      "end": 84.22187,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Ja, bevor ich mit meinen vielen Fragen loslege, haben Sie erstmal Fragen an mich oder an den Ablauf der heutigen Stunde?"
+    },
+    {
+      "id": "utt119",
+      "start": 84.66187,
+      "end": 88.72181,
+      "speaker": "SPEAKER_1",
+      "language": "de",
+      "text": " Ja, also ich habe natürlich schon viele Fragen."
+    },
+    {
+      "id": "utt121",
+      "start": 90.94381,
+      "end": 94.60381,
+      "speaker": "SPEAKER_1",
+      "language": "de",
+      "text": " Ich weiß ja gar nicht so genau, wie das funktioniert mit Psychotherapie."
+    },
+    {
+      "id": "utt123",
+      "start": 95.88381,
+      "end": 101.70381,
+      "speaker": "SPEAKER_1",
+      "language": "de",
+      "text": " Ich weiß auch gar nicht, wie das mit der Krankenkasse läuft, ob die jetzt dafür zahlt zum Beispiel."
+    },
+    {
+      "id": "utt124",
+      "start": 102.5,
+      "end": 103.004,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Ja."
+    },
+    {
+      "id": "utt125",
+      "start": 104.063,
+      "end": 115.95,
+      "speaker": "SPEAKER_1",
+      "language": "de",
+      "text": " Wie lange ich das machen kann und wie viele, ja genau, wie viele Stunden das dann beinhalten würde und was zum Beispiel passiert, wenn ich eine Stunde absagen muss, kurzfristig."
+    },
+    {
+      "id": "utt126",
+      "start": 116.125,
+      "end": 121.73,
+      "speaker": "SPEAKER_1",
+      "language": "de",
+      "text": " All das wären so Sachen, die ich wissen müsste bevor wir loslegen können."
+    },
+    {
+      "id": "utt129",
+      "start": 121.28375,
+      "end": 128.82381,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Gut, ich glaube vieles von dem, was Sie angesprochen haben, führt uns auch das Gespräch tatsächlich hin."
+    },
+    {
+      "id": "utt131",
+      "start": 128.92381,
+      "end": 130.64381,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " Von dem her aber gut, dass"
+    },
+    {
+      "id": "utt133",
+      "start": 130.64381,
+      "end": 132.38381,
+      "speaker": "SPEAKER_0",
+      "language": "de",
+      "text": " sie die Fragen sich schon gestellt haben."
+    }
+  ]
+}
