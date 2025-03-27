@@ -57,6 +57,45 @@ def analyze_channels(audio_file, tolerance=1e-6, dominance_threshold=0.8):
     return "2ch-distinct"  # Likely different speakers or content
 
 
+def get_audio_duration(audio_file):
+    """
+    Get the duration of an audio file in seconds.
+
+    Parameters:
+    - audio_file: Path to the audio file
+
+    Returns:
+    - Duration in seconds
+    """
+    try:
+        # Get the duration of the audio file
+        duration = librosa.get_duration(path=audio_file)
+        return duration
+    except Exception as e:
+        print(f"Error getting duration for {audio_file}: {e}")
+        return None
+
+
+def format_duration(seconds):
+    """
+    Format duration into HHhMMmSSs format.
+
+    Parameters:
+    - seconds: Duration in seconds
+
+    Returns:
+    - Formatted duration string
+    """
+    if seconds is None:
+        return "00h00m00s"
+
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = int(seconds % 60)
+
+    return f"{hours:02d}h{minutes:02d}m{secs:02d}s"
+
+
 def visualize_channel_comparison(audio_file, save_path=None) -> tuple[float, float, float, float]:
     """
     Creates a visualization of the two channels to help in analysis.
@@ -160,18 +199,28 @@ def get_user_input_for_rename(file_path, channel_type):
             break
         print("Please enter a valid title (alphanumeric characters and underscores only).")
 
-    return num_speakers, languages, title
+    # Ask if duration should be added
+    add_duration = input("Add audio duration to filename? (y/n): ").strip().lower() == 'y'
+
+    return num_speakers, languages, title, add_duration
 
 
 def rename_audio_file(file_path, channel_type):
     """Rename file according to convention and update related files"""
     # Get user input for renaming
-    num_speakers, languages, title = get_user_input_for_rename(file_path, channel_type)
+    num_speakers, languages, title, add_duration = get_user_input_for_rename(file_path, channel_type)
+
+    # Get and format duration if requested
+    duration_str = ""
+    if add_duration:
+        duration = get_audio_duration(file_path)
+        if duration:
+            duration_str = f"_{format_duration(duration)}"
 
     # Construct new filename
     dir_path = os.path.dirname(file_path)
     file_ext = os.path.splitext(file_path)[1]
-    new_filename = f"{channel_type}_{num_speakers}spk_{languages}_{title}{file_ext}"
+    new_filename = f"{channel_type}_{num_speakers}spk_{languages}_{title}{duration_str}{file_ext}"
     new_file_path = os.path.join(dir_path, new_filename)
 
     # Check if confirmation is needed
@@ -210,18 +259,86 @@ def already_follows_convention(file_path, channel_type):
     return filename.startswith(f"{channel_type}_")
 
 
+def add_duration_to_filename(file_path):
+    """
+    Add the audio file duration to its filename if not already present.
+
+    Parameters:
+    - file_path: Path to the audio file
+
+    Returns:
+    - New file path if renamed, None if skipped
+    """
+    try:
+        # Check if filename already has a duration pattern
+        filename = os.path.basename(file_path)
+        if "_" + "h" in filename and "m" in filename and "s" in filename:
+            print(f"File {filename} likely already has duration in name, skipping")
+            return None
+
+        # Get the duration of the audio file
+        duration = get_audio_duration(file_path)
+        if not duration:
+            return None
+
+        # Format the duration
+        duration_str = format_duration(duration)
+
+        # Prepare the new filename
+        directory = os.path.dirname(file_path)
+        name, ext = os.path.splitext(filename)
+
+        new_name = f"{name}_{duration_str}{ext}"
+        new_path = os.path.join(directory, new_name)
+
+        # Check if the new file already exists
+        if os.path.exists(new_path) and new_path != file_path:
+            print(f"Warning: {new_name} already exists! Skipping rename.")
+            return None
+
+        # Rename the file
+        os.rename(file_path, new_path)
+        print(f"Added duration: {filename} -> {new_name}")
+
+        # Find and rename related files (PNG, JSON, etc.)
+        base_path = os.path.splitext(file_path)[0]
+        for related_ext in [".png", ".json", ".ref.json"]:
+            related_file = base_path + related_ext
+            if os.path.exists(related_file):
+                new_related_path = os.path.join(directory, f"{name}_{duration_str}{related_ext}")
+                os.rename(related_file, new_related_path)
+                print(f"Also updated: {os.path.basename(related_file)} -> {os.path.basename(new_related_path)}")
+
+        return new_path
+    except Exception as e:
+        print(f"Error adding duration to {file_path}: {e}")
+        return None
+
+
 # Process all audio files in audio directory and subdirectories
 audio_dir = "audio"
 audio_files = find_audio_files(audio_dir)
 results = {}
 energy_data = {}
 renamed_files = {}
+duration_added_files = {}
 
 print(f"Found {len(audio_files)} audio files to process.")
+
+# Ask if duration should be added to all files
+add_duration_to_all = input("Add duration to all audio files? (y/n): ").strip().lower() == 'y'
 
 for file_path in audio_files:
     try:
         print(f"\nProcessing: {file_path}")
+
+        # Add duration to filename if requested
+        if add_duration_to_all:
+            new_path = add_duration_to_filename(file_path)
+            if new_path:
+                duration_added_files[file_path] = new_path
+                file_path = new_path
+
         channel_type = analyze_channels(file_path)
         results[file_path] = channel_type
 
@@ -254,7 +371,7 @@ for file_path in audio_files:
         print(f"Error processing {file_path}: {str(e)}")
 
 # Update results and energy_data for renamed files
-for old_path, new_path in renamed_files.items():
+for old_path, new_path in {**renamed_files, **duration_added_files}.items():
     if old_path in results:
         results[new_path] = results.pop(old_path)
     if old_path in energy_data:
@@ -263,6 +380,7 @@ for old_path, new_path in renamed_files.items():
 # Summary
 print("\nSummary:")
 print(f"Total files processed: {len(audio_files)}")
+print(f"Files with duration added: {len(duration_added_files)}")
 print(f"Files renamed: {len(renamed_files)}")
 
 for category in sorted(set(results.values())):
