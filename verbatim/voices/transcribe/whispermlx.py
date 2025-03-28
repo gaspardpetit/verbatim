@@ -81,44 +81,42 @@ class WhisperMlxTranscriber(Transcriber):
             LOG.warning("Empty or invalid audio chunk received")
             return []
 
-        try:
-            if whisper_temperatures is None:
-                whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+        # Handle temperatures
+        if whisper_temperatures is None:
+            whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+        if isinstance(whisper_temperatures, list):
+            # Transform into tuple of floats
+            temperatures = tuple(whisper_temperatures)
+        else:
+            temperatures = whisper_temperatures
 
-            # When whisper_temperatures is of type list
-            if isinstance(whisper_temperatures, list):
-                # Transform into tuple of floats
-                temperatures = tuple(whisper_temperatures)
-            else:
-                temperatures = whisper_temperatures
+        # Call MLX Whisper
+        result = transcribe(
+            audio,
+            task="transcribe",
+            path_or_hf_repo=self.model_path,
+            language=lang,
+            initial_prompt=prompt if prompt else None,
+            word_timestamps=True,
+            # Not yet implemented, see https://github.com/ml-explore/mlx-examples/issues/846
+            # beam_size=whisper_beam_size,
+            # patience=whisper_patience, # requires beam_size
+            # best_of=whisper_best_of, # leads to many std::bad_cast errors
+            verbose=(True if LOG.getEffectiveLevel() <= logging.INFO else None),  # pyright: ignore[reportOptionalCall]
+            temperature=temperatures,
+            # Below are the default values for transparency, see
+            # https://github.com/ml-explore/mlx-examples/blob/main/whisper/mlx_whisper/transcribe.py#L62
+            compression_ratio_threshold=2.4,
+            logprob_threshold=-1.0,
+            no_speech_threshold=0.6,
+            condition_on_previous_text=True,
+            prepend_punctuations="\"'“¿([{-",
+            append_punctuations="\"'.。,，!！?？:：”)]}、",
+            hallucination_silence_threshold=None,
+        )
 
-            # Set up transcription options
-            show_progress = LOG.getEffectiveLevel() <= logging.INFO
-
-            result = transcribe(
-                audio,
-                task="transcribe",
-                path_or_hf_repo=self.model_path,
-                language=lang,
-                initial_prompt=prompt if prompt else None,
-                word_timestamps=True,
-                # Not yet implemented in MLX Whisper, see https://github.com/ml-explore/mlx-examples/issues/846
-                # beam_size=whisper_beam_size,
-                # patience=whisper_patience, # requires beam_size
-                best_of=whisper_best_of,
-                verbose=(True if show_progress else None),  # pyright: ignore[reportOptionalCall]
-                # None = don't even show progress bar
-                temperature=temperatures,
-                no_speech_threshold=0.6,
-            )
-
-            if not result or "segments" not in result:
-                LOG.warning("Transcription returned no valid results, no segments found")
-                return []
-
-        # pylint: disable=broad-exception-caught
-        except Exception as e:
-            LOG.error(f"Error during transcription: {e}")
+        if not result or "segments" not in result:
+            LOG.warning("Transcription returned no valid results, no segments found")
             return []
 
         # Convert results to Word objects
@@ -157,7 +155,8 @@ class WhisperMlxTranscriber(Transcriber):
                 )
 
                 # Log word timetamp comparison
-                LOG.info(f"Word '{word.word}': end_ts={word.end_ts}, audio_ts={audio_ts}")
+                LOG.debug(f"Word '{word.word}': end_ts={word.end_ts}, audio_ts={audio_ts}")
                 transcript_words.append(word)
 
+        # Return collected words
         return transcript_words
