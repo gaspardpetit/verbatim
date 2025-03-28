@@ -102,7 +102,7 @@ class UtilsTest(unittest.TestCase):
     def test_generate_prompts_2(self):
         utt = {
             "utterance_id": "dummy",
-            "hyp_text": ("hi morning hi how are you I am good and you hello everyone how" " are you"),
+            "hyp_text": ("hi morning hi how are you I am good and you hello everyone how are you"),
             "hyp_spk": "1 1 2 2 2 2 1 1 1 1 1 3 3 3 3 3",
         }
         po = utils.PromptOptions(
@@ -233,7 +233,7 @@ class UtilsTest(unittest.TestCase):
         }
         po = utils.PromptOptions(
             emit_input_length=12000,
-            prompt_prefix=("Move potentially misplaced words to the right speaker in the" " following transcript.\n"),
+            prompt_prefix=("Move potentially misplaced words to the right speaker in the following transcript.\n"),
             prompt_suffix=" --> ",
         )
         prompts = utils.generate_prompts(utt, po=po)
@@ -432,7 +432,7 @@ class UtilsTest(unittest.TestCase):
         }
         po = utils.PromptOptions(
             emit_input_length=12000,
-            prompt_prefix=("Move potentially misplaced words to the right speaker in the" " following transcript.\n"),
+            prompt_prefix=("Move potentially misplaced words to the right speaker in the following transcript.\n"),
             prompt_suffix=" --> ",
         )
         prompts = utils.generate_prompts(utt, po=po)
@@ -600,14 +600,10 @@ class UtilsTest(unittest.TestCase):
             " doing well. What about you? <speaker:1> i'm doing well, too. Thank"
             " you. <speaker:2> my name"
         )
-        hyp = (
-            "<speaker:1> Hello, how are you doing <speaker:2> today? I am doing"
-            " well. What about <speaker:1> you? I'm doing well, too. Thank you."
-        )
+        hyp = "<speaker:1> Hello, how are you doing <speaker:2> today? I am doing well. What about <speaker:1> you? I'm doing well, too. Thank you."
         transferred = utils.transfer_llm_completion(llm_completion, hyp)
         self.assertEqual(
-            "<speaker:1> Hello, how are you doing today? <speaker:2> I am doing"
-            " well. What about you? <speaker:1> I'm doing well, too. Thank you.",
+            "<speaker:1> Hello, how are you doing today? <speaker:2> I am doing well. What about you? <speaker:1> I'm doing well, too. Thank you.",
             transferred,
         )
 
