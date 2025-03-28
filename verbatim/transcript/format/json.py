@@ -39,7 +39,7 @@ class TranscriptFormatter:
                     "lang": word.lang,
                     "prob": round(word.probability, 4),
                     "start": round(word.start_ts / 16000, 5),
-                    "end": round(word.end_ts / 16000, 5)
+                    "end": round(word.end_ts / 16000, 5),
                 }
                 for word in utterance.words
             ]
@@ -48,6 +48,7 @@ class TranscriptFormatter:
 
         # Use json.dumps to write the formatted JSON
         out.write(indented_lines)
+
 
 class TranscriptParser:
     def __init__(self, sample_rate: int = 16000):
@@ -101,14 +102,7 @@ class TranscriptParser:
                 words.append(word_obj)
 
             # Create the Utterance object.
-            utterance = Utterance(
-                utterance_id=utterance_id,
-                speaker=speaker,
-                start_ts=start_ts,
-                end_ts=end_ts,
-                text=text,
-                words=words
-            )
+            utterance = Utterance(utterance_id=utterance_id, speaker=speaker, start_ts=start_ts, end_ts=end_ts, text=text, words=words)
             utterances.append(utterance)
 
         return utterances
@@ -140,17 +134,19 @@ class JsonTranscriptWriter(TranscriptWriter):
         self.formatter.format_utterance(utterance=utterance, out=self.out)
         self.out.flush()
 
-def save_utterances(path:str, utterance:List[Utterance], config:Optional[TranscriptWriterConfig]):
+
+def save_utterances(path: str, utterance: List[Utterance], config: Optional[TranscriptWriterConfig]):
     if config is None:
         config = TranscriptWriterConfig()
-    writer:JsonTranscriptWriter = JsonTranscriptWriter(config=config)
+    writer: JsonTranscriptWriter = JsonTranscriptWriter(config=config)
     writer.open(path_no_ext=os.path.splitext(path)[0])
     for u in utterance:
         writer.write(u)
     writer.close()
 
+
 def read_utterances(path: str) -> List[Utterance]:
     parser = TranscriptParser()
-    with open(path, 'r', encoding='utf-8') as file:
+    with open(path, "r", encoding="utf-8") as file:
         utterances = parser.parse(file)
     return utterances

@@ -94,5 +94,3 @@ verbatim input.wav -b 12 --cpu
 
 ## Exit Codes
 - `0`: Success
-
-

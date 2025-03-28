@@ -1,9 +1,11 @@
 # PS08_verbatim/verbatim/transcript/postprocessing/config.py
 from dataclasses import dataclass
 
+
 @dataclass
 class Config:
     """Configuration for the diarization processor"""
+
     MODEL_NAME: str = "phi4"
     API_KEY: str = "ollama"
     OLLAMA_BASE_URL: str = "http://localhost:11434/v1"

@@ -92,54 +92,66 @@ WORDS_ALICE = [
     Word(start_ts=2515648, end_ts=2523008, word=" the", probability=1.0, lang="fr"),
 ]
 
-WORDS_ULYSSES = [Word(start_ts=0, end_ts=0, word=f" {w}", probability=1.0, lang="en") for w in
-    "Stately, plump Buck Mulligan came from the stairhead,"
+WORDS_ULYSSES = [
+    Word(start_ts=0, end_ts=0, word=f" {w}", probability=1.0, lang="en")
+    for w in "Stately, plump Buck Mulligan came from the stairhead,"
     " bearing a bowl of lather on which a mirror and a razor lay crossed."
-    " A yellow dressinggown, ungirdled, was sustained gently behind him on the mild morning air.".split()]
+    " A yellow dressinggown, ungirdled, was sustained gently behind him on the mild morning air.".split()
+]
+
 
 class TestSentences(unittest.TestCase):
     # pylint: disable=invalid-name
     def test_SilenceSentenceTokenizer(self):
         # pylint: disable=import-outside-toplevel
         from verbatim.transcript.sentences import SilenceSentenceTokenizer
+
         sentence_tokenizer = SilenceSentenceTokenizer()
 
         sentences = sentence_tokenizer.split(words=WORDS_ALICE)
 
         self.assertEqual(len(sentences), 2)
-        self.assertEqual(sentences[0],
+        self.assertEqual(
+            sentences[0],
             " Alice was beginning to get very tired of sitting by her sister on the bank, and of having nothing to do:"
-            " once or twice she had peeped into the book her sister was reading,")
-        self.assertEqual(sentences[1],
+            " once or twice she had peeped into the book her sister was reading,",
+        )
+        self.assertEqual(
+            sentences[1],
             " but it had no pictures or conversations in it, “and what is the use of a book,” thought Alice “without"
             " pictures or conversations?” So she was considering in her own mind (as well as she could, for the hot"
-            " day made her feel very sleepy and stupid), whether the")
+            " day made her feel very sleepy and stupid), whether the",
+        )
 
     def test_FastSentenceTokenizer(self):
         # pylint: disable=import-outside-toplevel
         from verbatim.transcript.sentences import FastSentenceTokenizer
+
         sentence_tokenizer = FastSentenceTokenizer()
 
         sentences = sentence_tokenizer.split(words=WORDS_ULYSSES)
 
         self.assertEqual(len(sentences), 2)
-        self.assertEqual(sentences[0],
-            " Stately, plump Buck Mulligan came from the stairhead, bearing a bowl of lather on which a mirror and a razor lay crossed.")
-        self.assertEqual(sentences[1],
-            "A yellow dressinggown, ungirdled, was sustained gently behind him on the mild morning air.")
+        self.assertEqual(
+            sentences[0], " Stately, plump Buck Mulligan came from the stairhead, bearing a bowl of lather on which a mirror and a razor lay crossed."
+        )
+        self.assertEqual(sentences[1], "A yellow dressinggown, ungirdled, was sustained gently behind him on the mild morning air.")
 
     def test_SaTSentenceTokenizer(self):
         # pylint: disable=import-outside-toplevel
         from verbatim.transcript.sentences import SaTSentenceTokenizer
+
         sentence_tokenizer = SaTSentenceTokenizer(device="cpu")
 
         sentences = sentence_tokenizer.split(words=WORDS_ULYSSES)
 
         self.assertEqual(len(sentences), 2)
-        self.assertEqual(sentences[0],
-            " Stately, plump Buck Mulligan came from the stairhead, bearing a bowl of lather on which a mirror and a razor lay crossed. ")
-        self.assertEqual(sentences[1],
-            "A yellow dressinggown, ungirdled, was sustained gently behind him on the mild morning air.")
+        self.assertEqual(
+            sentences[0],
+            " Stately, plump Buck Mulligan came from the stairhead, bearing a bowl of lather on which a mirror and a razor lay crossed. ",
+        )
+        self.assertEqual(sentences[1], "A yellow dressinggown, ungirdled, was sustained gently behind him on the mild morning air.")
+
 
 if __name__ == "__main__":
     unittest.main()
