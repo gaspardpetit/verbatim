@@ -17,6 +17,7 @@ LOG = logging.getLogger(__name__)
 # Get the package name dynamically
 PACKAGE_NAME = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 
+
 def main():
     # pylint: disable=import-outside-toplevel
     class OptionalValueAction(argparse.Action):
@@ -182,8 +183,6 @@ def main():
         output_formats.append("md")
     if args.json:
         output_formats.append("json")
-    if args.json_dlm:
-        output_formats.append("json_dlm")
     if args.stdout:
         output_formats.append("stdout")
     if args.stdout_nocolor:
