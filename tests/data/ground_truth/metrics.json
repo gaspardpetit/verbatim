@@ -1,0 +1,62 @@
+{
+  "1spk_en_WizardOfOzToto": {
+    "WER": 0.0,
+    "WDER": 0.0,
+    "cpWER": 0.0
+  },
+  "1spk_jp_KyotoTrain": {
+    "WER": 0.0,
+    "WDER": 0.0,
+    "cpWER": 0.0
+  },
+  "2spk_en-fr_AirFrance": {
+    "WER": 0.0,
+    "WDER": 0.0,
+    "cpWER": 0.0
+  },
+  "1spk_en-de_KennedyBerliner": {
+    "WER": 0.0,
+    "WDER": 0.0,
+    "cpWER": 0.0
+  },
+  "2spk_de_BeltzPsychodynamik": {
+    "WER": 0.0,
+    "WDER": 0.0,
+    "cpWER": 0.0
+  },
+  "2spk_de_BeltzSchwierigeSituation_1": {
+    "WER": 0.0,
+    "WDER": 0.0,
+    "cpWER": 0.0
+  },
+  "2spk_de_BeltzSchwierigeSituation_2": {
+    "WER": 0.0,
+    "WDER": 0.0,
+    "cpWER": 0.0
+  },
+  "2spk_de_BeltzSchwierigeSituation_3": {
+    "WER": 0.0,
+    "WDER": 0.0,
+    "cpWER": 0.0
+  },
+  "2spk_en_CarlRogersSteve": {
+    "WER": 0.0,
+    "WDER": 0.0,
+    "cpWER": 0.0
+  },
+  "2spk_de_AusschnittTherapieDJIMic2": {
+    "WER": 0.0,
+    "WDER": 0.0,
+    "cpWER": 0.0
+  },
+  "2spk_de_AusschnittTherapieYVC1000": {
+    "WER": 0.0,
+    "WDER": 0.0,
+    "cpWER": 0.0
+  },
+  "3spk_de_AusschnittTherapieYVC1000": {
+    "WER": 0.0,
+    "WDER": 0.0,
+    "cpWER": 0.0
+  }
+}

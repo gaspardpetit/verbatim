@@ -1,0 +1,20 @@
+{
+  "utterances": [
+    {
+      "id": "utt2",
+      "start": 0.07,
+      "end": 5.29,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " All free men, wherever they may live, are citizens of Berlin."
+    },
+    {
+      "id": "utt6",
+      "start": 6.9,
+      "end": 15.08,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " And therefore, as a free man, I take pride in the words, Ich bin ein Berliner."
+    }
+  ]
+}

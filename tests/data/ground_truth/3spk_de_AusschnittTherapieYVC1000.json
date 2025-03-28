@@ -1,0 +1,76 @@
+{
+  "utterances": [
+    {
+      "id": "utt2",
+      "start": 0.966,
+      "end": 3.486,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Hallo, mein Name ist Linus Sehn."
+    },
+    {
+      "id": "utt5",
+      "start": 3.826,
+      "end": 10.646,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich sitze hier am Otto-Selz-Institut mit "
+    },
+    {
+      "id": "utt6",
+      "start": 8.381,
+      "end": 11.018,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Maximilian Vöcklinghaus."
+    },
+    {
+      "id": "utt7",
+      "start": 12.12594,
+      "end": 15.52594,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Das wird auf jeden Fall schwer zu erkennen, dieser komplizierte Nachname."
+    },
+    {
+      "id": "utt9",
+      "start": 16.97594,
+      "end": 18.71594,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Wohnsitz Leipzig."
+    },
+    {
+      "id": "utt12",
+      "start": 18.99594,
+      "end": 22.81594,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Wohnsitz Leipzig, danke schön für diese Information."
+    },
+    {
+      "id": "utt16",
+      "start": 23.75594,
+      "end": 26.87594,
+      "speaker": "SPEAKER_02",
+      "language": "de",
+      "text": " Ich kann ja von hier aus auch was sagen."
+    },
+    {
+      "id": "utt19",
+      "start": 27.35594,
+      "end": 28.89594,
+      "speaker": "SPEAKER_02",
+      "language": "de",
+      "text": " Mein Name ist Julian Scharpf."
+    },
+    {
+      "id": "utt21",
+      "start": 29.57594,
+      "end": 30.51594,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja, perfekt."
+    }
+  ]
+}

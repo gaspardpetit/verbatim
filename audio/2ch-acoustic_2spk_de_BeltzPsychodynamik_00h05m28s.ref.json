@@ -1,0 +1,436 @@
+{
+  "utterances": [
+    {
+      "id": "utt2",
+      "start": 0.838,
+      "end": 5.558,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja, Frau Schubert, ich habe gehört, es ist irgendwas passiert, weshalb Sie mich kurzfristig sprechen wollten."
+    },
+    {
+      "id": "utt4",
+      "start": 13.44,
+      "end": 14.4,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Was bedrückt Sie denn?"
+    },
+    {
+      "id": "utt5",
+      "start": 25.591,
+      "end": 26.302,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Weiss nicht."
+    },
+    {
+      "id": "utt6",
+      "start": 30.56,
+      "end": 31.46,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Was ist denn passiert?"
+    },
+    {
+      "id": "utt8",
+      "start": 36.9,
+      "end": 38.14,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Geht scheiße."
+    },
+    {
+      "id": "utt10",
+      "start": 41.84,
+      "end": 42.76,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich hasse mich."
+    },
+    {
+      "id": "utt11",
+      "start": 42.98,
+      "end": 44.16,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich fühle mich zu fett."
+    },
+    {
+      "id": "utt18",
+      "start": 47.95994,
+      "end": 54.17994,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Also ich merke jetzt, dass es Ihnen ganz schön schwerfällt darüber zu sprechen."
+    },
+    {
+      "id": "utt24",
+      "start": 54.27994,
+      "end": 56.13994,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Vielleicht können Sie das trotzdem mal versuchen."
+    },
+    {
+      "id": "utt30",
+      "start": 56.23994,
+      "end": 57.37994,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich mache mir jetzt Sorgen um sie."
+    },
+    {
+      "id": "utt35",
+      "start": 60.11994,
+      "end": 61.85994,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Das ist alles so peinlich."
+    },
+    {
+      "id": "utt40",
+      "start": 66.01994,
+      "end": 68.67994,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Die gucken halt immer alle so blöd beim Mittagessen."
+    },
+    {
+      "id": "utt44",
+      "start": 70.11994,
+      "end": 72.39994,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Das ist ja immer so eine herausfordernde Situation."
+    },
+    {
+      "id": "utt49",
+      "start": 72.87994,
+      "end": 79.51994,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ja, und die eine hat dann auch noch, die Julia, ich weiß nicht, ob Sie die auch kennen, die hat dann noch richtig scheiße über mich erzählt."
+    },
+    {
+      "id": "utt54",
+      "start": 81.21994,
+      "end": 82.23994,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Was hat sie denn erzählt?"
+    },
+    {
+      "id": "utt58",
+      "start": 85.59994,
+      "end": 87.11994,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Guck mal, wie viel die frisst."
+    },
+    {
+      "id": "utt62",
+      "start": 88.85994,
+      "end": 93.53994,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich habe das genau gehört, als sie dann im Zimmer mit den anderen noch drüber gesprochen hat."
+    },
+    {
+      "id": "utt65",
+      "start": 95.59994,
+      "end": 99.33994,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Wenn die irgendwas will, dann machen alle immer so einen riesen Aufriss."
+    },
+    {
+      "id": "utt69",
+      "start": 101.19994,
+      "end": 102.97994,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Für mich interessiert sich da keiner."
+    },
+    {
+      "id": "utt73",
+      "start": 104.33994,
+      "end": 106.09994,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Und haben Sie das schon mit der Julia besprochen?"
+    },
+    {
+      "id": "utt76",
+      "start": 110.19994,
+      "end": 111.37994,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich traue mich nicht."
+    },
+    {
+      "id": "utt81",
+      "start": 113.05994,
+      "end": 114.53994,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich bin auch zu blöd."
+    },
+    {
+      "id": "utt85",
+      "start": 115.33994,
+      "end": 117.97994,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Wenn ich da sage, dann bringt das überhaupt nichts."
+    },
+    {
+      "id": "utt89",
+      "start": 119.91994,
+      "end": 122.49994,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich habe dann auch das Mittagessen ausgekotzt."
+    },
+    {
+      "id": "utt94",
+      "start": 123.99994,
+      "end": 127.65994,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Kann ich nicht irgendwo anders sein, wenn ich hier schon essen muss?"
+    },
+    {
+      "id": "utt98",
+      "start": 129.29994,
+      "end": 131.69994,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich würde das gerne noch ein bisschen verstehen."
+    },
+    {
+      "id": "utt101",
+      "start": 131.97994,
+      "end": 138.77994,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Kann das sein, dass Sie sich wünschen, dass ich an der Situation irgendwas verändere?"
+    },
+    {
+      "id": "utt104",
+      "start": 143.55994,
+      "end": 145.19994,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Können Sie nicht mal mit Julia sprechen?"
+    },
+    {
+      "id": "utt107",
+      "start": 148.37994,
+      "end": 156.03994,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja, also ich merke das, wie sehr sie sich wünschen, dass ich den Streit für sie löse."
+    },
+    {
+      "id": "utt114",
+      "start": 156.05994,
+      "end": 161.87994,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich finde das jetzt richtig gut, dass Sie das jetzt gerade schaffen, sich mit dem Bedürfnis hier mir anzuvertrauen."
+    },
+    {
+      "id": "utt117",
+      "start": 169.33994,
+      "end": 170.71994,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Das wäre ihnen am liebsten,"
+    },
+    {
+      "id": "utt120",
+      "start": 170.73994,
+      "end": 174.55994,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Das ich das für sie löse."
+    },
+    {
+      "id": "utt124",
+      "start": 174.61994,
+      "end": 177.21994,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Sie trauen sich das selber irgendwie gar nicht zu."
+    },
+    {
+      "id": "utt127",
+      "start": 180.77994,
+      "end": 182.05994,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Das bringt auch nichts."
+    },
+    {
+      "id": "utt134",
+      "start": 193.01994,
+      "end": 206.71994,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja, vielleicht ist das auch, weil da so eine große Sehnsucht in Ihnen drin ist, dass mal jemand für Sie eintritt, sich mal schützend vor Sie stellt."
+    },
+    {
+      "id": "utt136",
+      "start": 210.09987,
+      "end": 210.45994,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Vielleicht."
+    },
+    {
+      "id": "utt139",
+      "start": 212.61988,
+      "end": 216.85987,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja, Das ist ja auch etwas, was sie gar nie so richtig hatten."
+    },
+    {
+      "id": "utt145",
+      "start": 216.95988,
+      "end": 231.03987,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ihre Not wurde ja so oft übersehen und wenn, dann hat ja ihre Schwester die Aufmerksamkeit ihrer Mutter bekommen und für sie ist da niemand so richtig eingetreten."
+    },
+    {
+      "id": "utt149",
+      "start": 233.51988,
+      "end": 238.79987,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich habe halt auch immer funktioniert und die guten Noten nach Hause gebracht."
+    },
+    {
+      "id": "utt152",
+      "start": 239.16188,
+      "end": 242.16188,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich wollte dann meiner Mutter nicht auch noch zur Last fallen."
+    },
+    {
+      "id": "utt156",
+      "start": 245.40175,
+      "end": 251.74181,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja und ihre Mutter konnte sie ja auch nicht gegen ihren Vater schützen, der sie immer so entwertet hat."
+    },
+    {
+      "id": "utt158",
+      "start": 255.30181,
+      "end": 256.82181,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Sie können nicht mitkommen?"
+    },
+    {
+      "id": "utt163",
+      "start": 260.88181,
+      "end": 267.90181,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Frau Schubert, ich verstehe, dass Sie sich das wünschen, aber ich würde einen Fehler machen, wenn ich das für Sie mache."
+    },
+    {
+      "id": "utt168",
+      "start": 268.74175,
+      "end": 278.96175,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Und meine Aufgabe ist es doch hier ihnen so zu helfen, dass sie lernen, solche Konflikte dann selbst zu lösen, wenn sie nicht mehr hier sind."
+    },
+    {
+      "id": "utt172",
+      "start": 279.64175,
+      "end": 287.36175,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich finde das ganz wichtig, dass wir beide zusammen verstehen, warum sie sich eigentlich nicht wehren, wenn sie so attackiert werden."
+    },
+    {
+      "id": "utt178",
+      "start": 288.32175,
+      "end": 290.22175,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich trau mich halt einfach nicht."
+    },
+    {
+      "id": "utt183",
+      "start": 290.40175,
+      "end": 294.38175,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich höre das dann und dann mache ich dicht."
+    },
+    {
+      "id": "utt186",
+      "start": 295.57575,
+      "end": 297.71575,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Was soll ich denn machen?"
+    },
+    {
+      "id": "utt189",
+      "start": 298.11575,
+      "end": 300.55575,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Sie geben sich dann gleich so völlig auf."
+    },
+    {
+      "id": "utt194",
+      "start": 301.81575,
+      "end": 302.33575,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ja."
+    },
+    {
+      "id": "utt195",
+      "start": 302.99575,
+      "end": 304.53575,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich bin halt völlig fertig."
+    },
+    {
+      "id": "utt198",
+      "start": 307.91569,
+      "end": 315.59575,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Aber vielleicht ist das ja, weil der Wunsch in ihnen so hartnäckig ist, dass da mal jemand für sie eintritt."
+    },
+    {
+      "id": "utt200",
+      "start": 318.73569,
+      "end": 319.81575,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Das wäre mal schön."
+    },
+    {
+      "id": "utt202",
+      "start": 321.99575,
+      "end": 324.03575,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja, das kann ich richtig gut verstehen."
+    }
+  ]
+}
