@@ -1,0 +1,380 @@
+{
+  "utterances": [
+    {
+      "id": "utt2",
+      "start": 1.862,
+      "end": 2.702,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Hallo Herr Kroll."
+    },
+    {
+      "id": "utt3",
+      "start": 3.362,
+      "end": 3.802,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ups."
+    },
+    {
+      "id": "utt6",
+      "start": 4.862,
+      "end": 5.362,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Hallo."
+    },
+    {
+      "id": "utt11",
+      "start": 6.54394,
+      "end": 12.144,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": "Ich, Frau Barkemeyer, ich bin eigentlich heute nur gekommen, um zu sagen, dass ich die Therapie nicht weiterführen möchte."
+    },
+    {
+      "id": "utt16",
+      "start": 12.224,
+      "end": 13.804,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich möchte das bitte beenden."
+    },
+    {
+      "id": "utt18",
+      "start": 13.904,
+      "end": 15.764,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Das, das bringt für mich alles nichts."
+    },
+    {
+      "id": "utt19",
+      "start": 14.844,
+      "end": 15.434,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Was, und?"
+    },
+    {
+      "id": "utt24",
+      "start": 15.864,
+      "end": 17.104,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Lassen Sie mich bitte ausreden."
+    },
+    {
+      "id": "utt28",
+      "start": 17.144,
+      "end": 18.344,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Das bringt für mich alles nichts."
+    },
+    {
+      "id": "utt38",
+      "start": 18.444,
+      "end": 23.004,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Und ich werde das hiermit beenden."
+    },
+    {
+      "id": "utt46",
+      "start": 23.104,
+      "end": 24.024,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich habe so viel gearbeitet."
+    },
+    {
+      "id": "utt47",
+      "start": 24.024,
+      "end": 25.004,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Habe ich Sie richtig verstanden?"
+    },
+    {
+      "id": "utt53",
+      "start": 25.104,
+      "end": 27.444,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Sie wollen unsere Therapie jetzt beenden?"
+    },
+    {
+      "id": "utt58",
+      "start": 27.444,
+      "end": 28.884,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ja, ich muss das machen."
+    },
+    {
+      "id": "utt65",
+      "start": 28.984,
+      "end": 29.724,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Das hat überhaupt keinen Sinn."
+    },
+    {
+      "id": "utt66",
+      "start": 29.784,
+      "end": 37.084,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich habe so viel gearbeitet und so viel getan in letzter Zeit, aber es kommt eine klitzekleine Sache und sofort mache ich die gleiche Scheiße wieder."
+    },
+    {
+      "id": "utt72",
+      "start": 37.984,
+      "end": 39.504,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Mann, es tut mir leid."
+    },
+    {
+      "id": "utt76",
+      "start": 39.524,
+      "end": 42.804,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich, ich, ich, ich, ich, es, es klappt einfach nicht."
+    },
+    {
+      "id": "utt81",
+      "start": 42.904,
+      "end": 44.024,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich krieg's nicht hin!"
+    },
+    {
+      "id": "utt89",
+      "start": 45.346,
+      "end": 47.166,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Herr Kroll, ganz kurz."
+    },
+    {
+      "id": "utt94",
+      "start": 47.326,
+      "end": 47.646,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ja?"
+    },
+    {
+      "id": "utt95",
+      "start": 49.486,
+      "end": 52.966,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Können Sie sich überlegen, wie es mir gerade geht?"
+    },
+    {
+      "id": "utt99",
+      "start": 54.256,
+      "end": 54.616,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Was?"
+    },
+    {
+      "id": "utt100",
+      "start": 56.456,
+      "end": 57.456,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Was? Wieso wie es Ihnen gerade geht?"
+    },
+    {
+      "id": "utt104",
+      "start": 58.202,
+      "end": 60.582,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Vielleicht schauen Sie mich mal an, wie sehe ich gerade aus?"
+    },
+    {
+      "id": "utt108",
+      "start": 62.98794,
+      "end": 64.688,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich weiß nicht, wie Sie jetzt gerade aussehen."
+    },
+    {
+      "id": "utt114",
+      "start": 64.728,
+      "end": 68.148,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Das ist mir auch völlig egal, wie es Ihnen gerade, wie es ihnen gerade geht."
+    },
+    {
+      "id": "utt122",
+      "start": 68.248,
+      "end": 72.048,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich weiß noch, mir geht es scheiße und ich, ich, ich weiß nicht, was ich machen soll."
+    },
+    {
+      "id": "utt130",
+      "start": 72.128,
+      "end": 75.908,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Es hat einfach alles nicht geklappt, was ich mir vorgenommen habe."
+    },
+    {
+      "id": "utt137",
+      "start": 76.008,
+      "end": 78.348,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Okay, wir können gleich darüber sprechen."
+    },
+    {
+      "id": "utt144",
+      "start": 78.448,
+      "end": 81.008,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich möchte ganz kurz noch einmal kurz dabei bleiben."
+    },
+    {
+      "id": "utt153",
+      "start": 81.988,
+      "end": 83.648,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Was denken Sie, wie es mir gerade geht?"
+    },
+    {
+      "id": "utt163",
+      "start": 83.748,
+      "end": 84.568,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Wie sehe ich aus?"
+    },
+    {
+      "id": "utt164",
+      "start": 84.948,
+      "end": 90.988,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Sie sehen nett aus, wie immer."
+    },
+    {
+      "id": "utt173",
+      "start": 91.068,
+      "end": 94.248,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Sie haben ein sehr schönes Kleid angezogen und sehen nett aus."
+    },
+    {
+      "id": "utt183",
+      "start": 95.528,
+      "end": 96.348,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Und im Gesicht?"
+    },
+    {
+      "id": "utt184",
+      "start": 96.508,
+      "end": 97.708,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Was denken Sie, wie es mir gerade geht?"
+    },
+    {
+      "id": "utt194",
+      "start": 98.006,
+      "end": 99.226,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Welche Gefühle habe ich gerade?"
+    },
+    {
+      "id": "utt198",
+      "start": 100.964,
+      "end": 103.424,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich weiß nicht, Sie sehen erschrocken aus so ein bisschen."
+    },
+    {
+      "id": "utt203",
+      "start": 103.524,
+      "end": 105.504,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja, genau."
+    },
+    {
+      "id": "utt209",
+      "start": 105.802,
+      "end": 107.282,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Kann ich Ihnen sagen, wie es mir geht?"
+    },
+    {
+      "id": "utt216",
+      "start": 107.644,
+      "end": 109.204,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ja bitte, sagen Sie mir, wie es Ihnen geht."
+    },
+    {
+      "id": "utt222",
+      "start": 109.584,
+      "end": 110.624,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Sie haben recht, ja."
+    },
+    {
+      "id": "utt227",
+      "start": 111.304,
+      "end": 122.744,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Also ich fühle mich sehr erschrocken und ich hatte auch eben echt kurz ein bisschen Angst, ja? Als sie gegen die Flipchart so geschlagen haben."
+    },
+    {
+      "id": "utt230",
+      "start": 126.74388,
+      "end": 132.94394,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Und ich merke auch, dass ich auch, wie soll ich sagen, also ein Gedanke ist,"
+    },
+    {
+      "id": "utt233",
+      "start": 133.74394,
+      "end": 141.30394,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Oh nein, bitte hören Sie nicht auf, weil ich möchte Ihnen unbedingt helfen, ja?"
+    },
+    {
+      "id": "utt235",
+      "start": 141.40394,
+      "end": 142.32394,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich will Sie unterstützen."
+    }
+  ]
+}

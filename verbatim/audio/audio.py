@@ -79,14 +79,17 @@ def wav_to_int16(data):
 def samples_to_seconds(index: int) -> float:
     return index / 16000
 
+
 def seconds_to_samples(seconds: float) -> int:
     return int(seconds * 16000)
 
-def sample_to_timestr(sample:int, sample_rate:int):
-    seconds:float = sample / sample_rate
+
+def sample_to_timestr(sample: int, sample_rate: int):
+    seconds: float = sample / sample_rate
     return seconds_to_timestr(seconds=seconds)
 
-def seconds_to_timestr(seconds:float) -> str:
+
+def seconds_to_timestr(seconds: float) -> str:
     hour_part = math.floor(seconds // 3600)
     minute_part = math.floor((seconds % 3600) // 60)
     second_part = math.floor(seconds % 60)
@@ -109,15 +112,9 @@ def timestr_to_samples(timestr: str, sample_rate: int = 16000) -> int:
     """
     # Define regex patterns for specific formats.
     # Here, we capture the fractional part as a sequence of digits.
-    hh_mm_ss_ms_pattern = re.compile(
-        r"^(?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<fraction>\d+))?$"
-    )
-    mm_ss_ms_pattern = re.compile(
-        r"^(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<fraction>\d+))?$"
-    )
-    ss_ms_pattern = re.compile(
-        r"^(?P<seconds>\d+)(?:\.(?P<fraction>\d+))?$"
-    )
+    hh_mm_ss_ms_pattern = re.compile(r"^(?P<hours>\d+):(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<fraction>\d+))?$")
+    mm_ss_ms_pattern = re.compile(r"^(?P<minutes>\d+):(?P<seconds>\d+)(?:\.(?P<fraction>\d+))?$")
+    ss_ms_pattern = re.compile(r"^(?P<seconds>\d+)(?:\.(?P<fraction>\d+))?$")
 
     timestr = timestr.strip()
 

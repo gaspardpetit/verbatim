@@ -45,7 +45,6 @@ If no input file is provided, Verbatim expects input from stdin or can use the m
 - `--docx`: Enable Microsoft Word DOCX output
 - `--txt`: Enable plain text output
 - `--json`: Enable JSON file output
-- `--json_dlm`: Enable JSON output with diarization
 - `--md`: Enable Markdown output
 - `--stdout`: Enable stdout output (default: enabled)
 - `--stdout-nocolor`: Enable stdout output without colors
@@ -94,5 +93,3 @@ verbatim input.wav -b 12 --cpu
 
 ## Exit Codes
 - `0`: Success
-
-

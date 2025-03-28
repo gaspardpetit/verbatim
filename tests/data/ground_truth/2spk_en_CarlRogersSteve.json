@@ -1,0 +1,340 @@
+{
+  "utterances": [
+    {
+      "id": "utt2",
+      "start": 14.008,
+      "end": 14.708,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": "You're ready? You feel ready?"
+    },
+    {
+      "id": "utt3",
+      "start": 14.828,
+      "end": 15.188,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " Yes."
+    },
+    {
+      "id": "utt7",
+      "start": 15.708,
+      "end": 23.508,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " I don't know what caused you to volunteer, why you're here, but I'd be glad to hear whatever's on your mind."
+    },
+    {
+      "id": "utt11",
+      "start": 26.494,
+      "end": 32.254,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " I was invited to volunteer and I happily accepted."
+    },
+    {
+      "id": "utt14",
+      "start": 32.354,
+      "end": 37.194,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " I want to do this and it was an opportunity presented to me so I'm here."
+    },
+    {
+      "id": "utt16",
+      "start": 37.294,
+      "end": 37.814,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Okay."
+    },
+    {
+      "id": "utt17",
+      "start": 40.474,
+      "end": 42.454,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " And I'm feeling quite frightened."
+    },
+    {
+      "id": "utt19",
+      "start": 44.254,
+      "end": 49.034,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " And I have not picked out for myself any agenda right now."
+    },
+    {
+      "id": "utt24",
+      "start": 49.134,
+      "end": 57.854,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " I can talk a little bit about what's going on in my life, which is my ongoing agenda, I suppose."
+    },
+    {
+      "id": "utt26",
+      "start": 60.394,
+      "end": 63.374,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " The immediate agenda is that it's kind of scary."
+    },
+    {
+      "id": "utt28",
+      "start": 63.474,
+      "end": 68.234,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " Yes, and I feel really very exposed and self-conscious."
+    },
+    {
+      "id": "utt32",
+      "start": 70.91394,
+      "end": 78.954,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " But I also feel that some part of me is delighted to be sitting here in front of you and talking to you."
+    },
+    {
+      "id": "utt34",
+      "start": 82.554,
+      "end": 87.474,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " I'm a little distracted by some noises behind me, a rumbling, I don't know what that is."
+    },
+    {
+      "id": "utt36",
+      "start": 87.674,
+      "end": 89.114,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " I think that's outside."
+    },
+    {
+      "id": "utt42",
+      "start": 89.214,
+      "end": 89.834,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " I don't..."
+    },
+    {
+      "id": "utt43",
+      "start": 90.114,
+      "end": 92.914,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Anyway, let's try and disregard that."
+    },
+    {
+      "id": "utt47",
+      "start": 93.214,
+      "end": 93.734,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " Okay."
+    },
+    {
+      "id": "utt48",
+      "start": 98.434,
+      "end": 102.714,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " I feel not quite as anxious now as I did a moment ago."
+    },
+    {
+      "id": "utt51",
+      "start": 103.634,
+      "end": 111.214,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " So the most obvious thing for me to talk about is the fact that I'm going through a divorce."
+    },
+    {
+      "id": "utt57",
+      "start": 113.894,
+      "end": 119.274,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " Papers were filed in spring and the divorce should be final in fall."
+    },
+    {
+      "id": "utt61",
+      "start": 121.474,
+      "end": 126.314,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " There's lots of material there, which is very close to the surface for me."
+    },
+    {
+      "id": "utt65",
+      "start": 138.754,
+      "end": 143.374,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " I am in a small group which I value very highly."
+    },
+    {
+      "id": "utt68",
+      "start": 143.394,
+      "end": 144.494,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " It's been very good for me."
+    },
+    {
+      "id": "utt71",
+      "start": 144.594,
+      "end": 150.014,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " And two days ago I did a lot of intense work in that small group."
+    },
+    {
+      "id": "utt73",
+      "start": 150.114,
+      "end": 157.494,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " I ventilated a lot of pain and talked about what's going on with me and got some excellent support from my group."
+    },
+    {
+      "id": "utt76",
+      "start": 157.696,
+      "end": 164.936,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " Right now I'm feeling a little strange about repeating what I just said at that time."
+    },
+    {
+      "id": "utt80",
+      "start": 166.596,
+      "end": 171.036,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " I don't quite know whether that's the place to start or not, but at least that was helpful to you again."
+    },
+    {
+      "id": "utt86",
+      "start": 171.316,
+      "end": 171.876,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " Yes."
+    },
+    {
+      "id": "utt87",
+      "start": 171.896,
+      "end": 173.136,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " Really got some things out."
+    },
+    {
+      "id": "utt91",
+      "start": 173.236,
+      "end": 173.756,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " Yes."
+    },
+    {
+      "id": "utt92",
+      "start": 176.076,
+      "end": 183.796,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " I'm feeling sad that the workshop is going to end in about 24 hours."
+    },
+    {
+      "id": "utt100",
+      "start": 184.976,
+      "end": 198.276,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " I feel with respect to many people here both a strong connection and some pain that I haven't spent more time with various individuals, ambivalence."
+    },
+    {
+      "id": "utt108",
+      "start": 205.614,
+      "end": 223.434,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " And now I'm feeling awkward because I feel as though it's my task to produce something to talk about, and I'm not quite sure what to do with that, and I'm afraid of making a decision which will feel artificial."
+    },
+    {
+      "id": "utt112",
+      "start": 224.692,
+      "end": 229.472,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " And so I'm feeling,"
+    },
+    {
+      "id": "utt115",
+      "start": 230.092,
+      "end": 233.552,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " Part of me wants to be passive and wait for something to be suggested to me."
+    },
+    {
+      "id": "utt119",
+      "start": 238.772,
+      "end": 244.232,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " It is kind of a tough spot because you don't want to produce a problem."
+    },
+    {
+      "id": "utt123",
+      "start": 244.312,
+      "end": 246.972,
+      "speaker": "SPEAKER_01",
+      "language": "en",
+      "text": " If there is anything you want to talk about, you want it to be real."
+    },
+    {
+      "id": "utt128",
+      "start": 247.11,
+      "end": 248.35,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " Mm-hmm, that's right."
+    },
+    {
+      "id": "utt134",
+      "start": 250.37,
+      "end": 260.25,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " I was immediately, as you said that, I thought of some things that I was feeling as I heard you talking in the first hour, hour and a half."
+    },
+    {
+      "id": "utt137",
+      "start": 260.99,
+      "end": 268.17,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " And I was moved by several of the things that you said and the reports you gave."
+    },
+    {
+      "id": "utt142",
+      "start": 268.39,
+      "end": 281.03,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " And it comes from a place in me which just very passionately and deeply wants connection,"
+    },
+    {
+      "id": "utt145",
+      "start": 281.13,
+      "end": 283.47,
+      "speaker": "SPEAKER_00",
+      "language": "en",
+      "text": " harmony, peace."
+    }
+  ]
+}

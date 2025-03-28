@@ -14,12 +14,13 @@ LOG = logging.getLogger(__name__)
 
 class SentenceTokenizer(ABC):
     @abstractmethod
-    def split(self, words:List[Word]) -> List[str]:
+    def split(self, words: List[Word]) -> List[str]:
         pass
 
+
 class FastSentenceTokenizer(SentenceTokenizer):
-    def split(self, words:List[Word]) -> List[str]:
-        text = ''.join(w.word for w in words)
+    def split(self, words: List[Word]) -> List[str]:
+        text = "".join(w.word for w in words)
         # List of punctuation marks to split on
         split_punctuations = r".。;!！?？"
         punctuations = "\"'.。,;，!！?？:：”)]}、\"'“¿([{-"
@@ -57,16 +58,17 @@ class SaTSentenceTokenizer(SentenceTokenizer):
         self.sat_sm = SaT(model)
         self.sat_sm.half().to(device)
 
-    def split(self, words:List[Word]) -> List[str]:
-        text = ''.join(w.word for w in words)
+    def split(self, words: List[Word]) -> List[str]:
+        text = "".join(w.word for w in words)
         return self.sat_sm.split(text)  # pyright: ignore[reportReturnType]
+
 
 class SilenceSentenceTokenizer(SentenceTokenizer):
     def __init__(self):
         # parameters can be tuned as needed
-        self.target_duration = 10.0    # target sentence length in seconds
-        self.min_duration = 2.0        # below this, the penalty is huge
-        self.max_duration = 25.0       # above this, also huge penalty
+        self.target_duration = 10.0  # target sentence length in seconds
+        self.min_duration = 2.0  # below this, the penalty is huge
+        self.max_duration = 25.0  # above this, also huge penalty
         # Weight for how much a silence gap improves the candidate break.
         self.gap_weight = 1.0
         self.distance_weight = 1.0
@@ -77,20 +79,20 @@ class SilenceSentenceTokenizer(SentenceTokenizer):
         if not words:
             return []
 
-        def distance_energy(val:float, min_val:float, max_val:float, ideal_val:float) -> float:
-            value:float = max(0, min(1, (val - min_val) / (ideal_val - min_val) if val < ideal_val else (max_val-val) / (max_val-ideal_val)))
+        def distance_energy(val: float, min_val: float, max_val: float, ideal_val: float) -> float:
+            value: float = max(0, min(1, (val - min_val) / (ideal_val - min_val) if val < ideal_val else (max_val - val) / (max_val - ideal_val)))
             return 1 - value
 
-        def silence_energy(duration:float, max_duration:float) -> float:
-            value:float = max(0, min(1, duration / max_duration))
+        def silence_energy(duration: float, max_duration: float) -> float:
+            value: float = max(0, min(1, duration / max_duration))
             return 1 - value
 
-        def word_energy(left_word:str, right_word:str) -> float:
+        def word_energy(left_word: str, right_word: str) -> float:
             primary_suffix_punctuations = tuple([".", "。", ";", "!", "！", "?", "？"])
-            secondary_prefix_punctuations = tuple(["\"", "“", "¿", "¡", "(", "[", "{", "«"])
+            secondary_prefix_punctuations = tuple(['"', "“", "¿", "¡", "(", "[", "{", "«"])
             secondary_suffix_punctuations = tuple([",", "、"])
 
-            value:float = 0
+            value: float = 0
             if left_word.rstrip().endswith(primary_suffix_punctuations):
                 value += 1
             if left_word.rstrip().endswith(secondary_suffix_punctuations):
@@ -99,15 +101,13 @@ class SilenceSentenceTokenizer(SentenceTokenizer):
                 value += 0.25
             return 1 - max(0, min(1, value))
 
-        def _energy(first_word:Word, left_word:Word, right_word:Word):
+        def _energy(first_word: Word, left_word: Word, right_word: Word):
             seconds_from_start = samples_to_seconds(right_word.start_ts - first_word.start_ts)
             silence_duration = samples_to_seconds(right_word.start_ts - left_word.end_ts)
 
             distance_cost = distance_energy(
-                val=seconds_from_start,
-                min_val=self.min_duration,
-                max_val=self.max_duration,
-                ideal_val=self.target_duration)
+                val=seconds_from_start, min_val=self.min_duration, max_val=self.max_duration, ideal_val=self.target_duration
+            )
             silence_cost = silence_energy(duration=silence_duration, max_duration=self.max_duration)
             word_cost = word_energy(left_word=left_word.word, right_word=right_word.word)
             energy = self.distance_weight * distance_cost + self.silence_weight * silence_cost + self.word_weight * word_cost
@@ -121,7 +121,7 @@ class SilenceSentenceTokenizer(SentenceTokenizer):
         best_energy = math.inf
 
         for i in range(current_start, len(words) - 1):
-            energy = _energy(first_word=words[0], left_word=words[i], right_word=words[i+1])
+            energy = _energy(first_word=words[0], left_word=words[i], right_word=words[i + 1])
             weights.append(energy)
             if energy < best_energy:
                 best_energy = energy
@@ -134,11 +134,11 @@ class SilenceSentenceTokenizer(SentenceTokenizer):
             best_break_index = len(words) - 1
 
         # Build the sentence from current_start to best_break_index (inclusive)
-        sentence = "".join(word.word for word in words[current_start: best_break_index+1])
+        sentence = "".join(word.word for word in words[current_start : best_break_index + 1])
         if sentence:
             sentences.append(sentence)
 
-        sentence = "".join(word.word for word in words[best_break_index+1:])
+        sentence = "".join(word.word for word in words[best_break_index + 1 :])
         if sentence:
             sentences.append(sentence)
 
@@ -147,18 +147,21 @@ class SilenceSentenceTokenizer(SentenceTokenizer):
 
         return sentences
 
+
 class BoundedSentenceTokenizer(SentenceTokenizer):
-    def __init__(self, other_tokenizer:SentenceTokenizer, bounding_tokenizer:SentenceTokenizer=SilenceSentenceTokenizer(), max_duration:float=25):
+    def __init__(
+        self, other_tokenizer: SentenceTokenizer, bounding_tokenizer: SentenceTokenizer = SilenceSentenceTokenizer(), max_duration: float = 25
+    ):
         self.other_tokenizer = other_tokenizer
         self.bounding_tokenizer = bounding_tokenizer
         self.max_duration = max_duration
 
-    def split(self, words:List[Word]) -> List[str]:
+    def split(self, words: List[Word]) -> List[str]:
         tok = self.other_tokenizer.split(words=words)
         if len(tok) != 1:
             return tok
 
-        duration:float = samples_to_seconds(words[-1].end_ts - words[0].start_ts)
+        duration: float = samples_to_seconds(words[-1].end_ts - words[0].start_ts)
         if duration <= self.max_duration:
             return tok
 
