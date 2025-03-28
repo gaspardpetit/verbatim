@@ -123,6 +123,11 @@ class WhisperMlxTranscriber(Transcriber):
         transcript_words: List[Word] = []
         current_segment_lang = lang
 
+        # Keep track of last valid timestamp to help fix invalid ones
+        last_valid_end_ts = window_ts
+        min_word_duration = 50  # Minimum duration for a word in milliseconds
+        min_word_duration_samples = int(min_word_duration * 16000 / 1000)
+
         # Process segments and words
         for segment in result["segments"]:
             # Check if segment has a different language
@@ -133,15 +138,29 @@ class WhisperMlxTranscriber(Transcriber):
 
             for word_data in segment.get("words", []):
                 # Create Word object with correct language tag and timestamp offset
-                start_ts = int(word_data["start"] * 16000) + window_ts
-                end_ts = int(word_data["end"] * 16000) + window_ts
+                raw_start_ts = int(word_data["start"] * 16000) + window_ts
+                raw_end_ts = int(word_data["end"] * 16000) + window_ts
 
-                # Validate timestamps
-                if end_ts <= start_ts:
-                    LOG.warning(f"Invalid timestamps for word '{word_data['word']}': start={start_ts}, end={end_ts}")
-                    continue
+                # Fix invalid timestamps
+                if raw_end_ts <= raw_start_ts:
+                    LOG.info(f"Fixing invalid timestamps for word '{word_data['word']}': start={raw_start_ts}, end={raw_end_ts}")
 
-                if end_ts > audio_ts:
+                    # If we have a valid start time but invalid end time
+                    if raw_start_ts > last_valid_end_ts:
+                        # Assign a reasonable minimum duration
+                        raw_end_ts = raw_start_ts + min_word_duration_samples
+                    # If both timestamps are invalid or start <= last_end
+                    else:
+                        # Start from the last valid end time
+                        raw_start_ts = last_valid_end_ts
+                        # Estimate duration based on word length (approximation)
+                        word_length = len(word_data["word"].strip())
+                        word_duration = max(min_word_duration_samples, word_length * min_word_duration_samples // 2)
+                        raw_end_ts = raw_start_ts + word_duration
+
+                    LOG.info(f"Fixed timestamps for word '{word_data['word']}': start={raw_start_ts}, end={raw_end_ts}")
+
+                if raw_end_ts > audio_ts:
                     LOG.debug(f"Skipping word '{word_data['word']}' as it ends after audio_ts")
                     continue
 
