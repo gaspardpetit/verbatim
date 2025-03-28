@@ -126,7 +126,7 @@ The project is organized to be modular, such that individual components can be u
 ```python
 from verbatim.audio.sources.sourceconfig import SourceConfig
 from verbatim.audio.sources.factory import create_audio_source
-source = create_audio_source(input_source="samples/Airfrance - Bienvenue à bord.wav", device="cuda", source_config=SourceConfig(diarize=2))
+source = create_audio_source(input_source="audio/1ch_2spk_en-fr_AirFrance_00h03m54s.wav", device="cuda", source_config=SourceConfig(diarize=2))
 
 from verbatim.config import Config
 from verbatim.verbatim import Verbatim
