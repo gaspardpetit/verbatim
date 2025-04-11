@@ -5,6 +5,19 @@ outdir := "./out"
 default:
 	@just --list
 
+# Generate docs
+gendocs:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Generating documentation..."
+    source .venv/bin/activate
+
+    # Generate documentation using Sphinx
+    rm -rf docs/api # purge api
+    sphinx-apidoc --separate --module-first -d 6 -o docs/api verbatim/
+    rm -rf docs/_build # purge build
+    sphinx-build -b html docs docs/_build/html
+
 # Transcribe all files at path
 transcribe-dir inpath outpath lang diarization_strategy num_speakers:
     #!/usr/bin/env bash
