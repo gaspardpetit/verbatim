@@ -19,6 +19,14 @@ class MetricsEncoder(json.JSONEncoder):
             return asdict(o)
         return super().default(o)
 
+    def encode(self, o):
+        if isinstance(o, dict):
+            # Process dictionary values to format floats
+            for key, value in o.items():
+                if isinstance(value, float):
+                    o[key] = round(value * 100, 2)
+        return super().encode(o)
+
 
 def log_transcription(
     source_path: str,
@@ -51,12 +59,13 @@ def log_transcription(
     log_entry = {
         "timestamp": datetime.datetime.now().isoformat(),
         "audio_file": source_path,
+        "diarization_strategy": diarization_strategy,
         "output_prefix": output_prefix_no_ext,
         "start_time": start_time.isoformat(),
         "end_time": end_time.isoformat(),
         "duration_seconds": duration,
+        "duration_timestr": str(datetime.timedelta(seconds=duration)),
         "languages": languages,
-        "diarization_strategy": diarization_strategy,
     }
 
     # Add number of speakers if provided
