@@ -310,8 +310,41 @@ wheels = [
 
 [[package]]
 name = "av"
+version = "14.2.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.10'",
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f8/b6/83129e0337376214b0304893cbf0ad0a54718bb47845517fa5870439ca0b/av-14.2.0.tar.gz", hash = "sha256:132b5d52ca262b97b0356e8f48cbbe54d0ac232107a722ab8cc8c0c19eafa17b", size = 4063022 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/57/bd/82d5508548ca8972bd40aa8161058df13453cdccf4a35dd21ec9ef2a64d0/av-14.2.0-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:a5be356aa3e63a0ab0a7b32a3544e7494fd3fc546bce3a353b39f8258b6d718f", size = 22074143 },
+    { url = "https://files.pythonhosted.org/packages/03/a3/affde55bd7b9b4fd32d8b794a071ccc91aad19481929ffcafaad2a8eb446/av-14.2.0-cp310-cp310-macosx_12_0_x86_64.whl", hash = "sha256:f9e9a2bcb675916b1565dfe7dfad62d195c15a72dc4a56ac3b4006bac1d241d5", size = 27447923 },
+    { url = "https://files.pythonhosted.org/packages/a2/bd/af5d2f7a06c77c20d9ed14a5707601a8b7135965922cdc5d6f3718aa1dfb/av-14.2.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:872e8b8d39a01c04fd8f8ce4633d3e9e5d7d794ea9f8d4a9de03b9bc224cbcc7", size = 36597115 },
+    { url = "https://files.pythonhosted.org/packages/06/fc/55a97ebfda6a4639394c57ce78977b897d5ee04af1851401db1ed5a210d4/av-14.2.0-cp310-cp310-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:e72d01513615a628ad08a5957e57ac23f6a43051fd87b87e2faa42cafd6ecb29", size = 34985675 },
+    { url = "https://files.pythonhosted.org/packages/b9/dd/5eee0fa00134219051e9616786be19332823355f5ffbd2cbbf6d45e8be91/av-14.2.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:512a8ceca26250f26fc28913d7a08f962f8e7704189c111e9688180f9b752458", size = 38805945 },
+    { url = "https://files.pythonhosted.org/packages/8a/b5/eb11638a6eda0157fc3eeb43a9145ce772cd96776da031b63178917c1fc7/av-14.2.0-cp310-cp310-win_amd64.whl", hash = "sha256:1b01e4c96ecc892aa3b7dc605e7403866a2bc0eaf83ce04a9a3aed7077c69a4a", size = 30851852 },
+    { url = "https://files.pythonhosted.org/packages/75/d9/f93c06716ee45e5ec78814179f13ccef80593df69c2b8f48c6633a2157d0/av-14.2.0-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:42d0067654f3b05a86ddfaf4d82d4cb913d914024c5bbc8245dfe76357dfa350", size = 22066013 },
+    { url = "https://files.pythonhosted.org/packages/f5/18/d4352b27f3c93efbea9950c151d93bed6f3d8bb18d9d6467e064749133b1/av-14.2.0-cp311-cp311-macosx_12_0_x86_64.whl", hash = "sha256:d8c58401c3cf38bff59e45aa6a1fc1c4cb2443b872d668b4a11e4a6d5e5b5ac0", size = 27441465 },
+    { url = "https://files.pythonhosted.org/packages/18/68/a9398e36676721f335720173c856d26c4031203b8323ea43dd132c17cc34/av-14.2.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:707b3e9ec74d91a163b1b774b592cae32241f9df9b8f6c270ab7c7603e62359d", size = 37489187 },
+    { url = "https://files.pythonhosted.org/packages/73/38/2d407d1775efa096fe1ec64bbe45eb85b2637245ab798979adf2b06cf4be/av-14.2.0-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:7c5443e0396adffa66ca75bcbac3607ebdd4e15fe17dd20cf0b5b2a95915f42b", size = 35784761 },
+    { url = "https://files.pythonhosted.org/packages/af/3a/4156fa8234aa388c8aa6106f6356aad2e03682a4bca238c259caa4db7ecd/av-14.2.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e7647d4a8d1855d05fe70784a962b15e103a2d4a0eba1dea7bfbfd95753dedb9", size = 39678470 },
+    { url = "https://files.pythonhosted.org/packages/1a/ab/ddc797e2e99b84c674d7405ca3f99318d7bd7ff3ad13430911bc037ea3a9/av-14.2.0-cp311-cp311-win_amd64.whl", hash = "sha256:530800028f1056be744bd002b4f60fe85395d94603627a2e0aa26acf90cd4521", size = 30853921 },
+    { url = "https://files.pythonhosted.org/packages/6b/9b/eb3b48d2b42ae14856898ed996f512cec2655e8ebedc072c5bb658ca456a/av-14.2.0-cp39-cp39-macosx_12_0_arm64.whl", hash = "sha256:2b114f2c4ad8ee051b62e330f2f8ebf4399646179c98dd2c9c58f5bd09a521c5", size = 22102151 },
+    { url = "https://files.pythonhosted.org/packages/0f/c5/f0825d5a7aa2f9a6b299207ca98d136b82260cd345c915c624aaa9eb3b4b/av-14.2.0-cp39-cp39-macosx_12_0_x86_64.whl", hash = "sha256:d4358410ea04984acea15e4647f620a22bba9e12e4e632b4dc69c586bf896599", size = 27477304 },
+    { url = "https://files.pythonhosted.org/packages/e4/3f/a4a82b72f9e89629a959da93cf671bbe7cd9c1366608c6cdbd80c05cabdc/av-14.2.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8cd5a10b196b5f7a4b64e9c1b1c9eea87cadf4f1f0a8c00ade0ae8a223a5ba04", size = 36749313 },
+    { url = "https://files.pythonhosted.org/packages/ae/68/c49a162ee995cbea153ce73cf6cd818cf54e4871f05a2d537a92c23d7cbb/av-14.2.0-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:3f1f06d6d51ca859f2ee2db25afc3871ecc2179af588e745f31e137fa7935b1c", size = 35131393 },
+    { url = "https://files.pythonhosted.org/packages/88/f6/b01f6dd899f1f78471ed83be1ede15b0bf0f302aa3043ad44d772956e331/av-14.2.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9a0ab52af7ce51e98aac17800d42ae2fdb6ffc05321a69458960558561f62c09", size = 38951392 },
+    { url = "https://files.pythonhosted.org/packages/d0/ca/fc89c5d4d5adb69ab099aad3b8d8087ca2681ee3f25dfc7e97a1fc39bb82/av-14.2.0-cp39-cp39-win_amd64.whl", hash = "sha256:bcd1711f0f1c00e56e26f9593e3e9efe3cf0c24a1d610a7d53a3df027bca0ebc", size = 30875988 },
+]
+
+[[package]]
+name = "av"
 version = "14.3.0"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.11'",
+    "python_full_version == '3.10.*'",
+]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/88/c9/7b28af53ceb7ed80671657c3219de4da71ae5306843ecc0749b0f5bfb8dc/av-14.3.0-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:fb2fbd93685086c859748c147861dfb97ccf896dfbaa0141b8f15a1493d758e8", size = 20029577 },
     { url = "https://files.pythonhosted.org/packages/b5/4a/e5bf3212db0ab6c2ca21dc87727a305614af4830fad58cae05e011aed273/av-14.3.0-cp310-cp310-macosx_12_0_x86_64.whl", hash = "sha256:187fa564b130ac15b6ea7124c289be7fa8687d8e121d69b3000225cbff6414b0", size = 23819523 },
@@ -849,7 +882,8 @@ name = "faster-whisper"
 version = "1.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "av" },
+    { name = "av", version = "14.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "av", version = "14.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "ctranslate2" },
     { name = "huggingface-hub" },
     { name = "onnxruntime", version = "1.19.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -4209,7 +4243,8 @@ source = { editable = "." }
 dependencies = [
     { name = "audio-separator", version = "0.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "audio-separator", version = "0.30.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "av" },
+    { name = "av", version = "14.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "av", version = "14.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "colorama" },
     { name = "dataclasses-json" },
     { name = "datasets" },
@@ -4258,7 +4293,8 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "audio-separator", specifier = ">=0.18.0" },
-    { name = "av", specifier = ">=14.0.1" },
+    { name = "av", marker = "python_full_version < '3.10'", specifier = ">=14.0.1,<14.3.0" },
+    { name = "av", marker = "python_full_version >= '3.10'", specifier = ">=14.0.1" },
     { name = "colorama", specifier = ">=0.4.6" },
     { name = "dataclasses-json", specifier = ">=0.6.7" },
     { name = "datasets", specifier = ">=3.2.0" },
