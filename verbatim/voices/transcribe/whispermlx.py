@@ -81,49 +81,52 @@ class WhisperMlxTranscriber(Transcriber):
             LOG.warning("Empty or invalid audio chunk received")
             return []
 
-        try:
-            if whisper_temperatures is None:
-                whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+        # Handle temperatures
+        if whisper_temperatures is None:
+            whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+        if isinstance(whisper_temperatures, list):
+            # Transform into tuple of floats
+            temperatures = tuple(whisper_temperatures)
+        else:
+            temperatures = whisper_temperatures
 
-            # When whisper_temperatures is of type list
-            if isinstance(whisper_temperatures, list):
-                # Transform into tuple of floats
-                temperatures = tuple(whisper_temperatures)
-            else:
-                temperatures = whisper_temperatures
+        # Call MLX Whisper
+        result = transcribe(
+            audio,
+            task="transcribe",
+            path_or_hf_repo=self.model_path,
+            language=lang,
+            initial_prompt=prompt if prompt else None,
+            word_timestamps=True,
+            # Not yet implemented, see https://github.com/ml-explore/mlx-examples/issues/846
+            # beam_size=whisper_beam_size,
+            # patience=whisper_patience, # requires beam_size
+            # best_of=whisper_best_of, # leads to many std::bad_cast errors
+            verbose=(True if LOG.getEffectiveLevel() <= logging.INFO else None),  # pyright: ignore[reportOptionalCall]
+            temperature=temperatures,
+            # Below are the default values for transparency, see
+            # https://github.com/ml-explore/mlx-examples/blob/main/whisper/mlx_whisper/transcribe.py#L62
+            compression_ratio_threshold=2.4,
+            logprob_threshold=-1.0,
+            no_speech_threshold=0.6,
+            condition_on_previous_text=True,
+            prepend_punctuations="\"'“¿([{-",
+            append_punctuations="\"'.。,，!！?？:：”)]}、",
+            hallucination_silence_threshold=None,
+        )
 
-            # Set up transcription options
-            show_progress = LOG.getEffectiveLevel() <= logging.INFO
-
-            result = transcribe(
-                audio,
-                task="transcribe",
-                path_or_hf_repo=self.model_path,
-                language=lang,
-                initial_prompt=prompt if prompt else None,
-                word_timestamps=True,
-                # Not yet implemented in MLX Whisper, see https://github.com/ml-explore/mlx-examples/issues/846
-                # beam_size=whisper_beam_size,
-                # patience=whisper_patience, # requires beam_size
-                best_of=whisper_best_of,
-                verbose=(True if show_progress else None),  # pyright: ignore[reportOptionalCall]
-                # None = don't even show progress bar
-                temperature=temperatures,
-                no_speech_threshold=0.6,
-            )
-
-            if not result or "segments" not in result:
-                LOG.warning("Transcription returned no valid results, no segments found")
-                return []
-
-        # pylint: disable=broad-exception-caught
-        except Exception as e:
-            LOG.error(f"Error during transcription: {e}")
+        if not result or "segments" not in result:
+            LOG.warning("Transcription returned no valid results, no segments found")
             return []
 
         # Convert results to Word objects
         transcript_words: List[Word] = []
         current_segment_lang = lang
+
+        # Keep track of last valid timestamp to help fix invalid ones
+        last_valid_end_ts = window_ts
+        min_word_duration = 50  # Minimum duration for a word in milliseconds
+        min_word_duration_samples = int(min_word_duration * 16000 / 1000)
 
         # Process segments and words
         for segment in result["segments"]:
@@ -135,15 +138,29 @@ class WhisperMlxTranscriber(Transcriber):
 
             for word_data in segment.get("words", []):
                 # Create Word object with correct language tag and timestamp offset
-                start_ts = int(word_data["start"] * 16000) + window_ts
-                end_ts = int(word_data["end"] * 16000) + window_ts
+                raw_start_ts = int(word_data["start"] * 16000) + window_ts
+                raw_end_ts = int(word_data["end"] * 16000) + window_ts
 
-                # Validate timestamps
-                if end_ts <= start_ts:
-                    LOG.warning(f"Invalid timestamps for word '{word_data['word']}': start={start_ts}, end={end_ts}")
-                    continue
+                # Fix invalid timestamps
+                if raw_end_ts <= raw_start_ts:
+                    LOG.info(f"Fixing invalid timestamps for word '{word_data['word']}': start={raw_start_ts}, end={raw_end_ts}")
 
-                if end_ts > audio_ts:
+                    # If we have a valid start time but invalid end time
+                    if raw_start_ts > last_valid_end_ts:
+                        # Assign a reasonable minimum duration
+                        raw_end_ts = raw_start_ts + min_word_duration_samples
+                    # If both timestamps are invalid or start <= last_end
+                    else:
+                        # Start from the last valid end time
+                        raw_start_ts = last_valid_end_ts
+                        # Estimate duration based on word length (approximation)
+                        word_length = len(word_data["word"].strip())
+                        word_duration = max(min_word_duration_samples, word_length * min_word_duration_samples // 2)
+                        raw_end_ts = raw_start_ts + word_duration
+
+                    LOG.info(f"Fixed timestamps for word '{word_data['word']}': start={raw_start_ts}, end={raw_end_ts}")
+
+                if raw_end_ts > audio_ts:
                     LOG.debug(f"Skipping word '{word_data['word']}' as it ends after audio_ts")
                     continue
 
@@ -157,7 +174,8 @@ class WhisperMlxTranscriber(Transcriber):
                 )
 
                 # Log word timetamp comparison
-                LOG.info(f"Word '{word.word}': end_ts={word.end_ts}, audio_ts={audio_ts}")
+                LOG.debug(f"Word '{word.word}': end_ts={word.end_ts}, audio_ts={audio_ts}")
                 transcript_words.append(word)
 
+        # Return collected words
         return transcript_words
