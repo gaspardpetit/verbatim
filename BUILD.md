@@ -59,7 +59,7 @@ pip install uv
 ### Install Dependencies with Astral UV
 Use the `uv` CLI to install dependencies as per the configurations in `pyproject.toml`:
 ```bash
-uv install
+uv pip install .
 ```
 This will resolve dependencies, including those with custom indices or conditional markers.
 
@@ -114,6 +114,8 @@ You should now be ready to develop and run the project
 # Upgrading dependencies
 
 ```
+pip install uv --upgrade
+pip install --upgrade pip
 uv lock --upgrade
 ```
 

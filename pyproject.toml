@@ -45,7 +45,8 @@ classifiers = [
 ]
 dependencies = [
     "audio-separator>=0.18.0",
-    "av>=14.0.1",
+    "av>=14.0.1 ; python_version > '3.9'",
+    "av>=14.0.1,<14.3.0 ; python_version <= '3.9'",
     "colorama>=0.4.6",
     "dataclasses-json>=0.6.7",
     "demucs>=4.0.1",
