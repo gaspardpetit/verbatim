@@ -177,7 +177,7 @@ class State:
 
         # Ensure window_ts doesn't exceed audio_ts
         if self.window_ts + offset > self.audio_ts:
-            LOG.warning(f"Attempted to advance window beyond audio position. Capping advancement.")
+            LOG.warning("Attempted to advance window beyond audio position. Capping advancement.")
             offset = max(0, self.audio_ts - self.window_ts)
 
         LOG.debug(
@@ -195,7 +195,7 @@ class State:
     def append_audio_to_window(self, audio_chunk: NDArray):
         # Reset invalid window state if detected
         if self.window_ts > self.audio_ts:
-            LOG.warning(f"Invalid window state detected (window_ts > audio_ts). Resetting window position.")
+            LOG.warning("Invalid window state detected (window_ts > audio_ts). Resetting window position.")
             self.window_ts = self.audio_ts
 
         if audio_chunk.size == 0:
@@ -679,6 +679,9 @@ class Verbatim:
                 if len(self.state.unconfirmed_words) > 0:
                     next_ts = min(next_ts, self.state.unconfirmed_words[0].start_ts)
                 self.skip_leading_silence(min_speech_duration_ms=min_speech_duration_ms, max_skip=next_ts-self.state.window_ts)
+                for _utterance, _ack, _unc in self.flush_overflowing_utterances(diarization=audio_stream.diarization):
+                    # words confirmed while skipping are considered to be noise
+                    LOG.info(f"Skipping silence resulted in the following words to be dropped: {''.join(w.word for w in _utterance.words)}")
                 if self.state.audio_ts - self.state.window_ts < min_audio_duration_samples:
                     # we skipped all available audio - keep skipping silences and do nothing else for now
                     self.state.skip_silences = True

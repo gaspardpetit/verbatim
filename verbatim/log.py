@@ -2,7 +2,7 @@ import datetime
 import json
 import logging
 import os
-from typing import Any, Optional, List
+from typing import Optional, List
 from dataclasses import asdict, is_dataclass
 
 from verbatim.eval.compare import Metrics
@@ -20,7 +20,7 @@ class MetricsEncoder(json.JSONEncoder):
         return super().default(o)
 
 
-def log_transcription(
+def log_transcription(*,
     source_path: str,
     output_prefix_no_ext: str,
     start_time: datetime.datetime,
