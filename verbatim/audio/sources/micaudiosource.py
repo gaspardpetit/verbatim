@@ -16,7 +16,7 @@ LOG = logging.getLogger(__name__)
 class MicAudioStreamSoundDevice(AudioStream):
     source: "MicAudioSourceSoundDevice"
     audio_queue: queue.Queue
-    stream:sd.InputStream
+    stream: sd.InputStream
 
     def __init__(self, source: "MicAudioSourceSoundDevice"):
         super().__init__(start_offset=0, diarization=None)
@@ -73,7 +73,7 @@ class MicAudioStreamSoundDevice(AudioStream):
         return True
 
     def get_nchannels(self) -> int:
-        stream:sd.InputStream = self.stream
+        stream: sd.InputStream = self.stream
         idevice, _odevice = stream.channels
         return idevice
 
@@ -92,9 +92,9 @@ class MicAudioStreamPyAudio(AudioStream):
     source: "MicAudioSourcePyAudio"
     p: pyaudio.PyAudio
     stream: pyaudio.Stream
-    nchannels:int = 1
+    nchannels: int = 1
 
-    def __init__(self, source: "MicAudioSourcePyAudio", nchannels:int = 1):
+    def __init__(self, source: "MicAudioSourcePyAudio", nchannels: int = 1):
         super().__init__(start_offset=0, diarization=None)
         self.source = source
         self.p: pyaudio.PyAudio = pyaudio.PyAudio()

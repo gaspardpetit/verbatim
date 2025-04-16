@@ -1,0 +1,524 @@
+{
+  "utterances": [
+    {
+      "id": "utt1",
+      "start": 0.611,
+      "end": 1.309,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Hallo, Herr Kroll."
+    },
+    {
+      "id": "utt2",
+      "start": 1.574,
+      "end": 2.174,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Hallo."
+    },
+    {
+      "id": "utt4",
+      "start": 5.51194,
+      "end": 9.972,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Entschuldigung, ich wollte eigentlich nur heute kommen, um zu sagen, dass ich das abbrechen möchte."
+    },
+    {
+      "id": "utt7",
+      "start": 10.072,
+      "end": 14.072,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Das hat für mich alles keinen Sinn mehr und ich möchte die Therapie abbrechen."
+    },
+    {
+      "id": "utt11",
+      "start": 14.152,
+      "end": 15.072,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Die Therapie abbrechen?"
+    },
+    {
+      "id": "utt12",
+      "start": 15.092,
+      "end": 15.752,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Das war es für mich."
+    },
+    {
+      "id": "utt13",
+      "start": 15.976,
+      "end": 16.674,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Okay."
+    },
+    {
+      "id": "utt15",
+      "start": 18.552,
+      "end": 20.212,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich wollte Ihnen das eigentlich nur sagen."
+    },
+    {
+      "id": "utt18",
+      "start": 20.652,
+      "end": 20.852,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja."
+    },
+    {
+      "id": "utt19",
+      "start": 23.432,
+      "end": 26.503,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Puh, das ist aber ein Einstieg, Herr Kroll."
+    },
+    {
+      "id": "utt24",
+      "start": 24.872,
+      "end": 28.752,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja, das ist vor allem ein Ausstieg, weil das geht einfach so nicht weiter."
+    },
+    {
+      "id": "utt32",
+      "start": 28.852,
+      "end": 31.531,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich habe wirklich, ich hab mich so angestrengt."
+    },
+    {
+      "id": "utt39",
+      "start": 30.952,
+      "end": 32.052,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich hab mich wirklich bemüht "
+    },
+    {
+      "id": "utt43",
+      "start": 31.212,
+      "end": 32.472,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": "Ich bin hier immer hin gekommen."
+    },
+    {
+      "id": "utt44",
+      "start": 32.126,
+      "end": 33.436,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": "Herr Kroll? Herr Kroll."
+    },
+    {
+      "id": "utt52",
+      "start": 32.572,
+      "end": 32.972,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Sie"
+    },
+    {
+      "id": "utt56",
+      "start": 33.092,
+      "end": 33.652,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " haben das auch wirklich toll gemacht,"
+    },
+    {
+      "id": "utt57",
+      "start": 33.959,
+      "end": 34.476,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Okay."
+    },
+    {
+      "id": "utt59",
+      "start": 33.752,
+      "end": 37.032,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Sie haben das wirklich toll gemacht, Frau Torbner, aber, aber es hat einfach nichts gebracht."
+    },
+    {
+      "id": "utt64",
+      "start": 37.251,
+      "end": 38.442,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Es klingt ja..."
+    },
+    {
+      "id": "utt65",
+      "start": 38.582,
+      "end": 39.952,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Lassen Sie mich einmal kurz ausreden, bitte."
+    },
+    {
+      "id": "utt68",
+      "start": 40.321,
+      "end": 42.653,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja, einfach mal einmal kurz ausreden lassen. Ja?"
+    },
+    {
+      "id": "utt73",
+      "start": 41.868,
+      "end": 42.852,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Soll ich mich hinsetzen?"
+    },
+    {
+      "id": "utt74",
+      "start": 42.85,
+      "end": 46.816,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": "Ich möchte. Ah. Entschuldigung, das tut mir leid."
+    },
+    {
+      "id": "utt84",
+      "start": 46.752,
+      "end": 47.292,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Das tut mir leid."
+    },
+    {
+      "id": "utt84a",
+      "start": 47.11,
+      "end": 47.54,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Oh Gott"
+    },
+    {
+      "id": "utt85",
+      "start": 47.332,
+      "end": 47.992,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Das tut mir leid."
+    },
+    {
+      "id": "utt85",
+      "start": 47.332,
+      "end": 47.992,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Das tut mir leid."
+    },
+    {
+      "id": "utt85",
+      "start": 50.401,
+      "end": 51.015,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Das tut mir leid."
+    },
+    {
+      "id": "utt85",
+      "start": 50.56,
+      "end": 51.592,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Okay, ist okay."
+    },
+    {
+      "id": "utt89",
+      "start": 50.81394,
+      "end": 51.894,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Das passiert mir immer."
+    },
+    {
+      "id": "utt97",
+      "start": 51.994,
+      "end": 53.234,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Genau das ist mein Problem."
+    },
+    {
+      "id": "utt105",
+      "start": 54.154,
+      "end": 55.414,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Das ist genau mein Problem."
+    },
+    {
+      "id": "utt114",
+      "start": 53.593,
+      "end": 56.957,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Deswegen sind sie ja. Herr Kroll? Darf ich das nehmen? Darf ich das nehmen?"
+    },
+    {
+      "id": "utt115",
+      "start": 55.514,
+      "end": 56.314,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ja, natürlich."
+    },
+    {
+      "id": "utt116",
+      "start": 56.674,
+      "end": 57.754,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich wollte, das wollte ich nicht."
+    },
+    {
+      "id": "utt128",
+      "start": 57.854,
+      "end": 58.174,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ist okay."
+    },
+    {
+      "id": "utt129",
+      "start": 58.354,
+      "end": 59.034,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ist nicht schlimm."
+    },
+    {
+      "id": "utt134",
+      "start": 59.134,
+      "end": 59.774,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ist nicht passiert."
+    },
+    {
+      "id": "utt135",
+      "start": 59.774,
+      "end": 64.864,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich hatte so einen Scheißtag und ich habe gedacht, ich bin ein kleines Stückchen vorangekommen in der Therapie. Aber nein."
+    },
+    {
+      "id": "utt144",
+      "start": 63.514,
+      "end": 65.334,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Okay, es tut mir total leid."
+    },
+    {
+      "id": "utt148",
+      "start": 65.934,
+      "end": 66.914,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Nehmen Sie bitte Platz."
+    },
+    {
+      "id": "utt149",
+      "start": 68.054,
+      "end": 74.981,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich finde es super, dass Sie den weiten Weg gefahren sind, um mir zu sagen, dass Sie so frustriert sind, okay?"
+    },
+    {
+      "id": "utt152",
+      "start": 74.754,
+      "end": 76.414,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Und dass es nicht schlimm ist, nichts passiert."
+    },
+    {
+      "id": "utt157",
+      "start": 76.514,
+      "end": 77.194,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Nehmen Sie bitte Platz."
+    },
+    {
+      "id": "utt158",
+      "start": 80.334,
+      "end": 81.874,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Oh Mann, so geht mir das immer."
+    },
+    {
+      "id": "utt159",
+      "start": 82.348,
+      "end": 82.901,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Okay"
+    },
+    {
+      "id": "utt164",
+      "start": 81.974,
+      "end": 83.534,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich dachte, ich hätte es endlich geschafft."
+    },
+    {
+      "id": "utt169",
+      "start": 84.174,
+      "end": 85.894,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Aber heute war es wirklich so beschissen."
+    },
+    {
+      "id": "utt175",
+      "start": 85.994,
+      "end": 88.714,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Ich meine, Sabine, ich habe heute rausgekriegt, dass Sabine mich betrügt."
+    },
+    {
+      "id": "utt178",
+      "start": 89.314,
+      "end": 92.174,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Und ich meine, wir haben ja geübt, was wir dann machen."
+    },
+    {
+      "id": "utt187",
+      "start": 92.274,
+      "end": 95.572,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Dass wir dann irgendwie mentalisieren, oder was weiß ich, aber, aber."
+    },
+    {
+      "id": "utt187",
+      "start": 92.772,
+      "end": 93.227,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Okay."
+    },
+    {
+      "id": "utt187",
+      "start": 96.296,
+      "end": 98.248,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Aber in den Momenten geht das ja nicht. Das ist doch klar."
+    },
+    {
+      "id": "utt191",
+      "start": 95.71394,
+      "end": 98.274,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Aber in dem Moment geht das einfach nicht."
+    },
+    {
+      "id": "utt193",
+      "start": 98.374,
+      "end": 101.734,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Und dann habe ich wirklich auch die Hoffnung verloren, dass es irgendwie mal jemals hinhaut."
+    },
+    {
+      "id": "utt196",
+      "start": 101.814,
+      "end": 105.37,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Das tut mir, jetzt komm ich hier rein und mach hier ihre Praxis kaputt, das tut mir so leid."
+    },
+    {
+      "id": "utt198",
+      "start": 105.114,
+      "end": 106.334,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Sie haben ja nichts kaputt gemacht."
+    },
+    {
+      "id": "utt205",
+      "start": 106.472,
+      "end": 107.352,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Aber wissen Sie was?"
+    },
+    {
+      "id": "utt206",
+      "start": 107.592,
+      "end": 109.912,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich bin total froh, dass Sie da sind."
+    },
+    {
+      "id": "utt211",
+      "start": 110.872,
+      "end": 112.092,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Bin total froh."
+    },
+    {
+      "id": "utt216",
+      "start": 113.772,
+      "end": 115.392,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Das kann ich fast nicht glauben."
+    },
+    {
+      "id": "utt217",
+      "start": 115.392,
+      "end": 121.972,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Und es tut mir super leid, dass wir nach 15 Sitzungen nicht so weit sind, wie Sie weit sein wollen."
+    },
+    {
+      "id": "utt218",
+      "start": 122.552,
+      "end": 123.752,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Das verstehe ich total."
+    },
+    {
+      "id": "utt220",
+      "start": 115.392,
+      "end": 123.752,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Es tut mir super leid, dass wir nach 15 Sitzungen nicht so weit sind, wie sie weit sein wollen. Das verstehe ich total."
+    }
+  ]
+}

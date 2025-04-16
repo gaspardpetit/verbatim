@@ -10,6 +10,7 @@ from verbatim.transcript.postprocessing.config import Config
 
 LOG = logging.getLogger(__name__)
 
+
 class DiarizationProcessor:
     def __init__(self, config: Config):
         """Initialize the processor with configuration"""
@@ -27,7 +28,7 @@ class DiarizationProcessor:
             if word.startswith("<speaker:"):
                 if not word.endswith(">"):
                     word += ">"
-                spk = word[len("<speaker:"):-len(">")]
+                spk = word[len("<speaker:") : -len(">")]
                 try:
                     spk_int = int(spk)
                     if not spk or spk_int < 1 or spk_int > 10:
@@ -47,11 +48,8 @@ class DiarizationProcessor:
         try:
             response = self.client.chat.completions.create(
                 model=self.config.MODEL_NAME,
-                messages=[
-                    {"role": "system", "content": self.config.SYSTEM_PROMPT},
-                    {"role": "user", "content": f"{text} -->"}
-                ],
-                temperature=0.1
+                messages=[{"role": "system", "content": self.config.SYSTEM_PROMPT}, {"role": "user", "content": f"{text} -->"}],
+                temperature=0.1,
             )
 
             completion = response.choices[0].message.content
@@ -73,7 +71,7 @@ class DiarizationProcessor:
     def clean_speaker_tag(self, tag: str) -> str:
         """Clean up speaker tags by removing repeated numbers"""
         # Extract the first number from the tag
-        match = re.search(r'<speaker:(\d+)', tag)
+        match = re.search(r"<speaker:(\d+)", tag)
         if match:
             number = match.group(1)
             return f"<speaker:{number}>"
@@ -105,22 +103,14 @@ class DiarizationProcessor:
                 chunk_text = self.format_chunk(current_chunk)
                 text, spk = self.process_chunk(chunk_text)
 
-                output_utterances.append({
-                    "utterance_id": f"utt{len(output_utterances)}",
-                    "hyp_text": text,
-                    "hyp_spk": spk
-                })
+                output_utterances.append({"utterance_id": f"utt{len(output_utterances)}", "hyp_text": text, "hyp_spk": spk})
                 current_chunk = []
 
         # Process remaining utterances
         if current_chunk:
             chunk_text = self.format_chunk(current_chunk)
             text, spk = self.process_chunk(chunk_text)
-            output_utterances.append({
-                "utterance_id": f"utt{len(output_utterances)}",
-                "hyp_text": text,
-                "hyp_spk": spk
-            })
+            output_utterances.append({"utterance_id": f"utt{len(output_utterances)}", "hyp_text": text, "hyp_spk": spk})
 
         output_data = {"utterances": output_utterances}
 

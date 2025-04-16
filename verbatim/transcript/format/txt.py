@@ -34,8 +34,8 @@ COLORSCHEME_ACKNOWLEDGED = ColorScheme(
     color_speaker=Fore.LIGHTBLUE_EX,
     color_language=Fore.LIGHTYELLOW_EX,
     color_text=Fore.LIGHTGREEN_EX,
-    color_text_lowconfidence = Fore.LIGHTYELLOW_EX,
-    color_text_verylowconfidence = Fore.LIGHTRED_EX,
+    color_text_lowconfidence=Fore.LIGHTYELLOW_EX,
+    color_text_verylowconfidence=Fore.LIGHTRED_EX,
     color_reset=Style.RESET_ALL,
 )
 
@@ -44,8 +44,8 @@ COLORSCHEME_UNACKNOWLEDGED = ColorScheme(
     color_speaker=Fore.BLUE,
     color_language=Fore.YELLOW,
     color_text=Fore.GREEN,
-    color_text_lowconfidence = Fore.LIGHTYELLOW_EX,
-    color_text_verylowconfidence = Fore.LIGHTRED_EX,
+    color_text_lowconfidence=Fore.LIGHTYELLOW_EX,
+    color_text_verylowconfidence=Fore.LIGHTRED_EX,
     color_reset=Style.RESET_ALL,
 )
 
@@ -54,8 +54,8 @@ COLORSCHEME_UNCONFIRMED = ColorScheme(
     color_speaker=Fore.BLUE,
     color_language=Fore.YELLOW,
     color_text=Fore.LIGHTBLACK_EX,
-    color_text_lowconfidence = Fore.LIGHTBLACK_EX,
-    color_text_verylowconfidence = Fore.LIGHTBLACK_EX,
+    color_text_lowconfidence=Fore.LIGHTBLACK_EX,
+    color_text_verylowconfidence=Fore.LIGHTBLACK_EX,
     color_reset=Style.RESET_ALL,
 )
 
@@ -65,8 +65,8 @@ COLORSCHEME_NONE = ColorScheme(
     color_language="",
     color_text="",
     color_reset="",
-    color_text_lowconfidence = "",
-    color_text_verylowconfidence = "",
+    color_text_lowconfidence="",
+    color_text_verylowconfidence="",
 )
 
 
@@ -142,7 +142,8 @@ class TranscriptFormatter:
                 out.write(colours.color_reset)
 
     def _format_word_with_probability(
-        self, *,
+        self,
+        *,
         out: TextIO,
         word: str,
         probability: float,
@@ -151,37 +152,53 @@ class TranscriptFormatter:
     ):
         # pylint: disable=too-many-boolean-expressions
         if (
-            self.probability_style == ProbabilityStyle.word and probability < 0.90 / 2
-            or self.probability_style == ProbabilityStyle.word_75 and probability < 0.75 / 2
-            or self.probability_style == ProbabilityStyle.word_50 and probability < 0.50 / 2
-            or self.probability_style == ProbabilityStyle.word_25 and probability < 0.25 / 2
+            self.probability_style == ProbabilityStyle.word
+            and probability < 0.90 / 2
+            or self.probability_style == ProbabilityStyle.word_75
+            and probability < 0.75 / 2
+            or self.probability_style == ProbabilityStyle.word_50
+            and probability < 0.50 / 2
+            or self.probability_style == ProbabilityStyle.word_25
+            and probability < 0.25 / 2
         ):
             out.write(colours.color_text_verylowconfidence)
             out.write(word)
             out.write(colours.color_reset)
         elif (
-            self.probability_style == ProbabilityStyle.word and probability < 0.90
-            or self.probability_style == ProbabilityStyle.word_75 and probability < 0.75
-            or self.probability_style == ProbabilityStyle.word_50 and probability < 0.50
-            or self.probability_style == ProbabilityStyle.word_25 and probability < 0.25
+            self.probability_style == ProbabilityStyle.word
+            and probability < 0.90
+            or self.probability_style == ProbabilityStyle.word_75
+            and probability < 0.75
+            or self.probability_style == ProbabilityStyle.word_50
+            and probability < 0.50
+            or self.probability_style == ProbabilityStyle.word_25
+            and probability < 0.25
         ):
             out.write(colours.color_text_lowconfidence)
             out.write(word)
             out.write(colours.color_reset)
         elif (
-            self.probability_style == ProbabilityStyle.line and utterance_probability < 0.90 / 2
-            or self.probability_style == ProbabilityStyle.line_75 and utterance_probability < 0.75 / 2
-            or self.probability_style == ProbabilityStyle.line_50 and utterance_probability < 0.50 / 2
-            or self.probability_style == ProbabilityStyle.line_25 and utterance_probability < 0.25 / 2
+            self.probability_style == ProbabilityStyle.line
+            and utterance_probability < 0.90 / 2
+            or self.probability_style == ProbabilityStyle.line_75
+            and utterance_probability < 0.75 / 2
+            or self.probability_style == ProbabilityStyle.line_50
+            and utterance_probability < 0.50 / 2
+            or self.probability_style == ProbabilityStyle.line_25
+            and utterance_probability < 0.25 / 2
         ):
             out.write(colours.color_text_verylowconfidence)
             out.write(word)
             out.write(colours.color_reset)
         elif (
-            self.probability_style == ProbabilityStyle.line and utterance_probability < 0.90
-            or self.probability_style == ProbabilityStyle.line_75 and utterance_probability < 0.75
-            or self.probability_style == ProbabilityStyle.line_50 and utterance_probability < 0.50
-            or self.probability_style == ProbabilityStyle.line_25 and utterance_probability < 0.25
+            self.probability_style == ProbabilityStyle.line
+            and utterance_probability < 0.90
+            or self.probability_style == ProbabilityStyle.line_75
+            and utterance_probability < 0.75
+            or self.probability_style == ProbabilityStyle.line_50
+            and utterance_probability < 0.50
+            or self.probability_style == ProbabilityStyle.line_25
+            and utterance_probability < 0.25
         ):
             out.write(colours.color_text_lowconfidence)
             out.write(word)
@@ -200,14 +217,9 @@ class TranscriptFormatter:
         # pylint: disable=superfluous-parens
         for i, w in enumerate(utterance.words):
             self._format_language(out=out, language=w.lang, first_word=(i == 0), colours=colours)
-            self._format_word_with_probability(
-                out=out,
-                word=w.word,
-                probability=w.probability,
-                utterance_probability=percentile_25,
-                colours=colours
-            )
+            self._format_word_with_probability(out=out, word=w.word, probability=w.probability, utterance_probability=percentile_25, colours=colours)
         out.write("\n")
+
 
 class TextIOTranscriptWriter(TranscriptWriter):
     out: TextIO
@@ -226,8 +238,8 @@ class TextIOTranscriptWriter(TranscriptWriter):
             language_style=config.language_style,
             probability_style=config.probability_style,
             speaker_style=config.speaker_style,
-            timestamp_style=config.timestamp_style
-            )
+            timestamp_style=config.timestamp_style,
+        )
         self.acknowledged_colours = acknowledged_colours
         self.unacknowledged_colours = unacknowledged_colours
         self.unconfirmed_colors = unconfirmed_colors
