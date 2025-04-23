@@ -1,5 +1,8 @@
 from typing import Optional
 import logging
+import math
+
+from scipy.signal import resample_poly
 
 import numpy as np
 from numpy.typing import NDArray
@@ -72,66 +75,99 @@ class PyAVAudioStream(AudioStream):
 
     def next_chunk(self, chunk_length=1) -> NDArray:
         """
-        Return `chunk_length` seconds of audio as a NumPy array, shape (N,) or (N,1).
-        If not enough data is available, decode more frames from PyAV.
-        If at EOF, returns an empty array.
+        Return `chunk_length` seconds of audio as a NumPy array.
+        This version makes the resampling and reshaping behavior predictable and explicit.
         """
+
         if self._closed:
             LOG.warning("next_chunk() called after close(). Returning empty array.")
             return np.array([], dtype=np.float32)
 
         if self._done_decoding and len(self._sample_buffer) == 0:
-            # No more data left
             return np.array([], dtype=np.float32)
 
-        # How many samples do we need?
-        needed_samples = int(chunk_length * self.source.target_sample_rate)
+        # --- Step 1: Define original and target audio parameters ---
+        original_sample_rate = self._stream.codec_context.sample_rate
+        original_channels = self._stream.codec_context.channels
 
-        resampler = av.audio.resampler.AudioResampler(  # pyright: ignore[reportAttributeAccessIssue]
-            format="flt",  # float32
-            layout="stereo" if self.source.preserve_channels else "mono",  # 1 channel
-            rate=16000,  # target samplerate
-        )
+        target_sample_rate = self.source.target_sample_rate
+        target_channels = original_channels if self.source.preserve_channels else 1
 
-        # Keep reading frames from PyAV until we have enough
-        while len(self._sample_buffer) < needed_samples and not self._done_decoding:
+        LOG.debug(f"Original sample rate: {original_sample_rate} Hz, channels: {original_channels}")
+        LOG.debug(f"Target sample rate: {target_sample_rate} Hz, channels: {target_channels}")
+
+        # --- Step 2: Determine how many samples are needed for this chunk ---
+        needed_target_samples = int(chunk_length * target_sample_rate)
+        needed_input_samples = math.ceil(needed_target_samples * original_sample_rate / target_sample_rate)
+        LOG.debug(f"Want {needed_target_samples} output samples → need ~{needed_input_samples} input samples")
+
+        # --- Step 3: Decode and collect raw frames as-is ---
+        collected = []
+
+        total_collected_samples = 0
+        while total_collected_samples < needed_input_samples and not self._done_decoding:
             try:
                 frame = next(self._frame_iter)
             except StopIteration:
-                # No more frames from the container
-                LOG.info("Reached end of audio stream.")
+                LOG.info("Reached end of stream")
                 self._done_decoding = True
                 break
 
-            # Optionally, we can check the frame's pts (presentation timestamp)
-            # to see if we've passed end_time. If so, stop decoding.
+            # Respect end_time if set
             if self.source.end_time is not None and frame.pts is not None:
-                # Convert pts to seconds
-                # In PyAV, each stream has time_base -> frame_time = frame.pts * stream.time_base
-                current_time_sec = float(frame.pts * self._stream.time_base)
-                if current_time_sec > self.source.end_time:
-                    LOG.info(f"Reached end_time={self.source.end_time:.2f}s (current={current_time_sec:.2f}s). Stopping.")
+                timestamp_sec = float(frame.pts * self._stream.time_base)
+                if timestamp_sec > self.source.end_time:
+                    LOG.info(f"End time {self.source.end_time}s reached (current={timestamp_sec:.2f}s)")
                     self._done_decoding = True
                     break
 
-            # Resample to your desired format
-            new_frames: list[av.audio.frame.AudioFrame] = resampler.resample(frame)  # pyright: ignore[reportAttributeAccessIssue]
-            for new_frame in new_frames:
-                new_frame = new_frame.to_ndarray().astype(np.float32, copy=False).squeeze()
-                self._sample_buffer = np.concatenate([self._sample_buffer, new_frame])
+            # Convert the frame to ndarray, float32
+            arr = frame.to_ndarray().astype(np.float32, copy=False)
 
-        # By now, we either have enough samples or we hit EOF
-        audio_array = self._sample_buffer[:needed_samples]
-        self._sample_buffer = self._sample_buffer[needed_samples:]
+            # Normalize shape to always be (channels, samples)
+            if arr.ndim == 1:
+                arr = arr[np.newaxis, :]  # mono → (1, samples)
+            elif arr.ndim == 2:
+                pass  # already (channels, samples)
+            else:
+                raise ValueError(f"Unexpected frame shape: {arr.shape}")
 
-        # For consistency, let's return a float32 numpy array shape (N,)
-        audio_array = audio_array.astype(np.float32, copy=False)
+            total_collected_samples += arr.shape[1]
+            collected.append(arr)
 
-        if self.source.preserve_channels:
-            # Reshape to (samples, channels) if stereo
-            audio_array = audio_array.reshape(-1, 2)
+        # --- Step 4: Stack collected frames into one array ---
+        if not collected:
+            return np.array([], dtype=np.float32)
 
-        return audio_array
+        full_array = np.concatenate(collected, axis=1)  # shape: (channels, total_samples)
+        LOG.debug(f"Concatenated shape before mixing: {full_array.shape}")
+
+        # --- Optional: Downmix to mono if needed ---
+        if target_channels == 1 and full_array.shape[0] > 1:
+            # Average across channels: axis 0 is channels
+            full_array = full_array.mean(axis=0, keepdims=True)  # shape becomes (1, total_samples)
+            LOG.debug(f"Downmixed to mono: {full_array.shape}")
+
+        # --- Step 5: Resample if needed ---
+        if original_sample_rate != target_sample_rate:
+            LOG.debug(f"Resampling from {original_sample_rate} → {target_sample_rate} Hz")
+
+            # Resample each channel independently
+            up = int(target_sample_rate)
+            down = int(original_sample_rate)
+
+            resampled_channels = []
+            for ch_idx in range(full_array.shape[0]):
+                resampled = resample_poly(full_array[ch_idx], up, down)
+                resampled_channels.append(resampled)
+
+            # Stack back into (channels, samples)
+            full_array = np.stack(resampled_channels, axis=0)
+            LOG.debug(f"Resampled shape: {full_array.shape}")
+            LOG.debug(f"Chunk duration: {chunk_length} s → {needed_target_samples} samples needed at target rate")
+
+        return full_array.T
+
 
     def has_more(self) -> bool:
         """
