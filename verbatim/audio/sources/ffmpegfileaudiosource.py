@@ -166,7 +166,10 @@ class PyAVAudioStream(AudioStream):
             LOG.debug(f"Resampled shape: {full_array.shape}")
             LOG.debug(f"Chunk duration: {chunk_length} s → {needed_target_samples} samples needed at target rate")
 
-        return full_array.T
+        if target_channels == 1:
+            return np.squeeze(full_array)
+        else:
+            return full_array.T
 
 
     def has_more(self) -> bool:
@@ -192,6 +195,9 @@ class PyAVAudioStream(AudioStream):
 
     def get_nchannels(self) -> int:
         return self._stream.channels
+
+    def get_rate(self) -> int:
+        return self.source.target_sample_rate
 
 
 class PyAVAudioSource(AudioSource):

@@ -36,6 +36,10 @@ class AudioStream(ABC):
     def get_nchannels(self) -> int:
         pass
 
+    @abstractmethod
+    def get_rate(self) -> int:
+        pass
+
 
 class AudioSource(ABC):
     source_name: str = ""
