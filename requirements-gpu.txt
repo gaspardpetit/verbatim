@@ -166,7 +166,7 @@ fsspec==2024.12.0
     #   torch
 greenlet==3.2.0 ; platform_machine == 'AMD64' or platform_machine == 'WIN32' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'ppc64le' or platform_machine == 'win32' or platform_machine == 'x86_64'
     # via sqlalchemy
-h11==0.14.0
+h11==0.16.0
     # via httpcore
 httpcore==1.0.8
     # via httpx
@@ -691,7 +691,7 @@ tomlkit==0.13.2
     # via pylint
 toolwrapper==2.1.0
     # via mosestokenizer
-torch==2.6.0
+torch==2.7.0
     # via
     #   asteroid
     #   asteroid-filterbanks
