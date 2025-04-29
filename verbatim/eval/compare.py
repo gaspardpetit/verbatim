@@ -8,18 +8,21 @@ import tqdm
 from ..transcript.words import Utterance
 from .diarizationlm.metrics import UtteranceMetrics, compute_utterance_metrics
 
+
 @dataclass
 class UtteranceMetricsWithId(UtteranceMetrics):
-    utterance_id:str = ""
+    utterance_id: str = ""
+
 
 @dataclass
 class Metrics:
     # pylint: disable=invalid-name
-    utterances:List[UtteranceMetricsWithId] = field(default_factory=list)
-    WER:float = 0.0         # Word Error Rate - Measures transcription accuracy
-    WDER:float = 0.0        # Word Diarization Error Rate - Measures speaker attribution errors
-    cpWER:float = 0.0       # Concatenated-permutation WER - An enhanced WER that accounts for speaker permutation errors
-    SpkCntMAE:float = 0.0   # Mean Absolute Error - Measures differences in estimated and actual speaker counts
+    utterances: List[UtteranceMetricsWithId] = field(default_factory=list)
+    WER: float = 0.0  # Word Error Rate - Measures transcription accuracy
+    WDER: float = 0.0  # Word Diarization Error Rate - Measures speaker attribution errors
+    cpWER: float = 0.0  # Concatenated-permutation WER - An enhanced WER that accounts for speaker permutation errors
+    SpkCntMAE: float = 0.0  # Mean Absolute Error - Measures differences in estimated and actual speaker counts
+
 
 def compute_metrics_summary(
     json_dict: dict[str, Any],
@@ -93,11 +96,12 @@ def compute_metrics_summary(
 
 LOG = logging.getLogger(__name__)
 
+
 def compute_metrics(hyp_data: List[Utterance], ref_data: List[Utterance]) -> Metrics:
     """Calculate metrics between hypothesis and reference data."""
     data = {}
 
-    def get_speaker_id(name:str, cache:List[str]):
+    def get_speaker_id(name: str, cache: List[str]):
         for idx, speaker in enumerate(cache):
             if speaker == name:
                 return idx + 1  # Return a 1-indexed ID if the name exists.
@@ -117,5 +121,5 @@ def compute_metrics(hyp_data: List[Utterance], ref_data: List[Utterance]) -> Met
         }
     ]
 
-    metrics:Metrics =  compute_metrics_summary(data)
+    metrics: Metrics = compute_metrics_summary(data)
     return metrics

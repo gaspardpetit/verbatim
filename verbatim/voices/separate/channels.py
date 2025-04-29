@@ -14,8 +14,9 @@ from ...audio.audio import wav_to_int16
 # Configure logger
 LOG = logging.getLogger(__name__)
 
+
 class ChannelSeparation(SeparationStrategy):
-    def __init__(self, **kwargs): # pylint: disable=unused-argument
+    def __init__(self, **kwargs):  # pylint: disable=unused-argument
         super().__init__()
         LOG.info("Initializing Channel-Based Separator.")
 
@@ -25,7 +26,7 @@ class ChannelSeparation(SeparationStrategy):
         file_path: str,
         out_rttm_file: Optional[str] = None,
         out_speaker_wav_prefix="",
-        nb_speakers: Optional[int] = None, # pylint: disable=unused-argument
+        nb_speakers: Optional[int] = None,  # pylint: disable=unused-argument
         start_sample: int = 0,
         end_sample: Optional[int] = None,
     ) -> List[AudioSource]:
@@ -54,7 +55,7 @@ class ChannelSeparation(SeparationStrategy):
         LOG.info(f"Detected {num_channels} channel(s) in the audio file.")
 
         # Process each channel
-        results:List[AudioSource] = []
+        results: List[AudioSource] = []
         for channel_idx in range(num_channels):
             speaker_label = f"SPEAKER_{channel_idx}"
 
@@ -66,11 +67,7 @@ class ChannelSeparation(SeparationStrategy):
                 channel_data = wav_to_int16(channel_data)
 
             # Generate the output file name
-            file_name = (
-                f"{out_speaker_wav_prefix}-{speaker_label}.wav"
-                if out_speaker_wav_prefix
-                else f"{speaker_label}.wav"
-            )
+            file_name = f"{out_speaker_wav_prefix}-{speaker_label}.wav" if out_speaker_wav_prefix else f"{speaker_label}.wav"
 
             # Save the channel as a mono WAV file
             LOG.info(f"Saving channel {channel_idx} to file: {file_name}")
@@ -79,12 +76,7 @@ class ChannelSeparation(SeparationStrategy):
             # Update annotation (simplified example)
             annotation = Annotation()
             annotation[Segment(0, len(channel_data) / sample_rate)] = speaker_label
-            results.append(FileAudioSource(
-                file=file_name,
-                diarization=annotation,
-                start_sample=start_sample,
-                end_sample=end_sample
-            ))
+            results.append(FileAudioSource(file=file_name, diarization=annotation, start_sample=start_sample, end_sample=end_sample))
 
             # Optionally save RTTM file
             if out_rttm_file:

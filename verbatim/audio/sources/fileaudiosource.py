@@ -20,7 +20,7 @@ COMPATIBLE_FORMATS = [".mp3", ".m4a"]
 
 class FileAudioStream(AudioStream):
     source: "FileAudioSource"
-    stream:wave.Wave_read
+    stream: wave.Wave_read
 
     def __init__(self, source: "FileAudioSource", diarization: Optional[Annotation]):
         super().__init__(start_offset=source.start_sample, diarization=diarization)
@@ -39,9 +39,9 @@ class FileAudioStream(AudioStream):
 
     def next_chunk(self, chunk_length=1) -> NDArray:
         current_frame = self.stream.tell()
-        LOG.info(f"Reading {chunk_length} seconds of audio at "
-                 f"{sample_to_timestr(current_frame, self.stream.getframerate())} "
-                 f"from {self.source.file_path}.")
+        LOG.info(
+            f"Reading {chunk_length} seconds of audio at {sample_to_timestr(current_frame, self.stream.getframerate())} from {self.source.file_path}."
+        )
         frames = self.stream.readframes(int(self.stream.getframerate() * chunk_length))
         sample_width = self.stream.getsampwidth()
         n_channels = self.stream.getnchannels()
@@ -101,7 +101,7 @@ class FileAudioSource(AudioSource):
         file_path_no_ext, file_path_ext = os.path.splitext(self.file_path)
         if file_path_ext in COMPATIBLE_FORMATS:
             # Convert encoded audio to wav
-            wav_file_path = convert_to_wav(input_path=self.file_path, working_prefix_no_ext=file_path_no_ext,  preserve_channels=preserve_channels)
+            wav_file_path = convert_to_wav(input_path=self.file_path, working_prefix_no_ext=file_path_no_ext, preserve_channels=preserve_channels)
             self.file_path = wav_file_path
         self.end_sample = end_sample
         self.start_sample = start_sample
