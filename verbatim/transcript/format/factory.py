@@ -2,6 +2,7 @@ from typing import List
 
 from .writer import TranscriptWriterConfig, TranscriptWriter
 
+
 def configure_writers(
     write_config: TranscriptWriterConfig,
     output_formats: List[str],
@@ -31,10 +32,6 @@ def configure_writers(
         from .json import JsonTranscriptWriter
 
         multi_writer.add_writer(JsonTranscriptWriter(config=write_config))
-    if "json_dlm" in output_formats:
-        from .json_dlm import JsonDiarizationLMTranscriptWriter
-
-        multi_writer.add_writer(JsonDiarizationLMTranscriptWriter(config=write_config))
     if "stdout" in output_formats and "stdout-nocolor" not in output_formats:
         from .stdout import StdoutTranscriptWriter
 

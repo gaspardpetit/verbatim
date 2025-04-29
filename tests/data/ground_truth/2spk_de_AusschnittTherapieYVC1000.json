@@ -1,0 +1,84 @@
+{
+  "utterances": [
+    {
+      "id": "utt2",
+      "start": 0.774,
+      "end": 2.914,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Hallo, mein Name ist Linus Sehn."
+    },
+    {
+      "id": "utt7",
+      "start": 3.114,
+      "end": 12.374,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich bin Verhaltenstherapeut in Ausbildung am Otto-Selz-Institut in Mannheim."
+    },
+    {
+      "id": "utt11",
+      "start": 12.594,
+      "end": 14.534,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Ich sitze hier heute mit meinem Patienten."
+    },
+    {
+      "id": "utt16",
+      "start": 15.494,
+      "end": 16.834,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Was hat sie hergebracht?"
+    },
+    {
+      "id": "utt19",
+      "start": 16.934,
+      "end": 17.574,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Maximilian"
+    },
+    {
+      "id": "utt21",
+      "start": 17.574,
+      "end": 20.621,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Vöcklinghaus, ich verhalte mich."
+    },
+    {
+      "id": "utt22",
+      "start": 21.759,
+      "end": 23.349,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Und wie verhalten Sie sich so?"
+    },
+    {
+      "id": "utt23",
+      "start": 26.42,
+      "end": 26.893,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Gut."
+    },
+    {
+      "id": "utt24",
+      "start": 23.649,
+      "end": 28.289,
+      "speaker": "SPEAKER_01",
+      "language": "de",
+      "text": " Entsprechend der Situation."
+    },
+    {
+      "id": "utt25",
+      "start": 28.633,
+      "end": 31.125,
+      "speaker": "SPEAKER_00",
+      "language": "de",
+      "text": " Gut, damit können wir arbeiten."
+    }
+  ]
+}

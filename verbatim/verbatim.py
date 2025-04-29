@@ -1,3 +1,4 @@
+import json
 import logging
 import math
 import os
@@ -5,6 +6,7 @@ import sys
 import traceback
 import wave
 from dataclasses import dataclass, field
+from datetime import datetime
 from io import StringIO
 from typing import Generator, List, Optional, TextIO, Tuple
 
@@ -17,9 +19,10 @@ from .audio.audio import samples_to_seconds
 from .audio.sources.audiosource import AudioSource, AudioStream
 from .config import Config
 from .eval.compare import compute_metrics
+from .eval.find import find_reference_file
 from .models import Models
 from .transcript.format.factory import configure_writers
-from .transcript.format.json import read_utterances
+from .transcript.format.json import read_utterances, read_dlm_utterances
 from .transcript.format.txt import (
     COLORSCHEME_ACKNOWLEDGED,
     COLORSCHEME_UNACKNOWLEDGED,
@@ -37,6 +40,7 @@ from .transcript.format.writer import (
 from .transcript.idprovider import CounterIdProvider, IdProvider
 from .transcript.sentences import SentenceTokenizer, SilenceSentenceTokenizer
 from .transcript.words import Utterance, Word
+from .log import log_transcription
 
 # pylint: disable=unused-import
 from .voices.transcribe.transcribe import APPEND_PUNCTUATIONS, PREPEND_PUNCTUATIONS
@@ -170,6 +174,12 @@ class State:
     def advance_audio_window(self, offset: int):
         if offset <= 0:
             return
+
+        # Ensure window_ts doesn't exceed audio_ts
+        if self.window_ts + offset > self.audio_ts:
+            LOG.warning(f"Attempted to advance window beyond audio position. Capping advancement.")
+            offset = max(0, self.audio_ts - self.window_ts)
+
         LOG.debug(
             f"Shifting rolling window by {offset} samples ({samples_to_seconds(offset)}s) "
             f"to offset {self.window_ts + offset} ({samples_to_seconds(self.window_ts + offset)}s); "
@@ -183,6 +193,11 @@ class State:
         LOG.info(f"Window now has {samples_to_seconds(self.audio_ts - self.window_ts)} seconds of audio.")
 
     def append_audio_to_window(self, audio_chunk: NDArray):
+        # Reset invalid window state if detected
+        if self.window_ts > self.audio_ts:
+            LOG.warning(f"Invalid window state detected (window_ts > audio_ts). Resetting window position.")
+            self.window_ts = self.audio_ts
+
         if audio_chunk.size == 0:
             LOG.warning("Received empty audio chunk, skipping.")
             return
@@ -220,7 +235,7 @@ class Verbatim:
             models = Models(device=config.device, stream=config.stream)
         self.models = models
 
-    def skip_leading_silence(self, max_skip:int, min_speech_duration_ms: int = 500) -> int:
+    def skip_leading_silence(self, max_skip: int, min_speech_duration_ms: int = 500) -> int:
         min_speech_duration_ms = 750
         min_speech_duration_samples = 16000 * min_speech_duration_ms // 1000
         audio_samples = self.state.audio_ts - self.state.window_ts
@@ -324,7 +339,7 @@ class Verbatim:
         return result
 
     @staticmethod
-    def words_to_sentences(word_tokenizer:SentenceTokenizer, window_words: List[Word], id_provider: IdProvider) -> list[Utterance]:
+    def words_to_sentences(word_tokenizer: SentenceTokenizer, window_words: List[Word], id_provider: IdProvider) -> list[Utterance]:
         sentences = []
         if len(window_words) == 0:
             return []
@@ -388,7 +403,7 @@ class Verbatim:
 
         try:
             transcript_words = self.models.transcriber.transcribe(
-                audio=self.state.rolling_window.array[0:self.state.audio_ts - self.state.window_ts],
+                audio=self.state.rolling_window.array[0 : self.state.audio_ts - self.state.window_ts],
                 lang=lang,
                 prompt=whisper_prompt,
                 prefix=prefix_text,
@@ -437,10 +452,10 @@ class Verbatim:
                                 break
                             alt_prefix_text += word.word
                         alt_whisper_prompt = (
-                            self.config.whisper_prompts[test_lang] if test_lang in self.config.whisper_prompts
-                            else self.config.whisper_prompts["en"])
+                            self.config.whisper_prompts[test_lang] if test_lang in self.config.whisper_prompts else self.config.whisper_prompts["en"]
+                        )
                         alt_transcript_words = self.models.transcriber.transcribe(
-                            audio=self.state.rolling_window.array[0:self.state.audio_ts - self.state.window_ts],
+                            audio=self.state.rolling_window.array[0 : self.state.audio_ts - self.state.window_ts],
                             lang=test_lang,
                             prompt=alt_whisper_prompt,
                             prefix=alt_prefix_text,
@@ -461,7 +476,6 @@ class Verbatim:
                                     best_lang = test_lang
                 lang = best_lang
                 transcript_words = best_transcript
-
 
         self.state.transcript_candidate_history.advance(self.state.window_ts)
         confirmed_words = self.state.transcript_candidate_history.confirm(
@@ -510,8 +524,8 @@ class Verbatim:
             speaker_style=SpeakerStyle.always,
             timestamp_style=TimestampStyle.range,
             probability_style=ProbabilityStyle.word,
-            language_style=LanguageStyle.always
-            )
+            language_style=LanguageStyle.always,
+        )
         file.write(
             f"[{samples_to_seconds(self.state.window_ts)}/"
             f"{samples_to_seconds(self.state.audio_ts - self.state.acknowledged_ts)}/"
@@ -646,10 +660,7 @@ class Verbatim:
 
         return None
 
-    def process_audio_window(
-        self, audio_stream: AudioStream
-    ) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
-
+    def process_audio_window(self, audio_stream: AudioStream) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
         while True:
             # minimum number of samples to attempt transcription
             min_audio_duration_samples = 16000
@@ -663,7 +674,7 @@ class Verbatim:
                     next_ts = min(next_ts, self.state.unacknowledged_utterances[0].start_ts)
                 if len(self.state.unconfirmed_words) > 0:
                     next_ts = min(next_ts, self.state.unconfirmed_words[0].start_ts)
-                self.skip_leading_silence(min_speech_duration_ms=min_speech_duration_ms, max_skip=next_ts-self.state.window_ts)
+                self.skip_leading_silence(min_speech_duration_ms=min_speech_duration_ms, max_skip=next_ts - self.state.window_ts)
                 if self.state.audio_ts - self.state.window_ts < min_audio_duration_samples:
                     # we skipped all available audio - keep skipping silences and do nothing else for now
                     self.state.skip_silences = True
@@ -686,7 +697,8 @@ class Verbatim:
                 window_duration = samples_to_seconds(self.state.audio_ts - self.state.window_ts)
                 if window_duration > 25 and len(utterances) == 1:
                     utterances = self.words_to_sentences(
-                        word_tokenizer=SilenceSentenceTokenizer(), window_words=confirmed_words, id_provider=self.state.utterance_id)
+                        word_tokenizer=SilenceSentenceTokenizer(), window_words=confirmed_words, id_provider=self.state.utterance_id
+                    )
 
                 acknowledged_utterances, confirmed_utterances = self.acknowledge_utterances(utterances=utterances)
 
@@ -753,11 +765,7 @@ class Verbatim:
         self.state.append_audio_to_window(audio_array)
         return True
 
-    def flush_overflowing_utterances(
-            self,
-            diarization:Optional[Annotation]
-            ) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
-
+    def flush_overflowing_utterances(self, diarization: Optional[Annotation]) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
         # As the attention window advances, we may not be able to acknowledge
         # all utterances and words; When they fall behind, the best we can do
         # is return them as acknowledge.
@@ -829,7 +837,7 @@ class Verbatim:
                 yield from self.flush_overflowing_utterances(diarization=audio_stream.diarization)
 
                 # attempt to acknowledge new utterances from current window
-                for (utterance, unacknowmedged, unconfirmed) in self.process_audio_window(audio_stream=audio_stream):
+                for utterance, unacknowmedged, unconfirmed in self.process_audio_window(audio_stream=audio_stream):
                     had_utterances = True
                     yield utterance, unacknowmedged, unconfirmed
 
@@ -855,15 +863,24 @@ class Verbatim:
                 unconfirmed_utterance.speaker = self.assign_speaker(unconfirmed_utterance, audio_stream.diarization)
                 yield unconfirmed_utterance, [], []
 
-def execute(*,
-    config:Config,
-    source_path:str,
-    audio_sources:List[AudioSource],
-    write_config:TranscriptWriterConfig,
-    output_formats:List[str],
-    output_prefix_no_ext:str,
-    working_prefix_no_ext:str,
-    eval_file:Optional[str]):
+
+def execute(
+    *,
+    config: Config,
+    source_path: str,
+    audio_sources: List[AudioSource],
+    write_config: TranscriptWriterConfig,
+    output_formats: List[str],
+    output_prefix_no_ext: str,
+    working_prefix_no_ext: str,
+    eval_file: Optional[str],
+    languages: Optional[List[str]],
+    diarization_strategy: Optional[str],
+    num_speakers: Optional[int],
+):
+    # Record the start time
+    start_time = datetime.now()
+    LOG.info(f"Starting transcription at {start_time.isoformat()}")
 
     all_utterances: List[Utterance] = []
     transcriber = Verbatim(config)
@@ -896,8 +913,48 @@ def execute(*,
             writer.write(utterance=sorted_utterance)
         writer.close()
 
-    if eval_file:
-        sorted_utterances:List[Utterance] = sorted(all_utterances, key=lambda x: x.start_ts)
-        ref_utterances:List[Utterance] = read_utterances(eval_file)
-        metrics = compute_metrics(sorted_utterances, ref_utterances)
-        print(metrics)
+    # Record end time
+    end_time = datetime.now()
+    LOG.info(f"Finished transcription at {end_time.isoformat()}")
+    LOG.info(f"Total transcription time: {(end_time - start_time).total_seconds()} seconds")
+
+    metrics = None
+    # Check if eval_file is True (flag used without a path) or has an actual path
+    if eval_file is not None:
+        sorted_utterances: List[Utterance] = sorted(all_utterances, key=lambda x: x.start_ts)
+
+        # If eval_file is an empty string (flag without value), try to find a matching reference file
+        if eval_file == "":
+            eval_file = find_reference_file(source_path)
+            if not eval_file:
+                LOG.warning("No reference file found, skipping evaluation")
+
+        if eval_file:
+            # Detect the JSON format and read reference utterances appropriately
+            try:
+                with open(eval_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    # Check for a simple reference format by looking for ref_text in the first utterance
+                    if data.get("utterances") and "ref_text" in data["utterances"][0]:
+                        LOG.info(f"Detected reference format JSON in {eval_file}")
+                        ref_utterances = read_dlm_utterances(eval_file)
+                    else:
+                        LOG.info(f"Detected standard format JSON in {eval_file}")
+                        ref_utterances = read_utterances(eval_file)
+            except (json.JSONDecodeError, KeyError, IndexError) as e:
+                LOG.warning(f"Error detecting JSON format: {e}. Falling back to standard format.")
+                ref_utterances = read_utterances(eval_file)
+            metrics = compute_metrics(sorted_utterances, ref_utterances)
+            print(metrics)
+
+    # Log the transcription details
+    log_transcription(
+        source_path=source_path,
+        output_prefix_no_ext=output_prefix_no_ext,
+        start_time=start_time,
+        end_time=end_time,
+        languages=languages,
+        diarization_strategy=diarization_strategy,
+        num_speakers=num_speakers,
+        metrics=metrics,
+    )

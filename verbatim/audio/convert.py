@@ -1,10 +1,7 @@
 import os
 
-def convert_to_wav(
-        input_path: str,
-        working_prefix_no_ext: str,
-        preserve_channels: bool = False,
-        overwrite = True) -> str:
+
+def convert_to_wav(input_path: str, working_prefix_no_ext: str, preserve_channels: bool = False, overwrite=True) -> str:
     # pylint: disable=import-outside-toplevel
     from .sources.ffmpegfileaudiosource import PyAVAudioSource
     from .sources.wavsink import WavSink

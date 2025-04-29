@@ -177,7 +177,8 @@ cython_debug/
 out/
 
 # For private audio samples
-samples/private
+audio/private
+tests/data/ground_truth/private
 
 # Mac OS X
 .DS_Store

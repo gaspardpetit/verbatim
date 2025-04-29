@@ -7,6 +7,7 @@ from ...audio.sources.audiosource import AudioSource
 # Configure logger
 LOG = logging.getLogger(__name__)
 
+
 class SeparationStrategy(ABC):
     def __init__(self):
         pass

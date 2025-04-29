@@ -82,9 +82,15 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "furo>=2024.8.6",
+    "myst-parser>=3.0.1",
     "pylint>=3.3.3",
     "pytest>=8.3.4",
     "ruff>=0.8.6",
+    "sphinx-code-include>=2.0.0",
+    "sphinx-copybutton>=0.5.2",
+    "sphinx-design>=0.6.1",
+    "sphinx-favicon>=1.0.1",
 ]
 
 [project.optional-dependencies]
