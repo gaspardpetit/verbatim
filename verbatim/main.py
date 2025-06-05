@@ -77,12 +77,39 @@ def main():
         help="Enable stdout output without colors")
     parser.add_argument("--format-timestamp", type=lambda s: TimestampStyle[s], choices=list(TimestampStyle), default=TimestampStyle.minute,
         help="Set the timestamp format: 'none' for no timestamps, 'start' for start time, 'range' for start and end times")
-    parser.add_argument("--format-speaker", type=lambda s: SpeakerStyle[s], choices=list(SpeakerStyle), default=SpeakerStyle.change,
-        help="Set the timestamp format: 'none' for no timestamps, 'start' for start time, 'range' for start and end times")
-    parser.add_argument("--format-probability", type=lambda s: ProbabilityStyle[s], choices=list(ProbabilityStyle), default=ProbabilityStyle.line,
-        help="Set the timestamp format: 'none' for no timestamps, 'start' for start time, 'range' for start and end times")
-    parser.add_argument("--format-language", type=lambda s: LanguageStyle[s], choices=list(LanguageStyle), default=LanguageStyle.change,
-        help="Set the timestamp format: 'none' for no timestamps, 'start' for start time, 'range' for start and end times")
+    parser.add_argument(
+        "--format-speaker",
+        type=lambda s: SpeakerStyle[s],
+        choices=list(SpeakerStyle),
+        default=SpeakerStyle.change,
+        help=(
+            "Set the speaker format: 'none' for no speaker tags, "
+            "'change' to show the speaker only when it changes, "
+            "'always' to prefix every line with the speaker"
+        ),
+    )
+    parser.add_argument(
+        "--format-probability",
+        type=lambda s: ProbabilityStyle[s],
+        choices=list(ProbabilityStyle),
+        default=ProbabilityStyle.line,
+        help=(
+            "Set the probability format: choose between 'line' or 'word' "
+            "styles with optional thresholds (none, line, line_75, line_50, "
+            "line_25, word, word_75, word_50, word_25)"
+        ),
+    )
+    parser.add_argument(
+        "--format-language",
+        type=lambda s: LanguageStyle[s],
+        choices=list(LanguageStyle),
+        default=LanguageStyle.change,
+        help=(
+            "Set the language format: 'none' for no language tags, "
+            "'change' to display language when it changes, "
+            "'always' to show language on each line"
+        ),
+    )
     parser.add_argument("-e", "--eval", nargs="?", default=None,
         help="Path to reference json file")
 
