@@ -1,3 +1,4 @@
+import json
 import logging
 import math
 import os
@@ -5,6 +6,7 @@ import sys
 import traceback
 import wave
 from dataclasses import dataclass, field
+from datetime import datetime
 from io import StringIO
 from typing import Generator, List, Optional, TextIO, Tuple
 
@@ -17,9 +19,10 @@ from .audio.audio import samples_to_seconds
 from .audio.sources.audiosource import AudioSource, AudioStream
 from .config import Config
 from .eval.compare import compute_metrics
+from .eval.find import find_reference_file
 from .models import Models
 from .transcript.format.factory import configure_writers
-from .transcript.format.json import read_utterances
+from .transcript.format.json import read_utterances, read_dlm_utterances
 from .transcript.format.txt import (
     COLORSCHEME_ACKNOWLEDGED,
     COLORSCHEME_UNACKNOWLEDGED,
@@ -37,6 +40,7 @@ from .transcript.format.writer import (
 from .transcript.idprovider import CounterIdProvider, IdProvider
 from .transcript.sentences import SentenceTokenizer, SilenceSentenceTokenizer
 from .transcript.words import Utterance, Word
+from .log import log_transcription
 
 # pylint: disable=unused-import
 from .voices.transcribe.transcribe import APPEND_PUNCTUATIONS, PREPEND_PUNCTUATIONS
@@ -170,6 +174,12 @@ class State:
     def advance_audio_window(self, offset: int):
         if offset <= 0:
             return
+
+        # Ensure window_ts doesn't exceed audio_ts
+        if self.window_ts + offset > self.audio_ts:
+            LOG.warning("Attempted to advance window beyond audio position. Capping advancement.")
+            offset = max(0, self.audio_ts - self.window_ts)
+
         LOG.debug(
             f"Shifting rolling window by {offset} samples ({samples_to_seconds(offset)}s) "
             f"to offset {self.window_ts + offset} ({samples_to_seconds(self.window_ts + offset)}s); "
@@ -183,6 +193,11 @@ class State:
         LOG.info(f"Window now has {samples_to_seconds(self.audio_ts - self.window_ts)} seconds of audio.")
 
     def append_audio_to_window(self, audio_chunk: NDArray):
+        # Reset invalid window state if detected
+        if self.window_ts > self.audio_ts:
+            LOG.warning("Invalid window state detected (window_ts > audio_ts). Resetting window position.")
+            self.window_ts = self.audio_ts
+
         if audio_chunk.size == 0:
             LOG.warning("Received empty audio chunk, skipping.")
             return
@@ -664,6 +679,9 @@ class Verbatim:
                 if len(self.state.unconfirmed_words) > 0:
                     next_ts = min(next_ts, self.state.unconfirmed_words[0].start_ts)
                 self.skip_leading_silence(min_speech_duration_ms=min_speech_duration_ms, max_skip=next_ts-self.state.window_ts)
+                for _utterance, _ack, _unc in self.flush_overflowing_utterances(diarization=audio_stream.diarization):
+                    # words confirmed while skipping are considered to be noise
+                    LOG.info(f"Skipping silence resulted in the following words to be dropped: {''.join(w.word for w in _utterance.words)}")
                 if self.state.audio_ts - self.state.window_ts < min_audio_duration_samples:
                     # we skipped all available audio - keep skipping silences and do nothing else for now
                     self.state.skip_silences = True
@@ -855,15 +873,24 @@ class Verbatim:
                 unconfirmed_utterance.speaker = self.assign_speaker(unconfirmed_utterance, audio_stream.diarization)
                 yield unconfirmed_utterance, [], []
 
-def execute(*,
-    config:Config,
-    source_path:str,
-    audio_sources:List[AudioSource],
-    write_config:TranscriptWriterConfig,
-    output_formats:List[str],
-    output_prefix_no_ext:str,
-    working_prefix_no_ext:str,
-    eval_file:Optional[str]):
+
+def execute(
+    *,
+    config: Config,
+    source_path: str,
+    audio_sources: List[AudioSource],
+    write_config: TranscriptWriterConfig,
+    output_formats: List[str],
+    output_prefix_no_ext: str,
+    working_prefix_no_ext: str,
+    eval_file: Optional[str],
+    languages: Optional[List[str]],
+    diarization_strategy: Optional[str],
+    num_speakers: Optional[int],
+):
+    # Record the start time
+    start_time = datetime.now()
+    LOG.info(f"Starting transcription at {start_time.isoformat()}")
 
     all_utterances: List[Utterance] = []
     transcriber = Verbatim(config)
@@ -896,8 +923,48 @@ def execute(*,
             writer.write(utterance=sorted_utterance)
         writer.close()
 
-    if eval_file:
-        sorted_utterances:List[Utterance] = sorted(all_utterances, key=lambda x: x.start_ts)
-        ref_utterances:List[Utterance] = read_utterances(eval_file)
-        metrics = compute_metrics(sorted_utterances, ref_utterances)
-        print(metrics)
+    # Record end time
+    end_time = datetime.now()
+    LOG.info(f"Finished transcription at {end_time.isoformat()}")
+    LOG.info(f"Total transcription time: {(end_time - start_time).total_seconds()} seconds")
+
+    metrics = None
+    # Check if eval_file is True (flag used without a path) or has an actual path
+    if eval_file is not None:
+        sorted_utterances: List[Utterance] = sorted(all_utterances, key=lambda x: x.start_ts)
+
+        # If eval_file is an empty string (flag without value), try to find a matching reference file
+        if eval_file == "":
+            eval_file = find_reference_file(source_path)
+            if not eval_file:
+                LOG.warning("No reference file found, skipping evaluation")
+
+        if eval_file:
+            # Detect the JSON format and read reference utterances appropriately
+            try:
+                with open(eval_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    # Check for a simple reference format by looking for ref_text in the first utterance
+                    if data.get("utterances") and "ref_text" in data["utterances"][0]:
+                        LOG.info(f"Detected reference format JSON in {eval_file}")
+                        ref_utterances = read_dlm_utterances(eval_file)
+                    else:
+                        LOG.info(f"Detected standard format JSON in {eval_file}")
+                        ref_utterances = read_utterances(eval_file)
+            except (json.JSONDecodeError, KeyError, IndexError) as e:
+                LOG.warning(f"Error detecting JSON format: {e}. Falling back to standard format.")
+                ref_utterances = read_utterances(eval_file)
+            metrics = compute_metrics(sorted_utterances, ref_utterances)
+            print(metrics)
+
+    # Log the transcription details
+    log_transcription(
+        source_path=source_path,
+        output_prefix_no_ext=output_prefix_no_ext,
+        start_time=start_time,
+        end_time=end_time,
+        languages=languages,
+        diarization_strategy=diarization_strategy,
+        num_speakers=num_speakers,
+        metrics=metrics,
+    )
