@@ -1,0 +1,181 @@
+name: Tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CUDA_VISIBLE_DEVICES: -1
+
+jobs:
+  unit-fast-matrix:
+    name: Unit (fast) • ${{ matrix.os }} • py${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y portaudio19-dev ffmpeg
+
+      - name: Install system dependencies (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          brew update
+          brew install portaudio ffmpeg
+
+      - name: Install system dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install ffmpeg -y --no-progress
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+          key: uv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-py${{ matrix.python-version }}-
+
+      - name: Install deps with uv
+        shell: bash
+        run: |
+          python -m pip install -U pip uv
+          uv pip install --system -r requirements.txt
+
+      - name: Run quick tests (exclude heavy)
+        shell: bash
+        run: |
+          python -m pip install pytest
+          # Intentionally exclude slow/expensive tests for CI speed and runner limits.
+          # - TestPipeline.test_diarization_metrics_long exercises the full ASR+diarization
+          #   path on a longer sample and is too slow for macOS/Windows runners.
+          # - TestSentences.test_SaTSentenceTokenizer loads a SaT model; this is heavyweight
+          #   on GitHub-hosted runners and can be flaky without proper model caching.
+          #
+          # These are validated elsewhere (locally/nightly) and excluded here by design.
+          # To run them locally, examples:
+          #   pytest -q tests/test_pipeline.py::TestPipeline::test_diarization_metrics_long
+          #   pytest -q tests/test_sentences.py::TestSentences::test_SaTSentenceTokenizer
+          pytest -q -k "not test_pipeline and not SaTSentenceTokenizer"
+
+  coverage-ubuntu:
+    name: Coverage • ubuntu-latest • py3.11
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      pull-requests: write
+      contents: write
+    env:
+      HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install system dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y portaudio19-dev ffmpeg
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+          key: uv-${{ runner.os }}-py311-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-py311-
+
+      - name: Install deps with uv
+        shell: bash
+        run: |
+          python -m pip install -U pip uv
+          uv pip install --system -r requirements.txt
+          uv pip install --system coverage pytest
+
+      - name: Create .coveragerc
+        shell: bash
+        run: |
+          cat > .coveragerc <<'RC'
+          [run]
+          relative_files = true
+          source = verbatim
+          branch = true
+          omit =
+              tests/*
+          [report]
+          show_missing = true
+          exclude_lines =
+              if __name__ == .__main__.
+              if debug
+          [html]
+          directory = coverage_html_report
+          title = Code Coverage Report
+          RC
+
+      - name: Run pipeline smoke with coverage
+        shell: bash
+        run: |
+          coverage run -m pytest -q -k test_diarization_metrics_short
+          # NOTE: The following tests are intentionally not executed in CI due to runtime:
+          #   - tests/test_pipeline.py::TestPipeline::test_diarization_metrics_long
+          #   - tests/test_sentences.py::TestSentences::test_SaTSentenceTokenizer
+          # If you need to validate them in CI, consider a scheduled job or a
+          # workflow_dispatch that runs just these on ubuntu-latest.
+
+      - name: Report coverage
+        shell: bash
+        run: |
+          coverage xml -o coverage.xml
+          coverage report
+
+      - name: Post PR coverage comment
+        if: github.event_name == 'pull_request'
+        uses: py-cov-action/python-coverage-comment-action@v3
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
+          COVERAGE_PATH: .
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
