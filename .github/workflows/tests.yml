@@ -43,21 +43,22 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install system dependencies (Linux)
+      - name: Install ffmpeg + PortAudio (Linux)
         if: runner.os == 'Linux'
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y portaudio19-dev ffmpeg
+          sudo apt-get install -y --no-install-recommends ffmpeg portaudio19-dev
 
-      - name: Install system dependencies (macOS)
+      - name: Install ffmpeg + PortAudio (macOS)
         if: runner.os == 'macOS'
         shell: bash
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
         run: |
-          brew update
           brew install portaudio ffmpeg
 
-      - name: Install system dependencies (Windows)
+      - name: Install ffmpeg (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
@@ -76,6 +77,18 @@ jobs:
           key: uv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
           restore-keys: |
             uv-${{ runner.os }}-py${{ matrix.python-version }}-
+
+      - name: Cache model weights
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/ctranslate2
+            ~/.cache/whisper
+          key: modelcache-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            modelcache-${{ runner.os }}-py${{ matrix.python-version }}-
+            modelcache-${{ runner.os }}-
 
       - name: Install deps with uv
         shell: bash
@@ -116,11 +129,11 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install system dependencies
+      - name: Install system dependencies (Linux)
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y portaudio19-dev ffmpeg
+          sudo apt-get install -y --no-install-recommends ffmpeg portaudio19-dev
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -135,6 +148,18 @@ jobs:
           key: uv-${{ runner.os }}-py311-${{ hashFiles('uv.lock') }}
           restore-keys: |
             uv-${{ runner.os }}-py311-
+
+      - name: Cache model weights
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/ctranslate2
+            ~/.cache/whisper
+          key: modelcache-${{ runner.os }}-py311-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            modelcache-${{ runner.os }}-py311-
+            modelcache-${{ runner.os }}-
 
       - name: Install deps with uv
         shell: bash
