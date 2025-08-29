@@ -43,25 +43,8 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Install system dependencies (Linux)
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y portaudio19-dev ffmpeg
-
-      - name: Install system dependencies (macOS)
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          brew update
-          brew install portaudio ffmpeg
-
-      - name: Install system dependencies (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          choco install ffmpeg -y --no-progress
+      - name: Setup ffmpeg (all platforms)
+        uses: FedericoCarboni/setup-ffmpeg@v2
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -191,3 +174,25 @@ jobs:
         with:
           name: coverage-xml
           path: coverage.xml
+      - name: Cache model weights
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/ctranslate2
+            ~/.cache/whisper
+          key: modelcache-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            modelcache-${{ runner.os }}-py${{ matrix.python-version }}-
+            modelcache-${{ runner.os }}-
+      - name: Cache model weights
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/ctranslate2
+            ~/.cache/whisper
+          key: modelcache-${{ runner.os }}-py311-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            modelcache-${{ runner.os }}-py311-
+            modelcache-${{ runner.os }}-
