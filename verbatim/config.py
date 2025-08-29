@@ -163,6 +163,8 @@ class Config:
     whisper_best_of: int = -1
     whisper_patience: float = -1
     whisper_temperatures: List[float] = field(default_factory=list)
+    # Whisper model size/path used by transcribers; default matches production
+    whisper_model_size: str = "large-v3"
 
     # OUTPUT
     working_dir: str = field(default_factory=get_default_working_directory)

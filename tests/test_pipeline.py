@@ -29,6 +29,8 @@ class TestPipeline(unittest.TestCase):
 
         # Run verbatim pipeline
         config: Config = Config(device="cpu").configure_languages(["en"])
+        # Use a tiny model in CI/tests for speed
+        config.whisper_model_size = "tiny"
         audio_source: AudioSource = create_audio_source(input_source=test_file, device=config.device)
         verbatim: Verbatim = Verbatim(config=config)
 
@@ -76,6 +78,8 @@ class TestPipeline(unittest.TestCase):
 
         # Run verbatim pipeline
         config: Config = Config(device="cpu").configure_languages(["fr", "en"])
+        # Use a tiny model in CI/tests for speed
+        config.whisper_model_size = "tiny"
         source_config = SourceConfig(diarize=2)
         audio_source: AudioSource = create_audio_source(input_source=test_file, device=config.device, source_config=source_config)
         verbatim: Verbatim = Verbatim(config=config)

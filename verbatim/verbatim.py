@@ -217,7 +217,7 @@ class Verbatim:
         self.config = config
         self.state = State(config)
         if models is None:
-            models = Models(device=config.device, stream=config.stream)
+            models = Models(device=config.device, whisper_model_size=config.whisper_model_size, stream=config.stream)
         self.models = models
 
     def skip_leading_silence(self, max_skip:int, min_speech_duration_ms: int = 500) -> int:
