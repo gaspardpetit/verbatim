@@ -79,7 +79,9 @@ jobs:
           python -m pip install pytest
           # Intentionally exclude slow/expensive tests for CI speed and runner limits.
           # - TestPipeline.test_diarization_metrics_long exercises the full ASR+diarization
-          #   path on a longer sample and is too slow for macOS/Windows runners.
+          #   path on a longer sample and is too slow for macOS/Windows runners. We still
+          #   run TestPipeline.test_diarization_metrics_short to keep a pipeline smoke test
+          #   on all OSes.
           # - TestSentences.test_SaTSentenceTokenizer loads a SaT model; this is heavyweight
           #   on GitHub-hosted runners and can be flaky without proper model caching.
           #
@@ -87,7 +89,7 @@ jobs:
           # To run them locally, examples:
           #   pytest -q tests/test_pipeline.py::TestPipeline::test_diarization_metrics_long
           #   pytest -q tests/test_sentences.py::TestSentences::test_SaTSentenceTokenizer
-          pytest -q -k "not test_pipeline and not SaTSentenceTokenizer"
+          pytest -q -k "not test_diarization_metrics_long and not SaTSentenceTokenizer"
 
   coverage-ubuntu:
     name: Coverage • ubuntu-latest • py3.11
