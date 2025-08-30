@@ -19,6 +19,12 @@ sec:
 fmt:
 	ruff format .
 
+# Auto-fix with Ruff (format + quick fixes)
+.PHONY: fix
+fix:
+	ruff format .
+	ruff check --fix verbatim tests
+
 # Run test suite (quick)
 .PHONY: test
 test:
