@@ -1,78 +1,48 @@
-###############################################
-# Builder stage: build the wheel from source  #
-###############################################
-FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04 AS builder
+FROM nvidia/cuda:12.8.1-runtime-ubuntu22.04
 
-ENV DEBIAN_FRONTEND=noninteractive
 ARG VERSION=0.0.0
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      python3.11 \
-      python3.11-venv \
-      python3-pip \
-      ffmpeg \
-      portaudio19-dev \
-      git && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
-    python -m pip install --upgrade pip build
-
-WORKDIR /src
-
-COPY pyproject.toml README.md ./
-COPY verbatim verbatim
-COPY .git .git
-
-# Ensure a clean, PEP 440 compliant version is used in the wheel
-ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VERBATIM=${VERSION}
-ENV SETUPTOOLS_SCM_LOCAL_SCHEME=no-local-version
-
-RUN python -m build --wheel
-
-###############################################
-# Runtime stage: install runtime deps + wheel #
-###############################################
-FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04 AS runtime
-
-ARG HUGGINGFACE_TOKEN
-ARG VERSION
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    VERBATIM_VERSION=${VERSION}
+    VERBATIM_VERSION=${VERSION} \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-LABEL org.opencontainers.image.version=${VERSION}
+LABEL org.opencontainers.image.version=${VERBATIM_VERSION}
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      python3.11 \
-      python3.11-venv \
-      python3-pip \
-      ffmpeg \
-      portaudio19-dev \
-      build-essential \
-      python3-dev && \
-    rm -rf /var/lib/apt/lists/*
+# Build-time deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3.11 python3.11-venv python3.11-dev python3-pip \
+      build-essential pkg-config \
+      portaudio19-dev ffmpeg \
+      ca-certificates curl git \
+ && rm -rf /var/lib/apt/lists/*
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
-    python -m pip install --upgrade pip==24.3.1 && \
-    pip install --no-cache-dir --upgrade setuptools wheel && \
-    pip install --no-cache-dir cython==3.0.10 pybind11
+# 3.11 toolchain
+RUN python3.11 -m pip install --upgrade pip uv setuptools wheel build \
+ && python3.11 -m pip install --no-cache-dir cython==3.0.10 pybind11
 
-# Install core GPU wheels directly to avoid building sdists in CI
-# (versions aligned with requirements-gpu.txt pins for Python >=3.10)
-RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cu124 \
-      torch==2.8.0 torchaudio==2.8.0 onnxruntime-gpu==1.22.0
+WORKDIR /src
+COPY pyproject.toml uv.lock README.md ./
+COPY verbatim verbatim
 
-# Install built wheel
-COPY --from=builder /src/dist/*.whl /tmp/
-RUN pip install --no-cache-dir --no-build-isolation /tmp/*.whl && rm -f /tmp/*.whl
+# Ensure a clean, PEP 440-compliant version (no VCS needed)
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=${VERBATIM_VERSION} \
+    SETUPTOOLS_SCM_LOCAL_SCHEME=no-local-version
+
+# Install package with the CUDA extra
+RUN python3.11 -m uv pip install --system .[cuda_gpu]
+
+# Make sure runtime libs are avaible
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libportaudio2 libsndfile1 \
+    && rm -rf /var/lib/apt/lists/* /root/.cache
 
 WORKDIR /app
-
-# Optional warm-up to download models (requires HUGGINGFACE_TOKEN)
 COPY tests/data/init.mp3 /app/init.mp3
-RUN HUGGINGFACE_TOKEN=$HUGGINGFACE_TOKEN verbatim /app/init.mp3 --diarize --isolate -vv || true
 
+# Warm-up without leaking the token into layers (requires BuildKit)
+# docker build --secret id=hf_token,env=HUGGINGFACE_TOKEN ...
+RUN --mount=type=secret,id=hf_token \
+    HUGGINGFACE_TOKEN="$(cat /run/secrets/hf_token || true)" \
+    verbatim /app/init.mp3 --diarize --isolate -vv || true

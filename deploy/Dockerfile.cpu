@@ -1,73 +1,48 @@
-###############################################
-# CPU Builder stage                           #
-###############################################
-FROM python:3.11-slim AS builder
+FROM python:3.11-slim
 
-ENV DEBIAN_FRONTEND=noninteractive
-ARG VERSION=0.0.0
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      ffmpeg \
-      portaudio19-dev \
-      build-essential \
-      git && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN python -m pip install --upgrade pip build
-
-WORKDIR /src
-
-COPY pyproject.toml README.md ./
-COPY verbatim verbatim
-# Provide VCS metadata so hatch-vcs/setuptools-scm can resolve the version
-# Include VCS metadata so version can be derived from tags
-COPY .git .git
-
-# Ensure a clean, PEP 440 compliant version is used in the wheel
-ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VERBATIM=${VERSION}
-ENV HATCH_BUILD_VERSION=${VERSION}
-# Remove local "+g..." suffix from version to avoid pip parsing issues
-ENV SETUPTOOLS_SCM_LOCAL_SCHEME=no-local-version
-
-RUN python -m build --wheel -v
-
-###############################################
-# CPU Runtime stage                           #
-###############################################
-FROM python:3.11-slim AS runtime
-
-ARG HUGGINGFACE_TOKEN
 ARG VERSION=0.0.0
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    VERBATIM_VERSION=${VERSION}
+    VERBATIM_VERSION=${VERSION} \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-LABEL org.opencontainers.image.version=${VERSION}
+LABEL org.opencontainers.image.version=${VERBATIM_VERSION}
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      ffmpeg \
-      portaudio19-dev \
-      build-essential \
-      python3-dev && \
-    rm -rf /var/lib/apt/lists/*
+# Build-time deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+#      python python-venv python-dev python3-pip \
+      build-essential pkg-config \
+      portaudio19-dev ffmpeg \
+      ca-certificates curl git \
+ && rm -rf /var/lib/apt/lists/*
 
-# Use a stable pip to avoid packaging regressions with local versions
-RUN python -m pip install --upgrade pip==24.3.1
-RUN pip install --no-cache-dir --upgrade setuptools wheel
-# Toolchain for building some sdists (e.g., diffq)
-RUN pip install --no-cache-dir cython==3.0.10
-RUN pip install --no-cache-dir pybind11
+# 3.11 toolchain
+RUN python -m pip install --upgrade pip uv setuptools wheel build \
+ && python -m pip install --no-cache-dir cython==3.0.10 pybind11
 
-# Install our wheel; allow deps to build using preinstalled toolchain
-COPY --from=builder /src/dist/*.whl /tmp/
-RUN pip install --no-cache-dir --no-build-isolation /tmp/*.whl && rm -f /tmp/*.whl
+WORKDIR /src
+COPY pyproject.toml uv.lock README.md ./
+COPY verbatim verbatim
+
+# Ensure a clean, PEP 440-compliant version (no VCS needed)
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=${VERBATIM_VERSION} \
+    SETUPTOOLS_SCM_LOCAL_SCHEME=no-local-version
+
+# Install package without the CUDA extra
+RUN python -m uv pip install --system .
+
+# Make sure runtime libs are avaible
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libportaudio2 libsndfile1 \
+    && rm -rf /var/lib/apt/lists/* /root/.cache
 
 WORKDIR /app
-
-# Optional warm-up (non-fatal)
 COPY tests/data/init.mp3 /app/init.mp3
-RUN HUGGINGFACE_TOKEN=$HUGGINGFACE_TOKEN verbatim /app/init.mp3 --diarize --isolate -vv || true
 
+# Warm-up without leaking the token into layers (requires BuildKit)
+# docker build --secret id=hf_token,env=HUGGINGFACE_TOKEN ...
+RUN --mount=type=secret,id=hf_token \
+    HUGGINGFACE_TOKEN="$(cat /run/secrets/hf_token || true)" \
+    verbatim /app/init.mp3 --diarize --isolate -vv || true
