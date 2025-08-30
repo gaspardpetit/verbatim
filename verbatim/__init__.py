@@ -25,9 +25,12 @@ logging.getLogger("speechbrain.utils.quirks").setLevel(logging.WARNING)
 try:
     # Prefer version file generated at build time by hatch-vcs
     from ._version import __version__  # type: ignore
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     try:
-        from importlib.metadata import version as _pkg_version  # pyright: ignore[reportMissingImports]
+        from importlib.metadata import (
+            version as _pkg_version,
+            PackageNotFoundError,
+        )  # pyright: ignore[reportMissingImports]
         __version__ = _pkg_version("verbatim")
-    except Exception:
+    except PackageNotFoundError:
         __version__ = "0.0.0-dev"
