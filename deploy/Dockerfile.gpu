@@ -1,0 +1,66 @@
+###############################################
+# Builder stage: build the wheel from source  #
+###############################################
+FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      python3.11 \
+      python3.11-venv \
+      python3-pip \
+      ffmpeg \
+      portaudio19-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
+    python -m pip install --upgrade pip build
+
+WORKDIR /src
+
+COPY pyproject.toml README.md ./
+COPY verbatim verbatim
+
+RUN python -m build --wheel
+
+###############################################
+# Runtime stage: install runtime deps + wheel #
+###############################################
+FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04 AS runtime
+
+ARG HUGGINGFACE_TOKEN
+ARG VERSION
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    VERBATIM_VERSION=${VERSION}
+
+LABEL org.opencontainers.image.version=${VERSION}
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      python3.11 \
+      python3.11-venv \
+      python3-pip \
+      ffmpeg \
+      portaudio19-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
+    python -m pip install --upgrade pip
+
+# Install GPU runtime dependencies
+COPY requirements-gpu.txt /tmp/requirements-gpu.txt
+RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cu121 -r /tmp/requirements-gpu.txt
+
+# Install built wheel
+COPY --from=builder /src/dist/*.whl /tmp/
+RUN pip install --no-cache-dir /tmp/*.whl && rm -f /tmp/*.whl
+
+WORKDIR /app
+
+# Optional warm-up to download models (requires HUGGINGFACE_TOKEN)
+COPY tests/data/init.mp3 /app/init.mp3
+RUN HUGGINGFACE_TOKEN=$HUGGINGFACE_TOKEN verbatim /app/init.mp3 --diarize --isolate -vv || true
+

@@ -1,0 +1,53 @@
+###############################################
+# CPU Builder stage                           #
+###############################################
+FROM python:3.11-slim AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      ffmpeg \
+      portaudio19-dev \
+      build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN python -m pip install --upgrade pip build
+
+WORKDIR /src
+
+COPY pyproject.toml README.md ./
+COPY verbatim verbatim
+
+RUN python -m build --wheel
+
+###############################################
+# CPU Runtime stage                           #
+###############################################
+FROM python:3.11-slim AS runtime
+
+ARG HUGGINGFACE_TOKEN
+ARG VERSION
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    VERBATIM_VERSION=${VERSION}
+
+LABEL org.opencontainers.image.version=${VERSION}
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      ffmpeg \
+      portaudio19-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install the built wheel (pip will resolve CPU dependencies)
+COPY --from=builder /src/dist/*.whl /tmp/
+RUN pip install --no-cache-dir /tmp/*.whl && rm -f /tmp/*.whl
+
+WORKDIR /app
+
+# Optional warm-up (non-fatal)
+COPY tests/data/init.mp3 /app/init.mp3
+RUN HUGGINGFACE_TOKEN=$HUGGINGFACE_TOKEN verbatim /app/init.mp3 --diarize --isolate -vv || true
+
