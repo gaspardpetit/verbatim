@@ -32,9 +32,11 @@ class PyAnnoteDiarization(DiarizationStrategy):
             nb_speakers: Optional number of speakers
         """
         self.initialize_pipeline()
-        assert self.pipeline is not None
+        pipeline = self.pipeline
+        if pipeline is None:
+            raise RuntimeError("PyAnnote pipeline failed to initialize")
         with ProgressHook() as hook:
-            diarization = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
+            diarization = pipeline(file_path, hook=hook, num_speakers=nb_speakers)
 
         if out_rttm_file:
             self.save_rttm(diarization, out_rttm_file)

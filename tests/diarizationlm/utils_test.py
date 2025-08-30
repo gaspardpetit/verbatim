@@ -6,6 +6,7 @@
 
 import os
 import unittest
+from typing import cast, Dict, Any
 import datasets
 
 from verbatim.eval.diarizationlm import utils
@@ -517,8 +518,10 @@ class UtilsTest(unittest.TestCase):
             ]
         }
         result = utils.find_utt_dict("utt2", data_dict)
-        assert result is not None  # satisfy type checker
-        self.assertEqual("good morning", result["hyp_text"])
+        if result is None:
+            self.fail("find_utt_dict returned None for existing utterance id")
+        res = cast(Dict[str, Any], result)
+        self.assertEqual("good morning", res["hyp_text"])
 
     def test_update_hyp_text_in_utt_dict(self):
         utt_dict = {
