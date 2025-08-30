@@ -21,12 +21,13 @@ LOG = logging.getLogger(__name__)
 
 class PyannoteSpeakerSeparation(SeparationStrategy):
     def __init__(
-            self,
-            device: str,
-            huggingface_token: str,
-            separation_model="pyannote/speech-separation-ami-1.0",
-            diarization_strategy: str = "pyannote",
-            **kwargs):
+        self,
+        device: str,
+        huggingface_token: str,
+        separation_model="pyannote/speech-separation-ami-1.0",
+        diarization_strategy: str = "pyannote",
+        **kwargs,
+    ):
         super().__init__()
         LOG.info("Initializing Separation Pipeline.")
         self.diarization_strategy = diarization_strategy
@@ -106,12 +107,12 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
                 file_name = f"{out_speaker_wav_prefix}-{speaker}.wav" if out_speaker_wav_prefix else f"{speaker}.wav"
                 scipy.io.wavfile.write(file_name, sample_rate, channel_data)
                 separated_sources.append(
-                        FileAudioSource(
-                            file=file_name,
-                            start_sample=start_sample,
-                            end_sample=end_sample,
-                            diarization=diarization,
-                        )
+                    FileAudioSource(
+                        file=file_name,
+                        start_sample=start_sample,
+                        end_sample=end_sample,
+                        diarization=diarization,
+                    )
                 )
 
         else:

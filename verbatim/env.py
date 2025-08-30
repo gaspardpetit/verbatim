@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 
 LOG = logging.getLogger(__name__)
 
-def load_env_file(env_path:str=".env") -> bool:
+
+def load_env_file(env_path: str = ".env") -> bool:
     """
     Load environment variables from a .env file using python-dotenv.
 
@@ -27,6 +28,6 @@ def load_env_file(env_path:str=".env") -> bool:
         else:
             LOG.error(f"Failed to load environment variables from '{env_path}'.")
             return False
-    except Exception as e: # pylint: disable=broad-exception-caught
+    except Exception as e:  # pylint: disable=broad-exception-caught
         LOG.exception(f"Error while loading '{env_path}': {e}")
         return False

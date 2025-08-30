@@ -31,6 +31,7 @@ except ImportError:  # pragma: no cover
             version as _pkg_version,
             PackageNotFoundError,
         )  # pyright: ignore[reportMissingImports]
+
         __version__ = _pkg_version("verbatim")
     except PackageNotFoundError:
         __version__ = "0.0.0-dev"

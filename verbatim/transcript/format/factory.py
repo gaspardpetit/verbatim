@@ -2,6 +2,7 @@ from typing import List
 
 from .writer import TranscriptWriterConfig, TranscriptWriter
 
+
 def configure_writers(
     write_config: TranscriptWriterConfig,
     output_formats: List[str],

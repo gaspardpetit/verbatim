@@ -122,21 +122,19 @@ def sec2ass(seconds: float) -> str:
 
 
 def segment2vttblock(segment: dict, strip=True) -> str:
-    return f'{sec2vtt(segment["start"])} --> {sec2vtt(segment["end"])}\n' f'{finalize_text(segment["text"], strip)}'
+    return f"{sec2vtt(segment['start'])} --> {sec2vtt(segment['end'])}\n{finalize_text(segment['text'], strip)}"
 
 
 def segment2srtblock(segment: dict, idx: int, strip=True) -> str:
-    return f'{idx}\n{sec2srt(segment["start"])} --> {sec2srt(segment["end"])}\n' f'{finalize_text(segment["text"], strip)}'
+    return f"{idx}\n{sec2srt(segment['start'])} --> {sec2srt(segment['end'])}\n{finalize_text(segment['text'], strip)}"
 
 
 def segment2assblock(segment: dict, idx: int, strip=True) -> str:
-    return f'Dialogue: {idx},{sec2ass(segment["start"])},{sec2ass(segment["end"])},Default,,0,0,0,,' f'{finalize_text(segment["text"], strip)}'
+    return f"Dialogue: {idx},{sec2ass(segment['start'])},{sec2ass(segment['end'])},Default,,0,0,0,,{finalize_text(segment['text'], strip)}"
 
 
 def segment2tsvblock(segment: dict, strip=True) -> str:
-    return (
-        f'{sec2milliseconds(segment["start"])}' f'\t{sec2milliseconds(segment["end"])}' f'\t{segment["text"].strip() if strip else segment["text"]}'
-    )
+    return f"{sec2milliseconds(segment['start'])}\t{sec2milliseconds(segment['end'])}\t{segment['text'].strip() if strip else segment['text']}"
 
 
 def words2segments(words: List[dict], tag: Tuple[str, str], reverse_text: bool = False) -> List[dict]:
@@ -417,9 +415,9 @@ def result_to_ass(
         if font_size:
             fmt_style_dict.update(Fontsize=font_size)
 
-        fmts = f'Format: {", ".join(map(str, fmt_style_dict.keys()))}'
+        fmts = f"Format: {', '.join(map(str, fmt_style_dict.keys()))}"
 
-        styles = f'Style: {",".join(map(str, fmt_style_dict.values()))}'
+        styles = f"Style: {','.join(map(str, fmt_style_dict.values()))}"
 
         sub_str = (
             f"[Script Info]\nScriptType: v4.00+\nPlayResX: 384\nPlayResY: 288\nScaledBorderAndShadow: yes\n\n"
@@ -462,7 +460,7 @@ def result_to_txt(
     reverse_text: Union[bool, tuple] = False,
 ):
     def segments2blocks(segments: dict, _strip=True) -> str:
-        return "\n".join(f'{segment["text"].strip() if _strip else segment["text"]}' for segment in segments)
+        return "\n".join(f"{segment['text'].strip() if _strip else segment['text']}" for segment in segments)
 
     return result_to_any(
         result=result,

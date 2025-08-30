@@ -24,7 +24,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
             self.pipeline.instantiate({})
             self.pipeline.to(torch.device(self.device))
 
-    def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, nb_speakers:Optional[int] = None, **kwargs) -> Annotation:
+    def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, nb_speakers: Optional[int] = None, **kwargs) -> Annotation:
         """
         Compute diarization using PyAnnote.
 
