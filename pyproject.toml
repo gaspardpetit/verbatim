@@ -118,6 +118,9 @@ enable = true
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
+pythonVersion = "3.11"
+# Keep CI fast: allow unresolved third-party imports without failing.
+reportMissingImports = "warning"
 
 #[tool.uv.sources]
 #torch = [
