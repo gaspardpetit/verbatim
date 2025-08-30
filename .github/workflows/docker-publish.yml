@@ -44,10 +44,12 @@ jobs:
             suffix: ""
             dockerfile: deploy/Dockerfile.cpu
             platforms: linux/amd64,linux/arm64
+            tag_prefix: ""
           - name: gpu
             suffix: "-gpu"
             dockerfile: deploy/Dockerfile.gpu
             platforms: linux/amd64
+            tag_prefix: "gpu-"
 
     steps:
       - name: Checkout repository (with tags)
@@ -121,10 +123,6 @@ jobs:
             type=raw,value=${{ matrix.variant.tag_prefix }}v${{ steps.vermeta.outputs.major }}.${{ steps.vermeta.outputs.minor }},enable=${{ steps.vermeta.outputs.is_clean_release == 'true' }}
             type=raw,value=${{ matrix.variant.tag_prefix }}v${{ steps.vermeta.outputs.major }},enable=${{ steps.vermeta.outputs.is_clean_release == 'true' }}
             type=raw,value=${{ matrix.variant.tag_prefix }}latest,enable=${{ steps.vermeta.outputs.is_clean_release == 'true' }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=ref,event=branch
-            type=sha
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
@@ -143,7 +141,6 @@ jobs:
           build-args: |
             HUGGINGFACE_TOKEN=${{ env.HUGGINGFACE_TOKEN }}
             VERSION=${{ steps.vermeta.outputs.version }}
-            VERSION=${{ steps.meta.outputs.version }}
 
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker
