@@ -5,7 +5,10 @@ __init__.py
 import logging
 import warnings
 
-from matplotlib._api.deprecation import MatplotlibDeprecationWarning
+try:
+    from matplotlib._api.deprecation import MatplotlibDeprecationWarning  # type: ignore
+except ImportError:  # pragma: no cover
+    MatplotlibDeprecationWarning = DeprecationWarning  # type: ignore[misc,assignment]
 
 # see https://github.com/asteroid-team/torch-audiomentations/issues/172
 warnings.filterwarnings("ignore", category=UserWarning, module=r"torch_audiomentations\.utils\.io")
