@@ -22,8 +22,6 @@ env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
-  HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
-
 
 concurrency:
   group: docker-${{ github.ref }}
@@ -89,28 +87,44 @@ jobs:
         id: vermeta
         shell: bash
         run: |
+          set -euo pipefail
           SHA=$(git rev-parse --short HEAD)
           DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+      
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             VERSION="${GITHUB_REF_NAME}"
             DESCRIBE="${GITHUB_REF_NAME}"
+            # strip leading v for python version (e.g. v1.2.3 -> 1.2.3)
+            VERSION_PYTHON="${GITHUB_REF_NAME#v}"
           else
             DESCRIBE="$(git describe --tags --always --dirty)"
             VERSION="${DESCRIBE}"
+            # PEP 440: v1.2.3-4-gHASH[-dirty] => 1.2.3.post4[.dev0]
+            VERSION_PYTHON="$(git describe --tags --always --dirty \
+              | sed -E 's/^v//; s/-([0-9]+)-g[0-9a-f]+(-dirty)?$/.post\1\2/; s/-dirty$/.dev0/')"
           fi
-          echo "version=${VERSION}"   >> $GITHUB_OUTPUT
-          echo "describe=${DESCRIBE}" >> $GITHUB_OUTPUT
-          echo "sha=${SHA}"           >> $GITHUB_OUTPUT
-          echo "date=${DATE}"         >> $GITHUB_OUTPUT
+      
+          # Drop any local version (+foo) if present
+          VERSION_PYTHON="${VERSION_PYTHON%%+*}"
+      
+          echo "version=${VERSION}"           >> "$GITHUB_OUTPUT"
+          echo "version_python=${VERSION_PYTHON}" >> "$GITHUB_OUTPUT"
+          echo "describe=${DESCRIBE}"         >> "$GITHUB_OUTPUT"
+          echo "sha=${SHA}"                   >> "$GITHUB_OUTPUT"
+          echo "date=${DATE}"                 >> "$GITHUB_OUTPUT"
+      
           if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
             MAJOR="${BASH_REMATCH[1]}"; MINOR="${BASH_REMATCH[2]}"; PATCH="${BASH_REMATCH[3]}"
-            echo "major=${MAJOR}" >> $GITHUB_OUTPUT
-            echo "minor=${MINOR}" >> $GITHUB_OUTPUT
-            echo "patch=${PATCH}" >> $GITHUB_OUTPUT
-            echo "is_clean_release=true" >> $GITHUB_OUTPUT
+            echo "major=${MAJOR}" >> "$GITHUB_OUTPUT"
+            echo "minor=${MINOR}" >> "$GITHUB_OUTPUT"
+            echo "patch=${PATCH}" >> "$GITHUB_OUTPUT"
+            echo "is_clean_release=true" >> "$GITHUB_OUTPUT"
           else
-            echo "is_clean_release=false" >> $GITHUB_OUTPUT
+            echo "is_clean_release=false" >> "$GITHUB_OUTPUT"
           fi
+      
+          echo "Computed VERSION_PYTHON=${VERSION_PYTHON}"
+
 
       - name: Extract Docker metadata ( ${{ matrix.variant.name }} )
         id: dmeta
@@ -141,8 +155,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            HUGGINGFACE_TOKEN=${{ env.HUGGINGFACE_TOKEN }}
-            VERSION=${{ steps.vermeta.outputs.version }}
+            VERSION=${{ steps.vermeta.outputs.version_python }}
 
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker
