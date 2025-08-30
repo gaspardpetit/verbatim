@@ -1,12 +1,13 @@
 import logging
-from abc import ABC, abstractmethod
 import math
-from typing import List
 import re
+from abc import ABC, abstractmethod
+from typing import List
+
 from wtpsplit import SaT
 
-from verbatim.transcript.words import Word
 from verbatim.audio.audio import samples_to_seconds
+from verbatim.transcript.words import Word
 
 # Configure logger
 LOG = logging.getLogger(__name__)

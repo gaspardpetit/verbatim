@@ -1,8 +1,9 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
 from numpy.typing import NDArray
+
 from ...transcript.words import Word
 
 LOG = logging.getLogger(__name__)

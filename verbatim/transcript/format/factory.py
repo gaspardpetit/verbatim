@@ -1,6 +1,6 @@
 from typing import List
 
-from .writer import TranscriptWriterConfig, TranscriptWriter
+from .writer import TranscriptWriter, TranscriptWriterConfig
 
 
 def configure_writers(

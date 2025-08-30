@@ -1,5 +1,6 @@
 # verbatim/voices/diarize/factory.py
 from typing import Optional
+
 from .base import DiarizationStrategy
 from .pyannote import PyAnnoteDiarization
 from .stereo import StereoDiarization

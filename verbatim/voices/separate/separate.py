@@ -1,6 +1,6 @@
 import logging
-from typing import List, Optional
 from abc import ABC, abstractmethod
+from typing import List, Optional
 
 from ...audio.sources.audiosource import AudioSource
 

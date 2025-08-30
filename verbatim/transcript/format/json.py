@@ -1,9 +1,9 @@
-import os
 import json
-from typing import TextIO, List, Optional
+import os
+from typing import List, Optional, TextIO
 
-from .writer import TranscriptWriter, TranscriptWriterConfig
 from ..words import Utterance, Word
+from .writer import TranscriptWriter, TranscriptWriterConfig
 
 
 class TranscriptFormatter:

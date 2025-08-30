@@ -4,16 +4,14 @@ from typing import List, Optional
 import numpy as np
 import scipy.io.wavfile
 import torch
-
 from pyannote.audio import Pipeline
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 
-from .separate import SeparationStrategy
-
+from ...audio.audio import wav_to_int16
 from ...audio.sources.audiosource import AudioSource
 from ...audio.sources.fileaudiosource import FileAudioSource
-from ...audio.audio import wav_to_int16
 from ..diarize.factory import create_diarizer
+from .separate import SeparationStrategy
 
 # Configure logger
 LOG = logging.getLogger(__name__)

@@ -1,15 +1,15 @@
 import logging
 from typing import List, Optional
-import scipy.io.wavfile
+
 import numpy as np
+import scipy.io.wavfile
 from pyannote.core.annotation import Annotation
 from pyannote.core.segment import Segment
 
-from .separate import SeparationStrategy
+from ...audio.audio import wav_to_int16
 from ...audio.sources.audiosource import AudioSource
 from ...audio.sources.fileaudiosource import FileAudioSource
-
-from ...audio.audio import wav_to_int16
+from .separate import SeparationStrategy
 
 # Configure logger
 LOG = logging.getLogger(__name__)

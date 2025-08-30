@@ -1,8 +1,8 @@
 import json
-from typing import List, TextIO, Union, Dict, Optional
+from typing import Dict, List, Optional, TextIO, Union
 
-from .writer import TranscriptWriter, TranscriptWriterConfig
 from ..words import Utterance, Word
+from .writer import TranscriptWriter, TranscriptWriterConfig
 
 
 class JsonDiarizationLMTranscriptWriter(TranscriptWriter):

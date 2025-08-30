@@ -164,3 +164,9 @@ explicit = true
 
 line-length = 150
 indent-width = 4
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["verbatim", "tests"]

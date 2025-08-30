@@ -5,13 +5,12 @@ from typing import Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
-
 from pyannote.core.annotation import Annotation
 
-from .audiosource import AudioSource, AudioStream
+from ...voices.isolation import VoiceIsolation
 from ..audio import format_audio, sample_to_timestr
 from ..convert import convert_to_wav
-from ...voices.isolation import VoiceIsolation
+from .audiosource import AudioSource, AudioStream
 
 LOG = logging.getLogger(__name__)
 

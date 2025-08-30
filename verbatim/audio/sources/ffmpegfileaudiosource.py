@@ -1,14 +1,13 @@
-from typing import Optional
 import logging
-
-import numpy as np
-from numpy.typing import NDArray
+from typing import Optional
 
 # pylint: disable=c-extension-no-member
 import av
+import numpy as np
+from numpy.typing import NDArray
 
-from .audiosource import AudioSource, AudioStream
 from ..audio import seconds_to_samples
+from .audiosource import AudioSource, AudioStream
 
 LOG = logging.getLogger(__name__)
 

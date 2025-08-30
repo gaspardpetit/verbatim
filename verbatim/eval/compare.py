@@ -1,7 +1,7 @@
-import logging
-from typing import List, Any
-from dataclasses import dataclass, field
 import dataclasses
+import logging
+from dataclasses import dataclass, field
+from typing import Any, List
 
 import tqdm
 

@@ -1,10 +1,10 @@
 import logging
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 import librosa
 import numpy as np
-from numpy.typing import NDArray
 from audio_separator.separator import Separator
+from numpy.typing import NDArray
 from scipy.io.wavfile import write as wav_write
 
 from ..audio.audio import format_audio

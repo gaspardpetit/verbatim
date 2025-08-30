@@ -6,10 +6,10 @@ from typing import List
 
 from .__init__ import __version__
 from .transcript.format.writer import (
+    LanguageStyle,
+    ProbabilityStyle,
     SpeakerStyle,
     TimestampStyle,
-    ProbabilityStyle,
-    LanguageStyle,
 )
 
 LOG = logging.getLogger(__name__)

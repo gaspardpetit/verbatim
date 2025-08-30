@@ -1,9 +1,9 @@
 import logging
-from typing import List, Tuple, Optional
-
-from numpy.typing import NDArray
+from typing import List, Optional, Tuple
 
 from faster_whisper import WhisperModel
+from numpy.typing import NDArray
+
 from ...audio.audio import samples_to_seconds
 from ...transcript.words import Word
 from .transcribe import Transcriber, WhisperConfig

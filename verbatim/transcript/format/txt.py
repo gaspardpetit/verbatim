@@ -1,21 +1,20 @@
 from dataclasses import dataclass
-from typing import TextIO, List, Optional
+from typing import List, Optional, TextIO
 
 import numpy as np
 from colorama import Fore, Style
 
+from ...voices.diarization import UNKNOWN_SPEAKER
+from ..formatting import format_milliseconds
+from ..words import Utterance, Word
 from .writer import (
-    TranscriptWriter,
-    TranscriptWriterConfig,
+    LanguageStyle,
+    ProbabilityStyle,
     SpeakerStyle,
     TimestampStyle,
-    ProbabilityStyle,
-    LanguageStyle,
+    TranscriptWriter,
+    TranscriptWriterConfig,
 )
-
-from ..formatting import format_milliseconds
-from ...voices.diarization import UNKNOWN_SPEAKER
-from ..words import Utterance, Word
 
 
 @dataclass

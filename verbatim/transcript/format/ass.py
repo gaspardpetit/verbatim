@@ -8,10 +8,10 @@ import logging
 import os
 import warnings
 from itertools import chain
-from typing import List, Tuple, Union, Callable, Optional, Any
+from typing import Any, Callable, List, Optional, Tuple, Union
 
-from .writer import TranscriptWriter, TranscriptWriterConfig
 from ..words import Utterance, Word
+from .writer import TranscriptWriter, TranscriptWriterConfig
 
 LOG = logging.getLogger(__name__)
 

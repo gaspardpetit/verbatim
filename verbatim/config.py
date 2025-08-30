@@ -1,9 +1,9 @@
-from dataclasses import dataclass, field
 import logging
 import os
 import platform
-from typing import List, Optional, Tuple, Mapping
+from dataclasses import dataclass, field
 from types import MappingProxyType
+from typing import List, Mapping, Optional, Tuple
 
 from .audio.sources.audiosource import AudioSource
 

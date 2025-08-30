@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from pyannote.core.annotation import Annotation
 from numpy.typing import NDArray
+from pyannote.core.annotation import Annotation
 
 
 class AudioStream(ABC):

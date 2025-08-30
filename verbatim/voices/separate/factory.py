@@ -1,7 +1,7 @@
 # verbatim/voices/diarize/factory.py
-from .separate import SeparationStrategy
-from .pyannote import PyannoteSpeakerSeparation
 from .channels import ChannelSeparation
+from .pyannote import PyannoteSpeakerSeparation
+from .separate import SeparationStrategy
 
 
 def create_separator(strategy: str = "pyannote", **kwargs) -> SeparationStrategy:

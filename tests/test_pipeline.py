@@ -1,17 +1,18 @@
+import json
 import os
 import sys
-import json
 import unittest
+
 import pytest
 
-from verbatim.config import Config
-from verbatim.verbatim import Verbatim
 from verbatim.audio.sources.audiosource import AudioSource
-from verbatim.audio.sources.sourceconfig import SourceConfig
 from verbatim.audio.sources.factory import create_audio_source
+from verbatim.audio.sources.sourceconfig import SourceConfig
+from verbatim.config import Config
 from verbatim.eval.diarizationlm.metrics import compute_metrics_on_json_dict
-from verbatim.transcript.format.writer import TranscriptWriterConfig
 from verbatim.transcript.format.json_dlm import JsonDiarizationLMTranscriptWriter
+from verbatim.transcript.format.writer import TranscriptWriterConfig
+from verbatim.verbatim import Verbatim
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU

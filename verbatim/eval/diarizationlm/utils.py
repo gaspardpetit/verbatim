@@ -3,17 +3,16 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from collections.abc import Generator, Sequence
 import copy
 import dataclasses
 import json
 import sys
+from collections.abc import Generator, Sequence
 from typing import Any, List, Optional
 
 import numpy as np
-from scipy import optimize
-
 import word_levenshtein as levenshtein
+from scipy import optimize
 
 PUNCTUATIONS = [",", ".", "_", "?", "!", "-", '"', "'"]
 

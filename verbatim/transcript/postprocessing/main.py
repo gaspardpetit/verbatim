@@ -3,9 +3,9 @@ import json
 import logging
 from pathlib import Path
 
+from verbatim.eval.diarizationlm.metrics import calculate_metrics, format_improvements, format_metrics
 from verbatim.transcript.postprocessing.config import Config
 from verbatim.transcript.postprocessing.processor import DiarizationProcessor
-from verbatim.eval.diarizationlm.metrics import calculate_metrics, format_metrics, format_improvements
 
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)

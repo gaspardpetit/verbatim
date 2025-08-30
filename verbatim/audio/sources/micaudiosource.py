@@ -2,13 +2,12 @@ import logging
 import queue
 
 import numpy as np
-from numpy.typing import NDArray
-
 import pyaudio
 import sounddevice as sd
+from numpy.typing import NDArray
 
-from .audiosource import AudioSource, AudioStream
 from ..audio import samples_to_seconds
+from .audiosource import AudioSource, AudioStream
 
 LOG = logging.getLogger(__name__)
 

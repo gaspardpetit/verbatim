@@ -1,4 +1,5 @@
 import sys
+
 from verbatim.main import main
 
 sys.argv = [

@@ -1,7 +1,7 @@
 from typing import List, Optional
 
-from .writer import TranscriptWriter, TranscriptWriterConfig
 from ..words import Utterance, Word
+from .writer import TranscriptWriter, TranscriptWriterConfig
 
 
 class MultiTranscriptWriter(TranscriptWriter):

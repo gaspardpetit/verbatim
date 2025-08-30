@@ -1,6 +1,7 @@
+import logging
 from abc import ABC, abstractmethod
 from typing import Optional
-import logging
+
 from pyannote.core.annotation import Annotation
 
 LOG = logging.getLogger(__name__)

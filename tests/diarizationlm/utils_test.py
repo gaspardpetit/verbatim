@@ -6,7 +6,8 @@
 
 import os
 import unittest
-from typing import cast, Dict, Any
+from typing import Any, Dict, cast
+
 import datasets
 
 from verbatim.eval.diarizationlm import utils

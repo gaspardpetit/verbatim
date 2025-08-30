@@ -1,18 +1,19 @@
-from typing import TextIO, Union, List, Optional
 from enum import Enum
+from typing import List, Optional, TextIO, Union
+
 import numpy as np
 
-from .writer import (
-    TranscriptWriter,
-    TranscriptWriterConfig,
-    SpeakerStyle,
-    TimestampStyle,
-    ProbabilityStyle,
-    LanguageStyle,
-)
+from ...voices.diarization import UNKNOWN_SPEAKER
 from ..formatting import format_milliseconds
 from ..words import Utterance, Word
-from ...voices.diarization import UNKNOWN_SPEAKER
+from .writer import (
+    LanguageStyle,
+    ProbabilityStyle,
+    SpeakerStyle,
+    TimestampStyle,
+    TranscriptWriter,
+    TranscriptWriterConfig,
+)
 
 
 class Style(Enum):

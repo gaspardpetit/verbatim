@@ -1,4 +1,5 @@
 import wave
+
 import numpy as np
 
 from .audiosource import AudioSource

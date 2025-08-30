@@ -1,15 +1,14 @@
 # PS08_verbatim/verbatim/voices/transcribe/whispercpp.py
 
-import sys
 import logging
 import multiprocessing
+import sys
 from typing import List, Tuple, Union
-from numpy.typing import NDArray
 
+from numpy.typing import NDArray
 from pywhispercpp.model import Model, Segment
 
 from ...audio.audio import samples_to_seconds, seconds_to_samples
-
 from ...transcript.words import Word
 from .transcribe import Transcriber
 
