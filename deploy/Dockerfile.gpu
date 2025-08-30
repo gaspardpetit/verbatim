@@ -61,9 +61,11 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 &
     pip install --no-cache-dir --upgrade setuptools wheel && \
     pip install --no-cache-dir cython==3.0.10 pybind11
 
-# Install GPU runtime dependencies
+# Install GPU runtime dependencies (strip editable local reference)
 COPY requirements-gpu.txt /tmp/requirements-gpu.txt
-RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cu121 -r /tmp/requirements-gpu.txt
+RUN sed -e 's/\r$//' /tmp/requirements-gpu.txt | grep -v "^-e \.$" > /tmp/requirements-gpu.clean.txt \
+    && pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cu121 -r /tmp/requirements-gpu.clean.txt \
+    && rm -f /tmp/requirements-gpu.txt /tmp/requirements-gpu.clean.txt
 
 # Install built wheel
 COPY --from=builder /src/dist/*.whl /tmp/
