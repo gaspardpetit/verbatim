@@ -10,6 +10,7 @@ from pyannote.audio.pipelines.utils.hook import ProgressHook
 
 from .separate import SeparationStrategy
 
+from ...audio.sources.audiosource import AudioSource
 from ...audio.sources.fileaudiosource import FileAudioSource
 from ...audio.audio import wav_to_int16
 from ..diarize.factory import create_diarizer
@@ -69,7 +70,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         nb_speakers: Optional[int] = None,
         start_sample: int = 0,
         end_sample: Optional[int] = None,
-    ) -> List[FileAudioSource]:
+    ) -> List[AudioSource]:
         """
         Separate speakers in an audio file.
 
@@ -82,7 +83,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         Returns:
             Tuple of (diarization annotation, dictionary mapping speaker IDs to WAV files)
         """
-        separated_sources: List[FileAudioSource] = []
+        separated_sources: List[AudioSource] = []
         if not out_rttm_file:
             out_rttm_file = "out.rttm"
 

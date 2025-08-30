@@ -15,6 +15,16 @@
 - Local demo: `python run.py`.
 - Tests (unittest): `python -m unittest -q` (or `pytest -q`).
 - Lint/Sec checks: `ruff check verbatim tests`, `pylint verbatim $(git ls-files 'tests/*.py')`, `flake8 verbatim tests`, `bandit -r verbatim tests`.
+  - Tip: use `make check` to run the common local checks (Ruff, Flake8, Pylint, Pyright, Bandit) before committing.
+
+## Local Checks
+- Always run the basic static checks when you modify files:
+  - Ruff: `ruff check verbatim tests`
+  - Flake8: `flake8 verbatim tests`
+  - Pylint: `pylint --disable=import-error verbatim $(git ls-files 'tests/*.py')`
+  - Pyright: `pyright`
+  - Bandit: `bandit -r verbatim tests run.py`
+- Shortcut: `make check` groups all of the above.
 
 ## Architecture Overview
 - Read `doc/architecture.md` for the end-to-end pipeline, data flow, and component contracts.

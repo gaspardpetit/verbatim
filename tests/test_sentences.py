@@ -126,7 +126,7 @@ class TestSentences(unittest.TestCase):
         self.assertEqual(sentences[0],
             " Stately, plump Buck Mulligan came from the stairhead, bearing a bowl of lather on which a mirror and a razor lay crossed.")
         self.assertEqual(sentences[1],
-            "A yellow dressinggown, ungirdled, was sustained gently behind him on the mild morning air.")
+            " A yellow dressinggown, ungirdled, was sustained gently behind him on the mild morning air.")
 
     def test_SaTSentenceTokenizer(self):
         # pylint: disable=import-outside-toplevel
