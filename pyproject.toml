@@ -121,6 +121,10 @@ tag-pattern = "v(?P<version>.*)"
 # Write resolved version into a module during build
 version-file = "verbatim/_version.py"
 
+# Ensure PEP 440-compliant versions without local "+g..." suffix in wheels
+[tool.setuptools_scm]
+local_scheme = "no-local-version"
+
 [tool.pyright]
 venvPath = "."
 venv = ".venv"

@@ -4,12 +4,14 @@
 FROM python:3.11-slim AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
+ARG VERSION=0.0.0
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       ffmpeg \
       portaudio19-dev \
-      build-essential && \
+      build-essential \
+      git && \
     rm -rf /var/lib/apt/lists/*
 
 RUN python -m pip install --upgrade pip build
@@ -18,8 +20,17 @@ WORKDIR /src
 
 COPY pyproject.toml README.md ./
 COPY verbatim verbatim
+# Provide VCS metadata so hatch-vcs/setuptools-scm can resolve the version
+# Include VCS metadata so version can be derived from tags
+COPY .git .git
 
-RUN python -m build --wheel
+# Ensure a clean, PEP 440 compliant version is used in the wheel
+ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VERBATIM=${VERSION}
+ENV HATCH_BUILD_VERSION=${VERSION}
+# Remove local "+g..." suffix from version to avoid pip parsing issues
+ENV SETUPTOOLS_SCM_LOCAL_SCHEME=no-local-version
+
+RUN python -m build --wheel -v
 
 ###############################################
 # CPU Runtime stage                           #
@@ -27,7 +38,7 @@ RUN python -m build --wheel
 FROM python:3.11-slim AS runtime
 
 ARG HUGGINGFACE_TOKEN
-ARG VERSION
+ARG VERSION=0.0.0
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
@@ -38,12 +49,21 @@ LABEL org.opencontainers.image.version=${VERSION}
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       ffmpeg \
-      portaudio19-dev && \
+      portaudio19-dev \
+      build-essential \
+      python3-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# Install the built wheel (pip will resolve CPU dependencies)
+# Use a stable pip to avoid packaging regressions with local versions
+RUN python -m pip install --upgrade pip==24.3.1
+RUN pip install --no-cache-dir --upgrade setuptools wheel
+# Toolchain for building some sdists (e.g., diffq)
+RUN pip install --no-cache-dir cython==3.0.10
+RUN pip install --no-cache-dir pybind11
+
+# Install our wheel; allow deps to build using preinstalled toolchain
 COPY --from=builder /src/dist/*.whl /tmp/
-RUN pip install --no-cache-dir /tmp/*.whl && rm -f /tmp/*.whl
+RUN pip install --no-cache-dir --no-build-isolation /tmp/*.whl && rm -f /tmp/*.whl
 
 WORKDIR /app
 

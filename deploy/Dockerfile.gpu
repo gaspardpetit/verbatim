@@ -4,6 +4,7 @@
 FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
+ARG VERSION=0.0.0
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -11,7 +12,8 @@ RUN apt-get update && \
       python3.11-venv \
       python3-pip \
       ffmpeg \
-      portaudio19-dev && \
+      portaudio19-dev \
+      git && \
     rm -rf /var/lib/apt/lists/*
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
@@ -21,6 +23,11 @@ WORKDIR /src
 
 COPY pyproject.toml README.md ./
 COPY verbatim verbatim
+COPY .git .git
+
+# Ensure a clean, PEP 440 compliant version is used in the wheel
+ENV SETUPTOOLS_SCM_PRETEND_VERSION_FOR_VERBATIM=${VERSION}
+ENV SETUPTOOLS_SCM_LOCAL_SCHEME=no-local-version
 
 RUN python -m build --wheel
 
@@ -44,11 +51,15 @@ RUN apt-get update && \
       python3.11-venv \
       python3-pip \
       ffmpeg \
-      portaudio19-dev && \
+      portaudio19-dev \
+      build-essential \
+      python3-dev && \
     rm -rf /var/lib/apt/lists/*
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 && \
-    python -m pip install --upgrade pip
+    python -m pip install --upgrade pip==24.3.1 && \
+    pip install --no-cache-dir --upgrade setuptools wheel && \
+    pip install --no-cache-dir cython==3.0.10 pybind11
 
 # Install GPU runtime dependencies
 COPY requirements-gpu.txt /tmp/requirements-gpu.txt
@@ -56,7 +67,7 @@ RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/wh
 
 # Install built wheel
 COPY --from=builder /src/dist/*.whl /tmp/
-RUN pip install --no-cache-dir /tmp/*.whl && rm -f /tmp/*.whl
+RUN pip install --no-cache-dir --no-build-isolation /tmp/*.whl && rm -f /tmp/*.whl
 
 WORKDIR /app
 
