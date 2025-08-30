@@ -60,6 +60,8 @@ pip install uv
 Use the `uv` CLI to install dependencies as per the configurations in `pyproject.toml`:
 ```bash
 uv pip install .
+# or if you will be working on the project:
+# uv pip install -e .
 ```
 This will resolve dependencies, including those with custom indices or conditional markers.
 
