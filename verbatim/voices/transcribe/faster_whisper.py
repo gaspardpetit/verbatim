@@ -123,7 +123,11 @@ class FasterWhisperTranscriber(Transcriber):
 
         transcript_words: List[Word] = []
         for segment in segment_iter:
-            for w in segment.words:
+            # Guard against missing word timestamps in segment
+            words = getattr(segment, "words", None)
+            if not words:
+                continue
+            for w in words:
                 word = Word.from_word(word=w, lang=lang, ts_offset=window_ts)
                 if word.end_ts > audio_ts:
                     continue

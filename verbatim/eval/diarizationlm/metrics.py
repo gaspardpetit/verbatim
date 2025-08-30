@@ -236,7 +236,8 @@ def compute_metrics_on_json_dict(
     if compute_diarization_metrics:
         if not (ref_spk_field and hyp_spk_field):
             raise ValueError("hyp_spk_field and ref_spk_field must be both unset or both set.")
-    result_dict = {
+    # Explicitly type the result dict to allow heterogeneous values
+    result_dict: Dict[str, Any] = {
         "utterances": [],
     }
     for utt in tqdm.tqdm(json_dict["utterances"]):
