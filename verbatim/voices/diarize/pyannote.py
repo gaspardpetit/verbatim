@@ -32,7 +32,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
             nb_speakers: Optional number of speakers
         """
         self.initialize_pipeline()
-
+        assert self.pipeline is not None
         with ProgressHook() as hook:
             diarization = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
 

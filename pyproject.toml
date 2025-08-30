@@ -121,6 +121,25 @@ venv = ".venv"
 pythonVersion = "3.11"
 # Keep CI fast: allow unresolved third-party imports without failing.
 reportMissingImports = "warning"
+exclude = [
+    # Highly dynamic formatting helpers; complex typing provides low value
+    "verbatim/transcript/format/ass.py",
+    # Exclude local virtual envs and non-source directories
+    ".venv",
+    ".venv/**",
+    ".git",
+    "samples",
+    "doc",
+    "tests/data",
+    "testdata",
+]
+typeCheckingMode = "basic"
+# Downgrade noisy third-party attribute/call checks to warnings
+reportAttributeAccessIssue = "warning"
+reportCallIssue = "warning"
+reportIndexIssue = "warning"
+reportOptionalSubscript = "warning"
+reportOptionalCall = "warning"
 
 #[tool.uv.sources]
 #torch = [

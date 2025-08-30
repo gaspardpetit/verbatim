@@ -54,7 +54,7 @@ class DiarizationProcessor:
                 temperature=0.1
             )
 
-            completion = response.choices[0].message.content
+            completion = response.choices[0].message.content or ""
 
             # Create and log pretty diff
             print("\nProcessing chunk:")

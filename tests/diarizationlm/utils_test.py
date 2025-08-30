@@ -500,7 +500,7 @@ class UtilsTest(unittest.TestCase):
             po=po,
         )
         ds = datasets.Dataset.from_generator(reader.generate_data_dict)
-        entry = ds[0]
+        entry = ds[0]  # pyright: ignore[reportIndexIssue,reportArgumentType]
         self.assertEqual(entry["uttid"], "en_0638_seg0")
 
     def test_find_utt_dict(self):
@@ -517,6 +517,7 @@ class UtilsTest(unittest.TestCase):
             ]
         }
         result = utils.find_utt_dict("utt2", data_dict)
+        assert result is not None  # satisfy type checker
         self.assertEqual("good morning", result["hyp_text"])
 
     def test_update_hyp_text_in_utt_dict(self):
