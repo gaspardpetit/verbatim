@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import unittest
+import pytest
 
 from verbatim.config import Config
 from verbatim.verbatim import Verbatim
@@ -64,6 +65,8 @@ class TestPipeline(unittest.TestCase):
         # Cleanup
         os.remove(f"{out_file}.utt.json")
 
+    @pytest.mark.slow
+    @pytest.mark.requires_hf
     def test_diarization_metrics_long(self):
         # Setup paths
         test_file = "tests/data/test.mp3"

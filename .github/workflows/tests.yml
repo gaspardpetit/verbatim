@@ -87,23 +87,18 @@ jobs:
           python -m pip install -U pip uv
           uv pip install --system -r requirements.txt
 
-      - name: Run quick tests (exclude heavy)
+      - name: Run quick tests (exclude markers)
         shell: bash
         run: |
           python -m pip install pytest
-          # Intentionally exclude slow/expensive tests for CI speed and runner limits.
-          # - TestPipeline.test_diarization_metrics_long exercises the full ASR+diarization
-          #   path on a longer sample and is too slow for macOS/Windows runners. We still
-          #   run TestPipeline.test_diarization_metrics_short to keep a pipeline smoke test
-          #   on all OSes.
-          # - TestSentences.test_SaTSentenceTokenizer loads a SaT model; this is heavyweight
-          #   on GitHub-hosted runners and can be flaky without proper model caching.
+          # Intentionally exclude slow/expensive tests and those requiring HF token
+          # via markers for CI speed and runner limits.
           #
           # These are validated elsewhere (locally/nightly) and excluded here by design.
           # To run them locally, examples:
-          #   pytest -q tests/test_pipeline.py::TestPipeline::test_diarization_metrics_long
-          #   pytest -q tests/test_sentences.py::TestSentences::test_SaTSentenceTokenizer
-          pytest -q -k "not test_diarization_metrics_long and not SaTSentenceTokenizer"
+          #   pytest -q -m slow
+          #   pytest -q -m requires_hf
+          pytest -q -m "not slow and not requires_hf"
 
   coverage-ubuntu:
     name: Coverage • ubuntu-latest • py3.11

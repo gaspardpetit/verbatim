@@ -1,4 +1,5 @@
 import logging
+import pytest
 import unittest
 
 from verbatim.transcript.words import Word
@@ -128,6 +129,8 @@ class TestSentences(unittest.TestCase):
         self.assertEqual(sentences[1],
             " A yellow dressinggown, ungirdled, was sustained gently behind him on the mild morning air.")
 
+    @pytest.mark.slow
+    @pytest.mark.requires_hf
     def test_SaTSentenceTokenizer(self):
         # pylint: disable=import-outside-toplevel
         from verbatim.transcript.sentences import SaTSentenceTokenizer
