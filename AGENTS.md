@@ -46,6 +46,13 @@
 - Commits: imperative mood, concise scope. Prefer Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`).
 - PRs: clear description, rationale, and scope; link issues; include CLI output or artifact snippets when relevant; update docs (`doc/`, `README.md`). Ensure tests and linters pass.
 
+## Versioning & Releases
+- Source of truth is Git tags using `vX.Y.Z`.
+- The build uses `hatch-vcs` to derive the package version from tags.
+  - Non-tag builds get a VCS-derived local version (PEP 440 compliant).
+  - For releases, create a tag `vX.Y.Z` and publish a GitHub Release; the workflow builds with the tagged version.
+- The publish workflow checks out with full history and tags to resolve versions correctly.
+
 ## Security & Configuration Tips
 - Diarization models require `HUGGINGFACE_TOKEN`. Provide via env or `.env` (e.g., `HUGGINGFACE_TOKEN=hf_***`). Do not commit secrets.
 - For live mic on macOS/Linux, install PortAudio.

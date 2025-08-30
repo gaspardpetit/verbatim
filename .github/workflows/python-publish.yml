@@ -16,10 +16,11 @@ jobs:
       id-token: write
 
     steps:
-      - name: Check out the code
+      - name: Check out the code (with tags)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+          ref: ${{ github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -43,12 +44,7 @@ jobs:
           . .pkg-venv/bin/activate
           python -m pip install --upgrade pip
           python -m pip install dist/*.whl
-          python - << 'PY'
-import sys
-import verbatim
-print('Imported verbatim', getattr(verbatim, '__version__', 'unknown'))
-PY
+          python -c "import verbatim; print('Imported verbatim', getattr(verbatim, '__version__', 'unknown'))"
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-

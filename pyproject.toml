@@ -100,20 +100,26 @@ Homepage = "https://github.com/gaspardpetit/verbatim"
 verbatim = "verbatim.main:main"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
 include = ["verbatim/**/*"]
 
 [tool.hatch.version]
-path = "verbatim/__init__.py"
+source = "vcs"
 
 [tool.poetry]
 version = "0.0.0"
 
 [tool.poetry-dynamic-versioning]
 enable = true
+
+[tool.hatch.build.hooks.vcs]
+# Use tags like vX.Y.Z as source of truth
+tag-pattern = "v(?P<version>.*)"
+# Write resolved version into a module during build
+version-file = "verbatim/_version.py"
 
 [tool.pyright]
 venvPath = "."
@@ -158,4 +164,3 @@ explicit = true
 
 line-length = 150
 indent-width = 4
-

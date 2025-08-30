@@ -184,3 +184,4 @@ samples/private
 
 # Temporary files
 tmp
+.pkg-venv
