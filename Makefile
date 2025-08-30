@@ -29,3 +29,16 @@ test:
 ci: check
 	CUDA_VISIBLE_DEVICES=-1 pytest -q -k "not test_diarization_metrics_long and not SaTSentenceTokenizer"
 
+# Build and verify distribution locally (mirrors CI publish steps)
+.PHONY: release
+release:
+	python -m pip install --upgrade pip build twine
+	python -m build
+	python -m twine check dist/*
+	python -m venv .pkg-venv
+		. .pkg-venv/bin/activate && \
+		  python -m pip install --upgrade pip && \
+		  python -m pip install dist/*.whl && \
+		  python -c "import verbatim; print('Imported verbatim', getattr(verbatim, '__version__', 'unknown'))"
+
+
