@@ -14,3 +14,18 @@ type:
 sec:
 	bandit -r verbatim tests run.py
 
+# Format code using Ruff formatter
+.PHONY: fmt
+fmt:
+	ruff format .
+
+# Run test suite (quick)
+.PHONY: test
+test:
+	CUDA_VISIBLE_DEVICES=-1 pytest -q
+
+# Mirror CI fast matrix locally: checks + fast tests
+.PHONY: ci
+ci: check
+	CUDA_VISIBLE_DEVICES=-1 pytest -q -k "not test_diarization_metrics_long and not SaTSentenceTokenizer"
+
