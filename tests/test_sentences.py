@@ -1,7 +1,6 @@
 import logging
 import pytest
 import unittest
-import pytest
 
 from verbatim.transcript.words import Word
 
