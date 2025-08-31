@@ -1,9 +1,25 @@
-
 import logging
 import os
 import sys
 from getpass import getpass
 from typing import Optional
+
+# pylint: disable=broad-exception-caught
+
+# Optional imports for Hugging Face + Whisper (top-level for lint friendliness)
+try:
+    from huggingface_hub import snapshot_download  # type: ignore
+    from huggingface_hub.errors import HfHubHTTPError  # type: ignore
+    from huggingface_hub.utils import LocalEntryNotFoundError  # type: ignore
+except ImportError:  # pragma: no cover
+    HfHubHTTPError = Exception  # type: ignore
+    LocalEntryNotFoundError = Exception  # type: ignore
+    snapshot_download = None  # type: ignore
+
+try:
+    import whisper as openai_whisper  # type: ignore
+except ImportError:  # pragma: no cover
+    openai_whisper = None  # type: ignore
 
 LOG = logging.getLogger(__name__)
 
@@ -66,11 +82,8 @@ def prefetch(
     apply_cache_env(model_cache_dir, offline=False)
 
     # 1) Hugging Face models via huggingface_hub
-    try:
-        from huggingface_hub import snapshot_download
-    except Exception as e:  # pragma: no cover - optional path
-        LOG.warning(f"huggingface_hub not available: {e}")
-        snapshot_download = None  # type: ignore
+    if snapshot_download is None:  # pragma: no cover - optional path
+        LOG.warning("huggingface_hub not available: cannot prefetch HF-hosted models")
 
     hf_token = os.getenv("HUGGINGFACE_TOKEN")
 
@@ -82,14 +95,14 @@ def prefetch(
                 snapshot_download(repo_id=repo, token=hf_token, local_files_only=True)
                 LOG.info(f"Already cached: {repo}")
                 continue
-            except Exception:
+            except LocalEntryNotFoundError:
                 pass
 
             LOG.info(f"Prefetching HF repo: {repo}")
             try:
                 snapshot_download(repo_id=repo, token=hf_token, local_files_only=False)
                 continue
-            except Exception as e_first:  # pragma: no cover
+            except HfHubHTTPError as e_first:  # pragma: no cover
                 # If unauthorized and interactive, prompt for token and retry once
                 err_txt = str(e_first)
                 unauthorized = ("401" in err_txt) or ("restricted" in err_txt.lower()) or ("unauth" in err_txt.lower())
@@ -99,7 +112,7 @@ def prefetch(
                     print("Create one at https://huggingface.co/settings/tokens and ensure gated model access.")
                     try:
                         entered = getpass("Enter HUGGINGFACE_TOKEN (starts with hf_): ")
-                    except Exception:
+                    except (EOFError, KeyboardInterrupt):  # pragma: no cover
                         entered = ""
                     if entered:
                         hf_token = entered.strip()
@@ -108,7 +121,7 @@ def prefetch(
                         try:
                             snapshot_download(repo_id=repo, token=hf_token, local_files_only=False)
                             continue
-                        except Exception as e_retry:  # pragma: no cover
+                        except HfHubHTTPError as e_retry:  # pragma: no cover
                             LOG.warning(f"Failed to prefetch {repo} after prompt: {e_retry}")
                             continue
                 else:
@@ -122,7 +135,7 @@ def prefetch(
         try:
             LOG.info(f"Prefetching HF repo: {mlx_repo}")
             snapshot_download(repo_id=mlx_repo, token=hf_token, local_files_only=False)
-        except Exception as e:  # pragma: no cover
+        except HfHubHTTPError as e:  # pragma: no cover
             LOG.warning(f"Failed to prefetch {mlx_repo}: {e}")
 
     # 2) Faster-Whisper: populate cache without heavy initialization
@@ -155,32 +168,31 @@ def prefetch(
                 if snapshot_download is not None:
                     LOG.info(f"Prefetching faster-whisper model: {whisper_size}")
                     snapshot_download(repo_id=fw_repo, local_files_only=False)
-        except Exception as e:  # pragma: no cover
+        except (OSError, HfHubHTTPError) as e:  # pragma: no cover
             LOG.warning(f"Failed to prefetch faster-whisper {whisper_size}: {e}")
 
     # 3) OpenAI Whisper (downloads .pt to WHISPER_CACHE_DIR)
     if include_whisper_openai:
+        whisper_cache = os.getenv(
+            "WHISPER_CACHE_DIR", os.path.join(os.getenv("XDG_CACHE_HOME", os.path.expanduser("~/.cache")), "whisper")
+        )
         try:
-            whisper_cache = os.getenv(
-                "WHISPER_CACHE_DIR", os.path.join(os.getenv("XDG_CACHE_HOME", os.path.expanduser("~/.cache")), "whisper")
-            )
             os.makedirs(whisper_cache, exist_ok=True)
-            target = os.path.join(whisper_cache, f"{whisper_size}.pt")
-            if os.path.exists(target):
-                LOG.info("Already cached: openai/whisper (%s)", whisper_size)
+        except OSError:  # pragma: no cover
+            pass
+        target = os.path.join(whisper_cache, f"{whisper_size}.pt")
+        if os.path.exists(target):
+            LOG.info("Already cached: openai/whisper (%s)", whisper_size)
+        else:
+            if openai_whisper is None:  # pragma: no cover
+                LOG.warning("openai-whisper not available: cannot prefetch %s", whisper_size)
             else:
-                import whisper as openai_whisper
                 LOG.info(f"Prefetching OpenAI whisper model: {whisper_size}")
-                model = openai_whisper.load_model(whisper_size, device="cpu")
-                del model
-        except Exception as e:  # pragma: no cover
-            LOG.warning(f"Failed to prefetch openai/whisper {whisper_size}: {e}")
+                _ = openai_whisper.load_model(whisper_size, device="cpu")
 
     # 4) Voice isolation: provide guidance; download may be manual depending on backend
     cache_root = os.getenv("VERBATIM_MODEL_CACHE")
     if cache_root:
         iso_dir = os.path.join(cache_root, "audio-separator")
         os.makedirs(iso_dir, exist_ok=True)
-        LOG.info(
-            f"If needed, place MDX checkpoint (e.g., MDX23C-8KFFT-InstVoc_HQ_2.ckpt) under: {iso_dir} to enable offline isolation"
-        )
+        LOG.info(f"If needed, place MDX checkpoint (e.g., MDX23C-8KFFT-InstVoc_HQ_2.ckpt) under: {iso_dir} to enable offline isolation")

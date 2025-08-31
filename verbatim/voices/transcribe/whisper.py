@@ -44,9 +44,7 @@ class WhisperTranscriber(Transcriber):
             if os.path.exists(candidate):
                 resolved_model = candidate
             else:
-                raise RuntimeError(
-                    f"Offline mode is enabled and Whisper model '{model_size_or_path}' is not present in cache: {candidate}"
-                )
+                raise RuntimeError(f"Offline mode is enabled and Whisper model '{model_size_or_path}' is not present in cache: {candidate}")
 
         self.model: Whisper = whisper.load_model(resolved_model, device=device)
 

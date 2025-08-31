@@ -1,4 +1,5 @@
 """Factory for separation strategies with optional interactive HF-token prompt."""
+
 import os
 import sys
 from getpass import getpass
