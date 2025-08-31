@@ -273,28 +273,49 @@ class Config:
             os.environ.setdefault("VERBATIM_OFFLINE", "0")
 
         if model_cache_dir:
+            created_ok = True
             try:
                 os.makedirs(model_cache_dir, exist_ok=True)
             except OSError:
                 # If we cannot create the cache directory, log and continue with defaults
                 LOG.warning(f"Could not create model cache dir: {model_cache_dir}")
+                created_ok = False
+
+            # If exists but not writable, also degrade gracefully
+            if created_ok and (not os.access(model_cache_dir, os.W_OK)):
+                LOG.warning(f"Model cache dir not writable: {model_cache_dir}")
+                created_ok = False
+
+            if not created_ok:
+                # Do not set subdirs or cache env; keep defaults
+                return self
+
+            # Root is usable; set env and create subdirs guardedly
             os.environ["VERBATIM_MODEL_CACHE"] = model_cache_dir
 
             # XDG cache root influences many libs (incl. whisper default cache path)
-            xdg_cache = os.path.join(model_cache_dir, "xdg")
-            os.makedirs(xdg_cache, exist_ok=True)
-            os.environ.setdefault("XDG_CACHE_HOME", xdg_cache)
+            try:
+                xdg_cache = os.path.join(model_cache_dir, "xdg")
+                os.makedirs(xdg_cache, exist_ok=True)
+                os.environ.setdefault("XDG_CACHE_HOME", xdg_cache)
+            except OSError:
+                LOG.warning(f"Could not prepare XDG cache under {model_cache_dir}")
 
-            # Whisper cache (OpenAI whisper) – many installations honor this
-            whisper_cache = os.path.join(model_cache_dir, "whisper")
-            os.makedirs(whisper_cache, exist_ok=True)
-            os.environ.setdefault("WHISPER_CACHE_DIR", whisper_cache)
+            # Whisper cache (OpenAI whisper)
+            try:
+                whisper_cache = os.path.join(model_cache_dir, "whisper")
+                os.makedirs(whisper_cache, exist_ok=True)
+                os.environ.setdefault("WHISPER_CACHE_DIR", whisper_cache)
+            except OSError:
+                LOG.warning(f"Could not prepare Whisper cache under {model_cache_dir}")
 
             # Hugging Face cache
-            hf_home = os.path.join(model_cache_dir, "hf")
-            os.makedirs(hf_home, exist_ok=True)
-            os.environ.setdefault("HF_HOME", hf_home)
-            # Some libs consult HUGGINGFACE_HUB_CACHE directly
-            os.environ.setdefault("HUGGINGFACE_HUB_CACHE", os.path.join(hf_home, "hub"))
+            try:
+                hf_home = os.path.join(model_cache_dir, "hf")
+                os.makedirs(hf_home, exist_ok=True)
+                os.environ.setdefault("HF_HOME", hf_home)
+                os.environ.setdefault("HUGGINGFACE_HUB_CACHE", os.path.join(hf_home, "hub"))
+            except OSError:
+                LOG.warning(f"Could not prepare Hugging Face cache under {model_cache_dir}")
 
         return self
