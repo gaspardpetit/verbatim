@@ -1,6 +1,8 @@
+
 import logging
 import os
 import sys
+from getpass import getpass
 from typing import Optional
 
 LOG = logging.getLogger(__name__)
@@ -75,11 +77,44 @@ def prefetch(
     # Pyannote diarization/separation
     if include_pyannote and snapshot_download is not None:
         for repo in ("pyannote/speaker-diarization-3.1", "pyannote/speech-separation-ami-1.0"):
+            # Fast path: try local only to avoid network churn if already cached
             try:
-                LOG.info(f"Prefetching HF repo: {repo}")
+                snapshot_download(repo_id=repo, token=hf_token, local_files_only=True)
+                LOG.info(f"Already cached: {repo}")
+                continue
+            except Exception:
+                pass
+
+            LOG.info(f"Prefetching HF repo: {repo}")
+            try:
                 snapshot_download(repo_id=repo, token=hf_token, local_files_only=False)
-            except Exception as e:  # pragma: no cover
-                LOG.warning(f"Failed to prefetch {repo}: {e}")
+                continue
+            except Exception as e_first:  # pragma: no cover
+                # If unauthorized and interactive, prompt for token and retry once
+                err_txt = str(e_first)
+                unauthorized = ("401" in err_txt) or ("restricted" in err_txt.lower()) or ("unauth" in err_txt.lower())
+
+                if unauthorized and sys.stdin.isatty() and sys.stdout.isatty():
+                    print("Pyannote models are gated and require a Hugging Face token.")
+                    print("Create one at https://huggingface.co/settings/tokens and ensure gated model access.")
+                    try:
+                        entered = getpass("Enter HUGGINGFACE_TOKEN (starts with hf_): ")
+                    except Exception:
+                        entered = ""
+                    if entered:
+                        hf_token = entered.strip()
+                        os.environ["HUGGINGFACE_TOKEN"] = hf_token
+                        print("Token received. Tip: export HUGGINGFACE_TOKEN to avoid prompts next time.")
+                        try:
+                            snapshot_download(repo_id=repo, token=hf_token, local_files_only=False)
+                            continue
+                        except Exception as e_retry:  # pragma: no cover
+                            LOG.warning(f"Failed to prefetch {repo} after prompt: {e_retry}")
+                            continue
+                else:
+                    LOG.info("Non-interactive terminal; skipping prompt for HF token")
+
+                LOG.warning(f"Failed to prefetch {repo}: {e_first}")
 
     # MLX Whisper models (macOS/Apple Silicon) hosted on HF
     if include_mlx_whisper and snapshot_download is not None:
@@ -90,41 +125,54 @@ def prefetch(
         except Exception as e:  # pragma: no cover
             LOG.warning(f"Failed to prefetch {mlx_repo}: {e}")
 
-    # 2) Faster-Whisper (uses internal download to a local root)
+    # 2) Faster-Whisper: populate cache without heavy initialization
     if include_faster_whisper:
         try:
-            from faster_whisper import WhisperModel
             cache_root = os.getenv("VERBATIM_MODEL_CACHE")
             download_root = os.path.join(cache_root, "faster-whisper") if cache_root else None
-            LOG.info(f"Prefetching faster-whisper model: {whisper_size}")
-            try:
-                model = WhisperModel(
-                    model_size_or_path=whisper_size,
-                    device="cpu",
-                    compute_type="default",
-                    download_root=download_root,
-                    local_files_only=False,
-                )
-            except TypeError:
-                model = WhisperModel(
-                    model_size_or_path=whisper_size,
-                    device="cpu",
-                    compute_type="default",
-                )
-            # Touch a trivial call to ensure weights are resolved
-            _ = model.transcribe(audio=[0.0], language="en")[0]
-            del model
+            fw_repo = f"Systran/faster-whisper-{whisper_size}"
+
+            if download_root:
+                os.makedirs(download_root, exist_ok=True)
+                model_bin = os.path.join(download_root, "model.bin")
+                config_json = os.path.join(download_root, "config.json")
+                if os.path.exists(model_bin) and os.path.exists(config_json):
+                    LOG.info("Already cached: faster-whisper (%s)", whisper_size)
+                else:
+                    if snapshot_download is not None:
+                        LOG.info(f"Prefetching faster-whisper model: {whisper_size}")
+                        try:
+                            snapshot_download(
+                                repo_id=fw_repo,
+                                local_files_only=False,
+                                local_dir=download_root,
+                                local_dir_use_symlinks=True,
+                            )
+                        except TypeError:
+                            # Fallback: populate HF cache only
+                            snapshot_download(repo_id=fw_repo, local_files_only=False)
+            else:
+                if snapshot_download is not None:
+                    LOG.info(f"Prefetching faster-whisper model: {whisper_size}")
+                    snapshot_download(repo_id=fw_repo, local_files_only=False)
         except Exception as e:  # pragma: no cover
             LOG.warning(f"Failed to prefetch faster-whisper {whisper_size}: {e}")
 
     # 3) OpenAI Whisper (downloads .pt to WHISPER_CACHE_DIR)
     if include_whisper_openai:
         try:
-            import whisper as openai_whisper
-
-            LOG.info(f"Prefetching OpenAI whisper model: {whisper_size}")
-            model = openai_whisper.load_model(whisper_size, device="cpu")
-            del model
+            whisper_cache = os.getenv(
+                "WHISPER_CACHE_DIR", os.path.join(os.getenv("XDG_CACHE_HOME", os.path.expanduser("~/.cache")), "whisper")
+            )
+            os.makedirs(whisper_cache, exist_ok=True)
+            target = os.path.join(whisper_cache, f"{whisper_size}.pt")
+            if os.path.exists(target):
+                LOG.info("Already cached: openai/whisper (%s)", whisper_size)
+            else:
+                import whisper as openai_whisper
+                LOG.info(f"Prefetching OpenAI whisper model: {whisper_size}")
+                model = openai_whisper.load_model(whisper_size, device="cpu")
+                del model
         except Exception as e:  # pragma: no cover
             LOG.warning(f"Failed to prefetch openai/whisper {whisper_size}: {e}")
 
