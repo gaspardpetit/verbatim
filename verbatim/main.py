@@ -74,6 +74,11 @@ def main():
     parser.add_argument("--offline", action="store_true", help="Disallow any network/model downloads; use cache only")
     parser.add_argument("--model-cache", default=None, help="Deterministic cache directory for models and downloads")
     parser.add_argument(
+        "--install",
+        action="store_true",
+        help="Prefetch commonly used models into the cache and exit",
+    )
+    parser.add_argument(
         "-w",
         "--workdir",
         nargs="?",
@@ -164,6 +169,15 @@ def main():
         offline=args.offline,
         model_cache_dir=args.model_cache,
     )
+
+    # Handle install-only mode
+    if args.install:
+        LOG.info("Installing/prefetching models into cache...")
+        from .prefetch import prefetch
+
+        prefetch(model_cache_dir=args.model_cache, whisper_size=config.whisper_model_size)
+        LOG.info("Model prefetch complete.")
+        return
 
     source_path = args.input
     input_name_no_ext = os.path.splitext(os.path.split(source_path)[-1])[0]

@@ -509,3 +509,30 @@ A direct use of whisper on an audio clip like this one results in many errors. S
     <td>Thank you for your attention. We wish you a very pleasant flight.</td>
   </tr>
 </table>
+## Model Cache and Offline Mode
+
+Verbatim can prefetch and reuse models from a deterministic cache directory, and can run 100% offline once the cache is warmed.
+
+- `--model-cache <dir>`: sets a shared cache directory used by Hugging Face, Whisper, and faster-whisper.
+- `--offline`: prevents any network access and model downloads. All models must already be present in the cache; otherwise a clear error is raised.
+- `--install`: prefetches commonly used models into the selected cache and exits.
+
+Examples
+
+1) Prefetch models (first run, with network):
+```
+HUGGINGFACE_TOKEN=hf_... verbatim --install --model-cache /models
+```
+
+2) Fully offline run reusing the cache:
+```
+verbatim input.mp3 -o out --model-cache /models --offline
+```
+
+Default cache location (when `--model-cache` is not specified):
+- Local project directory `./.verbatim/` is used as the root cache.
+- Subdirectories are created inside: `./.verbatim/hf`, `./.verbatim/whisper`, etc.
+- If `./.verbatim/` cannot be created or is not writable, the app gracefully falls back to library defaults.
+
+Voice isolation (MDX): the `audio-separator` backend loads a checkpoint (e.g., `MDX23C-8KFFT-InstVoc_HQ_2.ckpt`).
+For offline use with `--model-cache`, place the file under `<cache>/audio-separator/`.
