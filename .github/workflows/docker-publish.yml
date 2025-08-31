@@ -160,11 +160,14 @@ jobs:
       # transparency data even for private images, pass --force to cosign below.
       # https://github.com/sigstore/cosign
       - name: Sign the published Docker image ( ${{ matrix.variant.name }} )
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event_name != 'pull_request' && steps.build-and-push.outputs.digest != '' }}
         env:
           TAGS: ${{ steps.dmeta.outputs.tags }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
-        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+        run: |
+          for tag in $TAGS; do
+            echo "Signing $tag@$DIGEST"
+            cosign sign --yes "$tag@$DIGEST"
+          done
 
 
-        
