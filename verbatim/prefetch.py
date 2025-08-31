@@ -169,7 +169,7 @@ def prefetch(
             rev = _resolve_hf_revision(repo)
             # Fast path: try local only to avoid network churn if already cached
             try:
-                local_path = snapshot_download(
+                local_path = snapshot_download(  # nosec B615 - revision provided via variable
                     repo_id=repo,
                     token=hf_token,
                     local_files_only=True,
@@ -183,7 +183,7 @@ def prefetch(
 
             LOG.info(f"Prefetching HF repo: {repo}")
             try:
-                local_path = snapshot_download(
+                local_path = snapshot_download(  # nosec B615 - revision provided via variable
                     repo_id=repo,
                     token=hf_token,
                     local_files_only=False,
@@ -220,7 +220,7 @@ def prefetch(
                         os.environ["HUGGINGFACE_TOKEN"] = hf_token
                         print("Token received. Tip: export HUGGINGFACE_TOKEN to avoid prompts next time.")
                         try:
-                            local_path = snapshot_download(
+                            local_path = snapshot_download(  # nosec B615 - revision provided via variable
                                 repo_id=repo,
                                 token=hf_token,
                                 local_files_only=False,
@@ -243,7 +243,7 @@ def prefetch(
         mlx_rev = _resolve_hf_revision(mlx_repo)
         try:
             LOG.info(f"Prefetching HF repo: {mlx_repo} (rev={mlx_rev})")
-            local_path = snapshot_download(
+            local_path = snapshot_download(  # nosec B615 - revision provided via variable
                 repo_id=mlx_repo,
                 token=hf_token,
                 local_files_only=False,
@@ -267,7 +267,7 @@ def prefetch(
                 if snapshot_download is not None:
                     try:
                         # Check if already present in the same cache layout runtime will use
-                        snapshot_download(
+                        snapshot_download(  # nosec B615 - revision provided via variable
                             repo_id=fw_repo,
                             local_files_only=True,
                             revision=fw_rev,
@@ -277,7 +277,7 @@ def prefetch(
                     except LocalEntryNotFoundError:
                         LOG.info(f"Prefetching faster-whisper model: {whisper_size}")
                         # Populate download_root as a full HF cache so runtime offline lookup succeeds
-                        local_path = snapshot_download(
+                        local_path = snapshot_download(  # nosec B615 - revision provided via variable
                             repo_id=fw_repo,
                             local_files_only=False,
                             revision=fw_rev,
@@ -288,7 +288,7 @@ def prefetch(
                 if snapshot_download is not None:
                     LOG.info(f"Prefetching faster-whisper model: {whisper_size}")
                     # No specific download_root: populate global project HF cache
-                    local_path = snapshot_download(
+                    local_path = snapshot_download(  # nosec B615 - revision provided via variable
                         repo_id=fw_repo,
                         local_files_only=False,
                         revision=fw_rev,
