@@ -27,9 +27,7 @@ class VoiceIsolation:
             if os.path.exists(candidate):
                 model_path = candidate
             elif offline_env:
-                raise RuntimeError(
-                    f"Offline mode is enabled and isolation model '{model_name}' was not found at {candidate}"
-                )
+                raise RuntimeError(f"Offline mode is enabled and isolation model '{model_name}' was not found at {candidate}")
 
         self.separator.load_model(model_path)
 
