@@ -4,10 +4,11 @@ If no Hugging Face token is provided and we're not in offline mode, this module
 will prompt for a token when running in an interactive terminal. For
 non-interactive environments, behavior remains unchanged (raises a clear error).
 """
+
 import os
 import sys
-from typing import Optional
 from getpass import getpass
+from typing import Optional
 
 from .base import DiarizationStrategy
 from .pyannote import PyAnnoteDiarization
@@ -44,9 +45,7 @@ def create_diarizer(strategy: str = "pyannote", device: str = "cpu", huggingface
                 print("Token received. Tip: export HUGGINGFACE_TOKEN to avoid prompts next time.")
 
         if not token and not offline_env:
-            raise ValueError(
-                "huggingface_token is required for PyAnnote diarization. Set HUGGINGFACE_TOKEN or run interactively to be prompted."
-            )
+            raise ValueError("huggingface_token is required for PyAnnote diarization. Set HUGGINGFACE_TOKEN or run interactively to be prompted.")
 
         # When offline, allow missing token (loading from local cache only)
         return PyAnnoteDiarization(device=device, huggingface_token=token)
