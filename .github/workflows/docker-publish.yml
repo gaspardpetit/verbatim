@@ -57,8 +57,6 @@ jobs:
         with:
           fetch-depth: 0
 
-sigstore/cosign-installer@v3.9.2
-
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
