@@ -170,6 +170,16 @@ class State:
     def advance_audio_window(self, offset: int):
         if offset <= 0:
             return
+        # Do not advance beyond available audio; keep window_ts <= audio_ts
+        max_advance = max(0, self.audio_ts - self.window_ts)
+        if offset > max_advance:
+            LOG.warning(
+                f"advance_audio_window requested {samples_to_seconds(offset)}s but only "
+                f"{samples_to_seconds(max_advance)}s available; clamping."
+            )
+            offset = max_advance
+        if offset == 0:
+            return
         LOG.debug(
             f"Shifting rolling window by {offset} samples ({samples_to_seconds(offset)}s) "
             f"to offset {self.window_ts + offset} ({samples_to_seconds(self.window_ts + offset)}s); "
@@ -195,9 +205,12 @@ class State:
 
         chunk_size = len(audio_chunk)
         window_size = len(self.rolling_window.array)
+        # Guard against a temporarily inconsistent state where window_ts > audio_ts
+        insertion_start = max(0, self.audio_ts - self.window_ts)
+        insertion_end = insertion_start + chunk_size
         if self.audio_ts + chunk_size <= self.window_ts + window_size:
             # Append to the current rolling window
-            self.rolling_window.array[self.audio_ts - self.window_ts : self.audio_ts - self.window_ts + chunk_size] = audio_chunk
+            self.rolling_window.array[insertion_start:insertion_end] = audio_chunk
         else:
             # Shift the window and append new audio
             shift_amount = self.audio_ts + chunk_size - (self.window_ts + window_size)
@@ -713,7 +726,8 @@ class Verbatim:
                     if len(self.state.unconfirmed_words) > 0 and skip_to > self.state.unconfirmed_words[0].start_ts:
                         skip_to = self.state.unconfirmed_words[0].start_ts
 
-                    self.state.acknowledged_ts = skip_to
+                    # Never acknowledge beyond audio we've actually ingested
+                    self.state.acknowledged_ts = min(skip_to, self.state.audio_ts)
                     self.state.skip_silences = True
             else:
                 acknowledged_utterances = []
