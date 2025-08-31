@@ -85,6 +85,13 @@ Save file in a specific directory
 verbatim audio_file.mp3 -o ./output/
 ```
 
+Start an HTTP server
+```bash
+verbatim --serve
+```
+This exposes a local `/audio/transcriptions` endpoint compatible with OpenAI's API.
+Include `-F stream=true` in your request to receive Server-Sent Events (`transcript.text.delta`, `transcript.text.done`).
+
 For see the [detailed terminal documentation](doc/verbatim-cli.md) for additional examples and options.
 
 ## Usage (from Docker)

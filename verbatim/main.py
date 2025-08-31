@@ -78,6 +78,7 @@ def main():
         action="store_true",
         help="Prefetch commonly used models into the cache and exit",
     )
+    parser.add_argument("--serve", action="store_true", help="Start an HTTP server with an OpenAI-compatible endpoint")
     parser.add_argument(
         "-w",
         "--workdir",
@@ -170,6 +171,8 @@ def main():
         model_cache_dir=args.model_cache,
     )
 
+    config.lang = args.languages if args.languages else ["en"]
+
     # Handle install-only mode
     if args.install:
         LOG.info("Installing/prefetching models into cache...")
@@ -179,12 +182,16 @@ def main():
         LOG.info("Model prefetch complete.")
         return
 
+    if args.serve:
+        from .server import serve
+
+        serve(config)
+        return
+
     source_path = args.input
     input_name_no_ext = os.path.splitext(os.path.split(source_path)[-1])[0]
     output_prefix_no_ext = os.path.join(config.output_dir, input_name_no_ext)
     working_prefix_no_ext = os.path.join(config.working_dir, input_name_no_ext)
-
-    config.lang = args.languages if args.languages else ["en"]
 
     # Set output formats
     from .transcript.format.writer import TranscriptWriterConfig
