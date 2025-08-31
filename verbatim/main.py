@@ -266,18 +266,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.argv = [
-        "run.py",
-        "samples/voices.wav",
-        "-w",
-        "out",
-        "--language",
-        "en",
-        "fr",
-        "--txt",
-        "--md",
-        "--json",
-        "--docx",
-        "--ass",
-    ]
     main()
