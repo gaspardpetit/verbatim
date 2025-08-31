@@ -1,39 +1,59 @@
 FROM nvidia/cuda:12.8.1-runtime-ubuntu22.04
 
-ARG VERSION=0.0.0
-
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    VERBATIM_VERSION=${VERSION} \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-LABEL org.opencontainers.image.version=${VERBATIM_VERSION}
+    # Use a fixed version until needed so this can be cached
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0 \
+    SETUPTOOLS_SCM_LOCAL_SCHEME=no-local-version
 
 # Build-time deps
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    apt-get update && apt-get install -y --no-install-recommends \
       python3.11 python3.11-venv python3.11-dev python3-pip \
       build-essential pkg-config \
       portaudio19-dev ffmpeg \
       ca-certificates curl git \
- && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
 # 3.11 toolchain
-RUN python3.11 -m pip install --upgrade pip uv setuptools wheel build \
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3.11 -m pip install --upgrade uv setuptools wheel build \
  && python3.11 -m pip install --no-cache-dir cython==3.0.10 pybind11
 
 WORKDIR /src
+
+# 1) Copy ONLY files that affect dependency resolution
 COPY pyproject.toml uv.lock README.md ./
-COPY verbatim verbatim
+
+# base image uses python 3.10 by default
+ENV UV_PYTHON=/usr/bin/python3.11
+ENV UV_PYTHON_DOWNLOADS=never
+
+# 2) Install locked dependencies into the system env (no project install yet)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv export --extra cuda_gpu --no-hashes --no-emit-project --frozen --format requirements-txt -o /tmp/requirements.txt
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3.11 -m uv pip install --system -r /tmp/requirements.txt
+
+# 3) Now add the source and install JUST your package (fast; --no-deps)
+COPY verbatim ./verbatim
 
 # Ensure a clean, PEP 440-compliant version (no VCS needed)
-ENV SETUPTOOLS_SCM_PRETEND_VERSION=${VERBATIM_VERSION} \
-    SETUPTOOLS_SCM_LOCAL_SCHEME=no-local-version
+ARG VERSION=0.0.0
+ENV VERBATIM_VERSION=${VERSION} 
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=${VERBATIM_VERSION}
 
 # Install package with the CUDA extra
-RUN python3.11 -m uv pip install --system .[cuda_gpu]
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=cache,target=/root/.cache/pip \
+    python3.11 -m uv pip install --system .[cuda_gpu]
 
-# Make sure runtime libs are avaible
+# Make sure runtime libs are available
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libportaudio2 libsndfile1 \
     && rm -rf /var/lib/apt/lists/* /root/.cache
@@ -41,7 +61,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 COPY tests/data/init.mp3 /app/init.mp3
 
-# # Disabled for now - this takes more than 1h on the github runners...
-# RUN --mount=type=secret,id=hf_token \
-#    HUGGINGFACE_TOKEN="$(cat /run/secrets/hf_token || true)" \
-#    verbatim /app/init.mp3 --diarize --isolate -vv || true
+# Default to running the CLI
+ENTRYPOINT ["verbatim"]
+CMD ["/app/init.mp3"]
+
+# Put volatile metadata LAST so it doesn't poison caches
+LABEL org.opencontainers.image.version=${VERBATIM_VERSION}

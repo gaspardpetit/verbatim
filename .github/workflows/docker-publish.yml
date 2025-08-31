@@ -140,11 +140,8 @@ jobs:
             type=raw,value=${{ matrix.variant.tag_prefix }}v${{ steps.vermeta.outputs.major }},enable=${{ steps.vermeta.outputs.is_clean_release == 'true' }}
             type=raw,value=${{ matrix.variant.tag_prefix }}latest,enable=${{ steps.vermeta.outputs.is_clean_release == 'true' }}
 
-      # Build and push Docker image with Buildx (don't push on PR)
-      # https://github.com/docker/build-push-action
       - name: Build and push Docker image ( ${{ matrix.variant.name }} )
-        id: build-and-push
-        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ${{ matrix.variant.dockerfile }}
@@ -152,8 +149,8 @@ jobs:
           tags: ${{ steps.dmeta.outputs.tags }}
           labels: ${{ steps.dmeta.outputs.labels }}
           platforms: ${{ matrix.variant.platforms }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.variant.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.variant.name }}
           build-args: |
             VERSION=${{ steps.vermeta.outputs.version_python }}
 
