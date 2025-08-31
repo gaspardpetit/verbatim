@@ -50,3 +50,16 @@ release:
 
 install:
 	uv pip install .
+
+.PHONY: docker docker-cpu docker-gpu
+
+VERSION_PY := $(shell git describe --tags --always --dirty \
+  | sed -E 's/^v//; s/-([0-9]+)-g[0-9a-f]+(-dirty)?$$/.post\1\2/; s/-dirty$$/.dev0/')
+
+docker-cpu:
+	docker build -t verbatim -f deploy/Dockerfile.cpu \
+	  --build-arg VERSION=$(VERSION_PY) .
+
+docker-gpu:
+	docker build -t verbatim:gpu -f deploy/Dockerfile.gpu \
+	  --build-arg VERSION=$(VERSION_PY) .
