@@ -1,4 +1,5 @@
 # verbatim/voices/diarize/factory.py
+import os
 from typing import Optional
 
 from .base import DiarizationStrategy
@@ -20,9 +21,11 @@ def create_diarizer(strategy: str = "pyannote", device: str = "cpu", huggingface
         DiarizationStrategy instance
     """
     if strategy == "pyannote":
-        if huggingface_token is None:
-            raise ValueError("huggingface_token is required for PyAnnote diarization")
-        return PyAnnoteDiarization(device=device, huggingface_token=huggingface_token)
+        offline_env = os.getenv("VERBATIM_OFFLINE", "0").lower() in ("1", "true", "yes")
+        if huggingface_token is None and not offline_env:
+            raise ValueError("huggingface_token is required for PyAnnote diarization when not offline")
+        # When offline, allow missing token (loading from local cache only)
+        return PyAnnoteDiarization(device=device, huggingface_token=huggingface_token or "")
     elif strategy == "stereo":
         return StereoDiarization(**kwargs)
     else:

@@ -153,6 +153,9 @@ class Config:
     device: str = "auto"
     stream: bool = False
     debug: bool = False
+    # Caching and connectivity
+    model_cache_dir: Optional[str] = None
+    offline: bool = False
 
     # TRANSCRIPTION
     lang: List[str] = field(default_factory=lambda: DEFAULT_LANGUAGES)
@@ -180,6 +183,9 @@ class Config:
         self.configure_latency(stream=self.stream)
 
         self.configure_output_directory(output_dir=self.output_dir, working_dir=self.working_dir)
+
+        # Configure model cache and offline mode last so env vars are ready
+        self.configure_cache(model_cache_dir=self.model_cache_dir, offline=self.offline)
 
     def configure_languages(self, lang: List[str]) -> "Config":
         self.lang = lang
@@ -247,3 +253,48 @@ class Config:
         if not os.path.isdir(self.working_dir):
             os.makedirs(self.working_dir)
         LOG.info(f"Working directory set to {self.working_dir}")
+
+    def configure_cache(self, model_cache_dir: Optional[str], offline: bool) -> "Config":
+        """Configure deterministic cache directories and offline mode.
+
+        - Sets environment variables that major libs honor:
+          HF_HOME/HUGGINGFACE_HUB_CACHE for Hugging Face, XDG_CACHE_HOME/WHISPER_CACHE_DIR
+          for Whisper, and a project-specific VERBATIM_MODEL_CACHE and VERBATIM_OFFLINE.
+        - Creates directories if they do not exist.
+        """
+        # Offline toggle
+        if offline:
+            os.environ["VERBATIM_OFFLINE"] = "1"
+            # Hugging Face/Transformers offline toggles
+            os.environ["HF_HUB_OFFLINE"] = "1"
+            os.environ["TRANSFORMERS_OFFLINE"] = "1"
+        else:
+            # Do not forcibly unset, but ensure default is empty if not set
+            os.environ.setdefault("VERBATIM_OFFLINE", "0")
+
+        if model_cache_dir:
+            try:
+                os.makedirs(model_cache_dir, exist_ok=True)
+            except OSError:
+                # If we cannot create the cache directory, log and continue with defaults
+                LOG.warning(f"Could not create model cache dir: {model_cache_dir}")
+            os.environ["VERBATIM_MODEL_CACHE"] = model_cache_dir
+
+            # XDG cache root influences many libs (incl. whisper default cache path)
+            xdg_cache = os.path.join(model_cache_dir, "xdg")
+            os.makedirs(xdg_cache, exist_ok=True)
+            os.environ.setdefault("XDG_CACHE_HOME", xdg_cache)
+
+            # Whisper cache (OpenAI whisper) – many installations honor this
+            whisper_cache = os.path.join(model_cache_dir, "whisper")
+            os.makedirs(whisper_cache, exist_ok=True)
+            os.environ.setdefault("WHISPER_CACHE_DIR", whisper_cache)
+
+            # Hugging Face cache
+            hf_home = os.path.join(model_cache_dir, "hf")
+            os.makedirs(hf_home, exist_ok=True)
+            os.environ.setdefault("HF_HOME", hf_home)
+            # Some libs consult HUGGINGFACE_HUB_CACHE directly
+            os.environ.setdefault("HUGGINGFACE_HUB_CACHE", os.path.join(hf_home, "hub"))
+
+        return self

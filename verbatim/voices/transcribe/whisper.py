@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Dict, List, Optional, Tuple
 
 import whisper
@@ -30,7 +31,24 @@ class WhisperTranscriber(Transcriber):
         self.whisper_best_of = whisper_best_of
         self.whisper_patience = whisper_patience
         self.whisper_temperatures = whisper_temperatures
-        self.model: Whisper = whisper.load_model(model_size_or_path, device=device)
+        # Honor offline and cache directory if provided
+        offline_env = os.getenv("VERBATIM_OFFLINE", "0").lower() in ("1", "true", "yes")
+        resolved_model: str = model_size_or_path
+        if offline_env and not os.path.exists(model_size_or_path):
+            # Try to resolve from cache directory
+            whisper_cache = os.getenv(
+                "WHISPER_CACHE_DIR",
+                os.path.join(os.getenv("XDG_CACHE_HOME", os.path.expanduser("~/.cache")), "whisper"),
+            )
+            candidate = os.path.join(whisper_cache, f"{model_size_or_path}.pt")
+            if os.path.exists(candidate):
+                resolved_model = candidate
+            else:
+                raise RuntimeError(
+                    f"Offline mode is enabled and Whisper model '{model_size_or_path}' is not present in cache: {candidate}"
+                )
+
+        self.model: Whisper = whisper.load_model(resolved_model, device=device)
 
     def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]:
         padded_audio = whisper.pad_or_trim(audio)

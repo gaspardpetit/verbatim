@@ -71,6 +71,8 @@ def main():
     parser.add_argument("--version", action="version", version=f"{PACKAGE_NAME} {__version__}")
     parser.add_argument("--cpu", action="store_true", help="Toggle CPU usage")
     parser.add_argument("-s", "--stream", action="store_true", help="Set mode to low latency streaming")
+    parser.add_argument("--offline", action="store_true", help="Disallow any network/model downloads; use cache only")
+    parser.add_argument("--model-cache", default=None, help="Deterministic cache directory for models and downloads")
     parser.add_argument(
         "-w",
         "--workdir",
@@ -159,6 +161,8 @@ def main():
         output_dir=args.outdir,
         working_dir=args.workdir if args.workdir is not None else "",
         stream=args.stream,
+        offline=args.offline,
+        model_cache_dir=args.model_cache,
     )
 
     source_path = args.input
