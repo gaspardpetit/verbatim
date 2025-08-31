@@ -174,8 +174,7 @@ class State:
         max_advance = max(0, self.audio_ts - self.window_ts)
         if offset > max_advance:
             LOG.warning(
-                f"advance_audio_window requested {samples_to_seconds(offset)}s but only "
-                f"{samples_to_seconds(max_advance)}s available; clamping."
+                f"advance_audio_window requested {samples_to_seconds(offset)}s but only {samples_to_seconds(max_advance)}s available; clamping."
             )
             offset = max_advance
         if offset == 0:

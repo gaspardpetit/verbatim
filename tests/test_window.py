@@ -1,9 +1,9 @@
-import unittest
-import numpy as np
-import sys
 import importlib
 import pathlib
+import sys
+import unittest
 
+import numpy as np
 
 # Ensure our workspace version of the package is imported, not any installed one.
 REPO_ROOT = str((pathlib.Path(__file__).parent.parent).resolve())
