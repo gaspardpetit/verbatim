@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1.7
 FROM python:3.11-slim AS base
 
+ARG TARGETPLATFORM
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -11,8 +12,7 @@ ENV SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0 \
     SETUPTOOLS_SCM_LOCAL_SCHEME=no-local-version
 
 # OS build/runtime deps (cache APT with BuildKit mounts)
-RUN --mount=type=cache,target=/var/cache/apt \
-    --mount=type=cache,target=/var/lib/apt \
+RUN --mount=type=cache,id=apt-${TARGETPLATFORM},target=/var/cache/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
       build-essential pkg-config \
       portaudio19-dev ffmpeg \

@@ -1,5 +1,6 @@
 FROM nvidia/cuda:12.8.1-runtime-ubuntu22.04
 
+ARG TARGETPLATFORM
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -10,8 +11,7 @@ ENV SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0 \
     SETUPTOOLS_SCM_LOCAL_SCHEME=no-local-version
 
 # Build-time deps
-RUN --mount=type=cache,target=/var/cache/apt \
-    --mount=type=cache,target=/var/lib/apt \
+RUN --mount=type=cache,id=apt-${TARGETPLATFORM},target=/var/cache/apt,sharing=locked \
     apt-get update && apt-get install -y --no-install-recommends \
       python3.11 python3.11-venv python3.11-dev python3-pip \
       build-essential pkg-config \
