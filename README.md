@@ -529,10 +529,10 @@ HUGGINGFACE_TOKEN=hf_... verbatim --install --model-cache /models
 verbatim input.mp3 -o out --model-cache /models --offline
 ```
 
-Notes on cache locations when `--model-cache` is not specified:
-- Hugging Face models: default to HF’s cache (typically `~/.cache/huggingface`, or `$XDG_CACHE_HOME/huggingface`).
-- OpenAI Whisper models (`openai-whisper`): default to `~/.cache/whisper` (or `$XDG_CACHE_HOME/whisper`).
-- faster-whisper models: stored under the Hugging Face cache by default.
+Default cache location (when `--model-cache` is not specified):
+- Local project directory `./.verbatim/` is used as the root cache.
+- Subdirectories are created inside: `./.verbatim/hf`, `./.verbatim/whisper`, etc.
+- If `./.verbatim/` cannot be created or is not writable, the app gracefully falls back to library defaults.
 
 Voice isolation (MDX): the `audio-separator` backend loads a checkpoint (e.g., `MDX23C-8KFFT-InstVoc_HQ_2.ckpt`).
 For offline use with `--model-cache`, place the file under `<cache>/audio-separator/`.

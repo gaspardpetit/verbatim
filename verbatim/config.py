@@ -272,6 +272,10 @@ class Config:
             # Do not forcibly unset, but ensure default is empty if not set
             os.environ.setdefault("VERBATIM_OFFLINE", "0")
 
+        # Default to a local project cache if unspecified
+        if not model_cache_dir:
+            model_cache_dir = os.path.join(os.getcwd(), ".verbatim")
+
         if model_cache_dir:
             created_ok = True
             try:

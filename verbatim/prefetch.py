@@ -25,6 +25,10 @@ def apply_cache_env(model_cache_dir: Optional[str], offline: bool = False) -> No
     else:
         os.environ.setdefault("VERBATIM_OFFLINE", "0")
 
+    # Default to local project cache if unspecified
+    if not model_cache_dir:
+        model_cache_dir = os.path.join(os.getcwd(), ".verbatim")
+
     if model_cache_dir:
         os.makedirs(model_cache_dir, exist_ok=True)
         os.environ["VERBATIM_MODEL_CACHE"] = model_cache_dir
@@ -132,4 +136,3 @@ def prefetch(
         LOG.info(
             f"If needed, place MDX checkpoint (e.g., MDX23C-8KFFT-InstVoc_HQ_2.ckpt) under: {iso_dir} to enable offline isolation"
         )
-
