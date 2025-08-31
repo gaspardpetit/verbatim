@@ -43,15 +43,26 @@ jobs:
           - name: cpu
             suffix: ""
             dockerfile: deploy/Dockerfile.cpu
-            platforms: linux/amd64,linux/arm64
             tag_prefix: ""
           - name: gpu
             suffix: "-gpu"
             dockerfile: deploy/Dockerfile.gpu
-            platforms: linux/amd64
             tag_prefix: "gpu-"
 
     steps:
+      # skip arm64 on regular builds - the runner uses an emulator and this is very slow...
+      - name: Set platforms
+        id: set-platforms
+        run: |
+          if [[ "${{ matrix.variant.name }}" == "gpu" ]]; then
+            echo "platforms=linux/amd64" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "schedule" || \
+                   "${{ github.event_name }}" == "release" ]]; then
+            echo "platforms=linux/amd64,linux/arm64" >> $GITHUB_OUTPUT
+          else
+            echo "platforms=linux/amd64" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout repository (with tags)
         uses: actions/checkout@v4
         with:
@@ -139,7 +150,7 @@ jobs:
             type=raw,value=${{ matrix.variant.tag_prefix }}v${{ steps.vermeta.outputs.major }}.${{ steps.vermeta.outputs.minor }},enable=${{ steps.vermeta.outputs.is_clean_release == 'true' }}
             type=raw,value=${{ matrix.variant.tag_prefix }}v${{ steps.vermeta.outputs.major }},enable=${{ steps.vermeta.outputs.is_clean_release == 'true' }}
             type=raw,value=${{ matrix.variant.tag_prefix }}latest,enable=${{ steps.vermeta.outputs.is_clean_release == 'true' }}
-
+      
       - name: Build and push Docker image ( ${{ matrix.variant.name }} )
         uses: docker/build-push-action@v5
         with:
@@ -148,9 +159,9 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.dmeta.outputs.tags }}
           labels: ${{ steps.dmeta.outputs.labels }}
-          platforms: ${{ matrix.variant.platforms }}
-          cache-from: type=gha,scope=${{ matrix.variant.name }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.variant.name }}
+          platforms: ${{ steps.set-platforms.outputs.platforms }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           build-args: |
             VERSION=${{ steps.vermeta.outputs.version_python }}
 
