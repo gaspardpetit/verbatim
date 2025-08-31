@@ -811,7 +811,7 @@ tqdm==4.67.1
     #   speechbrain
     #   transformers
     #   wtpsplit
-transformers==4.51.3
+transformers==4.53.0
     # via
     #   adapters
     #   pyannote-audio
