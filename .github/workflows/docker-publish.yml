@@ -24,9 +24,9 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 concurrency:
-  group: docker-${{ github.ref }}
+  group: ${{ github.event_name != 'pull_request' && format('docker-{0}', github.ref) || github.run_id }}
   cancel-in-progress: false
-
+  
 jobs:
   build:
 
