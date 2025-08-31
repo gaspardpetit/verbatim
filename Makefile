@@ -43,9 +43,10 @@ release:
 	python -m build
 	python -m twine check dist/*
 	python -m venv .pkg-venv
-		. .pkg-venv/bin/activate && \
-		  python -m pip install --upgrade pip && \
-		  python -m pip install dist/*.whl && \
-		  python -c "import verbatim; print('Imported verbatim', getattr(verbatim, '__version__', 'unknown'))"
+	. .pkg-venv/bin/activate && \
+	  python -m pip install --upgrade pip && \
+	  python -m pip install dist/*.whl && \
+	  python -c "import verbatim; print('Imported verbatim', getattr(verbatim, '__version__', 'unknown'))"
 
-
+install:
+	uv pip install .

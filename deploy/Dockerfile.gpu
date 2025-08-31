@@ -41,8 +41,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 COPY tests/data/init.mp3 /app/init.mp3
 
-# Warm-up without leaking the token into layers (requires BuildKit)
-# docker build --secret id=hf_token,env=HUGGINGFACE_TOKEN ...
-RUN --mount=type=secret,id=hf_token \
-    HUGGINGFACE_TOKEN="$(cat /run/secrets/hf_token || true)" \
-    verbatim /app/init.mp3 --diarize --isolate -vv || true
+# # Disabled for now - this takes more than 1h on the github runners...
+# RUN --mount=type=secret,id=hf_token \
+#    HUGGINGFACE_TOKEN="$(cat /run/secrets/hf_token || true)" \
+#    verbatim /app/init.mp3 --diarize --isolate -vv || true
