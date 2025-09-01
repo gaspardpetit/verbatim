@@ -1,0 +1,3 @@
+[submodule "ext/samples"]
+	path = ext/samples
+	url = https://github.com/gaspardpetit/verbatim-samples.git

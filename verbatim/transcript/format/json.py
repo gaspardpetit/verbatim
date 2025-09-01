@@ -150,3 +150,46 @@ def read_utterances(path: str) -> List[Utterance]:
     with open(path, "r", encoding="utf-8") as file:
         utterances = parser.parse(file)
     return utterances
+
+
+def read_dlm_utterances(path: str) -> List[Utterance]:
+    """
+    Reads utterances from a simplified JSON format that contains reference information
+    but no timing data.
+
+    Expected JSON format:
+    {
+      "utterances": [
+        {
+          "utterance_id": "utt19",
+          "ref_spk": "1 1 1 1 1 1 1 1",
+          "ref_text": "Also wir haben heute jetzt 30 Minuten Zeit."
+        },
+        ...
+      ]
+    }
+
+    :param path: Path to the JSON file
+    :return: List of Utterance objects with basic information (no timing data)
+    """
+    with open(path, "r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    utterances = []
+    for utt in data.get("utterances", []):
+        # Extract the speaker from ref_spk if available
+        ref_spk = utt.get("ref_spk", "")
+        speaker = f"SPEAKER_{ref_spk.split()[0]}" if ref_spk else None
+
+        # Create an Utterance with minimal information
+        utterance = Utterance(
+            utterance_id=utt.get("utterance_id", ""),
+            speaker=speaker,
+            start_ts=0,  # No timing information available
+            end_ts=0,  # No timing information available
+            text=utt.get("ref_text", ""),
+            words=[],  # No word-level information available
+        )
+        utterances.append(utterance)
+
+    return utterances

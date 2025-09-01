@@ -91,7 +91,6 @@ def main():
     parser.add_argument("--docx", action="store_true", help="Enable Microsoft Word DOCX output")
     parser.add_argument("--txt", action="store_true", help="Enable TXT file output")
     parser.add_argument("--json", action="store_true", help="Enable json file output")
-    parser.add_argument("--json_dlm", action="store_true", help="Enable json file output (diarizationlm)")
     parser.add_argument("--md", action="store_true", help="Enable Markdown (MD) output")
     parser.add_argument("--stdout", action="store_true", default=True, help="Enable stdout output (enabled by default)")
     parser.add_argument("--stdout-nocolor", action="store_true", help="Enable stdout output without colors")
@@ -214,8 +213,6 @@ def main():
         output_formats.append("md")
     if args.json:
         output_formats.append("json")
-    if args.json_dlm:
-        output_formats.append("json_dlm")
     if args.stdout:
         output_formats.append("stdout")
     if args.stdout_nocolor:
