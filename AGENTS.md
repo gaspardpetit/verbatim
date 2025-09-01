@@ -31,6 +31,14 @@
 - Key areas: audio sources (`verbatim/audio/`), transcription/diarization/separation (`verbatim/voices/`), transcript formatting (`verbatim/transcript/`), metrics (`verbatim/eval/`).
 - If you change stage interfaces or file formats, update `doc/architecture.md` and related diagrams in `doc/img/`.
 
+## Audio Parameters
+- Runtime audio parameters (sample rate, frame size, max attention window) live in `verbatim/audio/settings.py` as `AudioParams`.
+- Override defaults with environment variables:
+  - `VERBATIM_SAMPLE_RATE` (default 16000)
+  - `VERBATIM_FRAME_SIZE` (default 160)
+  - `VERBATIM_MAX_WINDOW_FRAMES` (default 3000)
+- Access them via `verbatim.audio.settings.AUDIO_PARAMS` for consistent configuration.
+
 ## Coding Style & Naming Conventions
 - Indentation: 4 spaces; line length: 150 (see `[tool.ruff]`).
 - Follow PEP 8: `snake_case` for functions/vars, `CamelCase` for classes, modules lowercase with underscores.

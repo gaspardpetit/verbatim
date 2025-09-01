@@ -168,6 +168,7 @@ explicit = true
 
 line-length = 150
 indent-width = 4
+extend-exclude = ["verbatim/_version.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
