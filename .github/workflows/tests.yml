@@ -177,7 +177,7 @@ jobs:
       - name: Run pipeline smoke with coverage
         shell: bash
         run: |
-          coverage run -m pytest -q -k test_diarization_metrics_short
+          coverage run -m pytest -q -k test_pipeline_quick
           # NOTE: The following tests are intentionally not executed in CI due to runtime:
           #   - tests/test_pipeline.py::TestPipeline::test_diarization_metrics_long
           #   - tests/test_sentences.py::TestSentences::test_SaTSentenceTokenizer
