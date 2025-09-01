@@ -119,6 +119,7 @@ pipeline: Pipeline = Pipeline(context=context)
 pipeline.execute()
 ```
 
+
 The project is organized to be modular, such that individual components can be used outside the full pipeline, and the pipeline can be customized to use custom stages. For example, to use a custom diarization stage:
 
 ```python

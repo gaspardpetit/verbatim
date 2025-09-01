@@ -3,12 +3,18 @@ import wave
 import numpy as np
 from scipy.signal import resample
 
+from ..settings import AUDIO_PARAMS
 from .audiosource import AudioSource
 
 
 class WavSink:
     @staticmethod
-    def dump_to_wav(audio_source: AudioSource, output_path: str, sample_rate: int = 16000, preserve_channels: bool = False):
+    def dump_to_wav(
+        audio_source: AudioSource,
+        output_path: str,
+        sample_rate: int = AUDIO_PARAMS.sample_rate,
+        preserve_channels: bool = False,
+    ):
         with audio_source.open() as audio_stream:
             input_sample_rate = audio_stream.get_rate()  # e.g., 48000
             num_channels = audio_stream.get_nchannels() if preserve_channels else 1

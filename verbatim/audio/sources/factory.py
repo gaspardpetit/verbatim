@@ -9,6 +9,7 @@ from pyannote.core.annotation import Annotation
 from ...voices.diarize.factory import create_diarizer  # Add this import
 from ..audio import samples_to_seconds, timestr_to_samples
 from ..convert import convert_to_wav
+from ..settings import AUDIO_PARAMS
 from .audiosource import AudioSource
 from .sourceconfig import SourceConfig
 
@@ -57,7 +58,7 @@ def create_audio_source(
             source_name="<stdin>",
             stream=sys.stdin.buffer,
             channels=1,
-            sampling_rate=16000,
+            sampling_rate=AUDIO_PARAMS.sample_rate,
             dtype=np.dtype(np.int16),
         )
 
