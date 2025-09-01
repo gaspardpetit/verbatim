@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import sys
+import types
 from dataclasses import dataclass
 
 
@@ -37,3 +39,16 @@ def get_audio_params() -> AudioParams:
 
 
 AUDIO_PARAMS = get_audio_params()
+
+
+class _SettingsModule(types.ModuleType):
+    """Ensure module is present in :data:`sys.modules` when accessed."""
+
+    def __getattribute__(self, name: str):  # pragma: no cover - trivial
+        mod_name = object.__getattribute__(self, "__name__")
+        if sys.modules.get(mod_name) is not self:
+            sys.modules[mod_name] = self
+        return super().__getattribute__(name)
+
+
+sys.modules[__name__].__class__ = _SettingsModule
