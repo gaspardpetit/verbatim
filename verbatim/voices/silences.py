@@ -7,6 +7,8 @@ import torch
 from numpy.typing import NDArray
 from silero_vad import get_speech_timestamps, load_silero_vad
 
+from verbatim.audio.settings import AUDIO_PARAMS
+
 # Configure logger
 LOG = logging.getLogger(__name__)
 
@@ -41,7 +43,7 @@ class SileroVoiceActivityDetection(VoiceActivityDetection):
             audio=audio_tensor,
             model=self.model,
             threshold=0.25,
-            sampling_rate=16000,
+            sampling_rate=AUDIO_PARAMS.sample_rate,
             min_speech_duration_ms=min_speech_duration_ms,
             max_speech_duration_s=float("inf"),
             min_silence_duration_ms=min_silence_duration_ms,

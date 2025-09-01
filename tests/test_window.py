@@ -5,6 +5,8 @@ import unittest
 
 import numpy as np
 
+from verbatim.audio.settings import AUDIO_PARAMS
+
 # Ensure our workspace version of the package is imported, not any installed one.
 REPO_ROOT = str((pathlib.Path(__file__).parent.parent).resolve())
 if REPO_ROOT not in sys.path:
@@ -19,7 +21,7 @@ verbatim_local = importlib.import_module("verbatim.verbatim")
 
 
 class DummyConfig:
-    def __init__(self, sampling_rate: int = 16000, window_duration: int = 1):
+    def __init__(self, sampling_rate: int = AUDIO_PARAMS.sample_rate, window_duration: int = 1):
         self.sampling_rate = sampling_rate
         self.window_duration = window_duration
 
@@ -27,7 +29,7 @@ class DummyConfig:
 class TestAdvanceAudioWindow(unittest.TestCase):
     def setUp(self):
         # Small window for faster tests
-        self.config = DummyConfig(sampling_rate=16000, window_duration=1)
+        self.config = DummyConfig(sampling_rate=AUDIO_PARAMS.sample_rate, window_duration=1)
         self.state = verbatim_local.State(self.config)
 
     def test_noop_when_offset_non_positive(self):

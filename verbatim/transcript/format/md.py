@@ -3,9 +3,12 @@ from typing import List, Optional, TextIO, Union
 
 import numpy as np
 
-from ...voices.diarization import UNKNOWN_SPEAKER
-from ..formatting import format_milliseconds
-from ..words import Utterance, Word
+from verbatim.audio.audio import samples_to_seconds
+from verbatim.audio.settings import AUDIO_PARAMS
+from verbatim.transcript.formatting import format_milliseconds
+from verbatim.transcript.words import Utterance, Word
+from verbatim.voices.diarization import UNKNOWN_SPEAKER
+
 from .writer import (
     LanguageStyle,
     ProbabilityStyle,
@@ -125,16 +128,24 @@ class TranscriptFormatter:
             pass
 
         elif self.timestamp_style == TimestampStyle.minute:
-            if self.last_ts is None or start_ts - self.last_ts >= 60 * 16000:
-                self.last_ts = ((start_ts // 16000) // 60) * 60 * 16000
-                md.bold(f"[{format_milliseconds(start_ts * 1000 / 16000)}]")
+            sample_rate = AUDIO_PARAMS.sample_rate
+            if self.last_ts is None or start_ts - self.last_ts >= 60 * sample_rate:
+                self.last_ts = ((start_ts // sample_rate) // 60) * 60 * sample_rate
+                md.bold(
+                    f"[{format_milliseconds(samples_to_seconds(start_ts) * 1000)}]"
+                )
                 md.append("\n\n")
 
         elif self.timestamp_style == TimestampStyle.start:
-            md.bold(f"[{format_milliseconds(start_ts * 1000 / 16000)}]:")
+            md.bold(
+                f"[{format_milliseconds(samples_to_seconds(start_ts) * 1000)}]:"
+            )
 
         elif self.timestamp_style == TimestampStyle.range:
-            md.bold(f"[{format_milliseconds(start_ts * 1000 / 16000)}-{format_milliseconds(end_ts * 1000 / 16000)}]:")
+            md.bold(
+                f"[{format_milliseconds(samples_to_seconds(start_ts) * 1000)}-"
+                f"{format_milliseconds(samples_to_seconds(end_ts) * 1000)}]:"
+            )
 
     def _format_speaker(self, md: MarkdownText, speaker: str):
         if self.speaker_style == SpeakerStyle.none:

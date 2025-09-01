@@ -7,10 +7,12 @@ import torch
 from pyannote.audio import Pipeline
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 
-from ...audio.audio import wav_to_int16
-from ...audio.sources.audiosource import AudioSource
-from ...audio.sources.fileaudiosource import FileAudioSource
-from ..diarize.factory import create_diarizer
+from verbatim.audio.audio import wav_to_int16
+from verbatim.audio.settings import AUDIO_PARAMS
+from verbatim.audio.sources.audiosource import AudioSource
+from verbatim.audio.sources.fileaudiosource import FileAudioSource
+from verbatim.voices.diarize.factory import create_diarizer
+
 from .separate import SeparationStrategy
 
 # Configure logger
@@ -129,7 +131,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
                     if speaker_data.dtype != np.int16:
                         speaker_data = wav_to_int16(speaker_data)
                     file_name = f"{out_speaker_wav_prefix}-{speaker}.wav" if out_speaker_wav_prefix else f"{speaker}.wav"
-                    scipy.io.wavfile.write(file_name, 16000, speaker_data)
+                    scipy.io.wavfile.write(file_name, AUDIO_PARAMS.sample_rate, speaker_data)
                     separated_sources.append(
                         FileAudioSource(
                             file=file_name,

@@ -5,7 +5,8 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import List, Mapping, Optional, Tuple
 
-from .audio.sources.audiosource import AudioSource
+from verbatim.audio.settings import AUDIO_PARAMS
+from verbatim.audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
 
@@ -146,8 +147,8 @@ def get_default_working_directory():
 
 @dataclass
 class Config:
-    sampling_rate: int = 16000
-    transcribe_latency: int = 16000
+    sampling_rate: int = AUDIO_PARAMS.sample_rate
+    transcribe_latency: int = AUDIO_PARAMS.sample_rate
     frames_per_buffer: int = 1000
     window_duration: int = 30  # seconds
     device: str = "auto"

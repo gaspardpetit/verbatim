@@ -107,7 +107,7 @@ def timestr_to_samples(timestr: str, sample_rate: int = AUDIO_PARAMS.sample_rate
 
     Args:
         timestr (str): Time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms.
-        sample_rate (int): Sampling rate in Hz (default is 16000).
+        sample_rate (int): Sampling rate in Hz (default is AUDIO_PARAMS.sample_rate).
 
     Returns:
         int: The corresponding sample index.

@@ -2,7 +2,10 @@ import json
 import os
 from typing import List, Optional, TextIO
 
-from ..words import Utterance, Word
+from verbatim.audio.audio import samples_to_seconds
+from verbatim.audio.settings import AUDIO_PARAMS
+from verbatim.transcript.words import Utterance, Word
+
 from .writer import TranscriptWriter, TranscriptWriterConfig
 
 
@@ -25,8 +28,8 @@ class TranscriptFormatter:
         # Create a dictionary for the utterance
         utterance_dict = {
             "id": utterance.utterance_id,
-            "start": round(utterance.start_ts / 16000, 5),
-            "end": round(utterance.end_ts / 16000, 5),
+            "start": round(samples_to_seconds(utterance.start_ts), 5),
+            "end": round(samples_to_seconds(utterance.end_ts), 5),
             "speaker": utterance.speaker,
             "language": utterance.words[0].lang,
             "text": utterance.text,
@@ -38,8 +41,8 @@ class TranscriptFormatter:
                     "text": word.word,
                     "lang": word.lang,
                     "prob": round(word.probability, 4),
-                    "start": round(word.start_ts / 16000, 5),
-                    "end": round(word.end_ts / 16000, 5),
+                    "start": round(samples_to_seconds(word.start_ts), 5),
+                    "end": round(samples_to_seconds(word.end_ts), 5),
                 }
                 for word in utterance.words
             ]
@@ -51,10 +54,10 @@ class TranscriptFormatter:
 
 
 class TranscriptParser:
-    def __init__(self, sample_rate: int = 16000):
+    def __init__(self, sample_rate: int = AUDIO_PARAMS.sample_rate):
         """
         :param sample_rate: The number of samples per second used to convert
-                            the floating-point seconds back into integer sample counts.
+            the floating-point seconds back into integer sample counts.
         """
         self.sample_rate = sample_rate
 

@@ -35,7 +35,7 @@ class TestAudioProcessing(unittest.TestCase):
         n_samples = int(duration_sec * from_sampling_rate)
         audio_resample = np.linspace(-1.0, 1.0, num=n_samples, dtype=np.float32)
         output = format_audio(audio_resample, from_sampling_rate)
-        expected_length = int(n_samples * 16000 / from_sampling_rate)
+        expected_length = int(n_samples * AUDIO_PARAMS.sample_rate / from_sampling_rate)
         self.assertEqual(output.shape[0], expected_length)
         self.assertEqual(output.dtype, np.float32)
 
@@ -59,7 +59,7 @@ class TestAudioProcessing(unittest.TestCase):
 
         data_float16 = np.array([0, 0.5, -0.5, 1, -1], dtype=np.float16)
         n = max(math.fabs(np.min(data_float16)), math.fabs(np.max(data_float16)))
-        expected = (data_float16.astype(np.float32) / n * np.iinfo(np.int16).max).astype(np.int16)
+        expected = (data_float16 / n * np.iinfo(np.int16).max).astype(np.int16)
         result = wav_to_int16(data_float16)
         np.testing.assert_array_equal(result, expected)
 

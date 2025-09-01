@@ -8,7 +8,8 @@ from audio_separator.separator import Separator
 from numpy.typing import NDArray
 from scipy.io.wavfile import write as wav_write
 
-from ..audio.audio import format_audio
+from verbatim.audio.audio import format_audio
+from verbatim.audio.settings import AUDIO_PARAMS
 
 # Configure logger
 LOG = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ LOG = logging.getLogger(__name__)
 
 class VoiceIsolation:
     def __init__(self, log_level: int = logging.WARN, model_name: str = "MDX23C-8KFFT-InstVoc_HQ_2.ckpt"):
-        self.separator = Separator(log_level=log_level, sample_rate=16000)
+        self.separator = Separator(log_level=log_level, sample_rate=AUDIO_PARAMS.sample_rate)
         cache_root = os.getenv("VERBATIM_MODEL_CACHE")
         offline_env = os.getenv("VERBATIM_OFFLINE", "0").lower() in ("1", "true", "yes")
 
@@ -65,7 +66,7 @@ class VoiceIsolation:
 
         # Save the input audio to a temporary file
         temp_audio_file = "voice-isolation.wav"
-        wav_write(temp_audio_file, 16000, audio)
+        wav_write(temp_audio_file, AUDIO_PARAMS.sample_rate, audio)
 
         voice_audio_path, _ = self.isolate_voice_in_file(file=temp_audio_file)
 
@@ -75,7 +76,7 @@ class VoiceIsolation:
 
         # Format the vocal audio to mono and 16 kHz
         formatted_voice_audio = format_audio(voice_audio, int(voice_sampling_rate))
-        wav_write("voice-isolation-filtered.wav", 16000, formatted_voice_audio)
+        wav_write("voice-isolation-filtered.wav", AUDIO_PARAMS.sample_rate, formatted_voice_audio)
 
         # ensure output has same length as input
         if len(formatted_voice_audio) < input_length:
