@@ -76,6 +76,10 @@ class MicAudioStreamSoundDevice(AudioStream):
         idevice, _odevice = stream.channels
         return idevice
 
+    def get_rate(self) -> int:
+        # pylint: disable=protected-access
+        return self.stream._samplerate
+
 
 class MicAudioSourceSoundDevice(AudioSource):
     def __init__(self, sampling_rate: int = 16000, frames_per_buffer: int = 1024):
@@ -133,6 +137,9 @@ class MicAudioStreamPyAudio(AudioStream):
 
     def get_nchannels(self) -> int:
         return self.nchannels
+
+    def get_rate(self) -> int:
+        return self.source.sampling_rate
 
 
 class MicAudioSourcePyAudio(AudioSource):

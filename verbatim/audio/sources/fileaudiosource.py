@@ -80,6 +80,9 @@ class FileAudioStream(AudioStream):
     def get_nchannels(self) -> int:
         return self.stream.getnchannels()
 
+    def get_rate(self) -> int:
+        return self.stream.getframerate()
+
 
 class FileAudioSource(AudioSource):
     diarization: Optional[Annotation]

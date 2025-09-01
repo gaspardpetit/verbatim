@@ -48,6 +48,9 @@ class PCMInputStreamAudioStream(AudioStream):
     def get_nchannels(self) -> int:
         return self.source.channels
 
+    def get_rate(self) -> int:
+        return self.source.sampling_rate
+
 
 class PCMInputStreamAudioSource(AudioSource):
     stream: BinaryIO
