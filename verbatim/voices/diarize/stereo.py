@@ -28,6 +28,11 @@ class StereoDiarization(DiarizationStrategy):
         return energy_left, energy_right, peak_left, peak_right
 
     def _determine_speaker(self, energy_left: float, energy_right: float, peak_left: float, peak_right: float) -> str:
+        # If both channels carry effectively no energy, treat as silence
+        epsilon = 1e-8
+        if energy_left <= epsilon and energy_right <= epsilon:
+            return "UNKNOWN"
+
         # Calculate energy ratios
         left_to_right_ratio = energy_left / energy_right if energy_right > 0 else float("inf")
         right_to_left_ratio = energy_right / energy_left if energy_left > 0 else float("inf")
