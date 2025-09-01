@@ -82,9 +82,9 @@ class TestPipeline(unittest.TestCase):
             expected_cpwer = expected_metrics.get(ref_filename, {}).get("cpWER")
 
         # Verify performance
-        assert metrics.WER <= expected_wer, f"WER is too high: {metrics.WER} > {expected_wer}"
-        assert metrics.WDER <= expected_wder, f"WDER is too high: {metrics.WDER} > {expected_wder}"
-        assert metrics.cpWER <= expected_cpwer, f"cpWER is too high: {metrics.cpWER} > {expected_cpwer}"
+        self.assertLessEqual(metrics.WER, expected_wer, f"WER is too high: {metrics.WER} > {expected_wer}")
+        self.assertLessEqual(metrics.WDER, expected_wder, f"WDER is too high: {metrics.WDER} > {expected_wder}")
+        self.assertLessEqual(metrics.cpWER, expected_cpwer, f"cpWER is too high: {metrics.cpWER} > {expected_cpwer}")
 
 
 if __name__ == "__main__":
