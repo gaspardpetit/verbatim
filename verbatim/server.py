@@ -4,7 +4,7 @@ import os
 import tempfile
 import threading
 from dataclasses import replace
-from typing import Iterable, Optional, Union, cast
+from typing import Callable, Iterable, Optional, Union, cast
 
 from aiohttp import web
 from aiohttp.multipart import BodyPartReader
@@ -35,7 +35,7 @@ async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
         return web.json_response({"error": "file is required"}, status=400)
 
     if not stream:
-        transcribe_func = transcribe_file
+        transcribe_func = request.app.get("transcribe_func", transcribe_file)
         try:
             text = await asyncio.to_thread(transcribe_func, file_path, config, language)
         finally:
@@ -49,7 +49,7 @@ async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
     loop = asyncio.get_event_loop()
     queue: asyncio.Queue[Optional[Union[str, Exception]]] = asyncio.Queue()
 
-    transcribe_iter = iterate_transcription
+    transcribe_iter = request.app.get("transcribe_iter", iterate_transcription)
 
     def worker() -> None:
         try:
@@ -148,9 +148,18 @@ async def _handle_model(request: web.Request) -> web.Response:
     return web.json_response({"error": "model not found"}, status=404)
 
 
-def create_app(config: Config) -> web.Application:
+def create_app(
+    config: Config,
+    *,
+    transcribe_func: Optional[Callable[[str, Config, Optional[str]], str]] = None,
+    transcribe_iter: Optional[Callable[[str, Config, Optional[str]], Iterable[str]]] = None,
+) -> web.Application:
     app = web.Application()
     app["config"] = config
+    if transcribe_func is not None:
+        app["transcribe_func"] = transcribe_func
+    if transcribe_iter is not None:
+        app["transcribe_iter"] = transcribe_iter
     app.router.add_post("/audio/transcriptions", _handle_transcriptions)
     app.router.add_get("/models", _handle_models)
     app.router.add_get("/models/{model_id}", _handle_model)
