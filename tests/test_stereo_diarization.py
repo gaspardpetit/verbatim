@@ -12,6 +12,7 @@ class TestStereoDiarization(unittest.TestCase):
         from verbatim.voices.diarize.stereo import StereoDiarization
 
         diarizer = StereoDiarization()
+        # pylint: disable=protected-access
         speaker = diarizer._determine_speaker(0.0, 0.0, 0.0, 0.0)
         self.assertEqual(speaker, "UNKNOWN")
 
