@@ -19,41 +19,45 @@ class ServerEndpointTests(IsolatedAsyncioTestCase):
     async def asyncTearDown(self):
         await self.client.close()
 
-    @patch("verbatim.server.transcribe_file", return_value="hello world")
-    async def test_transcriptions_endpoint(self, mock_transcribe):
+    async def test_transcriptions_endpoint(self):
         data = aiohttp.FormData()
         data.add_field("file", b"abc", filename="a.wav", content_type="audio/wav")
-        resp = await self.client.post("/audio/transcriptions", data=data)
-        self.assertEqual(resp.status, 200)
-        payload = await resp.json()
-        self.assertEqual(payload["text"], "hello world")
-        mock_transcribe.assert_called()
+        with patch("verbatim.server.transcribe_file", return_value="hello world") as mock_transcribe:
+            resp = await self.client.post("/audio/transcriptions", data=data)
+            self.assertEqual(resp.status, 200)
+            payload = await resp.json()
+            self.assertEqual(payload["text"], "hello world")
+            mock_transcribe.assert_called()
 
-    @patch("verbatim.server.iterate_transcription", return_value=iter(["hi ", "there"]))
-    async def test_transcriptions_stream_endpoint(self, mock_iter):
+    async def test_transcriptions_stream_endpoint(self):
         data = aiohttp.FormData()
         data.add_field("file", b"abc", filename="a.wav", content_type="audio/wav")
         data.add_field("stream", "true")
-        resp = await self.client.post("/audio/transcriptions", data=data)
-        self.assertEqual(resp.status, 200)
-        body = await resp.text()
-        self.assertIn("transcript.text.delta", body)
-        self.assertIn("hi ", body)
-        self.assertIn("there", body)
-        self.assertIn("transcript.text.done", body)
-        mock_iter.assert_called()
+        with patch(
+            "verbatim.server.iterate_transcription", return_value=iter(["hi ", "there"])
+        ) as mock_iter:
+            resp = await self.client.post("/audio/transcriptions", data=data)
+            self.assertEqual(resp.status, 200)
+            body = await resp.text()
+            self.assertIn("transcript.text.delta", body)
+            self.assertIn("hi ", body)
+            self.assertIn("there", body)
+            self.assertIn("transcript.text.done", body)
+            mock_iter.assert_called()
 
-    @patch("verbatim.server.iterate_transcription", side_effect=RuntimeError("boom"))
-    async def test_transcriptions_stream_endpoint_error(self, mock_iter):
+    async def test_transcriptions_stream_endpoint_error(self):
         data = aiohttp.FormData()
         data.add_field("file", b"abc", filename="a.wav", content_type="audio/wav")
         data.add_field("stream", "true")
-        resp = await self.client.post("/audio/transcriptions", data=data)
-        self.assertEqual(resp.status, 200)
-        body = await resp.text()
-        self.assertIn('"type": "error"', body)
-        self.assertNotIn("transcript.text.done", body)
-        mock_iter.assert_called()
+        with patch(
+            "verbatim.server.iterate_transcription", side_effect=RuntimeError("boom")
+        ) as mock_iter:
+            resp = await self.client.post("/audio/transcriptions", data=data)
+            self.assertEqual(resp.status, 200)
+            body = await resp.text()
+            self.assertIn('"type": "error"', body)
+            self.assertNotIn("transcript.text.done", body)
+            mock_iter.assert_called()
 
     async def test_models_endpoints(self):
         resp = await self.client.get("/models")
