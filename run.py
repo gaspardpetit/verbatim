@@ -4,9 +4,9 @@ from verbatim.main import main
 
 sys.argv = [
     "run.py",
-    "samples/Airfrance - Bienvenue à bord.wav",
+    "ext/samples/audio/1ch_2spk_en-fr_AirFrance_00h03m54s.wav",
     "--eval",
-    "samples/Airfrance - Bienvenue à bord.ref.json",
+    "ext/samples/truth/2spk_en-fr_AirFrance.json",
     "-v",
     "-w",
     "out",
