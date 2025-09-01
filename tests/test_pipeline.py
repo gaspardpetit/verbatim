@@ -20,10 +20,19 @@ class TestPipeline(unittest.TestCase):
         Quickly test the pipeline with a short audio file.
         """
         # Find audio file based on name
-        name = "WizardOfOzToto"
+        name = "2ch-acoustic_1spk_en_WizardOfOzToto_00h00m06s.mp3"
         filename = None
-        samples_dir = "ext/samples/audio"
-        truth_dir = "ext/samples/truth"
+
+        # Point to the external samples directory to run test against other
+        # samples, but commit against the local test samples to ensure that
+        # tests can run without external dependencies.
+
+        # samples_dir = "ext/samples/audio"
+        # truth_dir = "ext/samples/truth"
+
+        samples_dir = "tests/data"
+        truth_dir = "tests/data"
+
         for file in os.listdir(samples_dir):
             if name in file:
                 filename = file
@@ -35,7 +44,7 @@ class TestPipeline(unittest.TestCase):
 
         # Find reference file
         base_name = filename.split(".")[0][:-10]  # also exclude the duration timestamp at the end
-        ref_path = find_reference_file(base_name)
+        ref_path = find_reference_file(base_name, reference_dir=truth_dir)
 
         # Check if reference file was found
         if ref_path is None:
@@ -82,9 +91,9 @@ class TestPipeline(unittest.TestCase):
             expected_cpwer = expected_metrics.get(ref_filename, {}).get("cpWER")
 
         # Verify performance
-        assert metrics.WER <= expected_wer, f"WER is too high: {metrics.WER} > {expected_wer}"
-        assert metrics.WDER <= expected_wder, f"WDER is too high: {metrics.WDER} > {expected_wder}"
-        assert metrics.cpWER <= expected_cpwer, f"cpWER is too high: {metrics.cpWER} > {expected_cpwer}"
+        self.assertLessEqual(metrics.WER, expected_wer, f"WER is too high: {metrics.WER} > {expected_wer}")
+        self.assertLessEqual(metrics.WDER, expected_wder, f"WDER is too high: {metrics.WDER} > {expected_wder}")
+        self.assertLessEqual(metrics.cpWER, expected_cpwer, f"cpWER is too high: {metrics.cpWER} > {expected_cpwer}")
 
 
 if __name__ == "__main__":
