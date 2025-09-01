@@ -56,6 +56,10 @@ If no input file is provided, Verbatim expects input from stdin or can use the m
 - `-v, --verbose`: Increase verbosity (use multiple times for more detail)
 - `-i, --isolate`: Extract voices from background noise
 
+#### Server
+- `--serve`: Start an HTTP server with OpenAI-compatible `/audio/transcriptions` and `/models` endpoints
+  - Use `-F stream=true` in your request to receive Server-Sent Events
+
 #### Version & Help
 - `--version`: Display the version and exit
 - `-h, --help`: Show help message and exit

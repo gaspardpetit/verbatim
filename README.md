@@ -85,6 +85,13 @@ Save file in a specific directory
 verbatim audio_file.mp3 -o ./output/
 ```
 
+Start an HTTP server
+```bash
+verbatim --serve
+```
+This exposes local `/audio/transcriptions` and `/models` endpoints compatible with OpenAI's API (model IDs suffixed with `-verbatim`, e.g. `whisper-large-v3-verbatim`).
+Include `-F stream=true` in your request to receive Server-Sent Events (`transcript.text.delta`, `transcript.text.done`).
+
 For see the [detailed terminal documentation](doc/verbatim-cli.md) for additional examples and options.
 
 ## Usage (from Docker)
