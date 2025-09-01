@@ -10,7 +10,9 @@ import warnings
 from itertools import chain
 from typing import Any, Callable, List, Optional, Tuple, Union
 
-from ..words import Utterance, Word
+from verbatim.audio.audio import samples_to_seconds
+from verbatim.transcript.words import Utterance, Word
+
 from .writer import TranscriptWriter, TranscriptWriterConfig
 
 LOG = logging.getLogger(__name__)
@@ -510,8 +512,8 @@ class AssTranscriptWriter(TranscriptWriter):
                         ]
                         + [
                             {
-                                "start": w.start_ts / 16000,
-                                "end": w.end_ts / 16000,
+                                "start": samples_to_seconds(w.start_ts),
+                                "end": samples_to_seconds(w.end_ts),
                                 "word": w.word,
                             }
                             for w in u.words

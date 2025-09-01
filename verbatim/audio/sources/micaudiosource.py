@@ -7,6 +7,7 @@ import sounddevice as sd
 from numpy.typing import NDArray
 
 from ..audio import samples_to_seconds
+from ..settings import AUDIO_PARAMS
 from .audiosource import AudioSource, AudioStream
 
 LOG = logging.getLogger(__name__)
@@ -82,7 +83,7 @@ class MicAudioStreamSoundDevice(AudioStream):
 
 
 class MicAudioSourceSoundDevice(AudioSource):
-    def __init__(self, sampling_rate: int = 16000, frames_per_buffer: int = 1024):
+    def __init__(self, sampling_rate: int = AUDIO_PARAMS.sample_rate, frames_per_buffer: int = 1024):
         super().__init__(source_name="<mic>")
         self.sampling_rate = sampling_rate
         self.frames_per_buffer = frames_per_buffer
@@ -149,9 +150,9 @@ class MicAudioSourcePyAudio(AudioSource):
 
     def __init__(
         self,
-        latency: int = 16000,
+        latency: int = AUDIO_PARAMS.sample_rate,
         frames_per_buffer: int = 1000,
-        sampling_rate: int = 16000,
+        sampling_rate: int = AUDIO_PARAMS.sample_rate,
     ):
         super().__init__(source_name="<mic>")
         self.frames_per_iter: int = latency

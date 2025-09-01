@@ -4,6 +4,8 @@ import unittest
 
 import numpy as np
 
+from verbatim.audio.settings import AUDIO_PARAMS
+
 # pylint: disable=import-outside-toplevel
 
 
@@ -21,7 +23,7 @@ class TestStereoDiarization(unittest.TestCase):
 
         from verbatim.voices.diarize.stereo import StereoDiarization
 
-        sample_rate = 16000
+        sample_rate = AUDIO_PARAMS.sample_rate
         audio = np.zeros((sample_rate, 2), dtype=np.float32)
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             sf.write(tmp.name, audio, sample_rate)

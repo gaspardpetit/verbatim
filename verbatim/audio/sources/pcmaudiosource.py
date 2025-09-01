@@ -4,6 +4,7 @@ from typing import BinaryIO
 import numpy as np
 from numpy.typing import NDArray
 
+from ..settings import AUDIO_PARAMS
 from .audiosource import AudioSource, AudioStream
 
 LOG = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ class PCMInputStreamAudioSource(AudioSource):
         source_name: str,
         stream: BinaryIO,
         channels: int = 1,
-        sampling_rate: int = 16000,
+        sampling_rate: int = AUDIO_PARAMS.sample_rate,
         dtype: np.dtype = np.dtype(np.int16),
     ):
         super().__init__(source_name=source_name)

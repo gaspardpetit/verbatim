@@ -9,6 +9,7 @@ from numpy.typing import NDArray
 from scipy.signal import resample_poly
 
 from ..audio import seconds_to_samples
+from ..settings import AUDIO_PARAMS
 from .audiosource import AudioSource, AudioStream
 
 LOG = logging.getLogger(__name__)
@@ -204,14 +205,14 @@ class PyAVAudioSource(AudioSource):
     - Reads from a container (any format that FFmpeg/PyAV supports).
     - Decodes audio frames into an internal buffer.
     - Returns them in "chunk_length" second increments via next_chunk().
-    - By default, it streams as 16-bit int PCM at some target rate (e.g. 16 kHz).
+    - By default, it streams as 16-bit int PCM at the configured target rate.
     """
 
     def __init__(
         self,
         *,
         file_path: str,
-        target_sample_rate: int = 16000,
+        target_sample_rate: int = AUDIO_PARAMS.sample_rate,
         start_time: float = 0.0,
         end_time: Optional[float] = None,
         preserve_channels: bool = False,

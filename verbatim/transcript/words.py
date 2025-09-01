@@ -4,7 +4,7 @@ from typing import List, Optional
 from faster_whisper.transcribe import Word as WhisperWord
 from pywhispercpp.model import Segment
 
-from ..audio.audio import samples_to_seconds, seconds_to_samples
+from verbatim.audio.audio import samples_to_seconds, seconds_to_samples
 
 
 @dataclass
@@ -18,8 +18,8 @@ class Word:
     @classmethod
     def from_word(cls, word: WhisperWord, lang: str, ts_offset: int = 0) -> "Word":
         """Creates a Word instance from a Word object with a timestamp offset."""
-        start_ts = int(word.start * 16000) + ts_offset
-        end_ts = int(word.end * 16000) + ts_offset
+        start_ts = seconds_to_samples(word.start) + ts_offset
+        end_ts = seconds_to_samples(word.end) + ts_offset
         return cls(
             start_ts=start_ts,
             lang=lang,

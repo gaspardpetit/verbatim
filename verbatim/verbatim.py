@@ -13,7 +13,9 @@ from colorama import Fore
 from numpy.typing import NDArray
 from pyannote.core.annotation import Annotation
 
-from .audio.audio import samples_to_seconds
+from verbatim.audio.audio import samples_to_seconds
+from verbatim.audio.settings import AUDIO_PARAMS
+
 from .audio.sources.audiosource import AudioSource, AudioStream
 from .config import Config
 from .eval.compare import compute_metrics
@@ -234,7 +236,9 @@ class Verbatim:
 
     def skip_leading_silence(self, max_skip: int, min_speech_duration_ms: int = 500) -> int:
         min_speech_duration_ms = 750
-        min_speech_duration_samples = 16000 * min_speech_duration_ms // 1000
+        min_speech_duration_samples = (
+            AUDIO_PARAMS.sample_rate * min_speech_duration_ms // 1000
+        )
         audio_samples = self.state.audio_ts - self.state.window_ts
         voice_segments = self.models.vad.find_activity(
             audio=self.state.rolling_window.array[0:audio_samples],
@@ -366,7 +370,7 @@ class Verbatim:
 
         lang_sample_start = max(0, timestamp - self.state.window_ts)
         available_samples = self.state.audio_ts - self.state.window_ts - lang_sample_start
-        lang_samples_size = min(2 * 16000, available_samples)
+        lang_samples_size = min(2 * AUDIO_PARAMS.sample_rate, available_samples)
 
         while True:
             lang, prob = self._guess_language(
@@ -544,8 +548,8 @@ class Verbatim:
     def acknowledge_utterances(
         self,
         utterances: List[Utterance],
-        min_ack_duration=16000,
-        min_unack_duration=16000,
+        min_ack_duration=AUDIO_PARAMS.sample_rate,
+        min_unack_duration=AUDIO_PARAMS.sample_rate,
     ) -> Tuple[List[Utterance], List[Utterance]]:
         if len(utterances) == 0:
             return [], utterances
@@ -605,8 +609,8 @@ class Verbatim:
         if diarization is None:
             return None
 
-        start = utterance.start_ts / 16000.0
-        end = utterance.end_ts / 16000.0
+        start = utterance.start_ts / AUDIO_PARAMS.sample_rate
+        end = utterance.end_ts / AUDIO_PARAMS.sample_rate
         duration = end - start
         samples: List[float]
         if duration < 1:
@@ -660,7 +664,7 @@ class Verbatim:
     def process_audio_window(self, audio_stream: AudioStream) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
         while True:
             # minimum number of samples to attempt transcription
-            min_audio_duration_samples = 16000
+            min_audio_duration_samples = AUDIO_PARAMS.sample_rate
             min_speech_duration_ms = 500
             utterances = []
             enable_vad = True
@@ -716,7 +720,9 @@ class Verbatim:
                     # utterances are split at short pauses, advance a bit to avoid repeating the last word
                     # but not too much as to skip the first word of the next utterance
                     utterance_padding_ms = 100
-                    utterance_padding_samples = utterance_padding_ms * 16000 // 1000
+                    utterance_padding_samples = (
+                        utterance_padding_ms * AUDIO_PARAMS.sample_rate // 1000
+                    )
                     skip_to = acknowledged_utterances[-1].end_ts + utterance_padding_samples
 
                     # try to skip ahead, but don't skip beyond the next detected word

@@ -10,6 +10,7 @@ from pyannote.core.annotation import Annotation
 from ...voices.isolation import VoiceIsolation
 from ..audio import format_audio, sample_to_timestr
 from ..convert import convert_to_wav
+from ..settings import AUDIO_PARAMS
 from .audiosource import AudioSource, AudioStream
 
 LOG = logging.getLogger(__name__)
@@ -30,8 +31,8 @@ class FileAudioStream(AudioStream):
 
     def setpos(self, new_sample_pos: int):
         file_samplerate = self.stream.getframerate()
-        if file_samplerate != 16000:
-            file_sample_pos = new_sample_pos * file_samplerate // 16000
+        if file_samplerate != AUDIO_PARAMS.sample_rate:
+            file_sample_pos = new_sample_pos * file_samplerate // AUDIO_PARAMS.sample_rate
         else:
             file_sample_pos = new_sample_pos
         self.stream.setpos(int(file_sample_pos))

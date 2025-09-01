@@ -4,6 +4,7 @@ import os
 import tempfile
 import unittest
 
+from verbatim.audio.settings import AUDIO_PARAMS
 from verbatim.transcript.format.json import (
     TranscriptFormatter,
     TranscriptParser,
@@ -36,12 +37,13 @@ class TestTranscriptFormatter(unittest.TestCase):
         """
         Test that format_utterance correctly writes an utterance (with words)
         into JSON. Checks that timestamps are converted from sample counts to
-        seconds (using the fixed sample rate of 16000) and that numerical rounding
+        seconds (using the configured sample rate) and that numerical rounding
         is performed as expected.
         """
         # Create a dummy utterance with one word.
-        word = Word(word="hello", lang="en", probability=0.9876, start_ts=0, end_ts=16000)  # 0 sec to 1.0 sec
-        utt = Utterance("utt1", "speaker1", 0, 32000, "hello", [word])  # 0 sec to 2.0 sec
+        sr = AUDIO_PARAMS.sample_rate
+        word = Word(word="hello", lang="en", probability=0.9876, start_ts=0, end_ts=sr)
+        utt = Utterance("utt1", "speaker1", 0, 2 * sr, "hello", [word])
 
         formatter = TranscriptFormatter()
         output = io.StringIO()
@@ -58,7 +60,7 @@ class TestTranscriptFormatter(unittest.TestCase):
         self.assertEqual(utt_data["id"], "utt1")
         self.assertEqual(utt_data["speaker"], "speaker1")
         self.assertAlmostEqual(utt_data["start"], 0.0, places=5)
-        self.assertAlmostEqual(utt_data["end"], 2.0, places=5)  # 32000/16000 = 2.0 sec
+        self.assertAlmostEqual(utt_data["end"], 2.0, places=5)  # 2 * sr -> 2.0 sec
         self.assertEqual(utt_data["text"], "hello")
         # Check word details.
         self.assertIn("words", utt_data)
@@ -68,15 +70,16 @@ class TestTranscriptFormatter(unittest.TestCase):
         self.assertEqual(word_data["lang"], "en")
         self.assertAlmostEqual(word_data["prob"], 0.9876, places=4)
         self.assertAlmostEqual(word_data["start"], 0.0, places=5)
-        self.assertAlmostEqual(word_data["end"], 1.0, places=5)  # 16000/16000 = 1.0 sec
+        self.assertAlmostEqual(word_data["end"], 1.0, places=5)  # sr -> 1.0 sec
 
     def test_format_utterance_without_words(self):
         """
         Test that setting with_words=False omits the "words" key in the
         output JSON.
         """
-        word = Word(word="hello", lang="en", probability=0.9876, start_ts=0, end_ts=16000)  # 0 sec to 1.0 sec
-        utt = Utterance("utt1", "speaker1", 0, 32000, "hello", [word])
+        sr = AUDIO_PARAMS.sample_rate
+        word = Word(word="hello", lang="en", probability=0.9876, start_ts=0, end_ts=sr)
+        utt = Utterance("utt1", "speaker1", 0, 2 * sr, "hello", [word])
         formatter = TranscriptFormatter()
         output = io.StringIO()
         formatter.open(output)
@@ -92,10 +95,11 @@ class TestTranscriptFormatter(unittest.TestCase):
         Verify that successive calls to format_utterance insert the necessary
         commas between utterance JSON objects.
         """
-        word1 = Word(word="hello", lang="en", probability=0.9876, start_ts=0, end_ts=16000)
-        utt1 = Utterance("utt1", "speaker1", 0, 32000, "hello", [word1])
-        word2 = Word(word="world", lang="en", probability=0.95, start_ts=16000, end_ts=32000)
-        utt2 = Utterance("utt2", "speaker1", 32000, 64000, "world", [word2])
+        sr = AUDIO_PARAMS.sample_rate
+        word1 = Word(word="hello", lang="en", probability=0.9876, start_ts=0, end_ts=sr)
+        utt1 = Utterance("utt1", "speaker1", 0, 2 * sr, "hello", [word1])
+        word2 = Word(word="world", lang="en", probability=0.95, start_ts=sr, end_ts=2 * sr)
+        utt2 = Utterance("utt2", "speaker1", 2 * sr, 4 * sr, "world", [word2])
         formatter = TranscriptFormatter()
         output = io.StringIO()
         formatter.open(output)
@@ -129,24 +133,25 @@ class TestTranscriptParser(unittest.TestCase):
         }
         transcript_json = json.dumps(transcript_dict)
         input_io = io.StringIO(transcript_json)
-        parser = TranscriptParser(sample_rate=16000)
+        sr = AUDIO_PARAMS.sample_rate
+        parser = TranscriptParser(sample_rate=sr)
         utterances = parser.parse(input_io)
         self.assertEqual(len(utterances), 1)
         utt = utterances[0]
         self.assertEqual(utt.utterance_id, "utt1")
         self.assertEqual(utt.speaker, "speaker1")
         self.assertEqual(utt.text, "hello")
-        # Conversion: 2.0 seconds * 16000 = 32000 sample count
+        # Conversion: 2.0 seconds * sr = 2 * sr sample count
         self.assertEqual(utt.start_ts, 0)
-        self.assertEqual(utt.end_ts, 32000)
+        self.assertEqual(utt.end_ts, 2 * sr)
         self.assertEqual(len(utt.words), 1)
         word = utt.words[0]
         self.assertEqual(word.word, "hello")
         self.assertEqual(word.lang, "en")
         self.assertAlmostEqual(word.probability, 0.9876, places=4)
-        # Conversion: 1.0 second * 16000 = 16000 sample count
+        # Conversion: 1.0 second * sr = sr sample count
         self.assertEqual(word.start_ts, 0)
-        self.assertEqual(word.end_ts, 16000)
+        self.assertEqual(word.end_ts, sr)
 
 
 class TestJsonTranscriptWriterIntegration(unittest.TestCase):
@@ -156,8 +161,9 @@ class TestJsonTranscriptWriterIntegration(unittest.TestCase):
         file, then read it back with read_utterances. This verifies that the writer,
         formatter, and parser all cooperate to produce a round-trip accurate JSON transcript.
         """
-        word = Word(word="world", lang="en", probability=0.95, start_ts=16000, end_ts=32000)  # word spans 1.0 to 2.0 seconds
-        utt = Utterance("utt2", "speaker2", 0, 48000, "hello world", [word])  # 0 to 3.0 seconds
+        sr = AUDIO_PARAMS.sample_rate
+        word = Word(word="world", lang="en", probability=0.95, start_ts=sr, end_ts=2 * sr)
+        utt = Utterance("utt2", "speaker2", 0, 3 * sr, "hello world", [word])
         utterances = [utt]
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -179,8 +185,8 @@ class TestJsonTranscriptWriterIntegration(unittest.TestCase):
             self.assertEqual(read_word.lang, "en")
             self.assertAlmostEqual(read_word.probability, 0.95, places=4)
             # The writer converts sample counts to seconds and back:
-            self.assertEqual(read_word.start_ts, 16000)  # 1.0 sec * 16000
-            self.assertEqual(read_word.end_ts, 32000)  # 2.0 sec * 16000
+            self.assertEqual(read_word.start_ts, sr)
+            self.assertEqual(read_word.end_ts, 2 * sr)
 
 
 # =============================================================================

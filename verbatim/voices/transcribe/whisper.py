@@ -6,7 +6,9 @@ import whisper
 from numpy.typing import NDArray
 from whisper.model import Whisper
 
-from ...transcript.words import Word
+from verbatim.audio.audio import seconds_to_samples
+from verbatim.transcript.words import Word
+
 from .transcribe import Transcriber, WhisperConfig
 
 LOG = logging.getLogger(__name__)
@@ -142,8 +144,8 @@ class WhisperTranscriber(Transcriber):
                 word_text: str = word.get("word")  # pyright: ignore[reportAssignmentType]
                 word_probability: float = word.get("probability")  # pyright: ignore[reportAssignmentType]
 
-                start_ts = int(word_start * 16000) + window_ts
-                end_ts = int(word_end * 16000) + window_ts
+                start_ts = seconds_to_samples(word_start) + window_ts
+                end_ts = seconds_to_samples(word_end) + window_ts
                 words.append(
                     Word(
                         start_ts=start_ts,

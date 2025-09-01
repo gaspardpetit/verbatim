@@ -6,8 +6,10 @@ from typing import List, Optional, Tuple
 
 from numpy.typing import NDArray
 
-from ...audio.audio import samples_to_seconds
-from ...transcript.words import Word
+from verbatim.audio.audio import samples_to_seconds, seconds_to_samples
+from verbatim.audio.settings import AUDIO_PARAMS
+from verbatim.transcript.words import Word
+
 from .transcribe import Transcriber
 
 if sys.platform == "darwin":
@@ -126,7 +128,7 @@ class WhisperMlxTranscriber(Transcriber):
         # Keep track of last valid timestamp to help fix invalid ones
         last_valid_end_ts = window_ts
         min_word_duration = 50  # Minimum duration for a word in milliseconds
-        min_word_duration_samples = int(min_word_duration * 16000 / 1000)
+        min_word_duration_samples = int(min_word_duration * AUDIO_PARAMS.sample_rate / 1000)
 
         # Process segments and words
         for segment in result["segments"]:
@@ -138,8 +140,8 @@ class WhisperMlxTranscriber(Transcriber):
 
             for word_data in segment.get("words", []):
                 # Create Word object with correct language tag and timestamp offset
-                raw_start_ts = int(word_data["start"] * 16000) + window_ts
-                raw_end_ts = int(word_data["end"] * 16000) + window_ts
+                raw_start_ts = seconds_to_samples(word_data["start"]) + window_ts
+                raw_end_ts = seconds_to_samples(word_data["end"]) + window_ts
 
                 # Fix invalid timestamps
                 if raw_end_ts <= raw_start_ts:
@@ -166,8 +168,8 @@ class WhisperMlxTranscriber(Transcriber):
 
                 # Create Word object with timestamp offset
                 word = Word(
-                    start_ts=int(word_data["start"] * 16000) + window_ts,
-                    end_ts=int(word_data["end"] * 16000) + window_ts,
+                    start_ts=seconds_to_samples(word_data["start"]) + window_ts,
+                    end_ts=seconds_to_samples(word_data["end"]) + window_ts,
                     word=word_data["word"],
                     probability=word_data.get("probability", 1.0),
                     lang=current_segment_lang,

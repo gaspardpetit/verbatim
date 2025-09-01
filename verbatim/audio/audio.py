@@ -6,12 +6,14 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.signal import resample
 
+from .settings import AUDIO_PARAMS
+
 # Configure logger
 LOG = logging.getLogger(__name__)
 
 
 def format_audio(audio: NDArray, from_sampling_rate: int) -> NDArray:
-    to_sampling_rate = 16000
+    to_sampling_rate = AUDIO_PARAMS.sample_rate
 
     float_audio: NDArray
     if audio.dtype == np.float32:
@@ -77,11 +79,11 @@ def wav_to_int16(data):
 
 
 def samples_to_seconds(index: int) -> float:
-    return index / 16000
+    return index / AUDIO_PARAMS.sample_rate
 
 
 def seconds_to_samples(seconds: float) -> int:
-    return int(seconds * 16000)
+    return int(seconds * AUDIO_PARAMS.sample_rate)
 
 
 def sample_to_timestr(sample: int, sample_rate: int):
@@ -98,14 +100,14 @@ def seconds_to_timestr(seconds: float) -> str:
     return f"[{hour_part:02}:{minute_part:02}:{second_part:02}.{ms_part:03}]"
 
 
-def timestr_to_samples(timestr: str, sample_rate: int = 16000) -> int:
+def timestr_to_samples(timestr: str, sample_rate: int = AUDIO_PARAMS.sample_rate) -> int:
     """
     Converts a time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms
     (where the fractional part represents fractional seconds) to the corresponding sample index.
 
     Args:
         timestr (str): Time string in the format hh:mm:ss.ms, mm:ss.ms, or ss.ms.
-        sample_rate (int): Sampling rate in Hz (default is 16000).
+        sample_rate (int): Sampling rate in Hz (default is AUDIO_PARAMS.sample_rate).
 
     Returns:
         int: The corresponding sample index.
