@@ -9,10 +9,7 @@ from typing import Iterable, Optional, Union, cast
 from aiohttp import web
 from aiohttp.multipart import BodyPartReader
 
-from .audio.sources.factory import create_audio_source
-from .audio.sources.sourceconfig import SourceConfig
 from .config import Config
-from .verbatim import Verbatim
 
 
 async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
@@ -96,6 +93,10 @@ async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
 def iterate_transcription(
     path: str, base_config: Config, language: Optional[str] = None
 ) -> Iterable[str]:
+    from .audio.sources.factory import create_audio_source  # pylint: disable=import-outside-toplevel
+    from .audio.sources.sourceconfig import SourceConfig  # pylint: disable=import-outside-toplevel
+    from .verbatim import Verbatim  # pylint: disable=import-outside-toplevel
+
     cfg = replace(base_config)
     if language:
         cfg.lang = [language]
