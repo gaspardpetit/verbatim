@@ -9,46 +9,46 @@ permissions:
 
 jobs:
   pypi-publish:
-    name: upload release to PyPI
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ["3.11"]
-
+    name: Build and publish to PyPI
+    runs-on: ubuntu-latest
     environment: release
     permissions:
       id-token: write
 
     steps:
-      - name: Check out the code
+      - name: Check out the code (with tags)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y portaudio19-dev
+          sudo apt-get install -y --no-install-recommends ffmpeg portaudio19-dev
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.11'
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache
-          key: ${{ runner.os }}-py${{ matrix.python-version }}-cache-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-py${{ matrix.python-version }}-cache-
-
-      - name: Install dependencies
+      - name: Install build tools
         run: |
           python -m pip install --upgrade pip
-          pip install build
+          python -m pip install build twine
 
-      - name: Build package
+      - name: Build sdist and wheel
         run: python -m build
 
-      - name: Publish package distributions to PyPI
+      - name: Twine check
+        run: python -m twine check dist/*
+
+      - name: Smoke install built wheel
+        run: |
+          python -m venv .pkg-venv
+          . .pkg-venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install dist/*.whl
+          python -c "import verbatim; print('Imported verbatim', getattr(verbatim, '__version__', 'unknown'))"
+
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

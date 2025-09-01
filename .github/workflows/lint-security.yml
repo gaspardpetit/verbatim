@@ -1,0 +1,90 @@
+name: Lint & Security
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lint-security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ruff:
+    name: Ruff
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install ruff
+        run: python -m pip install --upgrade pip ruff
+      - name: Run ruff
+        run: ruff check verbatim tests
+
+  flake8:
+    name: Flake8
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install flake8
+        run: python -m pip install --upgrade pip flake8
+      - name: Run flake8 (errors then warnings)
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=150 --statistics
+
+  pylint:
+    name: Pylint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install pylint
+        run: python -m pip install --upgrade pip pylint
+      - name: Run pylint (no import errors)
+        run: |
+          pylint --disable=import-error verbatim $(git ls-files 'tests/*.py')
+
+  bandit:
+    name: Bandit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install bandit
+        run: python -m pip install --upgrade pip bandit
+      - name: Run bandit (pkg, tests, scripts)
+        run: bandit -r verbatim tests run.py

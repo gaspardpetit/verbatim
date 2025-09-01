@@ -1,10 +1,10 @@
 import logging
-import sys
 import platform
+import sys
 
-from .voices.transcribe.transcribe import Transcriber
-from .voices.silences import SileroVoiceActivityDetection, VoiceActivityDetection
 from .transcript.sentences import SentenceTokenizer
+from .voices.silences import SileroVoiceActivityDetection, VoiceActivityDetection
+from .voices.transcribe.transcribe import Transcriber
 
 # Configure logger
 LOG = logging.getLogger(__name__)

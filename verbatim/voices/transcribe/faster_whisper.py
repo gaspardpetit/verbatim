@@ -1,9 +1,10 @@
 import logging
-from typing import List, Tuple, Optional
-
-from numpy.typing import NDArray
+import os
+from typing import List, Optional, Tuple
 
 from faster_whisper import WhisperModel
+from numpy.typing import NDArray
+
 from ...audio.audio import samples_to_seconds
 from ...transcript.words import Word
 from .transcribe import Transcriber, WhisperConfig
@@ -25,19 +26,44 @@ class FasterWhisperTranscriber(Transcriber):
         if whisper_temperatures is None:
             whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
 
+        # Configure cache root and offline mode from environment
+        cache_root = os.getenv("VERBATIM_MODEL_CACHE")
+        download_root = os.path.join(cache_root, "faster-whisper") if cache_root else None
+        offline_env = os.getenv("VERBATIM_OFFLINE", "0").lower() in ("1", "true", "yes")
+
         if device == "cpu":
-            self.whisper_model = WhisperModel(
-                model_size_or_path=model_size_or_path,
-                device=device,
-                compute_type="default",
-                cpu_threads=16,
-            )
+            try:
+                self.whisper_model = WhisperModel(
+                    model_size_or_path=model_size_or_path,
+                    device=device,
+                    compute_type="default",
+                    cpu_threads=16,
+                    download_root=download_root,
+                    local_files_only=offline_env,
+                )
+            except TypeError:
+                # Older faster-whisper without these kwargs
+                self.whisper_model = WhisperModel(
+                    model_size_or_path=model_size_or_path,
+                    device=device,
+                    compute_type="default",
+                    cpu_threads=16,
+                )
         else:
-            self.whisper_model = WhisperModel(
-                model_size_or_path=model_size_or_path,
-                device=device,
-                compute_type="float16",
-            )
+            try:
+                self.whisper_model = WhisperModel(
+                    model_size_or_path=model_size_or_path,
+                    device=device,
+                    compute_type="float16",
+                    download_root=download_root,
+                    local_files_only=offline_env,
+                )
+            except TypeError:
+                self.whisper_model = WhisperModel(
+                    model_size_or_path=model_size_or_path,
+                    device=device,
+                    compute_type="float16",
+                )
 
         self.whisper_beam_size = whisper_beam_size
         self.whisper_best_of = whisper_best_of
@@ -123,7 +149,11 @@ class FasterWhisperTranscriber(Transcriber):
 
         transcript_words: List[Word] = []
         for segment in segment_iter:
-            for w in segment.words:
+            # Guard against missing word timestamps in segment
+            words = getattr(segment, "words", None)
+            if not words:
+                continue
+            for w in words:
                 word = Word.from_word(word=w, lang=lang, ts_offset=window_ts)
                 if word.end_ts > audio_ts:
                     continue

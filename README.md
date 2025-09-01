@@ -1,9 +1,7 @@
 [![PyPI version](https://badge.fury.io/py/verbatim.svg?)](https://pypi.python.org/pypi/verbatim/)
 [![Python versions](https://img.shields.io/pypi/pyversions/verbatim.svg)](https://pypi.org/project/verbatim/)
-[![Bandit](https://github.com/gaspardpetit/verbatim/actions/workflows/bandit.yml/badge.svg)](https://github.com/gaspardpetit/verbatim/actions/workflows/bandit.yml)
-[![Pylint](https://github.com/gaspardpetit/verbatim/actions/workflows/pylint.yml/badge.svg)](https://github.com/gaspardpetit/verbatim/actions/workflows/pylint.yml)
-[![Ruff](https://github.com/gaspardpetit/verbatim/actions/workflows/ruff.yml/badge.svg)](https://github.com/gaspardpetit/verbatim/actions/workflows/ruff.yml)
 [![Python package](https://github.com/gaspardpetit/verbatim/actions/workflows/python-package.yml/badge.svg)](https://github.com/gaspardpetit/verbatim/actions/workflows/python-package.yml)
+[![Lint & Security](https://github.com/gaspardpetit/verbatim/actions/workflows/lint-security.yml/badge.svg)](https://github.com/gaspardpetit/verbatim/actions/workflows/lint-security.yml)
 
 # Verbatim
 
@@ -126,7 +124,7 @@ The project is organized to be modular, such that individual components can be u
 ```python
 from verbatim.audio.sources.sourceconfig import SourceConfig
 from verbatim.audio.sources.factory import create_audio_source
-source = create_audio_source(input_source="samples/Airfrance - Bienvenue à bord.wav", device="cuda", source_config=SourceConfig(diarize=2))
+source = create_audio_source(input_source="ext/samples/audio/1ch_2spk_en-fr_AirFrance_00h03m54s.wav", device="cuda", source_config=SourceConfig(diarize=2))
 
 from verbatim.config import Config
 from verbatim.verbatim import Verbatim
@@ -511,3 +509,30 @@ A direct use of whisper on an audio clip like this one results in many errors. S
     <td>Thank you for your attention. We wish you a very pleasant flight.</td>
   </tr>
 </table>
+## Model Cache and Offline Mode
+
+Verbatim can prefetch and reuse models from a deterministic cache directory, and can run 100% offline once the cache is warmed.
+
+- `--model-cache <dir>`: sets a shared cache directory used by Hugging Face, Whisper, and faster-whisper.
+- `--offline`: prevents any network access and model downloads. All models must already be present in the cache; otherwise a clear error is raised.
+- `--install`: prefetches commonly used models into the selected cache and exits.
+
+Examples
+
+1) Prefetch models (first run, with network):
+```
+HUGGINGFACE_TOKEN=hf_... verbatim --install --model-cache /models
+```
+
+2) Fully offline run reusing the cache:
+```
+verbatim input.mp3 -o out --model-cache /models --offline
+```
+
+Default cache location (when `--model-cache` is not specified):
+- Local project directory `./.verbatim/` is used as the root cache.
+- Subdirectories are created inside: `./.verbatim/hf`, `./.verbatim/whisper`, etc.
+- If `./.verbatim/` cannot be created or is not writable, the app gracefully falls back to library defaults.
+
+Voice isolation (MDX): the `audio-separator` backend loads a checkpoint (e.g., `MDX23C-8KFFT-InstVoc_HQ_2.ckpt`).
+For offline use with `--model-cache`, place the file under `<cache>/audio-separator/`.

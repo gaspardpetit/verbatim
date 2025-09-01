@@ -1,8 +1,10 @@
 import math
 import unittest
+
 import numpy as np
 
 # pylint: disable=import-outside-toplevel
+
 
 class TestAudioProcessing(unittest.TestCase):
     def test_format_audio(self):
@@ -64,6 +66,7 @@ class TestAudioProcessing(unittest.TestCase):
 
     def test_samples_to_seconds(self):
         from verbatim.audio.audio import samples_to_seconds
+
         self.assertEqual(samples_to_seconds(0), 0.0)
         self.assertEqual(samples_to_seconds(16000), 1.0)
         self.assertEqual(samples_to_seconds(8000), 0.5)
@@ -71,6 +74,7 @@ class TestAudioProcessing(unittest.TestCase):
 
     def test_seconds_to_samples(self):
         from verbatim.audio.audio import seconds_to_samples
+
         self.assertEqual(seconds_to_samples(0), 0)
         self.assertEqual(seconds_to_samples(1), 16000)
         self.assertEqual(seconds_to_samples(0.5), 8000)
@@ -78,6 +82,7 @@ class TestAudioProcessing(unittest.TestCase):
 
     def test_seconds_to_timestr(self):
         from verbatim.audio.audio import seconds_to_timestr
+
         self.assertEqual(seconds_to_timestr(0.0), "[00:00:00.000]")
         self.assertEqual(seconds_to_timestr(1.5), "[00:00:01.500]")
         self.assertEqual(seconds_to_timestr(3661.78), "[01:01:01.780]")
@@ -85,12 +90,14 @@ class TestAudioProcessing(unittest.TestCase):
 
     def test_sample_to_timestr(self):
         from verbatim.audio.audio import sample_to_timestr
+
         self.assertEqual(sample_to_timestr(32000, 16000), "[00:00:02.000]")
         self.assertEqual(sample_to_timestr(8000, 16000), "[00:00:00.500]")
         self.assertEqual(sample_to_timestr(44100, 44100), "[00:00:01.000]")
 
     def test_timestr_to_samples(self):
         from verbatim.audio.audio import timestr_to_samples
+
         sample_rate = 16000
         self.assertEqual(timestr_to_samples("01:01:01.780", sample_rate), int((1 * 3600 + 1 * 60 + 1 + 0.780) * sample_rate))
         self.assertEqual(timestr_to_samples("01:01.500", sample_rate), int((1 * 60 + 1 + 0.500) * sample_rate))
@@ -100,6 +107,7 @@ class TestAudioProcessing(unittest.TestCase):
         self.assertEqual(timestr_to_samples("  0:05.000  ", sample_rate), int(5 * sample_rate))
         with self.assertRaises(ValueError):
             timestr_to_samples("invalid_format")
+
 
 if __name__ == "__main__":
     unittest.main()

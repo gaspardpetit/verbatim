@@ -1,9 +1,9 @@
-import os
 import json
-from typing import TextIO, List, Optional
+import os
+from typing import List, Optional, TextIO
 
-from .writer import TranscriptWriter, TranscriptWriterConfig
 from ..words import Utterance, Word
+from .writer import TranscriptWriter, TranscriptWriterConfig
 
 
 class TranscriptFormatter:
@@ -39,7 +39,7 @@ class TranscriptFormatter:
                     "lang": word.lang,
                     "prob": round(word.probability, 4),
                     "start": round(word.start_ts / 16000, 5),
-                    "end": round(word.end_ts / 16000, 5)
+                    "end": round(word.end_ts / 16000, 5),
                 }
                 for word in utterance.words
             ]
@@ -48,6 +48,7 @@ class TranscriptFormatter:
 
         # Use json.dumps to write the formatted JSON
         out.write(indented_lines)
+
 
 class TranscriptParser:
     def __init__(self, sample_rate: int = 16000):
@@ -101,14 +102,7 @@ class TranscriptParser:
                 words.append(word_obj)
 
             # Create the Utterance object.
-            utterance = Utterance(
-                utterance_id=utterance_id,
-                speaker=speaker,
-                start_ts=start_ts,
-                end_ts=end_ts,
-                text=text,
-                words=words
-            )
+            utterance = Utterance(utterance_id=utterance_id, speaker=speaker, start_ts=start_ts, end_ts=end_ts, text=text, words=words)
             utterances.append(utterance)
 
         return utterances
@@ -140,17 +134,62 @@ class JsonTranscriptWriter(TranscriptWriter):
         self.formatter.format_utterance(utterance=utterance, out=self.out)
         self.out.flush()
 
-def save_utterances(path:str, utterance:List[Utterance], config:Optional[TranscriptWriterConfig]):
+
+def save_utterances(path: str, utterance: List[Utterance], config: Optional[TranscriptWriterConfig]):
     if config is None:
         config = TranscriptWriterConfig()
-    writer:JsonTranscriptWriter = JsonTranscriptWriter(config=config)
+    writer: JsonTranscriptWriter = JsonTranscriptWriter(config=config)
     writer.open(path_no_ext=os.path.splitext(path)[0])
     for u in utterance:
         writer.write(u)
     writer.close()
 
+
 def read_utterances(path: str) -> List[Utterance]:
     parser = TranscriptParser()
-    with open(path, 'r', encoding='utf-8') as file:
+    with open(path, "r", encoding="utf-8") as file:
         utterances = parser.parse(file)
+    return utterances
+
+
+def read_dlm_utterances(path: str) -> List[Utterance]:
+    """
+    Reads utterances from a simplified JSON format that contains reference information
+    but no timing data.
+
+    Expected JSON format:
+    {
+      "utterances": [
+        {
+          "utterance_id": "utt19",
+          "ref_spk": "1 1 1 1 1 1 1 1",
+          "ref_text": "Also wir haben heute jetzt 30 Minuten Zeit."
+        },
+        ...
+      ]
+    }
+
+    :param path: Path to the JSON file
+    :return: List of Utterance objects with basic information (no timing data)
+    """
+    with open(path, "r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    utterances = []
+    for utt in data.get("utterances", []):
+        # Extract the speaker from ref_spk if available
+        ref_spk = utt.get("ref_spk", "")
+        speaker = f"SPEAKER_{ref_spk.split()[0]}" if ref_spk else None
+
+        # Create an Utterance with minimal information
+        utterance = Utterance(
+            utterance_id=utt.get("utterance_id", ""),
+            speaker=speaker,
+            start_ts=0,  # No timing information available
+            end_ts=0,  # No timing information available
+            text=utt.get("ref_text", ""),
+            words=[],  # No word-level information available
+        )
+        utterances.append(utterance)
+
     return utterances

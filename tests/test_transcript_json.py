@@ -4,18 +4,18 @@ import os
 import tempfile
 import unittest
 
-from verbatim.transcript.words import Word, Utterance
-
 from verbatim.transcript.format.json import (
     TranscriptFormatter,
     TranscriptParser,
-    save_utterances,
     read_utterances,
+    save_utterances,
 )
+from verbatim.transcript.words import Utterance, Word
 
 # =============================================================================
 # Unit Tests
 # =============================================================================
+
 
 class TestTranscriptFormatter(unittest.TestCase):
     def test_open_close(self):
@@ -123,15 +123,7 @@ class TestTranscriptParser(unittest.TestCase):
                     "speaker": "speaker1",
                     "language": "en",
                     "text": "hello",
-                    "words": [
-                        {
-                            "text": "hello",
-                            "lang": "en",
-                            "prob": 0.9876,
-                            "start": 0.0,
-                            "end": 1.0
-                        }
-                    ]
+                    "words": [{"text": "hello", "lang": "en", "prob": 0.9876, "start": 0.0, "end": 1.0}],
                 }
             ]
         }
@@ -188,12 +180,12 @@ class TestJsonTranscriptWriterIntegration(unittest.TestCase):
             self.assertAlmostEqual(read_word.probability, 0.95, places=4)
             # The writer converts sample counts to seconds and back:
             self.assertEqual(read_word.start_ts, 16000)  # 1.0 sec * 16000
-            self.assertEqual(read_word.end_ts, 32000)      # 2.0 sec * 16000
+            self.assertEqual(read_word.end_ts, 32000)  # 2.0 sec * 16000
 
 
 # =============================================================================
 # Main entry point for unittest
 # =============================================================================
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -79,7 +79,7 @@ class StereoDiarization(DiarizationStrategy):
                 for segment, _track, label in annotation.itertracks(yield_label=True):  # pyright: ignore[reportAssignmentType]
                     # RTTM format:
                     # Type File_ID Channel_ID Start Duration Speaker_Type Score Speaker_Name
-                    f.write(f"SPEAKER {uri} 1 {segment.start:.3f} {segment.duration:.3f} " f"<NA> <NA> {label} <NA> <NA>\n")
+                    f.write(f"SPEAKER {uri} 1 {segment.start:.3f} {segment.duration:.3f} <NA> <NA> {label} <NA> <NA>\n")
 
             LOG.info(f"Wrote diarization to RTTM file: {out_rttm_file}")
 

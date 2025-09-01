@@ -1,25 +1,24 @@
 import logging
-from typing import List, Union, Optional
 from enum import Enum
-import numpy as np
+from typing import List, Optional, Union
 
 import docx
+import numpy as np
 from docx.document import Document
 from docx.text.paragraph import Paragraph
 from docx.text.run import Run
 
-from .writer import (
-    TranscriptWriterConfig,
-    TimestampStyle,
-    SpeakerStyle,
-    ProbabilityStyle,
-    LanguageStyle,
-    TranscriptWriter,
-)
-from ..words import Utterance, Word
-from ..formatting import format_milliseconds
 from ...voices.diarization import UNKNOWN_SPEAKER
-
+from ..formatting import format_milliseconds
+from ..words import Utterance, Word
+from .writer import (
+    LanguageStyle,
+    ProbabilityStyle,
+    SpeakerStyle,
+    TimestampStyle,
+    TranscriptWriter,
+    TranscriptWriterConfig,
+)
 
 LOG = logging.getLogger(__name__)
 

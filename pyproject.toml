@@ -100,14 +100,14 @@ Homepage = "https://github.com/gaspardpetit/verbatim"
 verbatim = "verbatim.main:main"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
 include = ["verbatim/**/*"]
 
 [tool.hatch.version]
-path = "verbatim/__init__.py"
+source = "vcs"
 
 [tool.poetry]
 version = "0.0.0"
@@ -115,9 +115,41 @@ version = "0.0.0"
 [tool.poetry-dynamic-versioning]
 enable = true
 
+[tool.hatch.build.hooks.vcs]
+# Use tags like vX.Y.Z as source of truth
+tag-pattern = "v(?P<version>.*)"
+# Write resolved version into a module during build
+version-file = "verbatim/_version.py"
+
+# Ensure PEP 440-compliant versions without local "+g..." suffix in wheels
+[tool.setuptools_scm]
+local_scheme = "no-local-version"
+
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
+pythonVersion = "3.11"
+# Keep CI fast: allow unresolved third-party imports without failing.
+reportMissingImports = "warning"
+exclude = [
+    # Highly dynamic formatting helpers; complex typing provides low value
+    "verbatim/transcript/format/ass.py",
+    # Exclude local virtual envs and non-source directories
+    ".venv",
+    ".venv/**",
+    ".git",
+    "samples",
+    "doc",
+    "tests/data",
+    "testdata",
+]
+typeCheckingMode = "basic"
+# Downgrade noisy third-party attribute/call checks to warnings
+reportAttributeAccessIssue = "warning"
+reportCallIssue = "warning"
+reportIndexIssue = "warning"
+reportOptionalSubscript = "warning"
+reportOptionalCall = "warning"
 
 #[tool.uv.sources]
 #torch = [
@@ -137,3 +169,8 @@ explicit = true
 line-length = 150
 indent-width = 4
 
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["verbatim", "tests"]

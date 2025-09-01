@@ -1,11 +1,11 @@
 import sys
 
 from .txt import (
-    TextIOTranscriptWriter,
     COLORSCHEME_ACKNOWLEDGED,
+    COLORSCHEME_NONE,
     COLORSCHEME_UNACKNOWLEDGED,
     COLORSCHEME_UNCONFIRMED,
-    COLORSCHEME_NONE,
+    TextIOTranscriptWriter,
 )
 from .writer import TranscriptWriterConfig
 

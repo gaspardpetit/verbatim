@@ -1,7 +1,7 @@
 import dataclasses
 from abc import ABC, abstractmethod
-from typing import List, Optional
 from enum import Enum
+from typing import List, Optional
 
 from ..words import Utterance, Word
 

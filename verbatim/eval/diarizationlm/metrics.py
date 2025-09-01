@@ -128,7 +128,7 @@ def compute_wer(hyp_text: str, ref_text: str) -> tuple[UtteranceMetrics, list[tu
     result.wer_total = result.wer_correct + result.wer_sub + result.wer_delete
 
     if result.wer_total != len(ref_words):
-        raise ValueError(f"WER total mismatch: expected {len(ref_words)}, got {result.wer_total}. " f"Check the alignment and input normalization.")
+        raise ValueError(f"WER total mismatch: expected {len(ref_words)}, got {result.wer_total}. Check the alignment and input normalization.")
 
     return result, align
 
@@ -236,7 +236,8 @@ def compute_metrics_on_json_dict(
     if compute_diarization_metrics:
         if not (ref_spk_field and hyp_spk_field):
             raise ValueError("hyp_spk_field and ref_spk_field must be both unset or both set.")
-    result_dict = {
+    # Explicitly type the result dict to allow heterogeneous values
+    result_dict: Dict[str, Any] = {
         "utterances": [],
     }
     for utt in tqdm.tqdm(json_dict["utterances"]):

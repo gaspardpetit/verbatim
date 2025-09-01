@@ -1,10 +1,11 @@
 import logging
-from typing import Tuple, Optional
+import os
+from typing import Optional, Tuple
 
 import librosa
 import numpy as np
-from numpy.typing import NDArray
 from audio_separator.separator import Separator
+from numpy.typing import NDArray
 from scipy.io.wavfile import write as wav_write
 
 from ..audio.audio import format_audio
@@ -16,7 +17,19 @@ LOG = logging.getLogger(__name__)
 class VoiceIsolation:
     def __init__(self, log_level: int = logging.WARN, model_name: str = "MDX23C-8KFFT-InstVoc_HQ_2.ckpt"):
         self.separator = Separator(log_level=log_level, sample_rate=16000)
-        self.separator.load_model(model_name)
+        cache_root = os.getenv("VERBATIM_MODEL_CACHE")
+        offline_env = os.getenv("VERBATIM_OFFLINE", "0").lower() in ("1", "true", "yes")
+
+        # If a cache is configured, prefer a cached checkpoint path under it
+        model_path = model_name
+        if cache_root and not os.path.isabs(model_name):
+            candidate = os.path.join(cache_root, "audio-separator", model_name)
+            if os.path.exists(candidate):
+                model_path = candidate
+            elif offline_env:
+                raise RuntimeError(f"Offline mode is enabled and isolation model '{model_name}' was not found at {candidate}")
+
+        self.separator.load_model(model_path)
 
     def __enter__(self) -> "VoiceIsolation":
         return self

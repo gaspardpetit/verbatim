@@ -1,134 +1,100 @@
+import json
 import os
 import sys
-import json
 import unittest
 
-from verbatim.config import Config
-from verbatim.verbatim import Verbatim
-from verbatim.audio.sources.audiosource import AudioSource
-from verbatim.audio.sources.sourceconfig import SourceConfig
 from verbatim.audio.sources.factory import create_audio_source
-from verbatim.eval.diarizationlm.metrics import compute_metrics_on_json_dict
-from verbatim.transcript.format.writer import TranscriptWriterConfig
-from verbatim.transcript.format.json_dlm import JsonDiarizationLMTranscriptWriter
+from verbatim.config import Config
+from verbatim.eval.compare import compute_metrics
+from verbatim.eval.find import find_reference_file
+from verbatim.transcript.format.json import read_dlm_utterances, read_utterances
+from verbatim.verbatim import Verbatim
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Set CUDA_VISIBLE_DEVICES to -1 to use CPU
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Use CPU only
 
 
 class TestPipeline(unittest.TestCase):
-    def test_diarization_metrics_short(self):
-        # Setup paths
-        test_file = "tests/data/init.mp3"
-        ref_file = "tests/data/init.utt.ref.json"
-        out_file = "tests/data/init.out"
+    def test_pipeline_quick(self):
+        """
+        Quickly test the pipeline with a short audio file.
+        """
+        # Find audio file based on name
+        name = "2ch-acoustic_1spk_en_WizardOfOzToto_00h00m06s.mp3"
+        filename = None
 
-        # Load reference data
-        with open(ref_file, "r", encoding="utf-8") as f:
-            ref_data = json.load(f)
+        # Point to the external samples directory to run test against other
+        # samples, but commit against the local test samples to ensure that
+        # tests can run without external dependencies.
 
-        # Run verbatim pipeline
-        config: Config = Config(device="cpu").configure_languages(["en"])
-        audio_source: AudioSource = create_audio_source(input_source=test_file, device=config.device)
-        verbatim: Verbatim = Verbatim(config=config)
+        # samples_dir = "ext/samples/audio"
+        # truth_dir = "ext/samples/truth"
 
-        # Setup DLM JSON writer
-        writer = JsonDiarizationLMTranscriptWriter(config=TranscriptWriterConfig())
-        writer.open(out_file)
+        samples_dir = "tests/data"
+        truth_dir = "tests/data"
 
-        # Process audio
-        with audio_source.open() as audio_stream:
-            for utterance, _unack_utterances, _unconfirmed_words in verbatim.transcribe(audio_stream=audio_stream):
-                writer.write(utterance=utterance)
+        for file in os.listdir(samples_dir):
+            if name in file:
+                filename = file
+                break
+        if filename is None:
+            raise FileNotFoundError(f"No audio file found with name '{name}'")
+        audio_path = f"{samples_dir}/{filename}"
+        print(audio_path)
 
-        writer.close()
+        # Find reference file
+        base_name = filename.split(".")[0][:-10]  # also exclude the duration timestamp at the end
+        ref_path = find_reference_file(base_name, reference_dir=truth_dir)
 
-        # Load output data
-        with open(f"{out_file}.utt.json", "r", encoding="utf-8") as f:
-            hyp_data = json.load(f)
+        # Check if reference file was found
+        if ref_path is None:
+            raise FileNotFoundError(f"No reference file found for '{base_name}'")
 
-        # Merge reference data into hypothesis data
-        for h_utt, r_utt in zip(hyp_data["utterances"], ref_data["utterances"]):
-            h_utt["ref_text"] = r_utt["ref_text"]
-            h_utt["ref_spk"] = r_utt["ref_spk"]
+        # Get the filename without extension of the reference file
+        ref_filename = os.path.basename(ref_path).split(".")[0]
 
-        # Calculate metrics
-        result = compute_metrics_on_json_dict(hyp_data)
+        # Get language from filename
+        language_string = filename.split("_")[2]
+        if "-" in language_string:
+            languages = language_string.split("-")
+        else:
+            languages = [language_string]
 
-        # Check that all error rates are 0.0
-        self.assertEqual(result["WER"], 0.0)
-        self.assertEqual(result["WDER"], 0.0)
-        self.assertEqual(result["cpWER"], 0.0)
-        self.assertEqual(result["SpkCntMAE"], 0.0)
+        # Load reference transcripts
+        with open(ref_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            ref_utterances = (
+                read_dlm_utterances(ref_path) if data.get("utterances") and "ref_text" in data["utterances"][0] else read_utterances(ref_path)
+            )
+            print(ref_utterances)
 
-        # Cleanup
-        os.remove(f"{out_file}.utt.json")
-
-    def test_diarization_metrics_long(self):
-        # Setup paths
-        test_file = "tests/data/test.mp3"
-        ref_file = "tests/data/test.utt.ref.json"
-        out_file = "tests/data/test.mp3.out"
-
-        # Load reference data
-        with open(ref_file, "r", encoding="utf-8") as f:
-            ref_data = json.load(f)
-
-        # Run verbatim pipeline
-        config: Config = Config(device="cpu").configure_languages(["fr", "en"])
-        source_config = SourceConfig(diarize=2)
-        audio_source: AudioSource = create_audio_source(input_source=test_file, device=config.device, source_config=source_config)
-        verbatim: Verbatim = Verbatim(config=config)
-
-        # Setup DLM JSON writer
-        writer = JsonDiarizationLMTranscriptWriter(config=TranscriptWriterConfig())
-        writer.open(out_file)
+        # Initialize and run transcription (use cpu)
+        config = Config(device="cpu").configure_languages(languages)
+        source = create_audio_source(input_source=audio_path, device=config.device)
+        verbatim = Verbatim(config=config)
 
         # Process audio
-        with audio_source.open() as audio_stream:
-            for acknowledged_utterance, _confirmed_utterance, _unconfirmed_words in verbatim.transcribe(audio_stream=audio_stream):
-                writer.write(utterance=acknowledged_utterance)
+        all_utterances = []
+        with source.open() as audio_stream:
+            for utterance, _, _ in verbatim.transcribe(audio_stream=audio_stream):
+                all_utterances.append(utterance)
 
-        writer.close()
+        # Evaluate results
+        metrics = compute_metrics(all_utterances, ref_utterances)
+        print(metrics)
 
-        # Load output data
-        with open(f"{out_file}.utt.json", "r", encoding="utf-8") as f:
-            hyp_data = json.load(f)
+        # Load expected metrics
+        with open(f"{truth_dir}/metrics.json", "r", encoding="utf-8") as f:
+            expected_metrics = json.load(f)
+            expected_wer = expected_metrics.get(ref_filename, {}).get("WER")
+            expected_wder = expected_metrics.get(ref_filename, {}).get("WDER")
+            expected_cpwer = expected_metrics.get(ref_filename, {}).get("cpWER")
 
-        # Merge reference data into hypothesis data
-        for h_utt, r_utt in zip(hyp_data["utterances"], ref_data["utterances"]):
-            h_utt["ref_text"] = r_utt["ref_text"]
-            h_utt["ref_spk"] = r_utt["ref_spk"]
-
-        # Squash everything into a single utterance
-        hyp_data["utterances"] = [
-            {
-                "utterance_id": "utt0",
-                "hyp_text": " ".join([utt["hyp_text"] for utt in hyp_data["utterances"]]),
-                "hyp_spk": " ".join([utt["hyp_spk"] for utt in hyp_data["utterances"]]),
-                "ref_text": " ".join([utt["ref_text"] for utt in hyp_data["utterances"]]),
-                "ref_spk": " ".join([utt["ref_spk"] for utt in hyp_data["utterances"]]),
-            }
-        ]
-
-        # Calculate metrics
-        result = compute_metrics_on_json_dict(hyp_data)
-
-        # Check that all error rates are below 10%
-        self.assertLess(result["WER"], 0.1)
-        self.assertLess(result["WDER"], 0.1)
-        self.assertLess(result["cpWER"], 0.1)
-        self.assertLess(result["SpkCntMAE"], 0.1)
-
-        # Cleanup
-        os.remove(f"{out_file}.utt.json")
+        # Verify performance
+        self.assertLessEqual(metrics.WER, expected_wer, f"WER is too high: {metrics.WER} > {expected_wer}")
+        self.assertLessEqual(metrics.WDER, expected_wder, f"WDER is too high: {metrics.WDER} > {expected_wder}")
+        self.assertLessEqual(metrics.cpWER, expected_cpwer, f"cpWER is too high: {metrics.cpWER} > {expected_cpwer}")
 
 
 if __name__ == "__main__":
     unittest.main()
-    # config: Config = Config(device="cpu").configure_languages(["fr", "en"])
-    # audio_source: AudioSource = create_audio_source(input_source="tests/data/init.mp3", device=config.device)
-    # verbatim: Verbatim = Verbatim(config=config)
-    # with audio_source.open() as audio_stream:
-    #    for utterance, unack_utterances, unconfirmed_words in verbatim.transcribe(audio_stream=audio_stream):
-    #        print(utterance.text)

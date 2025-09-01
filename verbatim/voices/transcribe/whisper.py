@@ -1,13 +1,13 @@
 import logging
-from typing import List, Tuple, Optional, Dict
-
-from numpy.typing import NDArray
+import os
+from typing import Dict, List, Optional, Tuple
 
 import whisper
+from numpy.typing import NDArray
 from whisper.model import Whisper
 
-from .transcribe import Transcriber, WhisperConfig
 from ...transcript.words import Word
+from .transcribe import Transcriber, WhisperConfig
 
 LOG = logging.getLogger(__name__)
 
@@ -31,7 +31,22 @@ class WhisperTranscriber(Transcriber):
         self.whisper_best_of = whisper_best_of
         self.whisper_patience = whisper_patience
         self.whisper_temperatures = whisper_temperatures
-        self.model: Whisper = whisper.load_model(model_size_or_path, device=device)
+        # Honor offline and cache directory if provided
+        offline_env = os.getenv("VERBATIM_OFFLINE", "0").lower() in ("1", "true", "yes")
+        resolved_model: str = model_size_or_path
+        if offline_env and not os.path.exists(model_size_or_path):
+            # Try to resolve from cache directory
+            whisper_cache = os.getenv(
+                "WHISPER_CACHE_DIR",
+                os.path.join(os.getenv("XDG_CACHE_HOME", os.path.expanduser("~/.cache")), "whisper"),
+            )
+            candidate = os.path.join(whisper_cache, f"{model_size_or_path}.pt")
+            if os.path.exists(candidate):
+                resolved_model = candidate
+            else:
+                raise RuntimeError(f"Offline mode is enabled and Whisper model '{model_size_or_path}' is not present in cache: {candidate}")
+
+        self.model: Whisper = whisper.load_model(resolved_model, device=device)
 
     def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]:
         padded_audio = whisper.pad_or_trim(audio)
@@ -110,17 +125,16 @@ class WhisperTranscriber(Transcriber):
         words: List[Word] = []
         segment: Dict
         for segment in transcript["segments"]:  # pyright: ignore[reportAssignmentType]
-            # pylint: disable=unused-variable
-            # ruff: noqa: F841
-            _segment_id: int = segment.get("id")  # pyright: ignore[reportAssignmentType]
-            _segment_seek: int = segment.get("seek")  # pyright: ignore[reportAssignmentType]
-            _segment_start: str = segment.get("start")  # pyright: ignore[reportAssignmentType]
-            _segment_end: str = segment.get("end")  # pyright: ignore[reportAssignmentType]
-            _segment_text: str = segment.get("text")  # pyright: ignore[reportAssignmentType]
-            _segment_temperature: float = segment.get("temperature")  # pyright: ignore[reportAssignmentType]
-            _segment_avg_logprob: float = segment.get("avg_logprob")  # pyright: ignore[reportAssignmentType]
-            _segment_compression_ratio: float = segment.get("compression_ratio")  # pyright: ignore[reportAssignmentType]
-            _segment_no_speech_prob: float = segment.get("no_speech_prob")  # pyright: ignore[reportAssignmentType]
+            # read optional fields for completeness, but ignore values
+            _ = segment.get("id")  # noqa: F841  pyright: ignore[reportAssignmentType]
+            _ = segment.get("seek")  # noqa: F841  pyright: ignore[reportAssignmentType]
+            _ = segment.get("start")  # noqa: F841  pyright: ignore[reportAssignmentType]
+            _ = segment.get("end")  # noqa: F841  pyright: ignore[reportAssignmentType]
+            _ = segment.get("text")  # noqa: F841  pyright: ignore[reportAssignmentType]
+            _ = segment.get("temperature")  # noqa: F841  pyright: ignore[reportAssignmentType]
+            _ = segment.get("avg_logprob")  # noqa: F841  pyright: ignore[reportAssignmentType]
+            _ = segment.get("compression_ratio")  # noqa: F841  pyright: ignore[reportAssignmentType]
+            _ = segment.get("no_speech_prob")  # noqa: F841  pyright: ignore[reportAssignmentType]
             segment_words: List[Dict] = segment.get("words")  # pyright: ignore[reportAssignmentType]
             for word in segment_words:
                 word_start: float = word.get("start")  # pyright: ignore[reportAssignmentType]

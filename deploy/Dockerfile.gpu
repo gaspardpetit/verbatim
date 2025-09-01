@@ -1,0 +1,69 @@
+FROM nvidia/cuda:12.8.1-runtime-ubuntu22.04
+
+ARG TARGETPLATFORM
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+    # Use a fixed version until needed so this can be cached
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0 \
+    SETUPTOOLS_SCM_LOCAL_SCHEME=no-local-version
+
+# Build-time deps
+RUN --mount=type=cache,id=apt-${TARGETPLATFORM},target=/var/cache/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+      python3.11 python3.11-venv python3.11-dev python3-pip \
+      build-essential pkg-config \
+      portaudio19-dev ffmpeg \
+      ca-certificates curl git \
+    && rm -rf /var/lib/apt/lists/*
+
+# 3.11 toolchain
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3.11 -m pip install --upgrade uv setuptools wheel build \
+ && python3.11 -m pip install --no-cache-dir cython==3.0.10 pybind11
+
+WORKDIR /src
+
+# 1) Copy ONLY files that affect dependency resolution
+COPY pyproject.toml uv.lock README.md ./
+
+# base image uses python 3.10 by default
+ENV UV_PYTHON=/usr/bin/python3.11
+ENV UV_PYTHON_DOWNLOADS=never
+
+# 2) Install locked dependencies into the system env (no project install yet)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv export --extra cuda_gpu --no-hashes --no-emit-project --frozen --format requirements-txt -o /tmp/requirements.txt
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3.11 -m uv pip install --system -r /tmp/requirements.txt
+
+# 3) Now add the source and install JUST your package (fast; --no-deps)
+COPY verbatim ./verbatim
+
+# Ensure a clean, PEP 440-compliant version (no VCS needed)
+ARG VERSION=0.0.0
+ENV VERBATIM_VERSION=${VERSION} 
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=${VERBATIM_VERSION}
+
+# Install package with the CUDA extra
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=cache,target=/root/.cache/pip \
+    python3.11 -m uv pip install --system .[cuda_gpu]
+
+# Make sure runtime libs are available
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libportaudio2 libsndfile1 \
+    && rm -rf /var/lib/apt/lists/* /root/.cache
+
+WORKDIR /app
+COPY tests/data/init.mp3 /app/init.mp3
+
+# Default to running the CLI
+ENTRYPOINT ["verbatim"]
+CMD ["/app/init.mp3"]
+
+# Put volatile metadata LAST so it doesn't poison caches
+LABEL org.opencontainers.image.version=${VERBATIM_VERSION}

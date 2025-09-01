@@ -2,13 +2,12 @@ import logging
 import queue
 
 import numpy as np
-from numpy.typing import NDArray
-
 import pyaudio
 import sounddevice as sd
+from numpy.typing import NDArray
 
-from .audiosource import AudioSource, AudioStream
 from ..audio import samples_to_seconds
+from .audiosource import AudioSource, AudioStream
 
 LOG = logging.getLogger(__name__)
 
@@ -16,7 +15,7 @@ LOG = logging.getLogger(__name__)
 class MicAudioStreamSoundDevice(AudioStream):
     source: "MicAudioSourceSoundDevice"
     audio_queue: queue.Queue
-    stream:sd.InputStream
+    stream: sd.InputStream
 
     def __init__(self, source: "MicAudioSourceSoundDevice"):
         super().__init__(start_offset=0, diarization=None)
@@ -73,11 +72,12 @@ class MicAudioStreamSoundDevice(AudioStream):
         return True
 
     def get_nchannels(self) -> int:
-        stream:sd.InputStream = self.stream
+        stream: sd.InputStream = self.stream
         idevice, _odevice = stream.channels
         return idevice
 
     def get_rate(self) -> int:
+        # pylint: disable=protected-access
         return self.stream._samplerate
 
 
@@ -95,9 +95,9 @@ class MicAudioStreamPyAudio(AudioStream):
     source: "MicAudioSourcePyAudio"
     p: pyaudio.PyAudio
     stream: pyaudio.Stream
-    nchannels:int = 1
+    nchannels: int = 1
 
-    def __init__(self, source: "MicAudioSourcePyAudio", nchannels:int = 1):
+    def __init__(self, source: "MicAudioSourcePyAudio", nchannels: int = 1):
         super().__init__(start_offset=0, diarization=None)
         self.source = source
         self.p: pyaudio.PyAudio = pyaudio.PyAudio()

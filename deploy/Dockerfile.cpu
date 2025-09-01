@@ -1,0 +1,68 @@
+# syntax=docker/dockerfile:1.7
+FROM python:3.11-slim AS base
+
+ARG TARGETPLATFORM
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Use a fixed version until needed so this can be cached
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0 \
+    SETUPTOOLS_SCM_LOCAL_SCHEME=no-local-version
+
+# OS build/runtime deps (cache APT with BuildKit mounts)
+RUN --mount=type=cache,id=apt-${TARGETPLATFORM},target=/var/cache/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+      build-essential pkg-config \
+      portaudio19-dev ffmpeg \
+      ca-certificates curl git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Toolchain (cache pip wheel downloads)
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python -m pip install --upgrade pip uv setuptools wheel build \
+     && python -m pip install --no-cache-dir cython==3.0.10 pybind11
+
+WORKDIR /src
+
+# 1) Copy ONLY files that affect dependency resolution
+COPY pyproject.toml uv.lock README.md ./
+
+ENV UV_PYTHON_DOWNLOADS=never
+
+# 2) Install locked dependencies into the system env (no project install yet)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv export --no-hashes --no-emit-project --frozen --format requirements-txt -o /tmp/requirements.txt
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3.11 -m uv pip install --system -r /tmp/requirements.txt
+
+# 3) Now add the source and install JUST your package (fast; --no-deps)
+COPY verbatim ./verbatim
+
+# Ensure a clean, PEP 440-compliant version (no VCS needed)
+ARG VERSION=0.0.0
+ENV VERBATIM_VERSION=${VERSION} 
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=${VERBATIM_VERSION}
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=cache,target=/root/.cache/pip \
+    uv pip install --system --no-deps .
+    
+# Make sure runtime libs are available
+RUN --mount=type=cache,target=/var/cache/apt \
+    --mount=type=cache,target=/var/lib/apt \
+    apt-get update && apt-get install -y --no-install-recommends \
+      libportaudio2 libsndfile1 \
+    && rm -rf /var/lib/apt/lists/* /root/.cache
+
+WORKDIR /app
+COPY tests/data/init.mp3 /app/init.mp3
+
+# Default to running the CLI
+ENTRYPOINT ["verbatim"]
+CMD ["/app/init.mp3"]
+
+# Put volatile metadata LAST so it doesn't poison caches
+LABEL org.opencontainers.image.version=${VERBATIM_VERSION}

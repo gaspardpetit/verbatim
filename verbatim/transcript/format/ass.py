@@ -8,10 +8,10 @@ import logging
 import os
 import warnings
 from itertools import chain
-from typing import List, Tuple, Union, Callable, Optional
+from typing import Any, Callable, List, Optional, Tuple, Union
 
-from .writer import TranscriptWriter, TranscriptWriterConfig
 from ..words import Utterance, Word
+from .writer import TranscriptWriter, TranscriptWriterConfig
 
 LOG = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ def _save_as_file(content: str, path: str):
     LOG.info(f"Saved: {os.path.abspath(path)}")
 
 
-def _get_segments(result: Tuple[dict, list], min_dur: float, reverse_text: Union[bool, tuple] = False):
+def _get_segments(result: Any, min_dur: float, reverse_text: Union[bool, tuple] = False):
     if isinstance(result, dict):
         if reverse_text:
             warnings.warn(f"[reverse_text]=True only applies to WhisperResult but result is {type(result)}")
@@ -93,50 +93,48 @@ def finalize_text(text: str, strip: bool = True):
     return text.strip().replace("\n ", "\n")
 
 
-def sec2hhmmss(seconds: Tuple[float, int]):
+def sec2hhmmss(seconds: float):
     mm, ss = divmod(seconds, 60)
     hh, mm = divmod(mm, 60)
     return hh, mm, ss
 
 
-def sec2milliseconds(seconds: Tuple[float, int]) -> int:
+def sec2milliseconds(seconds: float) -> int:
     return round(seconds * 1000)
 
 
-def sec2centiseconds(seconds: Tuple[float, int]) -> int:
+def sec2centiseconds(seconds: float) -> int:
     return round(seconds * 100)
 
 
-def sec2vtt(seconds: Tuple[float, int]) -> str:
+def sec2vtt(seconds: float) -> str:
     hh, mm, ss = sec2hhmmss(seconds)
     return f"{hh:0>2.0f}:{mm:0>2.0f}:{ss:0>6.3f}"
 
 
-def sec2srt(seconds: Tuple[float, int]) -> str:
+def sec2srt(seconds: float) -> str:
     return sec2vtt(seconds).replace(".", ",")
 
 
-def sec2ass(seconds: Tuple[float, int]) -> str:
+def sec2ass(seconds: float) -> str:
     hh, mm, ss = sec2hhmmss(seconds)
     return f"{hh:0>1.0f}:{mm:0>2.0f}:{ss:0>2.2f}"
 
 
 def segment2vttblock(segment: dict, strip=True) -> str:
-    return f'{sec2vtt(segment["start"])} --> {sec2vtt(segment["end"])}\n' f'{finalize_text(segment["text"], strip)}'
+    return f"{sec2vtt(segment['start'])} --> {sec2vtt(segment['end'])}\n{finalize_text(segment['text'], strip)}"
 
 
 def segment2srtblock(segment: dict, idx: int, strip=True) -> str:
-    return f'{idx}\n{sec2srt(segment["start"])} --> {sec2srt(segment["end"])}\n' f'{finalize_text(segment["text"], strip)}'
+    return f"{idx}\n{sec2srt(segment['start'])} --> {sec2srt(segment['end'])}\n{finalize_text(segment['text'], strip)}"
 
 
 def segment2assblock(segment: dict, idx: int, strip=True) -> str:
-    return f'Dialogue: {idx},{sec2ass(segment["start"])},{sec2ass(segment["end"])},Default,,0,0,0,,' f'{finalize_text(segment["text"], strip)}'
+    return f"Dialogue: {idx},{sec2ass(segment['start'])},{sec2ass(segment['end'])},Default,,0,0,0,,{finalize_text(segment['text'], strip)}"
 
 
 def segment2tsvblock(segment: dict, strip=True) -> str:
-    return (
-        f'{sec2milliseconds(segment["start"])}' f'\t{sec2milliseconds(segment["end"])}' f'\t{segment["text"].strip() if strip else segment["text"]}'
-    )
+    return f"{sec2milliseconds(segment['start'])}\t{sec2milliseconds(segment['end'])}\t{segment['text'].strip() if strip else segment['text']}"
 
 
 def words2segments(words: List[dict], tag: Tuple[str, str], reverse_text: bool = False) -> List[dict]:
@@ -417,9 +415,9 @@ def result_to_ass(
         if font_size:
             fmt_style_dict.update(Fontsize=font_size)
 
-        fmts = f'Format: {", ".join(map(str, fmt_style_dict.keys()))}'
+        fmts = f"Format: {', '.join(map(str, fmt_style_dict.keys()))}"
 
-        styles = f'Style: {",".join(map(str, fmt_style_dict.values()))}'
+        styles = f"Style: {','.join(map(str, fmt_style_dict.values()))}"
 
         sub_str = (
             f"[Script Info]\nScriptType: v4.00+\nPlayResX: 384\nPlayResY: 288\nScaledBorderAndShadow: yes\n\n"
@@ -462,7 +460,7 @@ def result_to_txt(
     reverse_text: Union[bool, tuple] = False,
 ):
     def segments2blocks(segments: dict, _strip=True) -> str:
-        return "\n".join(f'{segment["text"].strip() if _strip else segment["text"]}' for segment in segments)
+        return "\n".join(f"{segment['text'].strip() if _strip else segment['text']}" for segment in segments)
 
     return result_to_any(
         result=result,

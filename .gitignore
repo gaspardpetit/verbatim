@@ -184,3 +184,6 @@ samples/private
 
 # Temporary files
 tmp
+.pkg-venv
+.verbatim/**
+verbatim/_version.py

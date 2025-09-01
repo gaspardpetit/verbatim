@@ -1,6 +1,8 @@
 import wave
+
 import numpy as np
 from scipy.signal import resample
+
 from .audiosource import AudioSource
 
 

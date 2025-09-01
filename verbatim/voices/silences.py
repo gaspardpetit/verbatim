@@ -1,11 +1,10 @@
 import logging
+import warnings
 from abc import ABC, abstractmethod
 from typing import Dict, List
-import warnings
 
-from numpy.typing import NDArray
 import torch
-
+from numpy.typing import NDArray
 from silero_vad import get_speech_timestamps, load_silero_vad
 
 # Configure logger

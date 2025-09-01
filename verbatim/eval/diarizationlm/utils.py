@@ -3,17 +3,16 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from collections.abc import Generator, Sequence
 import copy
 import dataclasses
 import json
 import sys
+from collections.abc import Generator, Sequence
 from typing import Any, List, Optional
 
 import numpy as np
-from scipy import optimize
-
 import word_levenshtein as levenshtein
+from scipy import optimize
 
 PUNCTUATIONS = [",", ".", "_", "?", "!", "-", '"', "'"]
 
@@ -137,7 +136,7 @@ def get_oracle_speakers(hyp_spk: str, hyp_spk_align: str) -> Sequence[int]:
                 hyp_spk_oracle[i] = 1 if i == 0 else hyp_spk_oracle[i - 1]
             continue
         if row_index[align_value - 1] != align_value - 1:
-            raise ValueError(f"Alignment mismatch at index {align_value - 1}: " f"expected {align_value - 1}, got {row_index[align_value - 1]}")
+            raise ValueError(f"Alignment mismatch at index {align_value - 1}: expected {align_value - 1}, got {row_index[align_value - 1]}")
         hyp_spk_oracle[i] = col_index[align_value - 1] + 1
 
     return hyp_spk_oracle
@@ -285,7 +284,7 @@ class JsonUtteranceReader:
         # Check for length mismatch between words and p_speakers
         if len(words) != len(p_speakers):
             raise ValueError(
-                f"Mismatch between words and input speakers: " f"{len(words)} words, {len(p_speakers)} input speakers in utterance {utt_id}."
+                f"Mismatch between words and input speakers: {len(words)} words, {len(p_speakers)} input speakers in utterance {utt_id}."
             )
 
         if self.target_speaker_field:
@@ -294,7 +293,7 @@ class JsonUtteranceReader:
             # Check for length mismatch between words and t_speakers
             if len(words) != len(t_speakers):
                 raise ValueError(
-                    f"Mismatch between words and target speakers: " f"{len(words)} words, {len(t_speakers)} target speakers in utterance {utt_id}."
+                    f"Mismatch between words and target speakers: {len(words)} words, {len(t_speakers)} target speakers in utterance {utt_id}."
                 )
         else:
             t_speakers = []

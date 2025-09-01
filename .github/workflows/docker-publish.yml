@@ -12,6 +12,8 @@ on:
     branches: [ "main" ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
+  release:
+    types: [published]
   pull_request:
     branches: [ "main" ]
 
@@ -20,31 +22,59 @@ env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
-  TOKEN_HUGGINGFACE: ${{ secrets.TOKEN_HUGGINGFACE }}
 
-
+concurrency:
+  group: ${{ github.event_name != 'pull_request' && format('docker-{0}', github.ref) || github.run_id }}
+  cancel-in-progress: false
+  
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: read
       packages: write
-      # This is used to complete the identity challenge
-      # with sigstore/fulcio when running outside of PRs.
       id-token: write
 
+    strategy:
+      matrix:
+        variant:
+          - name: cpu
+            suffix: ""
+            dockerfile: deploy/Dockerfile.cpu
+            tag_prefix: ""
+          - name: gpu
+            suffix: "-gpu"
+            dockerfile: deploy/Dockerfile.gpu
+            tag_prefix: "gpu-"
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      # skip arm64 on regular builds - the runner uses an emulator and this is very slow...
+      - name: Set platforms
+        id: set-platforms
+        run: |
+          if [[ "${{ matrix.variant.name }}" == "gpu" ]]; then
+            echo "platforms=linux/amd64" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "schedule" || \
+                   "${{ github.event_name }}" == "release" ]]; then
+            echo "platforms=linux/amd64,linux/arm64" >> $GITHUB_OUTPUT
+          else
+            echo "platforms=linux/amd64" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout repository (with tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
         if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@6e04d228eb30da1757ee4e1dd75a0ec73a653e06 #v3.1.1
+        uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 #v3.9.2
         with:
-          cosign-release: 'v2.1.1'
+          cosign-release: 'v2.5.3'
 
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
@@ -64,36 +94,91 @@ jobs:
 
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
+      - name: Compute version metadata
+        id: vermeta
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA=$(git rev-parse --short HEAD)
+          DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+      
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME}"
+            DESCRIBE="${GITHUB_REF_NAME}"
+            # strip leading v for python version (e.g. v1.2.3 -> 1.2.3)
+            VERSION_PYTHON="${GITHUB_REF_NAME#v}"
+          else
+            DESCRIBE="$(git describe --tags --always --dirty)"
+            VERSION="${DESCRIBE}"
+            # PEP 440: v1.2.3-4-gHASH[-dirty] => 1.2.3.post4[.dev0]
+            VERSION_PYTHON="$(git describe --tags --always --dirty \
+              | sed -E 's/^v//; s/-([0-9]+)-g[0-9a-f]+(-dirty)?$/.post\1\2/; s/-dirty$/.dev0/')"
+          fi
+      
+          # Drop any local version (+foo) if present
+          VERSION_PYTHON="${VERSION_PYTHON%%+*}"
+      
+          echo "version=${VERSION}"           >> "$GITHUB_OUTPUT"
+          echo "version_python=${VERSION_PYTHON}" >> "$GITHUB_OUTPUT"
+          echo "describe=${DESCRIBE}"         >> "$GITHUB_OUTPUT"
+          echo "sha=${SHA}"                   >> "$GITHUB_OUTPUT"
+          echo "date=${DATE}"                 >> "$GITHUB_OUTPUT"
+      
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            MAJOR="${BASH_REMATCH[1]}"; MINOR="${BASH_REMATCH[2]}"; PATCH="${BASH_REMATCH[3]}"
+            echo "major=${MAJOR}" >> "$GITHUB_OUTPUT"
+            echo "minor=${MINOR}" >> "$GITHUB_OUTPUT"
+            echo "patch=${PATCH}" >> "$GITHUB_OUTPUT"
+            echo "is_clean_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_clean_release=false" >> "$GITHUB_OUTPUT"
+          fi
+      
+          echo "Computed VERSION_PYTHON=${VERSION_PYTHON}"
+
+
+      - name: Extract Docker metadata ( ${{ matrix.variant.name }} )
+        id: dmeta
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
-      # Build and push Docker image with Buildx (don't push on PR)
-      # https://github.com/docker/build-push-action
-      - name: Build and push Docker image
-        id: build-and-push
-        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
+          tags: |
+            type=raw,value=${{ matrix.variant.tag_prefix }}sha-${{ steps.vermeta.outputs.sha }}
+            type=raw,value=${{ matrix.variant.tag_prefix }}main,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=${{ matrix.variant.tag_prefix }}desc-${{ steps.vermeta.outputs.describe }},enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=${{ matrix.variant.tag_prefix }}${{ github.ref_name }},enable=${{ steps.vermeta.outputs.is_clean_release == 'true' }}
+            type=raw,value=${{ matrix.variant.tag_prefix }}v${{ steps.vermeta.outputs.major }}.${{ steps.vermeta.outputs.minor }},enable=${{ steps.vermeta.outputs.is_clean_release == 'true' }}
+            type=raw,value=${{ matrix.variant.tag_prefix }}v${{ steps.vermeta.outputs.major }},enable=${{ steps.vermeta.outputs.is_clean_release == 'true' }}
+            type=raw,value=${{ matrix.variant.tag_prefix }}latest,enable=${{ steps.vermeta.outputs.is_clean_release == 'true' }}
+      
+      - name: Build and push Docker image ( ${{ matrix.variant.name }} )
+        uses: docker/build-push-action@v5
         with:
           context: .
+          file: ${{ matrix.variant.dockerfile }}
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.dmeta.outputs.tags }}
+          labels: ${{ steps.dmeta.outputs.labels }}
+          platforms: ${{ steps.set-platforms.outputs.platforms }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ steps.vermeta.outputs.version_python }}
 
       # Sign the resulting Docker image digest except on PRs.
       # This will only write to the public Rekor transparency log when the Docker
       # repository is public to avoid leaking data.  If you would like to publish
       # transparency data even for private images, pass --force to cosign below.
       # https://github.com/sigstore/cosign
-      - name: Sign the published Docker image
-        if: ${{ github.event_name != 'pull_request' }}
+      - name: Sign the published Docker image ( ${{ matrix.variant.name }} )
+        if: ${{ github.event_name != 'pull_request' && steps.build-and-push.outputs.digest != '' }}
         env:
-          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
-          TAGS: ${{ steps.meta.outputs.tags }}
+          TAGS: ${{ steps.dmeta.outputs.tags }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
-        # This step uses the identity token to provision an ephemeral certificate
-        # against the sigstore community Fulcio instance.
-        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+        run: |
+          for tag in $TAGS; do
+            echo "Signing $tag@$DIGEST"
+            cosign sign --yes "$tag@$DIGEST"
+          done
+
+

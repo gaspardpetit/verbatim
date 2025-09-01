@@ -1,11 +1,12 @@
 import logging
-from typing import List, Optional
 from abc import ABC, abstractmethod
+from typing import List, Optional
 
 from ...audio.sources.audiosource import AudioSource
 
 # Configure logger
 LOG = logging.getLogger(__name__)
+
 
 class SeparationStrategy(ABC):
     def __init__(self):

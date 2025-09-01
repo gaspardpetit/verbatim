@@ -1,17 +1,15 @@
-from typing import Optional
 import logging
 import math
-
-from scipy.signal import resample_poly
-
-import numpy as np
-from numpy.typing import NDArray
+from typing import Optional
 
 # pylint: disable=c-extension-no-member
 import av
+import numpy as np
+from numpy.typing import NDArray
+from scipy.signal import resample_poly
 
-from .audiosource import AudioSource, AudioStream
 from ..audio import seconds_to_samples
+from .audiosource import AudioSource, AudioStream
 
 LOG = logging.getLogger(__name__)
 
@@ -170,7 +168,6 @@ class PyAVAudioStream(AudioStream):
             return np.squeeze(full_array)
         else:
             return full_array.T
-
 
     def has_more(self) -> bool:
         """

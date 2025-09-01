@@ -3,12 +3,13 @@ import json
 import logging
 from pathlib import Path
 
+from verbatim.eval.diarizationlm.metrics import calculate_metrics, format_improvements, format_metrics
 from verbatim.transcript.postprocessing.config import Config
 from verbatim.transcript.postprocessing.processor import DiarizationProcessor
-from verbatim.eval.diarizationlm.metrics import calculate_metrics, format_metrics, format_improvements
 
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(__name__)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Process diarized transcripts with LLM")
@@ -20,7 +21,7 @@ def main():
 
     args = parser.parse_args()
 
-    output_path = args.output_json or args.input_json.with_suffix('.dlm.json')
+    output_path = args.output_json or args.input_json.with_suffix(".dlm.json")
 
     # Initialize configuration and processor
     config = Config()
@@ -35,11 +36,7 @@ def main():
 
     # Process with LLM
     print("\nProcessing JSON with LLM...")
-    processed_data = processor.process_json(
-        input_path=args.input_json,
-        output_path=output_path,
-        chunk_size=args.chunk_size
-    )
+    processed_data = processor.process_json(input_path=args.input_json, output_path=output_path, chunk_size=args.chunk_size)
 
     # Evaluate if reference provided
     if args.ref_json:
@@ -53,6 +50,7 @@ def main():
         print(format_metrics(before_metrics, prefix="Before LLM postprocessing"))
         print(format_metrics(after_metrics, prefix="After LLM postprocessing"))
         print(format_improvements(before_metrics, after_metrics))
+
 
 if __name__ == "__main__":
     main()

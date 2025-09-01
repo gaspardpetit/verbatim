@@ -4,15 +4,14 @@ from typing import List, Optional
 import numpy as np
 import scipy.io.wavfile
 import torch
-
 from pyannote.audio import Pipeline
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 
-from .separate import SeparationStrategy
-
-from ...audio.sources.fileaudiosource import FileAudioSource
 from ...audio.audio import wav_to_int16
+from ...audio.sources.audiosource import AudioSource
+from ...audio.sources.fileaudiosource import FileAudioSource
 from ..diarize.factory import create_diarizer
+from .separate import SeparationStrategy
 
 # Configure logger
 LOG = logging.getLogger(__name__)
@@ -20,12 +19,13 @@ LOG = logging.getLogger(__name__)
 
 class PyannoteSpeakerSeparation(SeparationStrategy):
     def __init__(
-            self,
-            device: str,
-            huggingface_token: str,
-            separation_model="pyannote/speech-separation-ami-1.0",
-            diarization_strategy: str = "pyannote",
-            **kwargs):
+        self,
+        device: str,
+        huggingface_token: str,
+        separation_model="pyannote/speech-separation-ami-1.0",
+        diarization_strategy: str = "pyannote",
+        **kwargs,
+    ):
         super().__init__()
         LOG.info("Initializing Separation Pipeline.")
         self.diarization_strategy = diarization_strategy
@@ -69,7 +69,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         nb_speakers: Optional[int] = None,
         start_sample: int = 0,
         end_sample: Optional[int] = None,
-    ) -> List[FileAudioSource]:
+    ) -> List[AudioSource]:
         """
         Separate speakers in an audio file.
 
@@ -82,7 +82,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         Returns:
             Tuple of (diarization annotation, dictionary mapping speaker IDs to WAV files)
         """
-        separated_sources: List[FileAudioSource] = []
+        separated_sources: List[AudioSource] = []
         if not out_rttm_file:
             out_rttm_file = "out.rttm"
 
@@ -105,12 +105,12 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
                 file_name = f"{out_speaker_wav_prefix}-{speaker}.wav" if out_speaker_wav_prefix else f"{speaker}.wav"
                 scipy.io.wavfile.write(file_name, sample_rate, channel_data)
                 separated_sources.append(
-                        FileAudioSource(
-                            file=file_name,
-                            start_sample=start_sample,
-                            end_sample=end_sample,
-                            diarization=diarization,
-                        )
+                    FileAudioSource(
+                        file=file_name,
+                        start_sample=start_sample,
+                        end_sample=end_sample,
+                        diarization=diarization,
+                    )
                 )
 
         else:
