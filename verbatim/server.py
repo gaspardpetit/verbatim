@@ -38,8 +38,9 @@ async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
         return web.json_response({"error": "file is required"}, status=400)
 
     if not stream:
+        transcribe_func = transcribe_file
         try:
-            text = await asyncio.to_thread(transcribe_file, file_path, config, language)
+            text = await asyncio.to_thread(transcribe_func, file_path, config, language)
         finally:
             os.unlink(file_path)
         return web.json_response({"text": text})
@@ -51,9 +52,11 @@ async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
     loop = asyncio.get_event_loop()
     queue: asyncio.Queue[Optional[Union[str, Exception]]] = asyncio.Queue()
 
+    transcribe_iter = iterate_transcription
+
     def worker() -> None:
         try:
-            for piece in iterate_transcription(file_path, config, language):
+            for piece in transcribe_iter(file_path, config, language):
                 asyncio.run_coroutine_threadsafe(queue.put(piece), loop)
         except Exception as exc:  # pragma: no cover - best effort  # pylint: disable=broad-exception-caught
             asyncio.run_coroutine_threadsafe(queue.put(exc), loop)
