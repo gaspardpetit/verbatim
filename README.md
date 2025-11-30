@@ -7,6 +7,8 @@
 
 For high quality multilingual speech to text.
 
+Verbatim uses VTTM (YAML with embedded RTTM) as the primary diarization handoff. If you provide an RTTM, it will be wrapped into VTTM internally. Pyannote-based diarization/separation is optional; install with `pip install verbatim[diarization]` when you need those backends.
+
 # Installation
 
 ## Prerequisites
@@ -42,16 +44,16 @@ pip install git+https://github.com/gaspardpetit/verbatim.git
 ### Torch with Cuda Support
 If the tool falls back to CPU instead of GPU, you may need to reinstall the torch dependency with Cuda support. Refer to the following instructions: [https://pytorch.org/get-started/locally/](https://pytorch.org/get-started/locally/)
 
-# HuggingFace Token
-For diarization, this project requires access to the pyannote models which are gated:
+# HuggingFace Token (optional for diarization)
+Verbatim uses VTTM as the diarization handoff. If you opt into pyannote-based diarization/separation (install the `diarization` extra), the models are gated and require a Hugging Face token:
 
 1. Create an account on [Hugging Face](https://huggingface.co/)
 2. Request access to the model at https://huggingface.co/pyannote/speaker-diarization-3.1
 3. Request access to the model at https://huggingface.co/pyannote/segmentation-3.0
 4. From your `Settings` > `Access Tokens`, generate an access token
-5. When running verbatim for the first time, set the `HUGGINGFACE_TOKEN` environment variable to your Hugging Face token. Once the model is downloaded, this is no longer necessary. 
+5. Set the `HUGGINGFACE_TOKEN` environment variable before running diarization. Once models are cached, the token is no longer needed.
 
-Instead of setting `HUGGINGFACE_TOKEN` environment variable, you may prefer to set the value using a `.env` file in the current directory like this:
+Instead of setting `HUGGINGFACE_TOKEN` in the environment, you may prefer to set the value using a `.env` file in the current directory like this:
 
 ## .env
 ```bash

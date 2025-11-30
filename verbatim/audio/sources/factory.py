@@ -2,7 +2,7 @@ import errno
 import logging
 import os
 import sys
-from typing import TYPE_CHECKING, Any, List, Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
 
@@ -18,15 +18,13 @@ from .sourceconfig import SourceConfig
 
 LOG = logging.getLogger(__name__)
 
-if TYPE_CHECKING:
-    from pyannote.core.annotation import Annotation
-else:  # pragma: no cover - type-only fallback to avoid runtime dependency
-    Annotation = Any  # pylint: disable=invalid-name
+Annotation = RTTMAnnotation  # pylint: disable=invalid-name
 
 
 def compute_diarization(
     file_path: str,
     device: str,
+    *,
     rttm_file: Optional[str] = None,
     vttm_file: Optional[str] = None,
     strategy: str = "pyannote",
