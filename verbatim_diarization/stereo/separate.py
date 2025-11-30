@@ -3,13 +3,12 @@ from typing import List, Optional
 
 import numpy as np
 import scipy.io.wavfile
-from pyannote.core.annotation import Annotation
-from pyannote.core.segment import Segment
 
-from ...audio.audio import wav_to_int16
-from ...audio.sources.audiosource import AudioSource
-from ...audio.sources.fileaudiosource import FileAudioSource
-from .separate import SeparationStrategy
+from verbatim.audio.audio import wav_to_int16
+from verbatim.audio.sources.audiosource import AudioSource
+from verbatim.audio.sources.fileaudiosource import FileAudioSource
+from verbatim_diarization.separate.base import SeparationStrategy
+from verbatim_rttm import Annotation, Segment
 
 # Configure logger
 LOG = logging.getLogger(__name__)

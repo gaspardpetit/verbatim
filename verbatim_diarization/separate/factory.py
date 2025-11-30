@@ -4,9 +4,7 @@ import os
 import sys
 from getpass import getpass
 
-from .channels import ChannelSeparation
-from .pyannote import PyannoteSpeakerSeparation
-from .separate import SeparationStrategy
+from verbatim_diarization.separate.base import SeparationStrategy
 
 
 def create_separator(strategy: str = "pyannote", **kwargs) -> SeparationStrategy:
@@ -26,9 +24,13 @@ def create_separator(strategy: str = "pyannote", **kwargs) -> SeparationStrategy
                 print("Token received. Tip: export HUGGINGFACE_TOKEN to avoid prompts next time.")
         if token:
             kwargs["huggingface_token"] = token
+        from verbatim_diarization.pyannote import PyannoteSpeakerSeparation
+
         return PyannoteSpeakerSeparation(**kwargs)
 
     if strategy == "channels":
+        from verbatim_diarization.stereo import ChannelSeparation
+
         return ChannelSeparation(**kwargs)
 
     raise ValueError(f"Unknown separation strategy: {strategy}")

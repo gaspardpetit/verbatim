@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from pyannote.core.annotation import Annotation
+from verbatim_rttm import Annotation
 
 LOG = logging.getLogger(__name__)
 

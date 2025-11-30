@@ -7,12 +7,11 @@ import torch
 from pyannote.audio import Pipeline
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 
-from verbatim_diarize import create_diarizer
-
-from ...audio.audio import wav_to_int16
-from ...audio.sources.audiosource import AudioSource
-from ...audio.sources.fileaudiosource import FileAudioSource
-from .separate import SeparationStrategy
+from verbatim.audio.audio import wav_to_int16
+from verbatim.audio.sources.audiosource import AudioSource
+from verbatim.audio.sources.fileaudiosource import FileAudioSource
+from verbatim_diarization.diarize.factory import create_diarizer
+from verbatim_diarization.separate.base import SeparationStrategy
 
 # Configure logger
 LOG = logging.getLogger(__name__)

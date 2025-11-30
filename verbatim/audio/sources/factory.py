@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 import numpy as np
 
-from verbatim_diarize import create_diarizer  # Add this import
+from verbatim_diarization import create_diarizer  # Add this import
+from verbatim_diarization.separate import create_separator
 
 from ..audio import samples_to_seconds, timestr_to_samples
 from ..convert import convert_to_wav
@@ -128,7 +129,7 @@ def create_audio_source(
             )
         elif source_config.diarization_file:
             # Load existing diarization from file
-            from verbatim_diarize import Diarization
+            from verbatim_diarization import Diarization
 
             try:
                 source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
@@ -143,7 +144,7 @@ def create_audio_source(
                 )
 
     if source_config.diarization_file:
-        from verbatim_diarize import Diarization
+        from verbatim_diarization import Diarization
 
         source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
 
@@ -236,8 +237,6 @@ def create_separate_speaker_sources(
 
     start_sample: int = timestr_to_samples(start_time) if start_time else 0
     stop_sample: Optional[int] = timestr_to_samples(stop_time) if stop_time else None
-
-    from ...voices.separate.factory import create_separator
 
     with create_separator(
         strategy=strategy,
