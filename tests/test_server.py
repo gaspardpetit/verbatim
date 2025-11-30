@@ -62,9 +62,7 @@ class ServerEndpointTests(IsolatedAsyncioTestCase):
         resp = await self.client.get("/models")
         self.assertEqual(resp.status, 200)
         payload = await resp.json()
-        self.assertTrue(
-            any(m["id"] == "whisper-large-v3-verbatim" for m in payload["data"])
-        )
+        self.assertTrue(any(m["id"] == "whisper-large-v3-verbatim" for m in payload["data"]))
 
         resp = await self.client.get("/models/whisper-large-v3-verbatim")
         self.assertEqual(resp.status, 200)
