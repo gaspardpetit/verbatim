@@ -2,7 +2,7 @@ import logging
 import os
 from typing import Optional
 
-from verbatim_rttm import Annotation, load_rttm
+from verbatim_rttm import Annotation, load_rttm, loads_rttm
 
 from .diarize.factory import create_diarizer
 
@@ -33,6 +33,14 @@ class Diarization:
         annotation: Annotation = load_rttm(rttm_file)
         if len(annotation) == 0:
             raise ValueError(f"No diarization data found in RTTM file: {rttm_file}")
+        return annotation
+
+    @staticmethod
+    def load_diarization_from_text(rttm_text: str) -> Annotation:
+        """Load diarization from RTTM/VTTM content (text)."""
+        annotation: Annotation = loads_rttm(rttm_text)
+        if len(annotation) == 0:
+            raise ValueError("No diarization data found in RTTM text")
         return annotation
 
     def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, strategy: str = "pyannote", **kwargs) -> Annotation:

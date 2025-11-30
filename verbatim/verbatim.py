@@ -50,10 +50,7 @@ from .transcript.words import Utterance, Word
 from .voices.transcribe.transcribe import APPEND_PUNCTUATIONS, PREPEND_PUNCTUATIONS
 
 # Optional type-only import to avoid pyannote dependency at runtime
-if TYPE_CHECKING:
-    from pyannote.core.annotation import Annotation
-else:  # pragma: no cover - type-only fallback to avoid runtime dependency
-    Annotation = Any  # pylint: disable=invalid-name
+Annotation = Any  # pylint: disable=invalid-name
 
 # Configure logger
 LOG = logging.getLogger(__name__)

@@ -3,10 +3,7 @@ from typing import TYPE_CHECKING, Optional
 
 from numpy.typing import NDArray
 
-if TYPE_CHECKING:
-    from pyannote.core.annotation import Annotation
-else:  # pragma: no cover - type-only fallback to avoid runtime dependency
-    Annotation = object  # pylint: disable=invalid-name
+Annotation = object  # pylint: disable=invalid-name
 
 
 class AudioStream(ABC):

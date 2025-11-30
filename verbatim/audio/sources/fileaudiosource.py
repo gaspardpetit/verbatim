@@ -11,10 +11,7 @@ from ..audio import format_audio, sample_to_timestr
 from ..convert import convert_to_wav
 from .audiosource import AudioSource, AudioStream
 
-if TYPE_CHECKING:
-    from pyannote.core.annotation import Annotation
-else:  # pragma: no cover - type-only fallback to avoid runtime dependency
-    Annotation = object  # pylint: disable=invalid-name
+Annotation = object  # pylint: disable=invalid-name
 
 LOG = logging.getLogger(__name__)
 

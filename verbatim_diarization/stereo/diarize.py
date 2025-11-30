@@ -70,13 +70,12 @@ class StereoDiarization(DiarizationStrategy):
         segment_samples = int(segment_duration * sample_rate)
         total_samples = len(audio)
 
-        annotation = Annotation()
+        segments = []
         current_speaker = None
         segment_start = 0
 
         # Use the file name as the uri for the annotation
         uri = os.path.splitext(os.path.basename(file_path))[0]
-        annotation.uri = uri
 
         for start_sample in range(0, total_samples, segment_samples):
             end_sample = min(start_sample + segment_samples, total_samples)
@@ -86,7 +85,7 @@ class StereoDiarization(DiarizationStrategy):
             if speaker != current_speaker and speaker != "UNKNOWN":
                 if current_speaker is not None:
                     segment = Segment(segment_start / sample_rate, start_sample / sample_rate)
-                    annotation[segment] = current_speaker
+                    segments.append(Segment(start=segment.start, end=segment.end, speaker=current_speaker, file_id=uri))
 
                 current_speaker = speaker
                 segment_start = start_sample
@@ -94,7 +93,9 @@ class StereoDiarization(DiarizationStrategy):
         # Add the final segment
         if current_speaker is not None:
             segment = Segment(segment_start / sample_rate, total_samples / sample_rate)
-            annotation[segment] = current_speaker
+            segments.append(Segment(start=segment.start, end=segment.end, speaker=current_speaker, file_id=uri))
+
+        annotation = Annotation(segments=segments, file_id=uri)
 
         if out_rttm_file:
             os.makedirs(os.path.dirname(out_rttm_file) or ".", exist_ok=True)

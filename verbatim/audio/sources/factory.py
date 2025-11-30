@@ -18,10 +18,7 @@ from .sourceconfig import SourceConfig
 
 LOG = logging.getLogger(__name__)
 
-if TYPE_CHECKING:
-    from pyannote.core.annotation import Annotation
-else:  # pragma: no cover - type-only fallback to avoid runtime dependency
-    Annotation = Any  # pylint: disable=invalid-name
+Annotation = RTTMAnnotation  # pylint: disable=invalid-name
 
 
 def compute_diarization(
