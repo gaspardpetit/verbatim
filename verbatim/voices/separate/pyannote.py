@@ -7,10 +7,11 @@ import torch
 from pyannote.audio import Pipeline
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 
+from verbatim_diarize import create_diarizer
+
 from ...audio.audio import wav_to_int16
 from ...audio.sources.audiosource import AudioSource
 from ...audio.sources.fileaudiosource import FileAudioSource
-from ..diarize.factory import create_diarizer
 from .separate import SeparationStrategy
 
 # Configure logger
@@ -117,6 +118,13 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             with ProgressHook() as hook:
                 if self.pipeline is None:
                     raise RuntimeError("Pyannote separation pipeline is not initialized")
+                try:
+                    pass  # type: ignore[unused-import]
+                except Exception as exc:  # pragma: no cover - defensive import
+                    raise RuntimeError("""
+                        pyannote separation requires torchcodec for audio decoding;
+                        install torchcodec (and compatible torch) or use stereo strategy.
+                    """) from exc
                 diarization_output, sources = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
 
             # pyannote.audio 4.x returns DiarizeOutput; normalize to Annotation

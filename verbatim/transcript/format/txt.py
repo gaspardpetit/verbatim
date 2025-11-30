@@ -4,7 +4,8 @@ from typing import List, Optional, TextIO
 import numpy as np
 from colorama import Fore, Style
 
-from ...voices.diarization import UNKNOWN_SPEAKER
+from verbatim_diarize import UNKNOWN_SPEAKER
+
 from ..formatting import format_milliseconds
 from ..words import Utterance, Word
 from .writer import (

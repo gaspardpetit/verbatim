@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 import numpy as np
 
-from ...voices.diarize.factory import create_diarizer  # Add this import
+from verbatim_diarize import create_diarizer  # Add this import
+
 from ..audio import samples_to_seconds, timestr_to_samples
 from ..convert import convert_to_wav
 from .audiosource import AudioSource
@@ -127,7 +128,7 @@ def create_audio_source(
             )
         elif source_config.diarization_file:
             # Load existing diarization from file
-            from ...voices.diarization import Diarization
+            from verbatim_diarize import Diarization
 
             try:
                 source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
@@ -142,7 +143,7 @@ def create_audio_source(
                 )
 
     if source_config.diarization_file:
-        from ...voices.diarization import Diarization
+        from verbatim_diarize import Diarization
 
         source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
 
