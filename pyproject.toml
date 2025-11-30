@@ -105,7 +105,7 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
-include = ["verbatim/**/*"]
+include = ["verbatim/**/*", "verbatim_core/**/*"]
 
 [tool.hatch.version]
 source = "vcs"

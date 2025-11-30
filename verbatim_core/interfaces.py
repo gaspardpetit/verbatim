@@ -16,7 +16,7 @@ from numpy.typing import NDArray
 
 # Minimal contract for transcription backends; lets us swap local/remote implementations.
 if TYPE_CHECKING:
-    from ..transcript.words import Word
+    from verbatim.transcript.words import Word
 else:  # pragma: no cover - type-only fallback to avoid heavy imports
     Word = object  # pylint: disable=invalid-name
 

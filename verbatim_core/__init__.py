@@ -1,8 +1,6 @@
 """
-Core scaffolding for shared types and helpers.
-
-These stay light-weight so they can be lifted into a dedicated verbatim-core
-package later without pulling heavy dependencies.
+Lightweight core package for transcription logic that can be shared independently
+of the heavier verbatim package. Keeps dependencies minimal.
 """
 
 from .interfaces import (
