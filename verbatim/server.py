@@ -11,9 +11,14 @@ from aiohttp.multipart import BodyPartReader
 
 from .config import Config
 
+CONFIG_KEY = web.AppKey("config", Config)
+# Use loose types for callbacks to avoid over-constraining AppKey typing
+TRANSCRIBE_FUNC_KEY = web.AppKey("transcribe_func", object)
+TRANSCRIBE_ITER_KEY = web.AppKey("transcribe_iter", object)
+
 
 async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
-    config: Config = request.app["config"]
+    config: Config = request.app[CONFIG_KEY]
     reader = await request.multipart()
     file_path: Optional[str] = None
     language: Optional[str] = None
@@ -35,9 +40,9 @@ async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
         return web.json_response({"error": "file is required"}, status=400)
 
     if not stream:
-        transcribe_func = request.app.get("transcribe_func", transcribe_file)
+        transcribe_func = request.app.get(TRANSCRIBE_FUNC_KEY, transcribe_file)
         try:
-            text = await asyncio.to_thread(transcribe_func, file_path, config, language)
+            text = await asyncio.to_thread(cast(Callable[[str, Config, Optional[str]], str], transcribe_func), file_path, config, language)
         finally:
             os.unlink(file_path)
         return web.json_response({"text": text})
@@ -49,7 +54,7 @@ async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
     loop = asyncio.get_event_loop()
     queue: asyncio.Queue[Optional[Union[str, Exception]]] = asyncio.Queue()
 
-    transcribe_iter = request.app.get("transcribe_iter", iterate_transcription)
+    transcribe_iter = cast(Callable[[str, Config, Optional[str]], Iterable[str]], request.app.get(TRANSCRIBE_ITER_KEY, iterate_transcription))
 
     def worker() -> None:
         try:
@@ -145,11 +150,11 @@ def create_app(
     transcribe_iter: Optional[Callable[[str, Config, Optional[str]], Iterable[str]]] = None,
 ) -> web.Application:
     app = web.Application()
-    app["config"] = config
+    app[CONFIG_KEY] = config  # populate before startup handlers
     if transcribe_func is not None:
-        app["transcribe_func"] = transcribe_func
+        app[TRANSCRIBE_FUNC_KEY] = transcribe_func
     if transcribe_iter is not None:
-        app["transcribe_iter"] = transcribe_iter
+        app[TRANSCRIBE_ITER_KEY] = transcribe_iter
     app.router.add_post("/audio/transcriptions", _handle_transcriptions)
     app.router.add_get("/models", _handle_models)
     app.router.add_get("/models/{model_id}", _handle_model)

@@ -50,8 +50,10 @@ class ChannelSeparation(SeparationStrategy):
         if audio_data.ndim < 2:
             LOG.info("Single channel detected. Assuming one speaker.")
             audio_data = np.expand_dims(audio_data, axis=1)
+        if audio_data.shape[1] < 1:  # type: ignore[index]
+            raise ValueError("Audio data must have at least one channel")
 
-        num_channels = audio_data.shape[1]
+        num_channels = int(audio_data.shape[1])  # type: ignore[index]
         LOG.info(f"Detected {num_channels} channel(s) in the audio file.")
 
         # Process each channel

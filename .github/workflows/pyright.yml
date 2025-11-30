@@ -27,6 +27,11 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip uv
+          uv sync --frozen --no-dev --all-extras
+
       - name: Install Pyright
         run: python -m pip install --upgrade pip pyright
 
