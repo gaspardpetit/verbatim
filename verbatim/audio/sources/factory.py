@@ -24,6 +24,7 @@ Annotation = RTTMAnnotation  # pylint: disable=invalid-name
 def compute_diarization(
     file_path: str,
     device: str,
+    *,
     rttm_file: Optional[str] = None,
     vttm_file: Optional[str] = None,
     strategy: str = "pyannote",
