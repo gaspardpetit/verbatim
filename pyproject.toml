@@ -74,6 +74,7 @@ dependencies = [
     "openai>=1.59.8",
     "datasets>=3.2.0",
     "python-dotenv>=1.0.1",
+    "pyyaml>=6.0.2",
     "termcolor>=3.1.0",
 ]
 
@@ -100,7 +101,7 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
-include = ["verbatim/**/*", "verbatim_core/**/*"]
+include = ["verbatim/**/*", "verbatim_core/**/*", "verbatim_rttm/**/*"]
 
 [tool.hatch.version]
 source = "vcs"
