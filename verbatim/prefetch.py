@@ -3,7 +3,6 @@ import os
 import platform
 import re
 import sys
-from getpass import getpass
 from typing import Optional
 
 # pylint: disable=broad-exception-caught
@@ -164,78 +163,13 @@ def prefetch(
     hub_cache = os.getenv("HUGGINGFACE_HUB_CACHE")
 
     # Pyannote diarization/separation
-    if include_pyannote and snapshot_download is not None:
-        for repo in ("pyannote/speaker-diarization-3.1", "pyannote/speech-separation-ami-1.0"):
-            rev = _resolve_hf_revision(repo)
-            # Fast path: try local only to avoid network churn if already cached
-            try:
-                local_path = snapshot_download(  # nosec B615 - revision provided via variable
-                    repo_id=repo,
-                    token=hf_token,
-                    local_files_only=True,
-                    revision=rev,
-                    cache_dir=hub_cache,
-                )
-                LOG.info("Already cached: %s (rev=%s) at %s", repo, rev, local_path)
-                continue
-            except LocalEntryNotFoundError:
-                pass
-
-            LOG.info(f"Prefetching HF repo: {repo}")
-            try:
-                local_path = snapshot_download(  # nosec B615 - revision provided via variable
-                    repo_id=repo,
-                    token=hf_token,
-                    local_files_only=False,
-                    revision=rev,
-                    cache_dir=hub_cache,
-                )
-                LOG.info("Downloaded: %s (rev=%s) to %s", repo, rev, local_path)
-                continue
-            except HfHubHTTPError as e_first:  # pragma: no cover
-                # If unauthorized and interactive, prompt for token and retry once
-                err_txt = str(e_first)
-                status = getattr(getattr(e_first, "response", None), "status_code", None)
-                lc = err_txt.lower()
-                unauthorized = (
-                    status in (401, 403)
-                    or "401" in lc
-                    or "403" in lc
-                    or "forbidden" in lc
-                    or "unauthorized" in lc
-                    or "unauth" in lc
-                    or "restricted" in lc
-                    or "gated" in lc
-                )
-
-                if unauthorized and sys.stdin.isatty() and sys.stdout.isatty():
-                    print("Pyannote models are gated and require a Hugging Face token.")
-                    print("Create one at https://huggingface.co/settings/tokens and ensure gated model access.")
-                    try:
-                        entered = getpass("Enter HUGGINGFACE_TOKEN (starts with hf_): ")
-                    except (EOFError, KeyboardInterrupt):  # pragma: no cover
-                        entered = ""
-                    if entered:
-                        hf_token = entered.strip()
-                        os.environ["HUGGINGFACE_TOKEN"] = hf_token
-                        print("Token received. Tip: export HUGGINGFACE_TOKEN to avoid prompts next time.")
-                        try:
-                            local_path = snapshot_download(  # nosec B615 - revision provided via variable
-                                repo_id=repo,
-                                token=hf_token,
-                                local_files_only=False,
-                                revision=rev,
-                                cache_dir=hub_cache,
-                            )
-                            LOG.info("Downloaded after auth: %s (rev=%s) to %s", repo, rev, local_path)
-                            continue
-                        except HfHubHTTPError as e_retry:  # pragma: no cover
-                            LOG.warning(f"Failed to prefetch {repo} after prompt: {e_retry}")
-                            continue
-                else:
-                    LOG.info("Non-interactive terminal; skipping prompt for HF token")
-
-                LOG.warning(f"Failed to prefetch {repo}: {e_first}")
+    if include_pyannote:
+        try:
+            from verbatim_diarize.prefetch import prefetch_diarization_models
+        except ImportError as exc:  # pragma: no cover - defensive
+            LOG.warning("verbatim_diarize not available; skipping diarization prefetch: %s", exc)
+        else:
+            prefetch_diarization_models(hf_token=hf_token, cache_dir=hub_cache, offline=False)
 
     # MLX Whisper models (macOS/Apple Silicon) hosted on HF
     if include_mlx_whisper and snapshot_download is not None:

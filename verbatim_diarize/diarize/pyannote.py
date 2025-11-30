@@ -30,6 +30,14 @@ class PyAnnoteDiarization(DiarizationStrategy):
         Additional kwargs:
             nb_speakers: Optional number of speakers
         """
+        try:
+            # pyannote.audio 4.x requires torchcodec for audio decoding
+            pass  # type: ignore[unused-import]
+        except Exception as exc:  # pragma: no cover - defensive import
+            raise RuntimeError("""
+                pyannote diarization requires torchcodec for audio decoding;
+                install torchcodec (and compatible torch) or switch diarization_strategy.
+                """) from exc
         self.initialize_pipeline()
         pipeline = self.pipeline
         if pipeline is None:

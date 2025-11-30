@@ -1,25 +1,31 @@
+import importlib.util
 import os
 import tempfile
 import unittest
 
 import numpy as np
 
+pyannote_available = importlib.util.find_spec("pyannote") is not None
+soundfile_available = importlib.util.find_spec("soundfile") is not None
+
 # pylint: disable=import-outside-toplevel
 
 
 class TestStereoDiarization(unittest.TestCase):
+    @unittest.skipUnless(pyannote_available, "pyannote not available")
     def test_determine_speaker_silence(self):
-        from verbatim.voices.diarize.stereo import StereoDiarization
+        from verbatim_diarize.diarize.stereo import StereoDiarization
 
         diarizer = StereoDiarization()
         # pylint: disable=protected-access
         speaker = diarizer._determine_speaker(0.0, 0.0, 0.0, 0.0)
         self.assertEqual(speaker, "UNKNOWN")
 
+    @unittest.skipUnless(pyannote_available and soundfile_available, "pyannote/soundfile not available")
     def test_compute_diarization_silence(self):
-        import soundfile as sf
+        import soundfile as sf  # type: ignore
 
-        from verbatim.voices.diarize.stereo import StereoDiarization
+        from verbatim_diarize.diarize.stereo import StereoDiarization
 
         sample_rate = 16000
         audio = np.zeros((sample_rate, 2), dtype=np.float32)
