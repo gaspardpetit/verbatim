@@ -7,6 +7,8 @@
 
 For high quality multilingual speech to text.
 
+Verbatim uses VTTM (YAML with embedded RTTM) as the primary diarization handoff. If you provide an RTTM, it will be wrapped into VTTM internally. Pyannote-based diarization/separation is optional; install with `pip install verbatim[diarization]` when you need those backends.
+
 # Installation
 
 ## Prerequisites
