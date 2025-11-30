@@ -71,28 +71,20 @@ async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
             break
         if isinstance(item, Exception):
             error = item
-            await resp.write(
-                f"data: {json.dumps({'type': 'error', 'error': str(item)})}\n\n".encode()
-            )
+            await resp.write(f"data: {json.dumps({'type': 'error', 'error': str(item)})}\n\n".encode())
             break
         piece = cast(str, item)
         pieces.append(piece)
-        await resp.write(
-            f"data: {json.dumps({'type': 'transcript.text.delta', 'delta': piece})}\n\n".encode()
-        )
+        await resp.write(f"data: {json.dumps({'type': 'transcript.text.delta', 'delta': piece})}\n\n".encode())
 
     if error is None:
         final_text = "".join(pieces).strip()
-        await resp.write(
-            f"data: {json.dumps({'type': 'transcript.text.done', 'text': final_text})}\n\n".encode()
-        )
+        await resp.write(f"data: {json.dumps({'type': 'transcript.text.done', 'text': final_text})}\n\n".encode())
     await resp.write_eof()
     return resp
 
 
-def iterate_transcription(
-    path: str, base_config: Config, language: Optional[str] = None
-) -> Iterable[str]:
+def iterate_transcription(path: str, base_config: Config, language: Optional[str] = None) -> Iterable[str]:
     from .audio.sources.factory import create_audio_source  # pylint: disable=import-outside-toplevel
     from .audio.sources.sourceconfig import SourceConfig  # pylint: disable=import-outside-toplevel
     from .verbatim import Verbatim  # pylint: disable=import-outside-toplevel
@@ -116,9 +108,7 @@ def iterate_transcription(
     )
     transcriber = Verbatim(cfg)
     with audio_source.open() as audio_stream:
-        for utterance, _, _ in transcriber.transcribe(
-            audio_stream=audio_stream, working_prefix_no_ext=working_prefix
-        ):
+        for utterance, _, _ in transcriber.transcribe(audio_stream=audio_stream, working_prefix_no_ext=working_prefix):
             yield utterance.text
 
 

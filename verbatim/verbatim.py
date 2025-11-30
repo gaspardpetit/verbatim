@@ -6,12 +6,11 @@ import traceback
 import wave
 from dataclasses import dataclass, field
 from io import StringIO
-from typing import Generator, List, Optional, TextIO, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Optional, TextIO, Tuple
 
 import numpy as np
 from colorama import Fore
 from numpy.typing import NDArray
-from pyannote.core.annotation import Annotation
 
 from .audio.audio import samples_to_seconds
 from .audio.sources.audiosource import AudioSource, AudioStream
@@ -40,6 +39,12 @@ from .transcript.words import Utterance, Word
 
 # pylint: disable=unused-import
 from .voices.transcribe.transcribe import APPEND_PUNCTUATIONS, PREPEND_PUNCTUATIONS
+
+# Optional type-only import to avoid pyannote dependency at runtime
+if TYPE_CHECKING:
+    from pyannote.core.annotation import Annotation
+else:  # pragma: no cover - type-only fallback to avoid runtime dependency
+    Annotation = Any  # pylint: disable=invalid-name
 
 # Configure logger
 LOG = logging.getLogger(__name__)
@@ -224,21 +229,34 @@ class State:
 class Verbatim:
     state: State
     config: Config
+    vad_callback: Optional[Callable[[NDArray, int, int], List[Dict[str, int]]]]
 
-    def __init__(self, config: Config, models=None):
+    def __init__(self, config: Config, models=None, vad_callback: Optional[Callable[[NDArray, int, int], List[Dict[str, int]]]] = None):
         self.config = config
         self.state = State(config)
         if models is None:
             models = Models(device=config.device, whisper_model_size=config.whisper_model_size, stream=config.stream)
         self.models = models
+        if vad_callback is not None:
+            self.vad_callback = vad_callback
+        elif hasattr(self.models, "vad"):
+            # default Silero VAD path; keeps current behavior while enabling injection later
+            self.vad_callback = self.models.vad.find_activity  # type: ignore[attr-defined]
+        else:
+            self.vad_callback = None
 
     def skip_leading_silence(self, max_skip: int, min_speech_duration_ms: int = 500) -> int:
+        if self.vad_callback is None:
+            LOG.info("VAD callback not configured; skipping silence detection and keeping current window.")
+            return self.state.window_ts
+
         min_speech_duration_ms = 750
         min_speech_duration_samples = 16000 * min_speech_duration_ms // 1000
         audio_samples = self.state.audio_ts - self.state.window_ts
-        voice_segments = self.models.vad.find_activity(
+        voice_segments = self.vad_callback(
             audio=self.state.rolling_window.array[0:audio_samples],
             min_speech_duration_ms=min_speech_duration_ms,
+            min_silence_duration_ms=100,
         )
         LOG.debug(f"Voice segments: {voice_segments}")
         if len(voice_segments) == 0:

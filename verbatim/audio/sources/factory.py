@@ -1,16 +1,20 @@
 import errno
 import os
 import sys
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 import numpy as np
-from pyannote.core.annotation import Annotation
 
 from ...voices.diarize.factory import create_diarizer  # Add this import
 from ..audio import samples_to_seconds, timestr_to_samples
 from ..convert import convert_to_wav
 from .audiosource import AudioSource
 from .sourceconfig import SourceConfig
+
+if TYPE_CHECKING:
+    from pyannote.core.annotation import Annotation
+else:  # pragma: no cover - type-only fallback to avoid runtime dependency
+    Annotation = Any  # pylint: disable=invalid-name
 
 
 def compute_diarization(
@@ -32,6 +36,7 @@ def compute_diarization(
 
         PyAnnote Annotation object
     """
+
     diarizer = create_diarizer(strategy=strategy, device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN"))
 
     return diarizer.compute_diarization(file_path=file_path, out_rttm_file=rttm_file, nb_speakers=nb_speakers)
