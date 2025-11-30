@@ -32,10 +32,18 @@ def compute_metrics_summary(
     hyp_spk_field: str = "hyp_spk",
 ) -> Metrics:
     """Compute metrics for all utterances in a json object."""
-    compute_diarization_metrics = ref_spk_field or hyp_spk_field
+    compute_diarization_metrics = bool(ref_spk_field) and bool(hyp_spk_field)
     if compute_diarization_metrics:
-        if not (ref_spk_field and hyp_spk_field):
-            raise ValueError("hyp_spk_field and ref_spk_field must be both unset or both set.")
+        for utt in json_dict.get("utterances", []):
+            hyp_spk = utt.get(hyp_spk_field)
+            ref_spk = utt.get(ref_spk_field)
+            if not hyp_spk and not ref_spk:
+                compute_diarization_metrics = False
+                break
+            if not (hyp_spk and ref_spk):
+                LOG.warning("Speaker labels missing on one side; skipping diarization metrics for this comparison.")
+                compute_diarization_metrics = False
+                break
     result_dict = Metrics()
     for utt in tqdm.tqdm(json_dict["utterances"]):
         if compute_diarization_metrics:
