@@ -5,7 +5,7 @@ from pyannote.audio import Pipeline
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 from pyannote.core.annotation import Annotation
 
-from .base import DiarizationStrategy
+from verbatim_diarization.diarize.base import DiarizationStrategy
 
 
 class PyAnnoteDiarization(DiarizationStrategy):

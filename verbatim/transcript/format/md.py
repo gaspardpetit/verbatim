@@ -3,7 +3,7 @@ from typing import List, Optional, TextIO, Union
 
 import numpy as np
 
-from verbatim_diarize import UNKNOWN_SPEAKER
+from verbatim_diarization import UNKNOWN_SPEAKER
 
 from ..formatting import format_milliseconds
 from ..words import Utterance, Word

@@ -10,9 +10,7 @@ import sys
 from getpass import getpass
 from typing import Optional
 
-from .base import DiarizationStrategy
-from .pyannote import PyAnnoteDiarization
-from .stereo import StereoDiarization
+from verbatim_diarization.diarize.base import DiarizationStrategy
 
 
 def create_diarizer(strategy: str = "pyannote", device: str = "cpu", huggingface_token: Optional[str] = None, **kwargs) -> DiarizationStrategy:
@@ -48,8 +46,12 @@ def create_diarizer(strategy: str = "pyannote", device: str = "cpu", huggingface
             raise ValueError("huggingface_token is required for PyAnnote diarization. Set HUGGINGFACE_TOKEN or run interactively to be prompted.")
 
         # When offline, allow missing token (loading from local cache only)
+        from verbatim_diarization.pyannote import PyAnnoteDiarization
+
         return PyAnnoteDiarization(device=device, huggingface_token=token)
     elif strategy == "stereo":
+        from verbatim_diarization.stereo import StereoDiarization
+
         return StereoDiarization(**kwargs)
     else:
         raise ValueError(f"Unknown diarization strategy: {strategy}")

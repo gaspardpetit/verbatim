@@ -165,9 +165,9 @@ def prefetch(
     # Pyannote diarization/separation
     if include_pyannote:
         try:
-            from verbatim_diarize.prefetch import prefetch_diarization_models
+            from verbatim_diarization.prefetch import prefetch_diarization_models
         except ImportError as exc:  # pragma: no cover - defensive
-            LOG.warning("verbatim_diarize not available; skipping diarization prefetch: %s", exc)
+            LOG.warning("verbatim_diarization not available; skipping diarization prefetch: %s", exc)
         else:
             prefetch_diarization_models(hf_token=hf_token, cache_dir=hub_cache, offline=False)
 

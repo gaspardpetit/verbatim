@@ -4,10 +4,9 @@ from typing import Optional
 
 import numpy as np
 import soundfile as sf
-from pyannote.core.annotation import Annotation
-from pyannote.core.segment import Segment
 
-from .base import DiarizationStrategy
+from verbatim_diarization.diarize.base import DiarizationStrategy
+from verbatim_rttm import Annotation, Segment
 
 LOG = logging.getLogger(__name__)
 
