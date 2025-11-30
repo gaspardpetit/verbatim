@@ -6,7 +6,7 @@ import traceback
 import wave
 from dataclasses import dataclass, field
 from io import StringIO
-from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Optional, TextIO, Tuple
+from typing import TYPE_CHECKING, Any, Generator, List, Optional, TextIO, Tuple
 
 import numpy as np
 from colorama import Fore
@@ -15,6 +15,14 @@ from numpy.typing import NDArray
 from .audio.audio import samples_to_seconds
 from .audio.sources.audiosource import AudioSource, AudioStream
 from .config import Config
+from .core import (
+    LanguageDetectionRequest,
+    LanguageDetectionResult,
+    TranscriberProtocol,
+    TranscriptionWindowResult,
+    VadFn,
+    detect_language,
+)
 from .eval.compare import compute_metrics
 from .models import Models
 from .transcript.format.factory import configure_writers
@@ -229,13 +237,24 @@ class State:
 class Verbatim:
     state: State
     config: Config
-    vad_callback: Optional[Callable[[NDArray, int, int], List[Dict[str, int]]]]
+    vad_callback: Optional[VadFn]
 
-    def __init__(self, config: Config, models=None, vad_callback: Optional[Callable[[NDArray, int, int], List[Dict[str, int]]]] = None):
+    def __init__(
+        self,
+        config: Config,
+        models=None,
+        vad_callback: Optional[VadFn] = None,
+        transcriber: Optional[TranscriberProtocol] = None,
+    ):
         self.config = config
         self.state = State(config)
         if models is None:
-            models = Models(device=config.device, whisper_model_size=config.whisper_model_size, stream=config.stream)
+            models = Models(
+                device=config.device,
+                whisper_model_size=config.whisper_model_size,
+                stream=config.stream,
+                transcriber=transcriber,
+            )
         self.models = models
         if vad_callback is not None:
             self.vad_callback = vad_callback
@@ -253,11 +272,7 @@ class Verbatim:
         min_speech_duration_ms = 750
         min_speech_duration_samples = 16000 * min_speech_duration_ms // 1000
         audio_samples = self.state.audio_ts - self.state.window_ts
-        voice_segments = self.vad_callback(
-            audio=self.state.rolling_window.array[0:audio_samples],
-            min_speech_duration_ms=min_speech_duration_ms,
-            min_silence_duration_ms=100,
-        )
+        voice_segments = self.vad_callback(self.state.rolling_window.array[0:audio_samples], min_speech_duration_ms, 100)
         LOG.debug(f"Voice segments: {voice_segments}")
         if len(voice_segments) == 0:
             # preserve a bit of audio at the end that may have been too short just because it is truncated
@@ -365,40 +380,16 @@ class Verbatim:
         utterances = Verbatim.align_words_to_sentences(id_provider=id_provider, sentences=sentences, window_words=window_words)
         return utterances
 
-    def _guess_language(self, audio: NDArray, sample_offset: int, sample_duration: int, lang: List[str]) -> Tuple[str, float]:
-        lang_samples = audio[sample_offset : sample_offset + sample_duration]
-        LOG.info(
-            f"Detecting language using samples {sample_offset}({samples_to_seconds(sample_offset)}) "
-            f"to {sample_offset + sample_duration}({samples_to_seconds(sample_offset + sample_duration)})"
-        )
-        return self.models.transcriber.guess_language(audio=lang_samples, lang=lang)
-
-    # returns the language guessed, the proability and the number of samples used to guess
     def guess_language(self, timestamp: int) -> Tuple[str, float, int]:
-        if len(self.config.lang) == 0:
-            LOG.warning("Language is not set - defaulting to english")
-            return ("en", 1.0, 0)
-
-        if len(self.config.lang) == 1:
-            return (self.config.lang[0], 1.0, 0)
-
-        lang_sample_start = max(0, timestamp - self.state.window_ts)
-        available_samples = self.state.audio_ts - self.state.window_ts - lang_sample_start
-        lang_samples_size = min(2 * 16000, available_samples)
-
-        while True:
-            lang, prob = self._guess_language(
-                audio=self.state.rolling_window.array,
-                sample_offset=lang_sample_start,
-                sample_duration=lang_samples_size,
-                lang=self.config.lang,
-            )
-            if prob > 0.5 or lang_samples_size == available_samples:
-                break
-            # retry with larger sample
-            lang_samples_size = min(2 * lang_samples_size, available_samples)
-
-        return (lang, prob, lang_samples_size)
+        request = LanguageDetectionRequest(
+            audio=self.state.rolling_window.array,
+            lang=self.config.lang,
+            timestamp=timestamp,
+            window_ts=self.state.window_ts,
+            audio_ts=self.state.audio_ts,
+        )
+        result: LanguageDetectionResult = detect_language(request=request, guess_fn=self.models.transcriber.guess_language)
+        return (result.language, result.probability, result.samples_used)
 
     def transcribe_window(self) -> Tuple[List[Word], List[Word]]:
         LOG.info("Starting transcription of audio chunk.")
@@ -725,7 +716,12 @@ class Verbatim:
                 self.state.unacknowledged_utterances = confirmed_utterances
 
                 for i, utterance in enumerate(acknowledged_utterances):
-                    yield utterance, acknowledged_utterances[i + 1 :] + confirmed_utterances, unconfirmed_words
+                    result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
+                        utterance=utterance,
+                        unacknowledged=acknowledged_utterances[i + 1 :] + confirmed_utterances,
+                        unconfirmed_words=unconfirmed_words,
+                    )
+                    yield result.as_tuple()
 
                 if len(acknowledged_utterances) > 0:
                     for u in acknowledged_utterances:
@@ -796,7 +792,12 @@ class Verbatim:
                 break
             utterance = self.state.unacknowledged_utterances.pop(0)
             utterance.speaker = self.assign_speaker(utterance, diarization)
-            yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
+            result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
+                utterance=utterance,
+                unacknowledged=self.state.unacknowledged_utterances,
+                unconfirmed_words=self.state.unconfirmed_words,
+            )
+            yield result.as_tuple()
 
         # If there is a partial utterance overflowing, acknowledge words from it
         if len(self.state.unacknowledged_utterances) > 0:
@@ -815,7 +816,12 @@ class Verbatim:
             if len(flushed_utterances_words) > 0:
                 utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
                 utterance.speaker = self.assign_speaker(utterance, diarization)
-                yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
+                result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
+                    utterance=utterance,
+                    unacknowledged=self.state.unacknowledged_utterances,
+                    unconfirmed_words=self.state.unconfirmed_words,
+                )
+                yield result.as_tuple()
 
         # If there are unconfirmed words falling behind, acknowledge them
         flushed_utterances_words = []
@@ -830,7 +836,12 @@ class Verbatim:
         if len(flushed_utterances_words) > 0:
             utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
             utterance.speaker = self.assign_speaker(utterance, diarization)
-            yield utterance, self.state.unacknowledged_utterances, self.state.unconfirmed_words
+            result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
+                utterance=utterance,
+                unacknowledged=self.state.unacknowledged_utterances,
+                unconfirmed_words=self.state.unconfirmed_words,
+            )
+            yield result.as_tuple()
 
         if len(flushed_utterances_words) > 0:
             flushed_utterances.append(Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words))
