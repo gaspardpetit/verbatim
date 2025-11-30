@@ -5,6 +5,7 @@ from typing import (
     Dict,
     Generic,
     List,
+    Optional,
     Protocol,
     Sequence,
     Tuple,
@@ -35,7 +36,7 @@ class TranscriberProtocol(Protocol):
         whisper_beam_size: int = 3,
         whisper_best_of: int = 3,
         whisper_patience: float = 1.0,
-        whisper_temperatures: List[float] | None = None,
+        whisper_temperatures: Optional[List[float]] = None,
     ) -> List[Word]: ...
 
 
