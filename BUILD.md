@@ -1,7 +1,7 @@
 # Build Instructions
 
 ## Supported Python Versions
-This project supports **Python 3.9**, **3.10**, and **3.11**. Ensure you have one of these versions installed on your system before proceeding.
+This project supports **Python 3.10**, **3.11**, and **3.12**. Ensure you have one of these versions installed on your system before proceeding.
 
 ## Setting Up the Environment
 
@@ -151,4 +151,3 @@ flake8 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistic
 # pip install bandit
 bandit -r verbatim tests
 ```
-

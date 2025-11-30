@@ -3,7 +3,7 @@ name = "verbatim"
 dynamic = ["version"]
 description = "high quality multi-lingual speech to text"
 readme = "README.md"
-requires-python = ">=3.9,<3.12"
+requires-python = ">=3.10,<3.13"
 license = "MIT"
 authors = [{ name = "Gaspard Petit", email = "gaspardpetit@gmail.com" }]
 keywords = [
@@ -39,23 +39,20 @@ classifiers = [
     "License :: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
     "audio-separator>=0.18.0",
-    "av>=14.0.1 ; python_version > '3.9'",
-    "av>=14.0.1,<14.3.0 ; python_version <= '3.9'",
+    "av>=14.0.1",
     "colorama>=0.4.6",
     "dataclasses-json>=0.6.7",
     "demucs>=4.0.1",
     "faster-whisper>=1.1.1",
     "langcodes>=3.5.0",
     "numpy<=1.26.3",
-    "onnxruntime>=1.16.0",
-    "onnxruntime>=1.16.0 ; python_version > '3.9'",
-    "onnxruntime<1.20 ; python_version <= '3.9'", # see https://github.com/astral-sh/uv/issues/9425
+    "onnxruntime>=1.16.0,<1.20",
     "openai-whisper>=20240930",
     "pyannote-audio[separation]>=3.3.2",
     "pyannote-core>=5.0.0",
@@ -90,8 +87,7 @@ dev = [
 
 [project.optional-dependencies]
 cuda_gpu = [
-    "onnxruntime-gpu>=1.16.0 ; python_version > '3.9'",
-    "onnxruntime-gpu<1.20 ; python_version <= '3.9'",   # see https://github.com/astral-sh/uv/issues/9425
+    "onnxruntime-gpu>=1.16.0,<1.20",
 ]
 
 [project.urls]
