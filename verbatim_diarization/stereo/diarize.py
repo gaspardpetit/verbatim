@@ -6,7 +6,7 @@ import numpy as np
 import soundfile as sf
 
 from verbatim_diarization.diarize.base import DiarizationStrategy
-from verbatim_rttm import Annotation, Segment
+from verbatim_rttm import Annotation, AudioRef, Segment, write_vttm
 
 LOG = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class StereoDiarization(DiarizationStrategy):
 
         return "UNKNOWN"
 
-    def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, **kwargs) -> Annotation:
+    def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, out_vttm_file: Optional[str] = None, **kwargs) -> Annotation:
         """
         Compute diarization based on stereo channel energy differences.
         When total energy difference is small, uses peak energy as a tiebreaker.
@@ -97,14 +97,16 @@ class StereoDiarization(DiarizationStrategy):
             annotation[segment] = current_speaker
 
         if out_rttm_file:
-            # Make sure the directory exists
             os.makedirs(os.path.dirname(out_rttm_file) or ".", exist_ok=True)
             with open(out_rttm_file, "w", encoding="utf-8") as f:
                 for segment, _track, label in annotation.itertracks(yield_label=True):  # pyright: ignore[reportAssignmentType]
-                    # RTTM format:
-                    # Type File_ID Channel_ID Start Duration Speaker_Type Score Speaker_Name
                     f.write(f"SPEAKER {uri} 1 {segment.start:.3f} {segment.duration:.3f} <NA> <NA> {label} <NA> <NA>\n")
+            LOG.info("Wrote diarization to RTTM file: %s", out_rttm_file)
 
-            LOG.info(f"Wrote diarization to RTTM file: {out_rttm_file}")
+        if out_vttm_file:
+            os.makedirs(os.path.dirname(out_vttm_file) or ".", exist_ok=True)
+            audio_refs = [AudioRef(id=uri, path=file_path, channel="stereo")]
+            write_vttm(out_vttm_file, audio=audio_refs, annotation=annotation)
+            LOG.info("Wrote diarization to VTTM file: %s", out_vttm_file)
 
         return annotation

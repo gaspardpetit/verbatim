@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import List, Optional
 
 import numpy as np
@@ -8,7 +9,7 @@ from verbatim.audio.audio import wav_to_int16
 from verbatim.audio.sources.audiosource import AudioSource
 from verbatim.audio.sources.fileaudiosource import FileAudioSource
 from verbatim_diarization.separate.base import SeparationStrategy
-from verbatim_rttm import Annotation, Segment
+from verbatim_rttm import Annotation, AudioRef, Segment, write_vttm
 
 # Configure logger
 LOG = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ class ChannelSeparation(SeparationStrategy):
         *,
         file_path: str,
         out_rttm_file: Optional[str] = None,
+        out_vttm_file: Optional[str] = None,
         out_speaker_wav_prefix="",
         nb_speakers: Optional[int] = None,  # pylint: disable=unused-argument
         start_sample: int = 0,
@@ -57,6 +59,8 @@ class ChannelSeparation(SeparationStrategy):
 
         # Process each channel
         results: List[AudioSource] = []
+        segments = []
+        audio_refs = []
         for channel_idx in range(num_channels):
             speaker_label = f"SPEAKER_{channel_idx}"
 
@@ -74,16 +78,23 @@ class ChannelSeparation(SeparationStrategy):
             LOG.info(f"Saving channel {channel_idx} to file: {file_name}")
             scipy.io.wavfile.write(file_name, sample_rate, channel_data)
 
-            # Update annotation (simplified example)
-            annotation = Annotation()
-            annotation[Segment(0, len(channel_data) / sample_rate)] = speaker_label
-            results.append(FileAudioSource(file=file_name, diarization=annotation, start_sample=start_sample, end_sample=end_sample))
+            # Update annotation for this channel
+            file_id = os.path.splitext(os.path.basename(file_name))[0]
+            segment = Segment(start=0.0, end=len(channel_data) / sample_rate, speaker=speaker_label, file_id=file_id)
+            segments.append(segment)
+            audio_refs.append(AudioRef(id=file_id, path=file_name, channel=str(channel_idx)))
+            ann = Annotation([segment])
+            results.append(FileAudioSource(file=file_name, diarization=ann, start_sample=start_sample, end_sample=end_sample))
 
-            # Optionally save RTTM file
+        # Optionally save combined RTTM/VTTM
+        if (out_rttm_file or out_vttm_file) and segments:
+            combined = Annotation(segments=segments)
             if out_rttm_file:
-                speaker_out_rttm_file = f"{out_rttm_file}-{speaker_label}.rttm"
-                LOG.info(f"Saving RTTM file: {speaker_out_rttm_file}")
-                with open(speaker_out_rttm_file, "w", encoding="utf-8") as rttm:
-                    annotation.write_rttm(rttm)
+                LOG.info("Saving RTTM file: %s", out_rttm_file)
+                with open(out_rttm_file, "w", encoding="utf-8") as rttm:
+                    combined.write_rttm(rttm)
+            if out_vttm_file:
+                LOG.info("Saving VTTM file: %s", out_vttm_file)
+                write_vttm(out_vttm_file, audio=audio_refs, annotation=combined)
 
         return results

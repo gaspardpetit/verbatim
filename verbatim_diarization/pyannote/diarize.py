@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 import torch
@@ -6,6 +7,8 @@ from pyannote.audio.pipelines.utils.hook import ProgressHook
 from pyannote.core.annotation import Annotation
 
 from verbatim_diarization.diarize.base import DiarizationStrategy
+from verbatim_rttm import Annotation as RTTMAnnotation
+from verbatim_rttm import AudioRef, Segment, write_vttm
 
 
 class PyAnnoteDiarization(DiarizationStrategy):
@@ -23,7 +26,9 @@ class PyAnnoteDiarization(DiarizationStrategy):
         self.pipeline.instantiate({})
         self.pipeline.to(torch.device(self.device))
 
-    def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, nb_speakers: Optional[int] = None, **kwargs) -> Annotation:
+    def compute_diarization(
+        self, file_path: str, out_rttm_file: Optional[str] = None, out_vttm_file: Optional[str] = None, nb_speakers: Optional[int] = None, **kwargs
+    ) -> Annotation:
         """
         Compute diarization using PyAnnote.
 
@@ -53,5 +58,15 @@ class PyAnnoteDiarization(DiarizationStrategy):
 
         if out_rttm_file:
             self.save_rttm(diarization_annotation, out_rttm_file)
+
+        if out_vttm_file:
+            os.makedirs(os.path.dirname(out_vttm_file) or ".", exist_ok=True)
+            uri = os.path.splitext(os.path.basename(file_path))[0]
+            segments = [
+                Segment(start=segment.start, end=segment.end, speaker=str(label), file_id=uri)
+                for segment, _track, label in diarization_annotation.itertracks(yield_label=True)
+            ]
+            rttm_ann = RTTMAnnotation(segments=segments, file_id=uri)
+            write_vttm(out_vttm_file, audio=[AudioRef(id=uri, path=file_path)], annotation=rttm_ann)
 
         return diarization_annotation
