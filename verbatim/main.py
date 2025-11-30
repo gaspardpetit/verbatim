@@ -39,12 +39,19 @@ def main():
     parser.add_argument("-o", "--outdir", default=".", help="Path to the output directory")
     parser.add_argument("--diarization-strategy", choices=["pyannote", "stereo"], default="pyannote", help="Diarization strategy to use")
     parser.add_argument(
+        "--vttm",
+        nargs="?",
+        action=OptionalValueAction,
+        default=None,
+        help="Path to VTTM diarization file to use; if omitted, a minimal VTTM will be created (and filled if diarization runs).",
+    )
+    parser.add_argument(
         "-d",
         "--diarization",
         nargs="?",
         action=OptionalValueAction,
         default=None,
-        help="Identify speakers in transcript using the diarization RTTM file at the specified path (ex. diarization.rttm)",
+        help="(Deprecated) RTTM diarization file path; if provided, it will be wrapped into a VTTM and consumed.",
     )
     parser.add_argument(
         "--separate", nargs="?", action=OptionalValueAction, default=None, help="Enables speaker voice separation and process each speaker separately"

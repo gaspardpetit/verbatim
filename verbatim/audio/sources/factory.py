@@ -1,4 +1,5 @@
 import errno
+import logging
 import os
 import sys
 from typing import TYPE_CHECKING, Any, List, Optional, Union
@@ -7,12 +8,15 @@ import numpy as np
 
 from verbatim_diarization import create_diarizer  # Add this import
 from verbatim_diarization.separate import create_separator
-from verbatim_rttm import load_vttm
+from verbatim_rttm import Annotation as RTTMAnnotation
+from verbatim_rttm import AudioRef, load_vttm, write_vttm
 
 from ..audio import samples_to_seconds, timestr_to_samples
 from ..convert import convert_to_wav
 from .audiosource import AudioSource
 from .sourceconfig import SourceConfig
+
+LOG = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from pyannote.core.annotation import Annotation
@@ -83,7 +87,7 @@ def create_audio_source(
 
     if source_config.diarization_file == "" or (source_config.diarize is not None and source_config.diarization_file is None):
         source_config.diarization_file = output_prefix_no_ext + ".rttm"
-    if source_config.vttm_file is None and source_config.diarize is not None:
+    if source_config.vttm_file is None:
         source_config.vttm_file = output_prefix_no_ext + ".vttm"
     if source_config.vttm_file == "":
         source_config.vttm_file = None
@@ -124,6 +128,11 @@ def create_audio_source(
     if not stream:
         if source_config.isolate is not None:
             input_source, _noise_path = FileAudioSource.isolate_voices(file_path=input_source, out_path_prefix=working_prefix_no_ext)
+        if source_config.vttm_file and not os.path.exists(source_config.vttm_file):
+            LOG.info("No VTTM provided; creating minimal VTTM placeholder at %s", source_config.vttm_file)
+            audio_id = os.path.splitext(os.path.basename(input_source))[0]
+            audio_ref = AudioRef(id=audio_id, path=input_source, channel="stereo" if source_config.diarization_strategy == "stereo" else "1")
+            write_vttm(source_config.vttm_file, audio=[audio_ref], annotation=RTTMAnnotation())
         if source_config.vttm_file:
             try:
                 _audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
@@ -146,6 +155,9 @@ def create_audio_source(
 
             try:
                 source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
+                if source_config.vttm_file and source_config.diarization is not None:
+                    audio_id = os.path.splitext(os.path.basename(input_source))[0]
+                    write_vttm(source_config.vttm_file, audio=[AudioRef(id=audio_id, path=input_source)], annotation=source_config.diarization)  # type: ignore[arg-type]
             except (StopIteration, FileNotFoundError):
                 # If the file doesn't exist or is empty, compute new diarization
                 source_config.diarization = compute_diarization(
@@ -158,12 +170,10 @@ def create_audio_source(
                 )
 
     if source_config.vttm_file and source_config.diarization is None:
-        _audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
-
-    if source_config.diarization_file and source_config.diarization is None:
-        from verbatim_diarization import Diarization
-
-        source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
+        try:
+            _audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
+        except (FileNotFoundError, ValueError):
+            source_config.diarization = None
 
     return FileAudioSource(
         file=input_source,
@@ -252,6 +262,10 @@ def create_separate_speaker_sources(
 
     if source_config.diarization_file == "" or (source_config.diarize is not None and source_config.diarization_file is None):
         source_config.diarization_file = output_prefix_no_ext + ".rttm"
+    if source_config.vttm_file is None:
+        source_config.vttm_file = output_prefix_no_ext + ".vttm"
+    if source_config.vttm_file == "":
+        source_config.vttm_file = None
 
     nb_speakers = source_config.diarize
     if nb_speakers == 0:
