@@ -64,6 +64,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         *,
         file_path: str,
         out_rttm_file: Optional[str] = None,
+        out_vttm_file: Optional[str] = None,
         out_speaker_wav_prefix="",
         nb_speakers: Optional[int] = None,
         start_sample: int = 0,
@@ -82,6 +83,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             Tuple of (diarization annotation, dictionary mapping speaker IDs to WAV files)
         """
         separated_sources: List[AudioSource] = []
+        diarization_annotation = None
         if not out_rttm_file:
             out_rttm_file = "out.rttm"
 
@@ -94,7 +96,9 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
 
             # Create diarization annotation
             diarizer = create_diarizer(strategy="stereo", device=self.device, huggingface_token=self.huggingface_token)
-            diarization = diarizer.compute_diarization(file_path=file_path, out_rttm_file=out_rttm_file, nb_speakers=nb_speakers)
+            diarization = diarizer.compute_diarization(
+                file_path=file_path, out_rttm_file=out_rttm_file, out_vttm_file=out_vttm_file, nb_speakers=nb_speakers
+            )
 
             # Split channels into separate files
             for channel, speaker in enumerate(["SPEAKER_0", "SPEAKER_1"]):
@@ -111,6 +115,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
                         diarization=diarization,
                     )
                 )
+            diarization_annotation = diarization
 
         else:
             # Use PyAnnote's neural separation for mono files
@@ -132,6 +137,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             # Save diarization to RTTM file
             with open(out_rttm_file, "w", encoding="utf-8") as rttm:
                 diarization.write_rttm(rttm)
+            diarization_annotation = diarization
 
             # Save separated sources to WAV files
             sources_data = np.asarray(sources.data)
@@ -154,5 +160,24 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
                     )
                 else:
                     LOG.debug(f"Skipping speaker {s} as it is out of bounds.")
+
+        if out_vttm_file and diarization_annotation is not None:
+            import os
+
+            from verbatim_rttm import Annotation as RTTMAnnotation
+            from verbatim_rttm import AudioRef, Segment, write_vttm
+
+            uri = os.path.splitext(os.path.basename(file_path))[0]
+            segments = [
+                Segment(start=segment.start, end=segment.end, speaker=str(label), file_id=uri)
+                for segment, _track, label in diarization_annotation.itertracks(yield_label=True)
+            ]
+            audio_refs = []
+            for src in separated_sources:
+                base = os.path.basename(src.source_name)
+                audio_refs.append(AudioRef(id=os.path.splitext(base)[0], path=src.source_name))
+            write_vttm(
+                out_vttm_file, audio=audio_refs or [AudioRef(id=uri, path=file_path)], annotation=RTTMAnnotation(segments=segments, file_id=uri)
+            )
 
         return separated_sources

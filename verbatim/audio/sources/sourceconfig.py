@@ -14,3 +14,4 @@ class SourceConfig:
     diarization: Optional[Annotation] = None
     diarization_file: Optional[str] = None
     diarization_strategy: str = "pyannote"
+    vttm_file: Optional[str] = None

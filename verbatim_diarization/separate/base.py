@@ -24,6 +24,7 @@ class SeparationStrategy(ABC):
         *,
         file_path: str,
         out_rttm_file: Optional[str] = None,
+        out_vttm_file: Optional[str] = None,
         out_speaker_wav_prefix="",
         nb_speakers: Optional[int] = None,
         start_sample: int = 0,

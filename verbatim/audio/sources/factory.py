@@ -7,6 +7,7 @@ import numpy as np
 
 from verbatim_diarization import create_diarizer  # Add this import
 from verbatim_diarization.separate import create_separator
+from verbatim_rttm import load_vttm
 
 from ..audio import samples_to_seconds, timestr_to_samples
 from ..convert import convert_to_wav
@@ -23,6 +24,7 @@ def compute_diarization(
     file_path: str,
     device: str,
     rttm_file: Optional[str] = None,
+    vttm_file: Optional[str] = None,
     strategy: str = "pyannote",
     nb_speakers: Union[int, None] = None,
 ) -> Annotation:
@@ -41,7 +43,7 @@ def compute_diarization(
 
     diarizer = create_diarizer(strategy=strategy, device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN"))
 
-    return diarizer.compute_diarization(file_path=file_path, out_rttm_file=rttm_file, nb_speakers=nb_speakers)
+    return diarizer.compute_diarization(file_path=file_path, out_rttm_file=rttm_file, out_vttm_file=vttm_file, nb_speakers=nb_speakers)
 
 
 def create_audio_source(
@@ -81,6 +83,10 @@ def create_audio_source(
 
     if source_config.diarization_file == "" or (source_config.diarize is not None and source_config.diarization_file is None):
         source_config.diarization_file = output_prefix_no_ext + ".rttm"
+    if source_config.vttm_file is None and source_config.diarize is not None:
+        source_config.vttm_file = output_prefix_no_ext + ".vttm"
+    if source_config.vttm_file == "":
+        source_config.vttm_file = None
 
     from .ffmpegfileaudiosource import PyAVAudioSource
     from .fileaudiosource import FileAudioSource
@@ -118,16 +124,23 @@ def create_audio_source(
     if not stream:
         if source_config.isolate is not None:
             input_source, _noise_path = FileAudioSource.isolate_voices(file_path=input_source, out_path_prefix=working_prefix_no_ext)
-        if source_config.diarize is not None:
+        if source_config.vttm_file:
+            try:
+                _audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
+            except (FileNotFoundError, ValueError):
+                source_config.diarization = None
+
+        if source_config.diarize is not None and source_config.diarization is None:
             # Compute new diarization
             source_config.diarization = compute_diarization(
                 file_path=input_source,
                 device=device,
                 rttm_file=source_config.diarization_file,
+                vttm_file=source_config.vttm_file,
                 strategy=source_config.diarization_strategy,
                 nb_speakers=source_config.diarize if source_config.diarize != 0 else None,
             )
-        elif source_config.diarization_file:
+        elif source_config.diarization_file and source_config.diarization is None:
             # Load existing diarization from file
             from verbatim_diarization import Diarization
 
@@ -139,11 +152,15 @@ def create_audio_source(
                     file_path=input_source,
                     device=device,
                     rttm_file=source_config.diarization_file,
+                    vttm_file=source_config.vttm_file,
                     strategy=source_config.diarization_strategy,
                     nb_speakers=source_config.diarize,
                 )
 
-    if source_config.diarization_file:
+    if source_config.vttm_file and source_config.diarization is None:
+        _audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
+
+    if source_config.diarization_file and source_config.diarization is None:
         from verbatim_diarization import Diarization
 
         source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
@@ -194,7 +211,12 @@ def create_joint_speaker_sources(
     stop_sample: Optional[int] = timestr_to_samples(stop_time) if stop_time else None
 
     annotation: Annotation = compute_diarization(
-        file_path=input_source, device=device, rttm_file=source_config.diarization_file, strategy=strategy, nb_speakers=nb_speakers
+        file_path=input_source,
+        device=device,
+        rttm_file=source_config.diarization_file,
+        vttm_file=source_config.vttm_file,
+        strategy=strategy,
+        nb_speakers=nb_speakers,
     )
 
     from ..sources.fileaudiosource import FileAudioSource
@@ -247,6 +269,7 @@ def create_separate_speaker_sources(
         sources = separation.separate_speakers(
             file_path=input_source,
             out_rttm_file=source_config.diarization_file,
+            out_vttm_file=source_config.vttm_file,
             out_speaker_wav_prefix=working_prefix_no_ext,
             nb_speakers=nb_speakers,
             start_sample=start_sample,
