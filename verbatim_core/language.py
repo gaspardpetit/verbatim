@@ -12,7 +12,7 @@ def _slice_audio(audio: NDArray, start: int, duration: int) -> NDArray:
 
 
 def detect_language(request: LanguageDetectionRequest, guess_fn: GuessLanguageFn) -> LanguageDetectionResult:
-    """Stateless language detection helper that can be lifted into verbatim-core later."""
+    """Stateless language detection helper that can be shared by verbatim-core."""
     if len(request.lang) == 0:
         LOG.warning("Language is not set - defaulting to english")
         return LanguageDetectionResult(language="en", probability=1.0, samples_used=0)

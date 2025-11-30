@@ -3,7 +3,8 @@ import platform
 import sys
 from typing import Optional
 
-from .core import TranscriberProtocol
+from verbatim_core import TranscriberProtocol
+
 from .transcript.sentences import SentenceTokenizer
 from .voices.silences import SileroVoiceActivityDetection, VoiceActivityDetection
 

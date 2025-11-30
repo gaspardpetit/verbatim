@@ -12,10 +12,7 @@ import numpy as np
 from colorama import Fore
 from numpy.typing import NDArray
 
-from .audio.audio import samples_to_seconds
-from .audio.sources.audiosource import AudioSource, AudioStream
-from .config import Config
-from .core import (
+from verbatim_core import (
     LanguageDetectionRequest,
     LanguageDetectionResult,
     TranscriberProtocol,
@@ -23,6 +20,10 @@ from .core import (
     VadFn,
     detect_language,
 )
+
+from .audio.audio import samples_to_seconds
+from .audio.sources.audiosource import AudioSource, AudioStream
+from .config import Config
 from .eval.compare import compute_metrics
 from .models import Models
 from .transcript.format.factory import configure_writers
