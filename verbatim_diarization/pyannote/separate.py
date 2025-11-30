@@ -75,7 +75,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
 
         Args:
             file_path: Path to input audio file
-            out_rttm_file: Path to output RTTM file
+            out_rttm_file: Optional legacy RTTM output path
             out_speaker_wav_prefix: Prefix for output WAV files
             nb_speakers: Optional number of speakers
 
@@ -85,7 +85,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         separated_sources: List[AudioSource] = []
         diarization_annotation = None
         if not out_rttm_file:
-            out_rttm_file = "out.rttm"
+            out_rttm_file = None
 
         # For stereo strategy, we might want to handle separation differently
         if self.diarization_strategy == "stereo":
@@ -134,9 +134,10 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             # pyannote.audio 4.x returns DiarizeOutput; normalize to Annotation
             diarization = diarization_output.speaker_diarization if hasattr(diarization_output, "speaker_diarization") else diarization_output
 
-            # Save diarization to RTTM file
-            with open(out_rttm_file, "w", encoding="utf-8") as rttm:
-                diarization.write_rttm(rttm)
+            # Save diarization to RTTM file if requested
+            if out_rttm_file:
+                with open(out_rttm_file, "w", encoding="utf-8") as rttm:
+                    diarization.write_rttm(rttm)
             diarization_annotation = diarization
 
             # Save separated sources to WAV files

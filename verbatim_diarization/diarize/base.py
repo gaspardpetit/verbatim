@@ -11,17 +11,20 @@ class DiarizationStrategy(ABC):
     """Base class for all diarization strategies"""
 
     @abstractmethod
-    def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, **kwargs) -> Annotation:
+    def compute_diarization(
+        self, file_path: str, out_rttm_file: Optional[str] = None, out_vttm_file: Optional[str] = None, **kwargs
+    ) -> Annotation:
         """
         Compute speaker diarization for the given audio file.
 
         Args:
             file_path: Path to the audio file
-            out_rttm_file: Optional path to output RTTM file
+            out_rttm_file: Optional legacy RTTM output path (derived from VTTM if present)
+            out_vttm_file: Preferred VTTM output path
             **kwargs: Strategy-specific parameters
 
         Returns:
-            PyAnnote Annotation object containing speaker segments
+            Annotation object containing speaker segments
         """
 
     def save_rttm(self, annotation: Annotation, out_rttm_file: str):
