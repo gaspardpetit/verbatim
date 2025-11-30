@@ -22,6 +22,11 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Install system dependencies (Linux)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends portaudio19-dev
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
