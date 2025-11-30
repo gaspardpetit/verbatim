@@ -2,8 +2,7 @@ import logging
 import os
 from typing import Optional
 
-from pyannote.core.annotation import Annotation
-from pyannote.database.util import load_rttm
+from verbatim_rttm import Annotation, load_rttm
 
 from .diarize.factory import create_diarizer
 
@@ -31,12 +30,9 @@ class Diarization:
         if not os.path.exists(rttm_file):
             raise FileNotFoundError(f"RTTM file not found: {rttm_file}")
 
-        rttms = load_rttm(file_rttm=rttm_file)
-
-        if not rttms:
+        annotation: Annotation = load_rttm(rttm_file)
+        if len(annotation) == 0:
             raise ValueError(f"No diarization data found in RTTM file: {rttm_file}")
-
-        annotation: Annotation = next(iter(rttms.values()))
         return annotation
 
     def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, strategy: str = "pyannote", **kwargs) -> Annotation:
