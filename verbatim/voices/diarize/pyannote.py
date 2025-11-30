@@ -17,10 +17,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
     def initialize_pipeline(self):
         """Lazy initialization of PyAnnote pipeline"""
         if self.pipeline is None:
-            self.pipeline = Pipeline.from_pretrained(
-                checkpoint_path="pyannote/speaker-diarization-3.1",
-                use_auth_token=self.huggingface_token,
-            )
+            self.pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", token=self.huggingface_token)
             self.pipeline.instantiate({})
             self.pipeline.to(torch.device(self.device))
 

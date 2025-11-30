@@ -53,24 +53,16 @@ def format_audio(audio: NDArray, from_sampling_rate: int) -> NDArray:
 def wav_to_int16(data):
     if data.dtype == np.int16:
         return data
-    if data.dtype == np.float16:
-        min_val = np.min(data)
-        max_val = np.max(data)
+    if data.dtype in (np.float16, np.float32, np.float64):
+        # Use float32 math to avoid float16 precision issues when scaling
+        float_data = data.astype(np.float32)
+        min_val = float_data.min()
+        max_val = float_data.max()
         n = max(math.fabs(min_val), math.fabs(max_val))
-        data = data / n
-        return (data * np.iinfo(np.int16).max).astype(np.int16)
-    if data.dtype == np.float32:
-        min_val = np.min(data)
-        max_val = np.max(data)
-        n = max(math.fabs(min_val), math.fabs(max_val))
-        data = data / n
-        return (data * np.iinfo(np.int16).max).astype(np.int16)
-    if data.dtype == np.float64:
-        min_val = np.min(data)
-        max_val = np.max(data)
-        n = max(math.fabs(min_val), math.fabs(max_val))
-        data = data / n
-        return (data * np.iinfo(np.int16).max).astype(np.int16)
+        if n == 0:
+            return np.zeros_like(float_data, dtype=np.int16)
+        scaled = (float_data / n) * np.iinfo(np.int16).max
+        return scaled.astype(np.int16)
     if data.dtype == np.int8:
         return (data * ((1.0 * np.iinfo(np.int16).max) / np.iinfo(np.int8).max)).astype(np.int16)
     if data.dtype == np.int32:
