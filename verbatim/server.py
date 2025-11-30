@@ -12,8 +12,9 @@ from aiohttp.multipart import BodyPartReader
 from .config import Config
 
 CONFIG_KEY = web.AppKey("config", Config)
-TRANSCRIBE_FUNC_KEY = web.AppKey("transcribe_func", Callable[[str, Config, Optional[str]], str])
-TRANSCRIBE_ITER_KEY = web.AppKey("transcribe_iter", Callable[[str, Config, Optional[str]], Iterable[str]])
+# Use loose types for callbacks to avoid over-constraining AppKey typing
+TRANSCRIBE_FUNC_KEY = web.AppKey("transcribe_func", object)
+TRANSCRIBE_ITER_KEY = web.AppKey("transcribe_iter", object)
 
 
 async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
@@ -41,7 +42,7 @@ async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
     if not stream:
         transcribe_func = request.app.get(TRANSCRIBE_FUNC_KEY, transcribe_file)
         try:
-            text = await asyncio.to_thread(transcribe_func, file_path, config, language)
+            text = await asyncio.to_thread(cast(Callable[[str, Config, Optional[str]], str], transcribe_func), file_path, config, language)
         finally:
             os.unlink(file_path)
         return web.json_response({"text": text})
@@ -53,7 +54,7 @@ async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
     loop = asyncio.get_event_loop()
     queue: asyncio.Queue[Optional[Union[str, Exception]]] = asyncio.Queue()
 
-    transcribe_iter = request.app.get(TRANSCRIBE_ITER_KEY, iterate_transcription)
+    transcribe_iter = cast(Callable[[str, Config, Optional[str]], Iterable[str]], request.app.get(TRANSCRIBE_ITER_KEY, iterate_transcription))
 
     def worker() -> None:
         try:
