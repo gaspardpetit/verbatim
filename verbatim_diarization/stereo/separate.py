@@ -36,7 +36,7 @@ class ChannelSeparation(SeparationStrategy):
 
         Args:
             file_path: Path to input audio file.
-            out_rttm_file: Path to output RTTM file.
+            out_rttm_file: Optional legacy RTTM output path.
             out_speaker_wav_prefix: Prefix for output WAV files.
             nb_speakers: Optional number of speakers (ignored for this implementation).
 

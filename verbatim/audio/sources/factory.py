@@ -157,7 +157,8 @@ def create_audio_source(
                 source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
                 if source_config.vttm_file and source_config.diarization is not None:
                     audio_id = os.path.splitext(os.path.basename(input_source))[0]
-                    write_vttm(source_config.vttm_file, audio=[AudioRef(id=audio_id, path=input_source)], annotation=source_config.diarization)  # type: ignore[arg-type]
+                    # Derive VTTM from RTTM for compatibility
+                    write_vttm(source_config.vttm_file, audio=[AudioRef(id=audio_id, path=input_source)], annotation=source_config.diarization)
             except (StopIteration, FileNotFoundError):
                 # If the file doesn't exist or is empty, compute new diarization
                 source_config.diarization = compute_diarization(
