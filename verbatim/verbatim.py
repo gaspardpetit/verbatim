@@ -12,7 +12,7 @@ import numpy as np
 from colorama import Fore
 from numpy.typing import NDArray
 
-from verbatim_core import (
+from verbatim_transcript import (
     LanguageDetectionRequest,
     LanguageDetectionResult,
     TranscriberProtocol,

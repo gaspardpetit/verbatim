@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from verbatim_core import LanguageDetectionRequest, TranscriptionWindowResult, detect_language
+from verbatim_transcript import LanguageDetectionRequest, TranscriptionWindowResult, detect_language
 
 
 class TestCoreLanguage(unittest.TestCase):
