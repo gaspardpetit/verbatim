@@ -18,6 +18,7 @@ from .config import Config
 from .core import (
     LanguageDetectionRequest,
     LanguageDetectionResult,
+    TranscriberProtocol,
     TranscriptionWindowResult,
     VadFn,
     detect_language,
@@ -238,11 +239,22 @@ class Verbatim:
     config: Config
     vad_callback: Optional[VadFn]
 
-    def __init__(self, config: Config, models=None, vad_callback: Optional[VadFn] = None):
+    def __init__(
+        self,
+        config: Config,
+        models=None,
+        vad_callback: Optional[VadFn] = None,
+        transcriber: Optional[TranscriberProtocol] = None,
+    ):
         self.config = config
         self.state = State(config)
         if models is None:
-            models = Models(device=config.device, whisper_model_size=config.whisper_model_size, stream=config.stream)
+            models = Models(
+                device=config.device,
+                whisper_model_size=config.whisper_model_size,
+                stream=config.stream,
+                transcriber=transcriber,
+            )
         self.models = models
         if vad_callback is not None:
             self.vad_callback = vad_callback
@@ -260,11 +272,7 @@ class Verbatim:
         min_speech_duration_ms = 750
         min_speech_duration_samples = 16000 * min_speech_duration_ms // 1000
         audio_samples = self.state.audio_ts - self.state.window_ts
-        voice_segments = self.vad_callback(
-            audio=self.state.rolling_window.array[0:audio_samples],
-            min_speech_duration_ms=min_speech_duration_ms,
-            min_silence_duration_ms=100,
-        )
+        voice_segments = self.vad_callback(self.state.rolling_window.array[0:audio_samples], min_speech_duration_ms, 100)
         LOG.debug(f"Voice segments: {voice_segments}")
         if len(voice_segments) == 0:
             # preserve a bit of audio at the end that may have been too short just because it is truncated
@@ -708,7 +716,7 @@ class Verbatim:
                 self.state.unacknowledged_utterances = confirmed_utterances
 
                 for i, utterance in enumerate(acknowledged_utterances):
-                    result = TranscriptionWindowResult(
+                    result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                         utterance=utterance,
                         unacknowledged=acknowledged_utterances[i + 1 :] + confirmed_utterances,
                         unconfirmed_words=unconfirmed_words,
@@ -784,7 +792,7 @@ class Verbatim:
                 break
             utterance = self.state.unacknowledged_utterances.pop(0)
             utterance.speaker = self.assign_speaker(utterance, diarization)
-            result = TranscriptionWindowResult(
+            result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                 utterance=utterance,
                 unacknowledged=self.state.unacknowledged_utterances,
                 unconfirmed_words=self.state.unconfirmed_words,
@@ -808,7 +816,7 @@ class Verbatim:
             if len(flushed_utterances_words) > 0:
                 utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
                 utterance.speaker = self.assign_speaker(utterance, diarization)
-                result = TranscriptionWindowResult(
+                result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                     utterance=utterance,
                     unacknowledged=self.state.unacknowledged_utterances,
                     unconfirmed_words=self.state.unconfirmed_words,
@@ -828,7 +836,7 @@ class Verbatim:
         if len(flushed_utterances_words) > 0:
             utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
             utterance.speaker = self.assign_speaker(utterance, diarization)
-            result = TranscriptionWindowResult(
+            result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                 utterance=utterance,
                 unacknowledged=self.state.unacknowledged_utterances,
                 unconfirmed_words=self.state.unconfirmed_words,

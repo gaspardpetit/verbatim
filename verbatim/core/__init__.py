@@ -9,6 +9,7 @@ from .interfaces import (
     GuessLanguageFn,
     LanguageDetectionRequest,
     LanguageDetectionResult,
+    TranscriberProtocol,
     TranscriptionWindowResult,
     VadFn,
 )
@@ -20,5 +21,6 @@ __all__ = [
     "LanguageDetectionRequest",
     "LanguageDetectionResult",
     "TranscriptionWindowResult",
+    "TranscriberProtocol",
     "VadFn",
 ]

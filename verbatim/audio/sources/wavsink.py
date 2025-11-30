@@ -21,7 +21,7 @@ class WavSink:
                 wav_file.setframerate(sample_rate)
 
                 while audio_stream.has_more():
-                    audio_chunk = audio_stream.next_chunk(chunk_length=1)
+                    audio_chunk: np.ndarray = np.asarray(audio_stream.next_chunk(chunk_length=1), dtype=np.float32)
 
                     # If stereo and not preserving channels, downmix to mono
                     if not preserve_channels and audio_chunk.ndim > 1:
@@ -30,7 +30,7 @@ class WavSink:
                     # Resample the audio if needed
                     if input_sample_rate != sample_rate:
                         target_len = int(len(audio_chunk) * sample_rate / input_sample_rate)
-                        audio_chunk = resample(audio_chunk, target_len)
+                        audio_chunk = np.asarray(resample(audio_chunk, target_len))
 
                     # Convert to 16-bit PCM
                     int_samples = (audio_chunk * 32767).clip(-32768, 32767).astype(np.int16)

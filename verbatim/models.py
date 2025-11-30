@@ -1,25 +1,35 @@
 import logging
 import platform
 import sys
+from typing import Optional
 
+from .core import TranscriberProtocol
 from .transcript.sentences import SentenceTokenizer
 from .voices.silences import SileroVoiceActivityDetection, VoiceActivityDetection
-from .voices.transcribe.transcribe import Transcriber
 
 # Configure logger
 LOG = logging.getLogger(__name__)
 
 
 class Models:
-    transcriber: Transcriber
+    transcriber: TranscriberProtocol
     vad: VoiceActivityDetection
     sentence_tokenizer: SentenceTokenizer
 
-    def __init__(self, device: str, whisper_model_size: str = "large-v3", stream: bool = False):
+    def __init__(
+        self,
+        device: str,
+        whisper_model_size: str = "large-v3",
+        stream: bool = False,
+        transcriber: Optional[TranscriberProtocol] = None,
+    ):
         # pylint: disable=import-outside-toplevel
         LOG.info("Initializing WhisperModel and audio stream.")
 
-        if sys.platform == "darwin":
+        if transcriber is not None:
+            LOG.info("Using injected transcriber implementation.")
+            self.transcriber = transcriber  # type: ignore[assignment]
+        elif sys.platform == "darwin":
             # If there this is an Apple Silicon device, use the MLX Whisper transcriber
             if platform.processor() == "arm":
                 LOG.info("Using WhisperMLX transcriber on Apple Silicon")
