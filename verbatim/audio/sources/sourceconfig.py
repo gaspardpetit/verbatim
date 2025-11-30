@@ -12,6 +12,6 @@ class SourceConfig:
     isolate: Optional[bool] = None
     diarize: Optional[int] = None
     diarization: Optional[Annotation] = None
-    diarization_file: Optional[str] = None
+    diarization_file: Optional[str] = None  # legacy RTTM; when set, we derive from vttm
     diarization_strategy: str = "pyannote"
     vttm_file: Optional[str] = None
