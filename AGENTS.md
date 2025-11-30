@@ -8,7 +8,7 @@
 - Top-level helpers: `run.py` (local demo), `Dockerfile`, `docker-*.sh`, `BUILD.md`, `README.md`.
 
 ## Build, Test, and Development Commands
-- Create env (Python 3.9–3.11): `python -m venv .venv && source .venv/bin/activate`.
+- Create env (Python 3.10–3.12): `python -m venv .venv && source .venv/bin/activate`.
 - Install deps (preferred): `pip install uv && uv pip install .`.
 - Alt install: `pip install -r requirements.txt` (GPU: `requirements-gpu.txt`).
 - Run CLI: `verbatim samples/…/audio.mp3 -v -o out`.

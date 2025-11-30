@@ -10,7 +10,7 @@ For high quality multilingual speech to text.
 # Installation
 
 ## Prerequisites
-- [Python](https://www.python.org/) version 3.9 to 3.11
+- [Python](https://www.python.org/) version 3.10 to 3.12
 - [Astral UV](https://github.com/astral-sh/uv) for development
 
 ### Portaudio
