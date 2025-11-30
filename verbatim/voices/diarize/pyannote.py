@@ -18,8 +18,10 @@ class PyAnnoteDiarization(DiarizationStrategy):
         """Lazy initialization of PyAnnote pipeline"""
         if self.pipeline is None:
             self.pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", token=self.huggingface_token)
-            self.pipeline.instantiate({})
-            self.pipeline.to(torch.device(self.device))
+        if self.pipeline is None:
+            raise RuntimeError("PyAnnote pipeline failed to initialize")
+        self.pipeline.instantiate({})
+        self.pipeline.to(torch.device(self.device))
 
     def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, nb_speakers: Optional[int] = None, **kwargs) -> Annotation:
         """
@@ -35,7 +37,13 @@ class PyAnnoteDiarization(DiarizationStrategy):
         with ProgressHook() as hook:
             diarization = pipeline(file_path, hook=hook, num_speakers=nb_speakers)
 
-        if out_rttm_file:
-            self.save_rttm(diarization, out_rttm_file)
+        # pyannote.audio 4.x returns a DiarizeOutput with a speaker_diarization field
+        if hasattr(diarization, "speaker_diarization"):
+            diarization_annotation = diarization.speaker_diarization  # type: ignore[attr-defined]
+        else:
+            diarization_annotation = diarization
 
-        return diarization
+        if out_rttm_file:
+            self.save_rttm(diarization_annotation, out_rttm_file)
+
+        return diarization_annotation

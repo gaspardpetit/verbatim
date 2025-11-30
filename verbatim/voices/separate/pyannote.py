@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import List, Optional, cast
 
 import numpy as np
 import scipy.io.wavfile
@@ -45,8 +45,10 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             },
         }
 
-        self.pipeline.instantiate(hyper_parameters)
+        if self.pipeline is None:
+            raise RuntimeError("Pyannote separation pipeline failed to initialize")
 
+        self.pipeline.instantiate(hyper_parameters)
         self.pipeline.to(torch.device(device))
 
     def __enter__(self) -> "PyannoteSpeakerSeparation":
@@ -87,7 +89,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         if self.diarization_strategy == "stereo":
             # For stereo files, we can simply split the channels
             sample_rate, audio_data = scipy.io.wavfile.read(file_path)
-            if audio_data.ndim != 2 or audio_data.shape[1] != 2:
+            if audio_data.ndim != 2 or audio_data.shape[1] != 2:  # type: ignore[index]
                 raise ValueError("Stereo separation requires stereo audio input")
 
             # Create diarization annotation
@@ -113,16 +115,24 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         else:
             # Use PyAnnote's neural separation for mono files
             with ProgressHook() as hook:
-                diarization, sources = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
+                if self.pipeline is None:
+                    raise RuntimeError("Pyannote separation pipeline is not initialized")
+                diarization_output, sources = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
+
+            # pyannote.audio 4.x returns DiarizeOutput; normalize to Annotation
+            diarization = diarization_output.speaker_diarization if hasattr(diarization_output, "speaker_diarization") else diarization_output
 
             # Save diarization to RTTM file
             with open(out_rttm_file, "w", encoding="utf-8") as rttm:
                 diarization.write_rttm(rttm)
 
             # Save separated sources to WAV files
+            sources_data = np.asarray(sources.data)
+            shape = cast(tuple[int, int], tuple(sources_data.shape[:2]))
+
             for s, speaker in enumerate(diarization.labels()):
-                if s < sources.data.shape[1]:
-                    speaker_data = sources.data[:, s]
+                if s < shape[1]:
+                    speaker_data = sources_data[:, s]
                     if speaker_data.dtype != np.int16:
                         speaker_data = wav_to_int16(speaker_data)
                     file_name = f"{out_speaker_wav_prefix}-{speaker}.wav" if out_speaker_wav_prefix else f"{speaker}.wav"
