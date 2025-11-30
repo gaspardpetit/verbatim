@@ -31,10 +31,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         self.diarization_strategy = diarization_strategy
         self.device = device
         self.huggingface_token = huggingface_token
-        self.pipeline = Pipeline.from_pretrained(
-            checkpoint_path=separation_model,
-            use_auth_token=self.huggingface_token,
-        )
+        self.pipeline = Pipeline.from_pretrained(separation_model, token=self.huggingface_token)
         hyper_parameters = {
             "segmentation": {"min_duration_off": 0.0, "threshold": 0.82},
             "clustering": {

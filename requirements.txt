@@ -2,7 +2,9 @@
 #    uv export --no-hashes
 -e .
 absl-py==2.3.1
-    # via ml-collections
+    # via
+    #   ml-collections
+    #   tensorboard
 adapters==1.2.0
     # via wtpsplit
 aiohappyeyeballs==2.6.1
@@ -21,7 +23,7 @@ anyio==4.10.0
     # via
     #   httpx
     #   openai
-asteroid==0.7.0
+asteroid==0.5.2
     # via pyannote-audio
 asteroid-filterbanks==0.4.0
     # via
@@ -33,7 +35,7 @@ async-timeout==5.0.1 ; python_full_version < '3.11'
     # via aiohttp
 attrs==25.3.0
     # via aiohttp
-audio-separator==0.30.2
+audio-separator==0.40.0
     # via verbatim
 audioread==3.0.1
     # via librosa
@@ -59,13 +61,10 @@ cffi==1.17.1
     #   soundfile
 charset-normalizer==3.4.3
     # via requests
-click==8.2.1
-    # via typer
 cloudpickle==3.1.1
     # via submitit
 colorama==0.4.6
     # via
-    #   click
     #   colorlog
     #   pylint
     #   pytest
@@ -109,10 +108,7 @@ dill==0.3.8
 distro==1.9.0
     # via openai
 docopt==0.6.2
-    # via
-    #   mosestokenizer
-    #   pyannote-metrics
-    #   pyannote-pipeline
+    # via mosestokenizer
 dora-search==0.1.12
     # via demucs
 einops==0.8.1
@@ -150,8 +146,18 @@ fsspec==2025.3.0
     #   lightning
     #   pytorch-lightning
     #   torch
+future==1.0.0
+    # via pytorch-lightning
+googleapis-common-protos==1.72.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
 greenlet==3.2.4 ; platform_machine == 'AMD64' or platform_machine == 'WIN32' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'ppc64le' or platform_machine == 'win32' or platform_machine == 'x86_64'
     # via sqlalchemy
+grpcio==1.76.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   tensorboard
 h11==0.16.0
     # via httpcore
 hf-xet==1.1.9 ; platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'
@@ -181,6 +187,8 @@ idna==3.10
     #   httpx
     #   requests
     #   yarl
+importlib-metadata==8.7.0
+    # via opentelemetry-api
 iniconfig==2.1.0
     # via pytest
 isort==6.0.1
@@ -217,27 +225,28 @@ lightning==2.5.4
 lightning-utilities==0.15.2
     # via
     #   lightning
-    #   pytorch-lightning
-llvmlite==0.43.0
-    # via
-    #   numba
-    #   verbatim
+    #   torchmetrics
+llvmlite==0.45.1
+    # via numba
 lxml==6.0.1
     # via python-docx
 mako==1.3.10
     # via alembic
 marisa-trie==1.3.1
     # via language-data
+markdown==3.10
+    # via tensorboard
 markdown-it-py==4.0.0
     # via rich
 markupsafe==3.0.2
     # via
     #   jinja2
     #   mako
+    #   werkzeug
 marshmallow==3.26.1
     # via dataclasses-json
 matplotlib==3.10.5
-    # via pyannote-metrics
+    # via pyannote-audio
 mccabe==0.7.0
     # via pylint
 mdurl==0.1.2
@@ -247,7 +256,7 @@ mir-eval==0.8.2
 ml-collections==1.1.0
     # via audio-separator
 ml-dtypes==0.5.3
-    # via onnx
+    # via onnx-weekly
 mlx==0.29.0 ; sys_platform == 'darwin'
     # via mlx-whisper
 mlx-metal==0.29.0 ; sys_platform == 'darwin'
@@ -276,13 +285,13 @@ networkx==3.4.2 ; python_full_version < '3.11'
     # via torch
 networkx==3.5 ; python_full_version >= '3.11'
     # via torch
-numba==0.60.0
+numba==0.62.1
     # via
     #   librosa
     #   mlx-whisper
     #   openai-whisper
     #   resampy
-numpy==1.26.3
+numpy==2.2.6 ; python_full_version < '3.11'
     # via
     #   asteroid
     #   asteroid-filterbanks
@@ -298,8 +307,8 @@ numpy==1.26.3
     #   ml-dtypes
     #   mlx-whisper
     #   numba
-    #   onnx
-    #   onnx2torch
+    #   onnx-weekly
+    #   onnx2torch-py313
     #   onnxruntime
     #   openai-whisper
     #   openunmix
@@ -308,6 +317,7 @@ numpy==1.26.3
     #   pyannote-core
     #   pyannote-metrics
     #   pystoi
+    #   pytorch-lightning
     #   pytorch-metric-learning
     #   pywhispercpp
     #   resampy
@@ -318,7 +328,51 @@ numpy==1.26.3
     #   soundfile
     #   soxr
     #   speechbrain
-    #   tensorboardx
+    #   tensorboard
+    #   torch-stoi
+    #   torchmetrics
+    #   torchvision
+    #   transformers
+    #   verbatim
+    #   wtpsplit
+numpy==2.3.5 ; python_full_version >= '3.11'
+    # via
+    #   asteroid
+    #   asteroid-filterbanks
+    #   audio-separator
+    #   contourpy
+    #   ctranslate2
+    #   datasets
+    #   diffq
+    #   diffq-fixed
+    #   librosa
+    #   matplotlib
+    #   mir-eval
+    #   ml-dtypes
+    #   mlx-whisper
+    #   numba
+    #   onnx-weekly
+    #   onnx2torch-py313
+    #   onnxruntime
+    #   openai-whisper
+    #   openunmix
+    #   optuna
+    #   pandas
+    #   pyannote-core
+    #   pyannote-metrics
+    #   pystoi
+    #   pytorch-lightning
+    #   pytorch-metric-learning
+    #   pywhispercpp
+    #   resampy
+    #   samplerate
+    #   scikit-learn
+    #   scipy
+    #   skops
+    #   soundfile
+    #   soxr
+    #   speechbrain
+    #   tensorboard
     #   torch-stoi
     #   torchmetrics
     #   torchvision
@@ -363,14 +417,12 @@ nvidia-nvjitlink-cu12==12.8.93 ; platform_machine == 'x86_64' and sys_platform =
 nvidia-nvtx-cu12==12.8.90 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
 omegaconf==2.3.0
-    # via
-    #   dora-search
-    #   pyannote-audio
-onnx==1.19.0
+    # via dora-search
+onnx-weekly==1.21.0.dev20251124
     # via
     #   audio-separator
-    #   onnx2torch
-onnx2torch==1.5.15
+    #   onnx2torch-py313
+onnx2torch-py313==1.6.0
     # via audio-separator
 onnxruntime==1.19.2
     # via
@@ -383,6 +435,35 @@ openai-whisper==20250625
     # via verbatim
 openfile==0.0.7
     # via mosestokenizer
+opentelemetry-api==1.38.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+    #   pyannote-audio
+opentelemetry-exporter-otlp==1.38.0
+    # via pyannote-audio
+opentelemetry-exporter-otlp-proto-common==1.38.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-proto-grpc==1.38.0
+    # via opentelemetry-exporter-otlp
+opentelemetry-exporter-otlp-proto-http==1.38.0
+    # via opentelemetry-exporter-otlp
+opentelemetry-proto==1.38.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-common
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-sdk==1.38.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+    #   pyannote-audio
+opentelemetry-semantic-conventions==0.59b0
+    # via opentelemetry-sdk
 openunmix==1.3.0
     # via demucs
 optuna==4.5.0
@@ -404,7 +485,7 @@ packaging==25.0
     #   pytorch-lightning
     #   skops
     #   speechbrain
-    #   tensorboardx
+    #   tensorboard
     #   torch-pitch-shift
     #   torchmetrics
     #   transformers
@@ -412,6 +493,7 @@ pandas==2.3.2
     # via
     #   asteroid
     #   datasets
+    #   pyannote-core
     #   pyannote-database
     #   pyannote-metrics
     #   wtpsplit
@@ -422,6 +504,7 @@ pesq==0.0.4
 pillow==10.4.0
     # via
     #   matplotlib
+    #   tensorboard
     #   torchvision
     #   verbatim
 platformdirs==4.4.0
@@ -443,26 +526,30 @@ propcache==0.3.2
     #   yarl
 protobuf==6.32.0
     # via
-    #   onnx
+    #   googleapis-common-protos
+    #   onnx-weekly
     #   onnxruntime
-    #   tensorboardx
-pyannote-audio==3.3.2
+    #   opentelemetry-proto
+    #   tensorboard
+pyannote-audio==4.0.2
     # via verbatim
-pyannote-core==5.0.0
+pyannote-core==6.0.1
     # via
     #   pyannote-audio
     #   pyannote-database
     #   pyannote-metrics
     #   pyannote-pipeline
     #   verbatim
-pyannote-database==5.1.3
+pyannote-database==6.1.0
     # via
     #   pyannote-audio
     #   pyannote-metrics
     #   pyannote-pipeline
-pyannote-metrics==3.2.1
+pyannote-metrics==4.0.0
     # via pyannote-audio
-pyannote-pipeline==3.0.1
+pyannote-pipeline==4.0.0
+    # via pyannote-audio
+pyannoteai-sdk==0.3.0
     # via pyannote-audio
 pyarrow==21.0.0
     # via datasets
@@ -474,6 +561,8 @@ pydantic==2.11.7
     # via openai
 pydantic-core==2.33.2
     # via pydantic
+pydeprecate==0.3.1
+    # via pytorch-lightning
 pydub==0.25.1
     # via
     #   audio-separator
@@ -500,7 +589,7 @@ python-docx==1.2.0
     # via verbatim
 python-dotenv==1.1.1
     # via verbatim
-pytorch-lightning==2.5.4
+pytorch-lightning==1.4.9
     # via
     #   asteroid
     #   lightning
@@ -538,7 +627,9 @@ requests==2.32.5
     #   audio-separator
     #   datasets
     #   huggingface-hub
+    #   opentelemetry-exporter-otlp-proto-http
     #   pooch
+    #   pyannoteai-sdk
     #   pywhispercpp
     #   tiktoken
     #   transformers
@@ -547,9 +638,7 @@ resampy==0.4.3
 retrying==1.4.2
     # via dora-search
 rich==14.1.0
-    # via
-    #   pyannote-audio
-    #   typer
+    # via pyannote-audio
 rotary-embedding-torch==0.6.5
     # via audio-separator
 ruamel-yaml==0.18.15
@@ -558,14 +647,15 @@ ruamel-yaml-clib==0.2.12 ; platform_python_implementation == 'CPython'
     # via ruamel-yaml
 ruff==0.12.11
 safetensors==0.6.2
-    # via transformers
+    # via
+    #   pyannote-audio
+    #   transformers
 samplerate==0.1.0
     # via audio-separator
 scikit-learn==1.7.1
     # via
     #   librosa
     #   pyannote-metrics
-    #   pyannote-pipeline
     #   pytorch-metric-learning
     #   skops
     #   wtpsplit
@@ -576,7 +666,6 @@ scipy==1.15.3 ; python_full_version < '3.11'
     #   librosa
     #   mir-eval
     #   mlx-whisper
-    #   pyannote-core
     #   pyannote-metrics
     #   pystoi
     #   scikit-learn
@@ -589,24 +678,20 @@ scipy==1.16.1 ; python_full_version >= '3.11'
     #   librosa
     #   mir-eval
     #   mlx-whisper
-    #   pyannote-core
     #   pyannote-metrics
     #   pystoi
     #   scikit-learn
     #   skops
     #   speechbrain
-semver==3.0.4
-    # via pyannote-audio
 sentencepiece==0.2.1
     # via speechbrain
 setuptools==80.9.0
     # via
     #   ctranslate2
     #   lightning-utilities
+    #   tensorboard
     #   torch
     #   triton
-shellingham==1.5.4
-    # via typer
 silero-vad==6.0.0
     # via verbatim
 six==1.17.0
@@ -626,15 +711,14 @@ sounddevice==0.5.2
 soundfile==0.13.1
     # via
     #   asteroid
+    #   audio-separator
     #   librosa
     #   pyannote-audio
     #   verbatim
 soxr==0.5.0.post1
     # via librosa
 speechbrain==1.0.3
-    # via
-    #   pyannote-audio
-    #   verbatim
+    # via verbatim
 sqlalchemy==2.0.43
     # via
     #   alembic
@@ -644,12 +728,11 @@ submitit==1.5.3
 sympy==1.14.0
     # via
     #   onnxruntime
-    #   pyannote-metrics
     #   torch
-tabulate==0.9.0
-    # via pyannote-metrics
-tensorboardx==2.6.4
-    # via pyannote-audio
+tensorboard==2.20.0
+    # via pytorch-lightning
+tensorboard-data-server==0.7.2
+    # via tensorboard
 termcolor==3.1.0
     # via verbatim
 threadpoolctl==3.6.0
@@ -683,7 +766,7 @@ torch==2.8.0
     #   julius
     #   lightning
     #   mlx-whisper
-    #   onnx2torch
+    #   onnx2torch-py313
     #   openai-whisper
     #   openunmix
     #   pyannote-audio
@@ -721,14 +804,15 @@ torchaudio==2.8.0
     #   torch-pitch-shift
     #   torch-stoi
     #   verbatim
-torchmetrics==0.11.4
+torchcodec==0.7.0
+    # via pyannote-audio
+torchmetrics==1.8.2
     # via
-    #   asteroid
     #   lightning
     #   pyannote-audio
     #   pytorch-lightning
 torchvision==0.23.0
-    # via onnx2torch
+    # via onnx2torch-py313
 tqdm==4.67.1
     # via
     #   audio-separator
@@ -760,8 +844,6 @@ triton==3.4.0 ; (platform_machine == 'x86_64' and sys_platform == 'linux') or sy
     # via
     #   openai-whisper
     #   torch
-typer==0.16.1
-    # via pyannote-database
 typing-extensions==4.15.0
     # via
     #   aiosignal
@@ -770,14 +852,19 @@ typing-extensions==4.15.0
     #   asteroid-filterbanks
     #   astroid
     #   exceptiongroup
+    #   grpcio
     #   huggingface-hub
     #   librosa
     #   lightning
     #   lightning-utilities
     #   multidict
-    #   onnx
+    #   onnx-weekly
     #   openai
-    #   pyannote-core
+    #   opentelemetry-api
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
     #   pydantic
     #   pydantic-core
     #   python-docx
@@ -785,7 +872,6 @@ typing-extensions==4.15.0
     #   sqlalchemy
     #   submitit
     #   torch
-    #   typer
     #   typing-inspect
     #   typing-inspection
 typing-inspect==0.9.0
@@ -800,6 +886,8 @@ urllib3==2.5.0
     # via requests
 wcwidth==0.2.13
     # via prettytable
+werkzeug==3.1.4
+    # via tensorboard
 wheel==0.45.1
     # via verbatim
 word-levenshtein==0.0.3
@@ -810,3 +898,5 @@ xxhash==3.5.0
     # via datasets
 yarl==1.20.1
     # via aiohttp
+zipp==3.23.0
+    # via importlib-metadata
