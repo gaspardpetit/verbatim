@@ -43,7 +43,7 @@ def main():
         nargs="?",
         action=OptionalValueAction,
         default=None,
-        help="Path to VTTM diarization file to use; if omitted, a minimal VTTM will be created (and filled if diarization runs).",
+        help="Path to VTTM diarization file; if omitted, a minimal VTTM is created (and filled if diarization runs).",
     )
     parser.add_argument(
         "-d",
@@ -51,7 +51,7 @@ def main():
         nargs="?",
         action=OptionalValueAction,
         default=None,
-        help="(Deprecated) RTTM diarization file path; if provided, it will be wrapped into a VTTM and consumed.",
+        help="(Deprecated) RTTM diarization file path; will be wrapped into a VTTM for processing.",
     )
     parser.add_argument(
         "--separate", nargs="?", action=OptionalValueAction, default=None, help="Enables speaker voice separation and process each speaker separately"

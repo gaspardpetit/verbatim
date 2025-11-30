@@ -43,6 +43,13 @@ class Diarization:
             raise ValueError("No diarization data found in RTTM text")
         return annotation
 
+    @staticmethod
+    def load_diarization_vttm(vttm_path: str) -> tuple[list, Annotation]:
+        """Load diarization and audio references from a VTTM file."""
+        from verbatim_rttm import load_vttm
+
+        return load_vttm(vttm_path)
+
     def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, strategy: str = "pyannote", **kwargs) -> Annotation:
         """
         Compute diarization using the specified strategy.

@@ -11,9 +11,7 @@ class DiarizationStrategy(ABC):
     """Base class for all diarization strategies"""
 
     @abstractmethod
-    def compute_diarization(
-        self, file_path: str, out_rttm_file: Optional[str] = None, out_vttm_file: Optional[str] = None, **kwargs
-    ) -> Annotation:
+    def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, out_vttm_file: Optional[str] = None, **kwargs) -> Annotation:
         """
         Compute speaker diarization for the given audio file.
 

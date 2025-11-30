@@ -6,7 +6,7 @@ import traceback
 import wave
 from dataclasses import dataclass, field
 from io import StringIO
-from typing import TYPE_CHECKING, Any, Generator, List, Optional, TextIO, Tuple
+from typing import Any, Generator, List, Optional, TextIO, Tuple
 
 import numpy as np
 from colorama import Fore

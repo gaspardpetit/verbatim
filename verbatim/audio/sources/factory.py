@@ -2,7 +2,7 @@ import errno
 import logging
 import os
 import sys
-from typing import TYPE_CHECKING, Any, List, Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
 
