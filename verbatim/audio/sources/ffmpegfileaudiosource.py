@@ -6,7 +6,6 @@ from typing import Optional
 import av
 import numpy as np
 from numpy.typing import NDArray
-from scipy.signal import resample_poly
 
 from ..audio import seconds_to_samples
 from .audiosource import AudioSource, AudioStream
@@ -153,6 +152,9 @@ class PyAVAudioStream(AudioStream):
             # Resample each channel independently
             up = int(target_sample_rate)
             down = int(original_sample_rate)
+
+            # Lazy import to avoid pulling scipy.signal during CLI startup
+            from scipy.signal import resample_poly  # type: ignore  # pylint: disable=import-outside-toplevel
 
             resampled_channels = []
             for ch_idx in range(full_array.shape[0]):

@@ -7,20 +7,27 @@ from ..words import Utterance, Word
 
 
 # pylint: disable=invalid-name
-class TimestampStyle(Enum):
+class StyleEnum(Enum):
+    """Enum that stringifies to its name for nicer CLI output."""
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class TimestampStyle(StyleEnum):
     none = 1
     start = 2
     range = 3
     minute = 4
 
 
-class SpeakerStyle(Enum):
+class SpeakerStyle(StyleEnum):
     none = 1
     change = 2
     always = 3
 
 
-class ProbabilityStyle(Enum):
+class ProbabilityStyle(StyleEnum):
     none = 1
     line = 2
     line_75 = 3
@@ -32,7 +39,7 @@ class ProbabilityStyle(Enum):
     word_25 = 9
 
 
-class LanguageStyle(Enum):
+class LanguageStyle(StyleEnum):
     none = 1
     change = 2
     always = 3
