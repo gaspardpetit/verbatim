@@ -76,6 +76,7 @@ jobs:
             ~/.cache/huggingface
             ~/.cache/ctranslate2
             ~/.cache/whisper
+            ${{ github.workspace }}/.verbatim
           key: modelcache-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
           restore-keys: |
             modelcache-${{ runner.os }}-py${{ matrix.python-version }}-
@@ -142,6 +143,7 @@ jobs:
             ~/.cache/huggingface
             ~/.cache/ctranslate2
             ~/.cache/whisper
+            ${{ github.workspace }}/.verbatim
           key: modelcache-${{ runner.os }}-py311-${{ hashFiles('uv.lock') }}
           restore-keys: |
             modelcache-${{ runner.os }}-py311-
