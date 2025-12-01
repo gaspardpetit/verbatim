@@ -1,6 +1,7 @@
 import logging
 import sys
-from typing import List, Optional, Tuple, Union
+from collections.abc import Mapping
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from numpy.typing import NDArray
 
@@ -37,6 +38,11 @@ else:
     SAMPLE_RATE = None
 
 
+TranscribeResult = Dict[str, Any]
+TranscribeSegment = Dict[str, Any]
+TranscribeWord = Dict[str, Any]
+
+
 class WhisperMlxTranscriber(Transcriber):
     """
     MLX-based Whisper backend.
@@ -47,6 +53,12 @@ class WhisperMlxTranscriber(Transcriber):
     - Those knobs are still exposed on the class for API compatibility with
       FasterWhisperTranscriber, but effectively no-ops on this backend.
     """
+
+    model_path: str
+    whisper_beam_size: int
+    whisper_best_of: int
+    whisper_patience: float
+    whisper_temperatures: List[float]
 
     def __init__(
         self,
@@ -111,7 +123,24 @@ class WhisperMlxTranscriber(Transcriber):
 
         mel = LOG_MEL_SPECTROGRAM(audio, n_mels=model.dims.n_mels, padding=N_SAMPLES)
         mel_segment = PAD_OR_TRIM(mel, N_FRAMES, axis=-2).astype(MX_CORE.float16)
-        _, probs = model.detect_language(mel_segment)  # dict: lang_code -> prob
+        detect_result = model.detect_language(mel_segment)
+        if not isinstance(detect_result, tuple) or len(detect_result) != 2:
+            raise RuntimeError("Unexpected detect_language return format")
+
+        probs_raw = detect_result[1]
+        if not isinstance(probs_raw, Mapping):
+            raise RuntimeError("Language probabilities are not a mapping")
+
+        probs: Dict[str, float] = {}
+        for code, prob in probs_raw.items():
+            if isinstance(code, str):
+                try:
+                    probs[code] = float(prob)
+                except (TypeError, ValueError):
+                    continue
+
+        if not probs:
+            raise RuntimeError("Language probabilities mapping is empty")
 
         best_lang = None
         best_prob = 0.0
@@ -123,8 +152,11 @@ class WhisperMlxTranscriber(Transcriber):
 
         if best_lang is None:
             # No restriction or no allowed language found: take global max
-            best_lang = max(probs, key=probs.get)
-            best_prob = float(probs[best_lang])
+            top_entry = max(probs.items(), key=lambda item: item[1])
+            best_lang, best_prob = top_entry[0], float(top_entry[1])
+
+        if best_lang is None:
+            raise RuntimeError("Language detection failed to produce a candidate")
 
         LOG.info("Detected language '%s' with probability %.3f", best_lang, best_prob)
         return best_lang, best_prob
@@ -161,11 +193,10 @@ class WhisperMlxTranscriber(Transcriber):
 
         # Temperatures: sequence of temperatures for fallback sampling
         if whisper_temperatures is None:
-            whisper_temperatures = self.whisper_temperatures
-        if isinstance(whisper_temperatures, list):
-            temperatures: Union[float, tuple] = tuple(whisper_temperatures)
+            temperature_source = self.whisper_temperatures
         else:
-            temperatures = whisper_temperatures
+            temperature_source = whisper_temperatures
+        temperatures: Tuple[float, ...] = tuple(temperature_source)
 
         # Keep these for logging / API consistency, but we do NOT pass them
         # to mlx_transcribe because beam search is not implemented there.
@@ -186,7 +217,7 @@ class WhisperMlxTranscriber(Transcriber):
         if MLX_TRANSCRIBE is None or SAMPLE_RATE is None:
             raise RuntimeError("mlx-whisper transcribe function is not available on this platform.")
 
-        result = MLX_TRANSCRIBE(
+        raw_result = MLX_TRANSCRIBE(
             audio,
             task="transcribe",
             path_or_hf_repo=self.model_path,
@@ -205,8 +236,18 @@ class WhisperMlxTranscriber(Transcriber):
             hallucination_silence_threshold=None,
         )
 
-        if not result or "segments" not in result:
-            LOG.warning("MLX transcription returned no segments")
+        result: TranscribeResult = cast(TranscribeResult, raw_result)
+        segments_obj = result.get("segments")
+        if not isinstance(segments_obj, list):
+            LOG.warning("MLX transcription returned no segments list")
+            return []
+        if not segments_obj:
+            LOG.warning("MLX transcription returned empty segments")
+            return []
+
+        segments: List[TranscribeSegment] = [segment for segment in segments_obj if isinstance(segment, dict)]
+        if not segments:
+            LOG.warning("MLX transcription segments are not dicts")
             return []
 
         transcript_words: List[Word] = []
@@ -216,16 +257,29 @@ class WhisperMlxTranscriber(Transcriber):
         min_word_duration_ms = 50
         min_word_duration_samples = int(SAMPLE_RATE * min_word_duration_ms / 1000.0)
 
-        for segment in result["segments"]:
-            segment_lang = segment.get("language", current_segment_lang)
+        for segment in segments:
+            lang_value = segment.get("language", current_segment_lang)
+            segment_lang = lang_value if isinstance(lang_value, str) else current_segment_lang
             if segment_lang != current_segment_lang:
                 LOG.info("Language switch detected: %s -> %s", current_segment_lang, segment_lang)
                 current_segment_lang = segment_lang
 
-            for word_data in segment.get("words", []):
+            words_obj = segment.get("words", [])
+            if not isinstance(words_obj, list):
+                continue
+
+            word_items: List[TranscribeWord] = [word for word in words_obj if isinstance(word, dict)]
+
+            for word_data in word_items:
+                start_val = word_data.get("start")
+                end_val = word_data.get("end")
+                word_text = word_data.get("word")
+                if not isinstance(start_val, (int, float)) or not isinstance(end_val, (int, float)) or not isinstance(word_text, str):
+                    continue
+
                 # MLX word timestamps are in seconds -> convert to samples
-                raw_start_ts = int(word_data["start"] * SAMPLE_RATE) + window_ts
-                raw_end_ts = int(word_data["end"] * SAMPLE_RATE) + window_ts
+                raw_start_ts = int(start_val * SAMPLE_RATE) + window_ts
+                raw_end_ts = int(end_val * SAMPLE_RATE) + window_ts
 
                 start_ts = raw_start_ts
                 end_ts = raw_end_ts
@@ -234,7 +288,7 @@ class WhisperMlxTranscriber(Transcriber):
                 if end_ts <= start_ts:
                     LOG.info(
                         "Fixing invalid timestamps for word %r: start=%d end=%d",
-                        word_data["word"],
+                        word_text,
                         start_ts,
                         end_ts,
                     )
@@ -245,7 +299,7 @@ class WhisperMlxTranscriber(Transcriber):
                     else:
                         # Shift to after last valid word and estimate duration
                         start_ts = last_valid_end_ts
-                        word_len = len(word_data["word"].strip())
+                        word_len = len(word_text.strip())
                         est_dur = max(
                             min_word_duration_samples,
                             (word_len * min_word_duration_samples) // 2,
@@ -254,7 +308,7 @@ class WhisperMlxTranscriber(Transcriber):
 
                     LOG.info(
                         "Fixed timestamps for word %r: start=%d end=%d",
-                        word_data["word"],
+                        word_text,
                         start_ts,
                         end_ts,
                     )
@@ -263,7 +317,7 @@ class WhisperMlxTranscriber(Transcriber):
                 if end_ts > audio_ts:
                     LOG.debug(
                         "Skipping word %r: end_ts=%d > audio_ts=%d",
-                        word_data["word"],
+                        word_text,
                         end_ts,
                         audio_ts,
                     )
@@ -271,11 +325,15 @@ class WhisperMlxTranscriber(Transcriber):
 
                 last_valid_end_ts = end_ts
 
+                probability_val = word_data.get("probability", 1.0)
+                if not isinstance(probability_val, (int, float)):
+                    probability_val = 1.0
+
                 word = Word(
                     start_ts=start_ts,
                     end_ts=end_ts,
-                    word=word_data["word"],
-                    probability=float(word_data.get("probability", 1.0)),
+                    word=word_text,
+                    probability=float(probability_val),
                     lang=current_segment_lang,
                 )
 

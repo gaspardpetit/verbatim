@@ -19,13 +19,28 @@ def prefetch_diarization_models(hf_token: Optional[str] = None, cache_dir: Optio
         LOG.warning("huggingface_hub not available: cannot prefetch diarization models")
         return
 
-    from verbatim_diarization.pyannote.constants import PYANNOTE_DIARIZATION_MODEL_ID, PYANNOTE_SEPARATION_MODEL_ID
+    from verbatim_diarization.pyannote.constants import (
+        PYANNOTE_DIARIZATION_MODEL_ID,
+        PYANNOTE_DIARIZATION_MODEL_REVISION,
+        PYANNOTE_SEPARATION_MODEL_ID,
+        PYANNOTE_SEPARATION_MODEL_REVISION,
+    )
 
-    repos = (PYANNOTE_DIARIZATION_MODEL_ID, PYANNOTE_SEPARATION_MODEL_ID)
-    for repo in repos:
+    repos = (
+        (PYANNOTE_DIARIZATION_MODEL_ID, PYANNOTE_DIARIZATION_MODEL_REVISION),
+        (PYANNOTE_SEPARATION_MODEL_ID, PYANNOTE_SEPARATION_MODEL_REVISION),
+    )
+    for repo, revision in repos:
+        pinned_revision = revision or "refs/heads/main"
         try:
             # Local-only try first
-            local_path = snapshot_download(repo_id=repo, token=hf_token, local_files_only=True, cache_dir=cache_dir)
+            local_path = snapshot_download(
+                repo_id=repo,
+                revision=pinned_revision,
+                token=hf_token,
+                local_files_only=True,
+                cache_dir=cache_dir,
+            )
             LOG.info("Already cached diarization repo: %s at %s", repo, local_path)
             continue
         except LocalEntryNotFoundError:
@@ -41,7 +56,13 @@ def prefetch_diarization_models(hf_token: Optional[str] = None, cache_dir: Optio
 
         LOG.info("Prefetching diarization model: %s", repo)
         try:
-            local_path = snapshot_download(repo_id=repo, token=hf_token, local_files_only=False, cache_dir=cache_dir)
+            local_path = snapshot_download(
+                repo_id=repo,
+                revision=pinned_revision,
+                token=hf_token,
+                local_files_only=False,
+                cache_dir=cache_dir,
+            )
             LOG.info("Downloaded %s to %s", repo, local_path)
         except HfHubHTTPError as exc:
             LOG.warning("Failed to prefetch %s: %s", repo, exc)
