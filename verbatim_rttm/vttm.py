@@ -2,6 +2,7 @@
 VTTM: YAML-wrapped RTTM for self-contained diarization + audio references.
 """
 
+import sys
 from dataclasses import dataclass
 from typing import Iterable, List, Optional, Tuple
 
@@ -51,7 +52,7 @@ def write_vttm(path: str, *, audio: Iterable[AudioRef], annotation: Annotation) 
     }
 
     with open(path, "w", encoding="utf-8") as fh:
-        yaml.safe_dump(payload, fh, sort_keys=False)
+        yaml.safe_dump(payload, fh, sort_keys=False, width=sys.maxsize)
 
 
 def _parse_audio(raw_audio) -> List[AudioRef]:

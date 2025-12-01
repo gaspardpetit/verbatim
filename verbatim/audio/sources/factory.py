@@ -38,11 +38,18 @@ def compute_diarization(
         device: Device to use ('cpu' or 'cuda')
         rttm_file: Optional path to save RTTM file
         strategy: Diarization strategy ('pyannote' or 'stereo')
-        nb_speakers: Optional number of speakers
+    nb_speakers: Optional number of speakers
 
         PyAnnote Annotation object
     """
 
+    LOG.info(
+        "Running diarization: strategy=%s nb_speakers=%s rttm_file=%s vttm_file=%s",
+        strategy,
+        nb_speakers,
+        rttm_file,
+        vttm_file,
+    )
     diarizer = create_diarizer(strategy=strategy, device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN"))
 
     return diarizer.compute_diarization(file_path=file_path, out_rttm_file=rttm_file, out_vttm_file=vttm_file, nb_speakers=nb_speakers)
@@ -134,6 +141,9 @@ def create_audio_source(
         if source_config.vttm_file:
             try:
                 _audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
+                if len(source_config.diarization) == 0:
+                    # Treat empty annotations as missing so diarization can be computed
+                    source_config.diarization = None
             except (FileNotFoundError, ValueError):
                 source_config.diarization = None
 
@@ -147,6 +157,8 @@ def create_audio_source(
                 strategy=source_config.diarization_strategy,
                 nb_speakers=source_config.diarize if source_config.diarize != 0 else None,
             )
+        elif source_config.diarization is None:
+            LOG.info("Diarization not requested; proceeding without diarization.")
         elif source_config.diarization_file and source_config.diarization is None:
             # Load existing diarization from file
             from verbatim_diarization import Diarization
@@ -171,6 +183,8 @@ def create_audio_source(
     if source_config.vttm_file and source_config.diarization is None:
         try:
             _audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
+            if len(source_config.diarization) == 0:
+                source_config.diarization = None
         except (FileNotFoundError, ValueError):
             source_config.diarization = None
 

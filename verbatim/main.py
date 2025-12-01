@@ -232,13 +232,24 @@ def main():
     else:
         diarize = int(args.diarize)
 
+    LOG.info(
+        "Diarization settings: strategy=%s diarize=%s vttm=%s rttm=%s separate=%s",
+        args.diarization_strategy,
+        diarize,
+        args.vttm,
+        args.diarization,
+        args.separate,
+    )
+
     from .audio.sources.sourceconfig import SourceConfig
 
+    vttm_path = args.vttm if args.vttm not in (None, "") else None
     source_config: SourceConfig = SourceConfig(
         isolate=args.isolate,
         diarize=diarize,
         diarization_file=args.diarization,
         diarization_strategy=args.diarization_strategy,
+        vttm_file=vttm_path,
     )
 
     from .audio.sources.audiosource import AudioSource

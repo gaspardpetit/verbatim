@@ -1,14 +1,22 @@
+import logging
 import os
+import time
 from typing import Optional
 
 import torch
 from pyannote.audio import Pipeline
+from pyannote.audio.core.task import Problem, Resolution, Specifications
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 from pyannote.core.annotation import Annotation
+from torch.serialization import add_safe_globals
 
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_rttm import Annotation as RTTMAnnotation
 from verbatim_rttm import AudioRef, Segment, write_vttm
+
+from .ffmpeg_loader import ensure_ffmpeg_for_torchcodec
+
+LOG = logging.getLogger(__name__)
 
 
 class PyAnnoteDiarization(DiarizationStrategy):
@@ -16,11 +24,15 @@ class PyAnnoteDiarization(DiarizationStrategy):
         self.device = device
         self.huggingface_token = huggingface_token
         self.pipeline = None
+        self.model_id = "pyannote/speaker-diarization-community-1"  # previously "pyannote/speaker-diarization-3.1"
 
     def initialize_pipeline(self):
         """Lazy initialization of PyAnnote pipeline"""
         if self.pipeline is None:
-            self.pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", token=self.huggingface_token)
+            # Allow safe loading of pyannote checkpoints under torch>=2.6
+            add_safe_globals([torch.torch_version.TorchVersion, Specifications, Problem, Resolution])
+            # Default to community-friendly model
+            self.pipeline = Pipeline.from_pretrained(self.model_id, token=self.huggingface_token)
         if self.pipeline is None:
             raise RuntimeError("PyAnnote pipeline failed to initialize")
         self.pipeline.instantiate({})
@@ -35,20 +47,46 @@ class PyAnnoteDiarization(DiarizationStrategy):
         Additional kwargs:
             nb_speakers: Optional number of speakers
         """
+        # pyannote.audio 4.x requires torchcodec; attempt to ensure FFmpeg DLLs first.
+        ensure_ffmpeg_for_torchcodec()
+
+        def _import_torchcodec():
+            from torchcodec.decoders import AudioDecoder  # noqa: F401
+
+            try:
+                import pyannote.audio.core.io as pa_io
+
+                pa_io.AudioDecoder = AudioDecoder
+            except Exception:
+                pass
+
         try:
-            # pyannote.audio 4.x requires torchcodec for audio decoding
-            pass  # type: ignore[unused-import]
-        except Exception as exc:  # pragma: no cover - defensive import
-            raise RuntimeError("""
-                pyannote diarization requires torchcodec for audio decoding;
-                install torchcodec (and compatible torch) or switch diarization_strategy.
-                """) from exc
+            _import_torchcodec()
+        except Exception as exc:
+            # Retry after another FFmpeg scan; surface a clearer error if still broken.
+            ensure_ffmpeg_for_torchcodec()
+            try:
+                _import_torchcodec()
+            except Exception as exc2:  # pragma: no cover - defensive import
+                raise RuntimeError(
+                    "pyannote diarization could not load torchcodec (FFmpeg dependency). "
+                    "Install FFmpeg shared libraries (4–7) and set FFMPEG_DLL_DIR or add them to PATH."
+                ) from exc2
         self.initialize_pipeline()
         pipeline = self.pipeline
         if pipeline is None:
             raise RuntimeError("PyAnnote pipeline failed to initialize")
+        start = time.perf_counter()
         with ProgressHook() as hook:
             diarization = pipeline(file_path, hook=hook, num_speakers=nb_speakers)
+        elapsed = time.perf_counter() - start
+        LOG.info(
+            "PyAnnote diarization completed in %.2fs (model=%s, file=%s, speakers=%s)",
+            elapsed,
+            self.model_id,
+            file_path,
+            nb_speakers if nb_speakers is not None else "auto",
+        )
 
         # pyannote.audio 4.x returns a DiarizeOutput with a speaker_diarization field
         if hasattr(diarization, "speaker_diarization"):
