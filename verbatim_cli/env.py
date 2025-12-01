@@ -17,17 +17,16 @@ def load_env_file(env_path: str = ".env") -> bool:
     - bool: True if the file was successfully loaded, False otherwise.
     """
     if not os.path.isfile(env_path):
-        LOG.info(f"No '{env_path}' file provided.")
+        LOG.info("No '%s' file provided.", env_path)
         return False
 
     try:
         # load_dotenv returns True if the file was found and loaded, else False.
         if load_dotenv(dotenv_path=env_path, override=True):
-            LOG.info(f"Environment variables from '{env_path}' loaded successfully.")
+            LOG.info("Environment variables from '%s' loaded successfully.", env_path)
             return True
-        else:
-            LOG.error(f"Failed to load environment variables from '{env_path}'.")
-            return False
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        LOG.exception(f"Error while loading '{env_path}': {e}")
+        LOG.error("Failed to load environment variables from '%s'.", env_path)
+        return False
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        LOG.exception("Error while loading '%s': %s", env_path, exc)
         return False
