@@ -13,15 +13,14 @@ class OptionalValueAction(argparse.Action):
         setattr(namespace, self.dest, values if values is not None else "")
 
 
-def build_parser(prog: str = "verbatim") -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog=prog, description="Verbatim: that's what she said")
-
-    parser.add_argument(
-        "input",
-        nargs="?",
-        default=None,
-        help="Path to the input audio file. Use '-' to read from stdin (expecting 16bit 16kHz mono PCM stream) or '>' to use microphone.",
-    )
+def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool = True, prog: str = "verbatim") -> argparse.ArgumentParser:
+    if include_input:
+        parser.add_argument(
+            "input",
+            nargs="?",
+            default=None,
+            help="Path to the input audio file. Use '-' to read from stdin (expecting 16bit 16kHz mono PCM stream) or '>' to use microphone.",
+        )
     parser.add_argument("-f", "--from", default="00:00.000", dest="start_time", help="Start time within the file in hh:mm:ss.ms or mm:ss.ms")
     parser.add_argument("-t", "--to", default="", dest="stop_time", help="Stop time within the file in hh:mm:ss.ms or mm:ss.ms")
     parser.add_argument("-o", "--outdir", default=".", help="Path to the output directory")
@@ -129,5 +128,9 @@ def build_parser(prog: str = "verbatim") -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("-e", "--eval", nargs="?", default=None, help="Path to reference json file")
-
     return parser
+
+
+def build_parser(prog: str = "verbatim", *, include_input: bool = True) -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog=prog, description="Verbatim: that's what she said")
+    return add_shared_arguments(parser, include_input=include_input, prog=prog)
