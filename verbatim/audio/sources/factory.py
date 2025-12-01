@@ -100,21 +100,21 @@ def create_audio_source(
     from .ffmpegfileaudiosource import PyAVAudioSource
     from .fileaudiosource import FileAudioSource
 
+    preserve_for_diarization = source_config.diarize_strategy in ("energy", "channel", "pyannote")
+
     if os.path.splitext(input_source)[-1] != ".wav":
         if not (not stream and (source_config.isolate is not None or source_config.diarize_strategy is not None)):
             return PyAVAudioSource(
                 file_path=input_source,
                 start_time=samples_to_seconds(start_sample),
                 end_time=samples_to_seconds(stop_sample) if stop_sample else None,
-                preserve_channels=source_config.diarize_strategy in ("energy", "channel"),
+                preserve_channels=preserve_for_diarization,
             )
-
-        preserve_channels = source_config.diarize_strategy in ("energy", "channel")
 
         input_source = convert_to_wav(
             input_path=input_source,
             working_prefix_no_ext=working_prefix_no_ext,
-            preserve_channels=preserve_channels,
+            preserve_channels=preserve_for_diarization,
         )
 
         return create_audio_source(
@@ -193,7 +193,7 @@ def create_audio_source(
         start_sample=start_sample,
         end_sample=stop_sample,
         diarization=source_config.diarization,
-        preserve_channels=source_config.diarize_strategy in ("energy", "channel"),
+        preserve_channels=False,
     )
 
 
