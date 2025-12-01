@@ -91,6 +91,7 @@ jobs:
         shell: bash
         env:
           VERBATIM_OFFLINE: "0"
+          HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
         run: |
           verbatim --install --model-cache "$GITHUB_WORKSPACE/.verbatim"
 
@@ -165,6 +166,7 @@ jobs:
         shell: bash
         env:
           VERBATIM_OFFLINE: "0"
+          HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
         run: |
           verbatim --install --model-cache "$GITHUB_WORKSPACE/.verbatim"
 

@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 import tempfile
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -92,6 +92,80 @@ def _extract_channels(file_path: str, channels: List[int], working_dir: Optional
     return temp_path
 
 
+def resolve_clause_params(clause, default_nb_speakers: Union[int, None]) -> Tuple[Union[int, None], Dict[str, Union[str, int]], Optional[str]]:
+    """Map policy params to diarizer kwargs and base speaker label (if provided)."""
+    params_copy = dict(clause.params)
+    nb_from_clause: Union[int, None]
+    base_label = params_copy.get("speaker")
+    if "speakers" in params_copy:
+        try:
+            nb_from_clause = int(params_copy.pop("speakers"))
+        except ValueError:
+            nb_from_clause = default_nb_speakers
+    else:
+        nb_from_clause = default_nb_speakers
+
+    strategy_kwargs: Dict[str, Union[str, int]] = {}
+    if clause.strategy == "channel":
+        pattern = params_copy.pop("speaker", params_copy.pop("speaker_pattern", None)) or "SPEAKER_{idx}"
+        offset = params_copy.pop("offset", 0) or 0
+        try:
+            offset_int = int(offset)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            offset_int = 0
+        strategy_kwargs["speaker"] = pattern
+        strategy_kwargs["offset"] = offset_int
+
+    # Preserve any extra params for future strategies
+    strategy_kwargs.update(params_copy)
+    return nb_from_clause, strategy_kwargs, base_label
+
+
+def relabel_speakers(segments: List[Segment], base_label: Optional[str], label_counts: Dict[str, int]) -> List[Segment]:
+    """Rewrite speaker labels using a base_label. If multiple speakers, suffix with _# and dedupe globally."""
+    if base_label is None:
+        return segments
+
+    seen_order = []
+    for seg in segments:
+        if seg.speaker not in seen_order:
+            seen_order.append(seg.speaker)
+
+    if len(seen_order) == 1:
+        base = base_label
+        count = label_counts.get(base, 0)
+        if count == 0:
+            new_label = base
+        else:
+            new_label = f"{base}_{count + 1}"
+        label_counts[base] = count + 1
+        mapping = {seen_order[0]: new_label}
+    else:
+        base = base_label
+        count = label_counts.get(base, 0)
+        mapping = {}
+        for idx, speaker in enumerate(seen_order, start=1):
+            new_label = f"{base}_{count + idx}"
+            mapping[speaker] = new_label
+        label_counts[base] = count + len(seen_order)
+
+    new_segments = []
+    for seg in segments:
+        new_seg = Segment(
+            start=seg.start,
+            end=seg.end,
+            speaker=mapping.get(seg.speaker, seg.speaker),
+            file_id=seg.file_id,
+            channel=seg.channel,
+            orthography=seg.orthography,
+            subtype=seg.subtype,
+            confidence=seg.confidence,
+            slat=seg.slat,
+        )
+        new_segments.append(new_seg)
+    return new_segments
+
+
 def compute_diarization_policy(
     *,
     file_path: str,
@@ -126,6 +200,7 @@ def compute_diarization_policy(
     base_id = os.path.splitext(os.path.basename(file_path))[0]
     combined_segments = []
     temp_paths: List[str] = []
+    label_counts: Dict[str, int] = {}
 
     try:
         for group in grouped.values():
@@ -135,18 +210,21 @@ def compute_diarization_policy(
             if subset_path != file_path:
                 temp_paths.append(subset_path)
 
+            clause_nb_speakers, strategy_kwargs, base_label = resolve_clause_params(clause, nb_speakers)
+
             diarization = compute_diarization(
                 file_path=subset_path,
                 device=device,
                 rttm_file=None,
                 vttm_file=None,
                 strategy=clause.strategy,
-                nb_speakers=nb_speakers,
+                nb_speakers=clause_nb_speakers,
                 working_dir=working_dir,
-                **clause.params,
+                **strategy_kwargs,
             )
 
-            for segment in diarization.segments:
+            relabeled_segments = relabel_speakers(diarization.segments, base_label, label_counts)
+            for segment in relabeled_segments:
                 segment.file_id = base_id
                 combined_segments.append(segment)
     finally:
