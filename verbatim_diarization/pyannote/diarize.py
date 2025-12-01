@@ -46,7 +46,13 @@ class PyAnnoteDiarization(DiarizationStrategy):
         self.pipeline.to(torch.device(self.device))
 
     def compute_diarization(
-        self, file_path: str, out_rttm_file: Optional[str] = None, out_vttm_file: Optional[str] = None, nb_speakers: Optional[int] = None, **kwargs
+        self,
+        file_path: str,
+        out_rttm_file: Optional[str] = None,
+        out_vttm_file: Optional[str] = None,
+        nb_speakers: Optional[int] = None,
+        working_dir: Optional[str] = None,
+        **kwargs,
     ) -> Annotation:
         """
         Compute diarization using PyAnnote.
@@ -69,7 +75,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
 
         try:
             _import_torchcodec()
-        except Exception as exc:
+        except Exception:
             # Retry after another FFmpeg scan; surface a clearer error if still broken.
             ensure_ffmpeg_for_torchcodec()
             try:
@@ -89,10 +95,11 @@ class PyAnnoteDiarization(DiarizationStrategy):
                 audio, sample_rate = sf.read(file_path)
                 if isinstance(audio, np.ndarray) and audio.ndim > 1 and audio.shape[1] > 1:
                     mono = np.mean(audio, axis=1)
-                    fd, temp_path = tempfile.mkstemp(suffix=".wav")
+                    tmp_dir = working_dir or tempfile.gettempdir()
+                    fd, temp_path = tempfile.mkstemp(suffix=".wav", dir=tmp_dir)
                     os.close(fd)
                     sf.write(temp_path, mono, sample_rate)
-                    LOG.info("Downmixed %s to mono for pyannote diarization", file_path)
+                    LOG.info("Downmixed %s to mono for pyannote diarization at %s", file_path, temp_path)
                     file_for_pipeline = temp_path
                 else:
                     file_for_pipeline = file_path

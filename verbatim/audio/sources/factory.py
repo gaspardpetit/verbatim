@@ -29,6 +29,7 @@ def compute_diarization(
     vttm_file: Optional[str] = None,
     strategy: str = "pyannote",
     nb_speakers: Union[int, None] = None,
+    working_dir: Optional[str] = None,
 ) -> Annotation:
     """
     Compute diarization for an audio file using the specified strategy.
@@ -52,7 +53,13 @@ def compute_diarization(
     )
     diarizer = create_diarizer(strategy=strategy, device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN"))
 
-    return diarizer.compute_diarization(file_path=file_path, out_rttm_file=rttm_file, out_vttm_file=vttm_file, nb_speakers=nb_speakers)
+    return diarizer.compute_diarization(
+        file_path=file_path,
+        out_rttm_file=rttm_file,
+        out_vttm_file=vttm_file,
+        nb_speakers=nb_speakers,
+        working_dir=working_dir,
+    )
 
 
 def create_audio_source(
@@ -96,6 +103,7 @@ def create_audio_source(
         source_config.vttm_file = output_prefix_no_ext + ".vttm"
     if source_config.vttm_file == "":
         source_config.vttm_file = None
+    working_dir = os.path.dirname(working_prefix_no_ext) or None
 
     from .ffmpegfileaudiosource import PyAVAudioSource
     from .fileaudiosource import FileAudioSource
@@ -155,6 +163,7 @@ def create_audio_source(
                 vttm_file=source_config.vttm_file,
                 strategy=source_config.diarize_strategy or "pyannote",
                 nb_speakers=nb_speakers,
+                working_dir=working_dir,
             )
         elif source_config.diarization is None:
             LOG.info("Diarization not requested; proceeding without diarization.")
@@ -178,6 +187,7 @@ def create_audio_source(
                     vttm_file=source_config.vttm_file,
                     strategy=source_config.diarize_strategy or "pyannote",
                     nb_speakers=nb_speakers,
+                    working_dir=working_dir,
                 )
 
     if source_config.vttm_file and source_config.diarization is None:
