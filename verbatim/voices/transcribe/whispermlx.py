@@ -12,20 +12,29 @@ LOG = logging.getLogger(__name__)
 
 if sys.platform == "darwin":
     # MLX / mlx-whisper only available on macOS
-    import mlx.core as mx
+    import mlx.core as MX_CORE
     from mlx_whisper.audio import (
         N_FRAMES,
         N_SAMPLES,
         SAMPLE_RATE,
-        log_mel_spectrogram,
-        pad_or_trim,
     )
-    from mlx_whisper.transcribe import ModelHolder
-    from mlx_whisper.transcribe import transcribe as mlx_transcribe
+    from mlx_whisper.audio import (
+        log_mel_spectrogram as LOG_MEL_SPECTROGRAM,
+    )
+    from mlx_whisper.audio import (
+        pad_or_trim as PAD_OR_TRIM,
+    )
+    from mlx_whisper.transcribe import ModelHolder as MODEL_HOLDER
+    from mlx_whisper.transcribe import transcribe as MLX_TRANSCRIBE
 else:
-    mx = None
-    ModelHolder = None
-    mlx_transcribe = None
+    MX_CORE = None
+    MODEL_HOLDER = None
+    MLX_TRANSCRIBE = None
+    LOG_MEL_SPECTROGRAM = None
+    PAD_OR_TRIM = None
+    N_FRAMES = None
+    N_SAMPLES = None
+    SAMPLE_RATE = None
 
 
 class WhisperMlxTranscriber(Transcriber):
@@ -68,10 +77,10 @@ class WhisperMlxTranscriber(Transcriber):
         """
         Use mlx-whisper's ModelHolder cache to avoid re-loading the model.
         """
-        if ModelHolder is None:
+        if MODEL_HOLDER is None or MX_CORE is None:
             raise RuntimeError("mlx-whisper is not available on this platform.")
-        dtype = mx.float16
-        return ModelHolder.get_model(self.model_path, dtype=dtype)
+        dtype = MX_CORE.float16
+        return MODEL_HOLDER.get_model(self.model_path, dtype=dtype)
 
     def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]:
         """
@@ -85,6 +94,9 @@ class WhisperMlxTranscriber(Transcriber):
 
         model = self._get_mlx_model()
 
+        if N_SAMPLES is None or N_FRAMES is None:
+            raise RuntimeError("mlx-whisper spectrogram constants are not available on this platform.")
+
         # Non-multilingual models: force "en", but respect allowed list.
         if not getattr(model, "is_multilingual", True):
             chosen = "en"
@@ -94,8 +106,11 @@ class WhisperMlxTranscriber(Transcriber):
             return chosen, 1.0
 
         # Build log-mel spectrogram and run detect_language
-        mel = log_mel_spectrogram(audio, n_mels=model.dims.n_mels, padding=N_SAMPLES)
-        mel_segment = pad_or_trim(mel, N_FRAMES, axis=-2).astype(mx.float16)
+        if LOG_MEL_SPECTROGRAM is None or PAD_OR_TRIM is None or MX_CORE is None:
+            raise RuntimeError("mlx-whisper audio helpers are not available on this platform.")
+
+        mel = LOG_MEL_SPECTROGRAM(audio, n_mels=model.dims.n_mels, padding=N_SAMPLES)
+        mel_segment = PAD_OR_TRIM(mel, N_FRAMES, axis=-2).astype(MX_CORE.float16)
         _, probs = model.detect_language(mel_segment)  # dict: lang_code -> prob
 
         best_lang = None
@@ -168,7 +183,10 @@ class WhisperMlxTranscriber(Transcriber):
 
         # Call mlx-whisper transcribe WITHOUT beam-related options.
         # This uses greedy / sampling decoding only.
-        result = mlx_transcribe(
+        if MLX_TRANSCRIBE is None or SAMPLE_RATE is None:
+            raise RuntimeError("mlx-whisper transcribe function is not available on this platform.")
+
+        result = MLX_TRANSCRIBE(
             audio,
             task="transcribe",
             path_or_hf_repo=self.model_path,
