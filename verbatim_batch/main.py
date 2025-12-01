@@ -1,10 +1,12 @@
 import argparse
 import logging
 import sys
+from argparse import Namespace
 from pathlib import Path
 from typing import Iterable, List
 
 from verbatim_cli.args import add_shared_arguments
+from verbatim_cli.config_file import load_config_file, merge_args, select_profile
 from verbatim_cli.configure import (
     build_output_formats,
     build_prefixes,
@@ -12,7 +14,7 @@ from verbatim_cli.configure import (
     make_config,
     make_source_config,
     make_write_config,
-    resolve_diarize,
+    resolve_speakers,
 )
 from verbatim_cli.env import load_env_file
 from verbatim_cli.run_single import build_audio_sources, run_execute
@@ -33,7 +35,7 @@ def iter_input_files(batch_dir: Path, patterns: Iterable[str], recursive: bool) 
 
 def build_batch_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="verbatim-batch", description="Batch transcription for Verbatim")
-    parser.add_argument("--batch-dir", required=True, help="Directory to scan for input audio files")
+    parser.add_argument("--batch-dir", help="Directory to scan for input audio files")
     parser.add_argument(
         "--match",
         nargs="*",
@@ -60,7 +62,15 @@ def outputs_exist(output_prefix_no_ext: str, output_formats: List[str]) -> bool:
 
 def main():
     parser = build_batch_parser()
-    args = parser.parse_args()
+    base_defaults: Namespace = parser.parse_args([])
+    user_args = parser.parse_args()
+
+    cfg_data = {}
+    if getattr(user_args, "config", None):
+        cfg_data = load_config_file(user_args.config)
+
+    global_profile = select_profile(cfg_data, filename=None)
+    args = merge_args(base_defaults, global_profile, user_args)
 
     log_level = compute_log_level(args.verbose)
     for handler in logging.root.handlers[:]:
@@ -85,15 +95,11 @@ def main():
         LOG.info("Model prefetch complete.")
         return
 
+    if not args.batch_dir:
+        parser.error("Batch directory must be specified via --batch-dir or config file")
     batch_dir = Path(args.batch_dir).expanduser().resolve()
     if not batch_dir.exists():
         parser.error(f"Batch directory does not exist: {batch_dir}")
-
-    config = make_config(args)
-    write_config = make_write_config(args, log_level)
-    diarize = resolve_diarize(args)
-    source_config = make_source_config(args, diarize)
-    output_formats = build_output_formats(args)
 
     inputs = iter_input_files(batch_dir, args.match, args.recursive)
     if not inputs:
@@ -104,16 +110,26 @@ def main():
 
     for src_path in inputs:
         source_path = str(src_path)
+
+        profile = select_profile(cfg_data, filename=source_path)
+        file_args = merge_args(base_defaults, {**global_profile, **profile}, user_args)
+
+        config = make_config(file_args)
+        write_config = make_write_config(file_args, log_level)
+        speakers = resolve_speakers(file_args)
+        source_config = make_source_config(file_args, speakers)
+        output_formats = build_output_formats(file_args)
+
         output_prefix_no_ext, working_prefix_no_ext = build_prefixes(config, source_path)
 
-        if args.skip_existing and outputs_exist(output_prefix_no_ext, output_formats):
+        if file_args.skip_existing and outputs_exist(output_prefix_no_ext, output_formats):
             LOG.info("Skipping %s (existing outputs found)", source_path)
             continue
 
         LOG.info("Processing %s", source_path)
         try:
             audio_sources = build_audio_sources(
-                args=args,
+                args=file_args,
                 config=config,
                 source_config=source_config,
                 source_path=source_path,
@@ -128,7 +144,7 @@ def main():
                 output_formats=output_formats,
                 output_prefix_no_ext=output_prefix_no_ext,
                 working_prefix_no_ext=working_prefix_no_ext,
-                eval_file=args.eval,
+                eval_file=file_args.eval,
             )
         except Exception:  # pylint: disable=broad-exception-caught
             LOG.exception("Failed to process %s", source_path)

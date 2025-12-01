@@ -8,7 +8,10 @@ LOG = logging.getLogger(__name__)
 
 def main():
     # pylint: disable=import-outside-toplevel
+    from argparse import Namespace
+
     from verbatim_cli.args import build_parser
+    from verbatim_cli.config_file import load_config_file, merge_args, select_profile
     from verbatim_cli.configure import (
         build_output_formats,
         build_prefixes,
@@ -16,14 +19,22 @@ def main():
         make_config,
         make_source_config,
         make_write_config,
-        resolve_diarize,
+        resolve_speakers,
     )
     from verbatim_cli.env import load_env_file
     from verbatim_cli.run_single import build_audio_sources, run_execute
 
     parser = build_parser(prog="verbatim")
+    base_defaults: Namespace = parser.parse_args([])
+    user_args = parser.parse_args()
 
-    args = parser.parse_args()
+    cfg_data = {}
+    if getattr(user_args, "config", None):
+        cfg_data = load_config_file(user_args.config)
+
+    profile_overrides = select_profile(cfg_data, filename=user_args.input)
+    args = merge_args(base_defaults, profile_overrides, user_args)
+
     log_level = compute_log_level(args.verbose)
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
@@ -60,18 +71,18 @@ def main():
 
     output_formats = build_output_formats(args)
 
-    diarize = resolve_diarize(args)
+    speakers = resolve_speakers(args)
 
     LOG.info(
-        "Diarization settings: strategy=%s diarize=%s vttm=%s rttm=%s separate=%s",
-        args.diarization_strategy,
-        diarize,
+        "Diarization settings: strategy=%s speakers=%s vttm=%s rttm=%s separate=%s",
+        args.diarize,
+        speakers,
         args.vttm,
         args.diarization,
         args.separate,
     )
 
-    source_config = make_source_config(args, diarize)
+    source_config = make_source_config(args, speakers)
 
     audio_sources: List = build_audio_sources(
         args=args,

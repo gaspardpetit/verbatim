@@ -90,7 +90,7 @@ def create_audio_source(
     if os.path.exists(input_source) is False:
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), input_source)
 
-    if source_config.diarization_file == "" or (source_config.diarize is not None and source_config.diarization_file is None):
+    if source_config.diarization_file == "" or (source_config.diarize_strategy is not None and source_config.diarization_file is None):
         source_config.diarization_file = output_prefix_no_ext + ".rttm"
     if source_config.vttm_file is None:
         source_config.vttm_file = output_prefix_no_ext + ".vttm"
@@ -101,18 +101,15 @@ def create_audio_source(
     from .fileaudiosource import FileAudioSource
 
     if os.path.splitext(input_source)[-1] != ".wav":
-        if not (not stream and (source_config.isolate is not None or source_config.diarize is not None)):
+        if not (not stream and (source_config.isolate is not None or source_config.diarize_strategy is not None)):
             return PyAVAudioSource(
                 file_path=input_source,
                 start_time=samples_to_seconds(start_sample),
                 end_time=samples_to_seconds(stop_sample) if stop_sample else None,
-                preserve_channels=source_config.diarization_strategy == "stereo",
+                preserve_channels=source_config.diarize_strategy == "stereo",
             )
 
-        if source_config.diarization_strategy == "stereo":
-            preserve_channels = True
-        else:
-            preserve_channels = False
+        preserve_channels = source_config.diarize_strategy == "stereo"
 
         input_source = convert_to_wav(
             input_path=input_source,
@@ -136,7 +133,7 @@ def create_audio_source(
         if source_config.vttm_file and not os.path.exists(source_config.vttm_file):
             LOG.info("No VTTM provided; creating minimal VTTM placeholder at %s", source_config.vttm_file)
             audio_id = os.path.splitext(os.path.basename(input_source))[0]
-            audio_ref = AudioRef(id=audio_id, path=input_source, channel="stereo" if source_config.diarization_strategy == "stereo" else "1")
+            audio_ref = AudioRef(id=audio_id, path=input_source, channel="stereo" if source_config.diarize_strategy == "stereo" else "1")
             write_vttm(source_config.vttm_file, audio=[audio_ref], annotation=RTTMAnnotation())
         if source_config.vttm_file:
             try:
@@ -147,15 +144,16 @@ def create_audio_source(
             except (FileNotFoundError, ValueError):
                 source_config.diarization = None
 
-        if source_config.diarize is not None and source_config.diarization is None:
+        if source_config.diarize_strategy is not None and source_config.diarization is None:
             # Compute new diarization
+            nb_speakers = source_config.speakers if source_config.speakers not in (0, "") else None
             source_config.diarization = compute_diarization(
                 file_path=input_source,
                 device=device,
                 rttm_file=source_config.diarization_file,
                 vttm_file=source_config.vttm_file,
-                strategy=source_config.diarization_strategy,
-                nb_speakers=source_config.diarize if source_config.diarize != 0 else None,
+                strategy=source_config.diarize_strategy or "pyannote",
+                nb_speakers=nb_speakers,
             )
         elif source_config.diarization is None:
             LOG.info("Diarization not requested; proceeding without diarization.")
@@ -171,13 +169,14 @@ def create_audio_source(
                     write_vttm(source_config.vttm_file, audio=[AudioRef(id=audio_id, path=input_source)], annotation=source_config.diarization)
             except (StopIteration, FileNotFoundError):
                 # If the file doesn't exist or is empty, compute new diarization
+                nb_speakers = source_config.speakers if source_config.speakers not in (0, "") else None
                 source_config.diarization = compute_diarization(
                     file_path=input_source,
                     device=device,
                     rttm_file=source_config.diarization_file,
                     vttm_file=source_config.vttm_file,
-                    strategy=source_config.diarization_strategy,
-                    nb_speakers=source_config.diarize,
+                    strategy=source_config.diarize_strategy or "pyannote",
+                    nb_speakers=nb_speakers,
                 )
 
     if source_config.vttm_file and source_config.diarization is None:
@@ -193,7 +192,7 @@ def create_audio_source(
         start_sample=start_sample,
         end_sample=stop_sample,
         diarization=source_config.diarization,
-        preserve_channels=source_config.diarization_strategy == "stereo",
+        preserve_channels=source_config.diarize_strategy == "stereo",
     )
 
 
@@ -223,12 +222,9 @@ def create_joint_speaker_sources(
             working_prefix_no_ext=working_prefix_no_ext,
         )
 
-    if source_config.diarization_file == "" or (source_config.diarize is not None and source_config.diarization_file is None):
+    if source_config.diarization_file == "" or (source_config.diarize_strategy is not None and source_config.diarization_file is None):
         source_config.diarization_file = output_prefix_no_ext + ".rttm"
-
-    nb_speakers = source_config.diarize
-    if nb_speakers == 0:
-        nb_speakers = None
+    nb_speakers = source_config.speakers if source_config.speakers not in (0, "") else None
 
     start_sample: int = timestr_to_samples(start_time) if start_time else 0
     stop_sample: Optional[int] = timestr_to_samples(stop_time) if stop_time else None
@@ -273,16 +269,14 @@ def create_separate_speaker_sources(
             working_prefix_no_ext=working_prefix_no_ext,
         )
 
-    if source_config.diarization_file == "" or (source_config.diarize is not None and source_config.diarization_file is None):
+    if source_config.diarization_file == "" or (source_config.diarize_strategy is not None and source_config.diarization_file is None):
         source_config.diarization_file = output_prefix_no_ext + ".rttm"
     if source_config.vttm_file is None:
         source_config.vttm_file = output_prefix_no_ext + ".vttm"
     if source_config.vttm_file == "":
         source_config.vttm_file = None
 
-    nb_speakers = source_config.diarize
-    if nb_speakers == 0:
-        nb_speakers = None
+    nb_speakers = source_config.speakers if source_config.speakers not in (0, "") else None
 
     start_sample: int = timestr_to_samples(start_time) if start_time else 0
     stop_sample: Optional[int] = timestr_to_samples(stop_time) if stop_time else None
@@ -291,7 +285,7 @@ def create_separate_speaker_sources(
         strategy=strategy,
         device=device,
         huggingface_token=os.getenv("HUGGINGFACE_TOKEN", ""),
-        diarization_strategy=source_config.diarization_strategy,
+        diarization_strategy=source_config.diarize_strategy or "pyannote",
     ) as separation:
         sources = separation.separate_speakers(
             file_path=input_source,

@@ -24,7 +24,7 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
     parser.add_argument("-f", "--from", default="00:00.000", dest="start_time", help="Start time within the file in hh:mm:ss.ms or mm:ss.ms")
     parser.add_argument("-t", "--to", default="", dest="stop_time", help="Stop time within the file in hh:mm:ss.ms or mm:ss.ms")
     parser.add_argument("-o", "--outdir", default=".", help="Path to the output directory")
-    parser.add_argument("--diarization-strategy", choices=["pyannote", "stereo"], default="pyannote", help="Diarization strategy to use")
+    parser.add_argument("--diarize", choices=["pyannote", "stereo", "channels"], default=None, help="Diarization strategy to use")
     parser.add_argument(
         "--vttm",
         nargs="?",
@@ -32,14 +32,7 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
         default=None,
         help="Path to VTTM diarization file; if omitted, a minimal VTTM is created (and filled if diarization runs).",
     )
-    parser.add_argument(
-        "-d",
-        "--diarization",
-        nargs="?",
-        action=OptionalValueAction,
-        default=None,
-        help="(Deprecated) RTTM diarization file path; will be wrapped into a VTTM for processing.",
-    )
+    parser.add_argument("-d", "--diarization", nargs="?", action=OptionalValueAction, default=None, help="RTTM diarization file path")
     parser.add_argument(
         "--separate", nargs="?", action=OptionalValueAction, default=None, help="Enables speaker voice separation and process each speaker separately"
     )
@@ -53,7 +46,14 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
         "if a name is provided, otherwise uses default names.",
     )
     parser.add_argument("-l", "--languages", nargs="*", help="Languages for speech recognition. Provide multiple values for multiple languages.")
-    parser.add_argument("-n", "--diarize", nargs="?", action=OptionalValueAction, default=None, help="Number of speakers in the audio file.")
+    parser.add_argument(
+        "-n",
+        "--speakers",
+        nargs="?",
+        action=OptionalValueAction,
+        default=None,
+        help="Number of speakers (int), 'auto' for automatic, or '0' to disable fixed-count hints.",
+    )
     parser.add_argument(
         "-b",
         "--nb_beams",
@@ -67,6 +67,7 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
     parser.add_argument("-s", "--stream", action="store_true", help="Set mode to low latency streaming")
     parser.add_argument("--offline", action="store_true", help="Disallow any network/model downloads; use cache only")
     parser.add_argument("--model-cache", default=None, help="Deterministic cache directory for models and downloads")
+    parser.add_argument("--config", help="Path to YAML or JSON config file for defaults")
     parser.add_argument(
         "--install",
         action="store_true",

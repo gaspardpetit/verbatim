@@ -37,21 +37,24 @@ def make_write_config(args, log_level: int) -> TranscriptWriterConfig:
     return write_config
 
 
-def resolve_diarize(args) -> Optional[int]:
-    if args.diarize == "":
-        return 0
-    if args.diarize is None:
+def resolve_speakers(args) -> Optional[int]:
+    if args.speakers in (None, "auto"):
         return None
-    return int(args.diarize)
+    if args.speakers in ("", 0, "0"):
+        return 0
+    try:
+        return int(args.speakers)
+    except (TypeError, ValueError):
+        return None
 
 
-def make_source_config(args, diarize: Optional[int]) -> SourceConfig:
+def make_source_config(args, speakers: Optional[int]) -> SourceConfig:
     vttm_path = args.vttm if args.vttm not in (None, "") else None
     return SourceConfig(
         isolate=args.isolate,
-        diarize=diarize,
+        diarize_strategy=args.diarize,
+        speakers=speakers,
         diarization_file=args.diarization,
-        diarization_strategy=args.diarization_strategy,
         vttm_file=vttm_path,
     )
 
