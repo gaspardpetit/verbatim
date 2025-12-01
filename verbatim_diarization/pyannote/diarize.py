@@ -70,8 +70,8 @@ class PyAnnoteDiarization(DiarizationStrategy):
                 import pyannote.audio.core.io as pa_io
 
                 setattr(pa_io, "AudioDecoder", AudioDecoder)  # pyright: ignore[reportPrivateImportUsage]
-            except Exception:
-                pass
+            except Exception as exc:  # pragma: no cover - best effort hook
+                LOG.debug("Failed to register torchcodec AudioDecoder with pyannote: %s", exc)
 
         try:
             _import_torchcodec()
@@ -126,8 +126,8 @@ class PyAnnoteDiarization(DiarizationStrategy):
             if temp_path and os.path.exists(temp_path):
                 try:
                     os.unlink(temp_path)
-                except Exception:  # pragma: no cover - best effort cleanup
-                    pass
+                except Exception as exc:  # pragma: no cover - best effort cleanup
+                    LOG.debug("Failed to remove temporary diarization file %s: %s", temp_path, exc)
 
         if diarization is None:
             raise RuntimeError("PyAnnote diarization failed without producing output")

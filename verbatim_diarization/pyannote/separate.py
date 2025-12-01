@@ -142,8 +142,8 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
                     import pyannote.audio.core.io as pa_io
 
                     setattr(pa_io, "AudioDecoder", AudioDecoder)  # pyright: ignore[reportPrivateImportUsage]
-                except Exception:
-                    pass
+                except Exception as exc:  # pragma: no cover - best effort hook
+                    LOG.debug("Failed to register torchcodec AudioDecoder with pyannote: %s", exc)
 
             try:
                 _import_torchcodec()
