@@ -24,7 +24,7 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
     parser.add_argument("-f", "--from", default="00:00.000", dest="start_time", help="Start time within the file in hh:mm:ss.ms or mm:ss.ms")
     parser.add_argument("-t", "--to", default="", dest="stop_time", help="Stop time within the file in hh:mm:ss.ms or mm:ss.ms")
     parser.add_argument("-o", "--outdir", default=".", help="Path to the output directory")
-    parser.add_argument("--diarize", choices=["pyannote", "stereo", "channels"], default=None, help="Diarization strategy to use")
+    parser.add_argument("--diarize", choices=["pyannote", "energy", "channel"], default=None, help="Diarization strategy to use")
     parser.add_argument(
         "--vttm",
         nargs="?",

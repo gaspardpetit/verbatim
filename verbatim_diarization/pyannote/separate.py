@@ -108,7 +108,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
                 raise ValueError("Stereo separation requires stereo audio input")
 
             # Create diarization annotation
-            diarizer = create_diarizer(strategy="stereo", device=self.device, huggingface_token=self.huggingface_token)
+            diarizer = create_diarizer(strategy="energy", device=self.device, huggingface_token=self.huggingface_token)
             diarization = diarizer.compute_diarization(
                 file_path=file_path, out_rttm_file=out_rttm_file, out_vttm_file=out_vttm_file, nb_speakers=nb_speakers
             )
