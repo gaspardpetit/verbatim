@@ -14,6 +14,7 @@ from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_rttm import Annotation as RTTMAnnotation
 from verbatim_rttm import AudioRef, Segment, write_vttm
 
+from .constants import PYANNOTE_DIARIZATION_MODEL_ID
 from .ffmpeg_loader import ensure_ffmpeg_for_torchcodec
 
 LOG = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
         self.device = device
         self.huggingface_token = huggingface_token
         self.pipeline = None
-        self.model_id = "pyannote/speaker-diarization-community-1"  # previously "pyannote/speaker-diarization-3.1"
+        self.model_id = PYANNOTE_DIARIZATION_MODEL_ID  # previously "pyannote/speaker-diarization-3.1"
 
     def initialize_pipeline(self):
         """Lazy initialization of PyAnnote pipeline"""

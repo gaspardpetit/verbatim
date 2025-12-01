@@ -46,9 +46,14 @@ def write_vttm(path: str, *, audio: Iterable[AudioRef], annotation: Annotation) 
     for line in _serialize_annotation(annotation):
         rttm_lines.append(line.rstrip("\n"))
 
+    try:
+        from yaml.scalarstring import LiteralScalarString  # type: ignore
+    except Exception:  # pragma: no cover - fallback if PyYAML changes
+        LiteralScalarString = str  # type: ignore
+
     payload = {
         "audio": [{"id": ref.id, "path": ref.path, "channel": ref.channel} for ref in audio],
-        "rttm": "\n".join(rttm_lines) + ("\n" if rttm_lines else ""),
+        "rttm": LiteralScalarString("\n".join(rttm_lines) + ("\n" if rttm_lines else "")),
     }
 
     with open(path, "w", encoding="utf-8") as fh:

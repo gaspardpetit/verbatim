@@ -256,13 +256,19 @@ def main():
 
     audio_sources: List[AudioSource] = []
 
-    if args.separate:
+    # Handle separation flag; empty string -> default strategy
+    if args.separate == "":
+        separate_strategy = "pyannote"
+    else:
+        separate_strategy = args.separate
+
+    if separate_strategy:
         # perform the transcription by combining the transcript of
         # multiple audio sources separated from a single one
         from .audio.sources.factory import create_separate_speaker_sources
 
         audio_sources += create_separate_speaker_sources(
-            strategy=args.separate or "pyannote",
+            strategy=separate_strategy or "pyannote",
             source_config=source_config,
             device=config.device,
             input_source=source_path,

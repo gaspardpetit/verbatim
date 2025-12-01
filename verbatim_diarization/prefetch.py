@@ -19,7 +19,9 @@ def prefetch_diarization_models(hf_token: Optional[str] = None, cache_dir: Optio
         LOG.warning("huggingface_hub not available: cannot prefetch diarization models")
         return
 
-    repos = ("pyannote/speaker-diarization-3.1", "pyannote/speech-separation-ami-1.0")
+    from verbatim_diarization.pyannote.constants import PYANNOTE_DIARIZATION_MODEL_ID, PYANNOTE_SEPARATION_MODEL_ID
+
+    repos = (PYANNOTE_DIARIZATION_MODEL_ID, PYANNOTE_SEPARATION_MODEL_ID)
     for repo in repos:
         try:
             # Local-only try first
