@@ -13,10 +13,10 @@ LOG = logging.getLogger(__name__)
 class ChannelDiarization(DiarizationStrategy):
     """Treat each channel as a separate speaker without further diarization."""
 
-    def __init__(self, speaker_labels: Optional[dict[int, str]] = None, speaker_pattern: str = "SPEAKER_{idx}", speaker_offset: int = 0):
+    def __init__(self, speaker_labels: Optional[dict[int, str]] = None, speaker: str = "SPEAKER_{idx}", offset: int = 0):
         self.speaker_labels = speaker_labels or {}
-        self.speaker_pattern = speaker_pattern
-        self.speaker_offset = speaker_offset
+        self.speaker_pattern = speaker
+        self.speaker_offset = offset
 
     def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, out_vttm_file: Optional[str] = None, **kwargs) -> Annotation:
         audio, sample_rate = sf.read(file_path)

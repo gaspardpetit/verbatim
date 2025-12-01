@@ -89,10 +89,24 @@ verbatim audio_file.mp3 -o ./output/
 
 Start an HTTP server
 ```bash
-verbatim --serve
+verbatim-serve
 ```
 This exposes local `/audio/transcriptions` and `/models` endpoints compatible with OpenAI's API (model IDs suffixed with `-verbatim`, e.g. `whisper-large-v3-verbatim`).
 Include `-F stream=true` in your request to receive Server-Sent Events (`transcript.text.delta`, `transcript.text.done`).
+
+Batch transcription
+```bash
+verbatim-batch --batch-dir ./audio --match "*.wav" "*.mp3" --recursive --skip-existing --txt
+```
+
+Diarization policy examples
+```bash
+# Downmix all channels and run pyannote
+verbatim audio_file.wav --diarize "=pyannote"
+
+# Channels 1-2 energy diarization together; channel 3 pyannote; others per-channel labels (auto numbering)
+verbatim audio_file.wav --diarize "1,2=energy;3=pyannote;*=channel?speaker=HOST"
+```
 
 For see the [detailed terminal documentation](doc/verbatim-cli.md) for additional examples and options.
 
