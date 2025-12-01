@@ -8,14 +8,14 @@ from verbatim_rttm import Segment
 class TestDiarizePolicyParams(unittest.TestCase):
     def test_channel_params(self):
         clause = PolicyClause(targets={0}, strategy="channel", params={"speaker": "HOST", "offset": "1"})
-        nb, kwargs = resolve_clause_params(clause, default_nb_speakers=3)
+        nb, kwargs, _ = resolve_clause_params(clause, default_nb_speakers=3)
         self.assertEqual(nb, 3)
         self.assertEqual(kwargs.get("speaker"), "HOST")
         self.assertEqual(kwargs.get("offset"), 1)
 
     def test_speakers_override(self):
         clause = PolicyClause(targets={0}, strategy="energy", params={"speakers": "2"})
-        nb, kwargs = resolve_clause_params(clause, default_nb_speakers=None)
+        nb, kwargs, _ = resolve_clause_params(clause, default_nb_speakers=None)
         self.assertEqual(nb, 2)
         self.assertEqual(kwargs, {})
 
