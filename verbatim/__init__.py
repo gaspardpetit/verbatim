@@ -2,7 +2,6 @@
 __init__.py
 """
 
-import logging
 import warnings
 
 # Avoid importing matplotlib on startup; fall back to DeprecationWarning for filtering.
