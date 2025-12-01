@@ -11,7 +11,7 @@ from verbatim_diarization import create_diarizer  # Add this import
 from verbatim_diarization.policy import assign_channels, parse_policy
 from verbatim_diarization.separate import create_separator
 from verbatim_rttm import Annotation as RTTMAnnotation
-from verbatim_rttm import AudioRef, load_vttm, write_vttm
+from verbatim_rttm import AudioRef, Segment, load_vttm, write_vttm
 
 from ..audio import samples_to_seconds, timestr_to_samples
 from ..convert import convert_to_wav
