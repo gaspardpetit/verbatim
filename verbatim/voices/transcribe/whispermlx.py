@@ -13,7 +13,6 @@ LOG = logging.getLogger(__name__)
 if sys.platform == "darwin":
     # MLX / mlx-whisper only available on macOS
     import mlx.core as mx
-    from mlx_whisper.transcribe import ModelHolder, transcribe as mlx_transcribe
     from mlx_whisper.audio import (
         N_FRAMES,
         N_SAMPLES,
@@ -21,6 +20,8 @@ if sys.platform == "darwin":
         log_mel_spectrogram,
         pad_or_trim,
     )
+    from mlx_whisper.transcribe import ModelHolder
+    from mlx_whisper.transcribe import transcribe as mlx_transcribe
 else:
     mx = None
     ModelHolder = None
