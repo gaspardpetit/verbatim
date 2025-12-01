@@ -48,7 +48,7 @@ If the tool falls back to CPU instead of GPU, you may need to reinstall the torc
 Verbatim uses VTTM as the diarization handoff. If you opt into pyannote-based diarization/separation (install the `diarization` extra), the models are gated and require a Hugging Face token:
 
 1. Create an account on [Hugging Face](https://huggingface.co/)
-2. Request access to the model at https://huggingface.co/pyannote/speaker-diarization-3.1
+2. Request access to the model at https://huggingface.co/pyannote/speaker-diarization-community-1
 3. Request access to the model at https://huggingface.co/pyannote/segmentation-3.0
 4. From your `Settings` > `Access Tokens`, generate an access token
 5. Set the `HUGGINGFACE_TOKEN` environment variable before running diarization. Once models are cached, the token is no longer needed.

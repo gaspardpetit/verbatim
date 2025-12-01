@@ -1,17 +1,22 @@
 import logging
-from typing import List, Optional, cast
+from typing import Any, List, Optional, cast
 
 import numpy as np
 import scipy.io.wavfile
 import torch
 from pyannote.audio import Pipeline
+from pyannote.audio.core.task import Problem, Resolution, Specifications
 from pyannote.audio.pipelines.utils.hook import ProgressHook
+from torch.serialization import add_safe_globals
 
 from verbatim.audio.audio import wav_to_int16
 from verbatim.audio.sources.audiosource import AudioSource
 from verbatim.audio.sources.fileaudiosource import FileAudioSource
 from verbatim_diarization.diarize.factory import create_diarizer
 from verbatim_diarization.separate.base import SeparationStrategy
+
+from .constants import PYANNOTE_SEPARATION_MODEL_ID
+from .ffmpeg_loader import ensure_ffmpeg_for_torchcodec
 
 # Configure logger
 LOG = logging.getLogger(__name__)
@@ -22,7 +27,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         self,
         device: str,
         huggingface_token: str,
-        separation_model="pyannote/speech-separation-ami-1.0",
+        separation_model=PYANNOTE_SEPARATION_MODEL_ID,
         diarization_strategy: str = "pyannote",
         **kwargs,
     ):
@@ -31,6 +36,13 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         self.diarization_strategy = diarization_strategy
         self.device = device
         self.huggingface_token = huggingface_token
+        # Allow safe loading of pyannote checkpoints under torch>=2.6
+        torch_version_mod: Any = getattr(torch, "torch_version", None)
+        safe_types = [Specifications, Problem, Resolution]
+        if torch_version_mod is not None:
+            safe_types.append(torch_version_mod.TorchVersion)  # type: ignore[attr-defined]
+        add_safe_globals(safe_types)  # pyright: ignore[reportArgumentType]
+
         self.pipeline = Pipeline.from_pretrained(separation_model, token=self.huggingface_token)
         hyper_parameters = {
             "segmentation": {"min_duration_off": 0.0, "threshold": 0.82},
@@ -83,6 +95,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             Tuple of (diarization annotation, dictionary mapping speaker IDs to WAV files)
         """
         separated_sources: List[AudioSource] = []
+        audio_refs_meta: List[tuple[str, str]] = []
         diarization_annotation = None
         if not out_rttm_file:
             out_rttm_file = None
@@ -107,6 +120,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
                     channel_data = wav_to_int16(channel_data)
                 file_name = f"{out_speaker_wav_prefix}-{speaker}.wav" if out_speaker_wav_prefix else f"{speaker}.wav"
                 scipy.io.wavfile.write(file_name, sample_rate, channel_data)
+                audio_refs_meta.append((speaker, file_name))
                 separated_sources.append(
                     FileAudioSource(
                         file=file_name,
@@ -119,16 +133,32 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
 
         else:
             # Use PyAnnote's neural separation for mono files
+            ensure_ffmpeg_for_torchcodec()
+
+            def _import_torchcodec():
+                from torchcodec.decoders import AudioDecoder  # noqa: F401
+
+                try:
+                    import pyannote.audio.core.io as pa_io
+
+                    setattr(pa_io, "AudioDecoder", AudioDecoder)  # pyright: ignore[reportPrivateImportUsage]
+                except Exception:
+                    pass
+
+            try:
+                _import_torchcodec()
+            except Exception:
+                ensure_ffmpeg_for_torchcodec()
+                try:
+                    _import_torchcodec()
+                except Exception as exc2:  # pragma: no cover - defensive import
+                    raise RuntimeError(
+                        "pyannote separation could not load torchcodec (FFmpeg dependency). "
+                        "Install FFmpeg shared libraries (4–7) and set FFMPEG_DLL_DIR or add them to PATH."
+                    ) from exc2
             with ProgressHook() as hook:
                 if self.pipeline is None:
                     raise RuntimeError("Pyannote separation pipeline is not initialized")
-                try:
-                    pass  # type: ignore[unused-import]
-                except Exception as exc:  # pragma: no cover - defensive import
-                    raise RuntimeError("""
-                        pyannote separation requires torchcodec for audio decoding;
-                        install torchcodec (and compatible torch) or use stereo strategy.
-                    """) from exc
                 diarization_output, sources = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
 
             # pyannote.audio 4.x returns DiarizeOutput; normalize to Annotation
@@ -151,6 +181,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
                         speaker_data = wav_to_int16(speaker_data)
                     file_name = f"{out_speaker_wav_prefix}-{speaker}.wav" if out_speaker_wav_prefix else f"{speaker}.wav"
                     scipy.io.wavfile.write(file_name, 16000, speaker_data)
+                    audio_refs_meta.append((speaker, file_name))
                     separated_sources.append(
                         FileAudioSource(
                             file=file_name,
@@ -169,16 +200,15 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             from verbatim_rttm import AudioRef, Segment, write_vttm
 
             uri = os.path.splitext(os.path.basename(file_path))[0]
-            segments = [
-                Segment(start=segment.start, end=segment.end, speaker=str(label), file_id=uri)
-                for segment, _track, label in diarization_annotation.itertracks(yield_label=True)
-            ]
-            audio_refs = []
-            for src in separated_sources:
-                base = os.path.basename(src.source_name)
-                audio_refs.append(AudioRef(id=os.path.splitext(base)[0], path=src.source_name))
-            write_vttm(
-                out_vttm_file, audio=audio_refs or [AudioRef(id=uri, path=file_path)], annotation=RTTMAnnotation(segments=segments, file_id=uri)
-            )
+            label_to_path = {label: path for label, path in audio_refs_meta}
+            segments = []
+            for segment, _track, label in diarization_annotation.itertracks(yield_label=True):
+                seg_label = str(label)
+                file_id = seg_label if seg_label in label_to_path else uri
+                segments.append(Segment(start=segment.start, end=segment.end, speaker=seg_label, file_id=file_id))
+
+            audio_refs = [AudioRef(id=label, path=path, channel="1") for label, path in audio_refs_meta] or [AudioRef(id=uri, path=file_path)]
+
+            write_vttm(out_vttm_file, audio=audio_refs, annotation=RTTMAnnotation(segments=segments, file_id=uri))
 
         return separated_sources
