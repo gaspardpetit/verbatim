@@ -8,7 +8,7 @@ from audio_separator.separator import Separator
 from numpy.typing import NDArray
 from scipy.io.wavfile import write as wav_write
 
-from ..audio.audio import format_audio
+from verbatim_audio.audio import format_audio
 
 # Configure logger
 LOG = logging.getLogger(__name__)

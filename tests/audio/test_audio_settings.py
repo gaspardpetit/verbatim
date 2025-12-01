@@ -3,7 +3,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from verbatim.audio import settings
+from verbatim_audio import settings
 
 
 class TestAudioSettings(unittest.TestCase):

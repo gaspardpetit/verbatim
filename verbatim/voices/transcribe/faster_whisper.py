@@ -5,7 +5,8 @@ from typing import List, Optional, Tuple
 from faster_whisper import WhisperModel
 from numpy.typing import NDArray
 
-from ...audio.audio import samples_to_seconds
+from verbatim_audio.audio import samples_to_seconds
+
 from ...transcript.words import Word
 from .transcribe import Transcriber, WhisperConfig
 

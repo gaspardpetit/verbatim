@@ -3,12 +3,12 @@ import os
 import sys
 import unittest
 
-from verbatim.audio.sources.factory import create_audio_sources
 from verbatim.config import Config
 from verbatim.eval.compare import compute_metrics
 from verbatim.eval.find import find_reference_file
 from verbatim.transcript.format.json import read_dlm_utterances, read_utterances
 from verbatim.verbatim import Verbatim
+from verbatim_audio.sources.factory import create_audio_sources
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Use CPU only

@@ -3,14 +3,14 @@ import unittest
 
 import numpy as np
 
-from verbatim.audio.settings import AUDIO_PARAMS
+from verbatim_audio.settings import AUDIO_PARAMS
 
 # pylint: disable=import-outside-toplevel
 
 
 class TestAudioProcessing(unittest.TestCase):
     def test_format_audio(self):
-        from verbatim.audio.audio import format_audio
+        from verbatim_audio.audio import format_audio
 
         sample_rate = AUDIO_PARAMS.sample_rate
         audio_mono_float = np.array([0.0, 0.5, -0.5, 1.0, -1.0], dtype=np.float32)
@@ -51,7 +51,7 @@ class TestAudioProcessing(unittest.TestCase):
         np.testing.assert_array_almost_equal(output, expected, decimal=5)
 
     def test_wav_to_int16(self):
-        from verbatim.audio.audio import wav_to_int16
+        from verbatim_audio.audio import wav_to_int16
 
         data_int16 = np.array([0, 1000, -1000, 32767, -32768], dtype=np.int16)
         result = wav_to_int16(data_int16)
@@ -67,7 +67,7 @@ class TestAudioProcessing(unittest.TestCase):
             wav_to_int16(np.array([0, 1, 2], dtype=np.uint8))
 
     def test_samples_to_seconds(self):
-        from verbatim.audio.audio import samples_to_seconds
+        from verbatim_audio.audio import samples_to_seconds
 
         sr = AUDIO_PARAMS.sample_rate
         self.assertEqual(samples_to_seconds(0), 0.0)
@@ -76,7 +76,7 @@ class TestAudioProcessing(unittest.TestCase):
         self.assertTrue(math.isclose(samples_to_seconds(3 * sr), 3.0, rel_tol=1e-6))
 
     def test_seconds_to_samples(self):
-        from verbatim.audio.audio import seconds_to_samples
+        from verbatim_audio.audio import seconds_to_samples
 
         sr = AUDIO_PARAMS.sample_rate
         self.assertEqual(seconds_to_samples(0), 0)
@@ -85,7 +85,7 @@ class TestAudioProcessing(unittest.TestCase):
         self.assertEqual(seconds_to_samples(2.5), int(2.5 * sr))
 
     def test_seconds_to_timestr(self):
-        from verbatim.audio.audio import seconds_to_timestr
+        from verbatim_audio.audio import seconds_to_timestr
 
         self.assertEqual(seconds_to_timestr(0.0), "[00:00:00.000]")
         self.assertEqual(seconds_to_timestr(1.5), "[00:00:01.500]")
@@ -93,7 +93,7 @@ class TestAudioProcessing(unittest.TestCase):
         self.assertEqual(seconds_to_timestr(59.999), "[00:00:59.999]")
 
     def test_sample_to_timestr(self):
-        from verbatim.audio.audio import sample_to_timestr
+        from verbatim_audio.audio import sample_to_timestr
 
         sr = AUDIO_PARAMS.sample_rate
         self.assertEqual(sample_to_timestr(2 * sr, sr), "[00:00:02.000]")
@@ -101,7 +101,7 @@ class TestAudioProcessing(unittest.TestCase):
         self.assertEqual(sample_to_timestr(44100, 44100), "[00:00:01.000]")
 
     def test_timestr_to_samples(self):
-        from verbatim.audio.audio import timestr_to_samples
+        from verbatim_audio.audio import timestr_to_samples
 
         sample_rate = AUDIO_PARAMS.sample_rate
         self.assertEqual(timestr_to_samples("01:01:01.780", sample_rate), int((1 * 3600 + 1 * 60 + 1 + 0.780) * sample_rate))

@@ -8,7 +8,8 @@ from typing import List, Tuple, Union
 from numpy.typing import NDArray
 from pywhispercpp.model import Model, Segment
 
-from ...audio.audio import samples_to_seconds, seconds_to_samples
+from verbatim_audio.audio import samples_to_seconds, seconds_to_samples
+
 from ...transcript.words import Word
 from .transcribe import Transcriber
 

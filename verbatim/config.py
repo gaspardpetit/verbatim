@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import List, Mapping, Optional, Tuple
 
-from .audio.sources.audiosource import AudioSource
+from verbatim_audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
 

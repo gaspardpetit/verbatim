@@ -1,6 +1,6 @@
 import unittest
 
-from verbatim.audio.sources.factory import relabel_speakers, resolve_clause_params
+from verbatim_audio.sources.factory import relabel_speakers, resolve_clause_params
 from verbatim_diarization.policy import PolicyClause
 from verbatim_rttm import Segment
 

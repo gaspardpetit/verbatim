@@ -4,15 +4,15 @@
 check: lint type sec
 
 lint:
-	ruff check verbatim verbatim_batch verbatim_cli verbatim_diarization verbatim_rttm verbatim_serve verbatim_transcript tests
-	flake8 verbatim verbatim_batch verbatim_cli verbatim_diarization verbatim_rttm verbatim_serve verbatim_transcript tests
-	pylint --disable=import-error verbatim $$(git ls-files 'tests/*.py')
+	ruff check verbatim verbatim_audio verbatim_batch verbatim_cli verbatim_diarization verbatim_rttm verbatim_serve verbatim_transcript tests
+	flake8 verbatim verbatim_audio verbatim_batch verbatim_cli verbatim_diarization verbatim_rttm verbatim_serve verbatim_transcript tests
+	pylint --disable=import-error verbatim $$(git ls-files 'tests/**/*.py')
 
 type:
 	pyright
 	
 sec:
-	bandit -r verbatim verbatim_batch verbatim_cli verbatim_diarization verbatim_rttm verbatim_serve verbatim_transcript tests run.py
+	bandit -r verbatim verbatim_audio verbatim_batch verbatim_cli verbatim_diarization verbatim_rttm verbatim_serve verbatim_transcript tests run.py
 
 # Format code using Ruff formatter
 .PHONY: fmt
@@ -24,7 +24,7 @@ fmt:
 fix:
 	ruff format .
 	ruff check --fix --select I .
-	ruff check --fix verbatim verbatim_batch verbatim_cli verbatim_diarization verbatim_rttm verbatim_serve verbatim_transcript tests
+	ruff check --fix verbatim verbatim_audio verbatim_batch verbatim_cli verbatim_diarization verbatim_rttm verbatim_serve verbatim_transcript tests
 
 # Run test suite (quick)
 .PHONY: test

@@ -5,8 +5,8 @@ from abc import ABC, abstractmethod
 from time import perf_counter
 from typing import List
 
-from verbatim.audio.audio import samples_to_seconds
 from verbatim.transcript.words import Word
+from verbatim_audio.audio import samples_to_seconds
 
 # Configure logger
 LOG = logging.getLogger(__name__)

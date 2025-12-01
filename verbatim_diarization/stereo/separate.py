@@ -5,9 +5,9 @@ from typing import List, Optional
 import numpy as np
 import scipy.io.wavfile
 
-from verbatim.audio.audio import wav_to_int16
-from verbatim.audio.sources.audiosource import AudioSource
-from verbatim.audio.sources.fileaudiosource import FileAudioSource
+from verbatim_audio.audio import wav_to_int16
+from verbatim_audio.sources.audiosource import AudioSource
+from verbatim_audio.sources.fileaudiosource import FileAudioSource
 from verbatim_diarization.separate.base import SeparationStrategy
 from verbatim_rttm import Annotation, AudioRef, Segment, write_vttm
 
