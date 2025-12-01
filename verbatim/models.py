@@ -18,7 +18,6 @@ LOG = logging.getLogger(__name__)
 
 
 class Models:
-    transcriber: TranscriberProtocol
     vad: "VoiceActivityDetection"
     sentence_tokenizer: SentenceTokenizer
 
