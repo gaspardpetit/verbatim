@@ -113,6 +113,10 @@ def compute_diarization_policy(
     nchannels = info.channels
     assignments = assign_channels(clauses, nchannels=nchannels)
 
+    if len(assignments) < nchannels:
+        missing = sorted(set(range(nchannels)) - set(assignments.keys()))
+        LOG.warning("Diarization policy left channels %s unassigned; they will be ignored.", missing)
+
     grouped: Dict[str, Dict] = {}
     for ch, clause in assignments.items():
         key = f"{clause.strategy}|{tuple(sorted(clause.params.items()))}"
@@ -139,6 +143,7 @@ def compute_diarization_policy(
                 strategy=clause.strategy,
                 nb_speakers=nb_speakers,
                 working_dir=working_dir,
+                **clause.params,
             )
 
             for segment in diarization.segments:
@@ -150,7 +155,7 @@ def compute_diarization_policy(
             try:
                 os.unlink(temp)
             except Exception:  # pragma: no cover
-                pass
+                LOG.warning("Failed to remove temporary file %s", temp)
 
     merged = Annotation(segments=combined_segments, file_id=base_id)
 

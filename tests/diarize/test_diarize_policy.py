@@ -33,6 +33,12 @@ class TestDiarizePolicy(unittest.TestCase):
         self.assertEqual(assignments[1].strategy, "pyannote")
         self.assertNotIn(0, assignments)  # no wildcard means unassigned
 
+    def test_speaker_pattern_params(self):
+        policy_str = "0=channel?speaker=HOST&offset=1"
+        clauses = parse_policy(policy_str)
+        self.assertEqual(clauses[0].params.get("speaker"), "HOST")
+        self.assertEqual(clauses[0].params.get("offset"), "1")
+
 
 if __name__ == "__main__":
     unittest.main()
