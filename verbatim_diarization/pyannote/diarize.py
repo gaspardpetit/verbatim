@@ -1,8 +1,10 @@
 import logging
 import os
+import tempfile
 import time
 from typing import Any, Optional
 
+import numpy as np
 import torch
 from pyannote.audio import Pipeline
 from pyannote.audio.core.task import Problem, Resolution, Specifications
@@ -44,7 +46,13 @@ class PyAnnoteDiarization(DiarizationStrategy):
         self.pipeline.to(torch.device(self.device))
 
     def compute_diarization(
-        self, file_path: str, out_rttm_file: Optional[str] = None, out_vttm_file: Optional[str] = None, nb_speakers: Optional[int] = None, **kwargs
+        self,
+        file_path: str,
+        out_rttm_file: Optional[str] = None,
+        out_vttm_file: Optional[str] = None,
+        nb_speakers: Optional[int] = None,
+        working_dir: Optional[str] = None,
+        **kwargs,
     ) -> Annotation:
         """
         Compute diarization using PyAnnote.
@@ -67,7 +75,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
 
         try:
             _import_torchcodec()
-        except Exception as exc:
+        except Exception:
             # Retry after another FFmpeg scan; surface a clearer error if still broken.
             ensure_ffmpeg_for_torchcodec()
             try:
@@ -77,21 +85,52 @@ class PyAnnoteDiarization(DiarizationStrategy):
                     "pyannote diarization could not load torchcodec (FFmpeg dependency). "
                     "Install FFmpeg shared libraries (4–7) and set FFMPEG_DLL_DIR or add them to PATH."
                 ) from exc2
-        self.initialize_pipeline()
-        pipeline = self.pipeline
-        if pipeline is None:
-            raise RuntimeError("PyAnnote pipeline failed to initialize")
-        start = time.perf_counter()
-        with ProgressHook() as hook:
-            diarization = pipeline(file_path, hook=hook, num_speakers=nb_speakers)
-        elapsed = time.perf_counter() - start
-        LOG.info(
-            "PyAnnote diarization completed in %.2fs (model=%s, file=%s, speakers=%s)",
-            elapsed,
-            self.model_id,
-            file_path,
-            nb_speakers if nb_speakers is not None else "auto",
-        )
+        # Downmix multi-channel audio to mono for pyannote
+        temp_path: Optional[str] = None
+        diarization = None
+        try:
+            try:
+                import soundfile as sf  # lazy import
+
+                audio, sample_rate = sf.read(file_path)
+                if isinstance(audio, np.ndarray) and audio.ndim > 1 and audio.shape[1] > 1:
+                    mono = np.mean(audio, axis=1)
+                    tmp_dir = working_dir or tempfile.gettempdir()
+                    fd, temp_path = tempfile.mkstemp(suffix=".wav", dir=tmp_dir)
+                    os.close(fd)
+                    sf.write(temp_path, mono, sample_rate)
+                    LOG.info("Downmixed %s to mono for pyannote diarization at %s", file_path, temp_path)
+                    file_for_pipeline = temp_path
+                else:
+                    file_for_pipeline = file_path
+            except Exception:
+                # Fallback: let pyannote handle; may fail if multi-channel unsupported
+                file_for_pipeline = file_path
+
+            self.initialize_pipeline()
+            pipeline = self.pipeline
+            if pipeline is None:
+                raise RuntimeError("PyAnnote pipeline failed to initialize")
+            start = time.perf_counter()
+            with ProgressHook() as hook:
+                diarization = pipeline(file_for_pipeline, hook=hook, num_speakers=nb_speakers)
+            elapsed = time.perf_counter() - start
+            LOG.info(
+                "PyAnnote diarization completed in %.2fs (model=%s, file=%s, speakers=%s)",
+                elapsed,
+                self.model_id,
+                file_path,
+                nb_speakers if nb_speakers is not None else "auto",
+            )
+        finally:
+            if temp_path and os.path.exists(temp_path):
+                try:
+                    os.unlink(temp_path)
+                except Exception:  # pragma: no cover - best effort cleanup
+                    pass
+
+        if diarization is None:
+            raise RuntimeError("PyAnnote diarization failed without producing output")
 
         # pyannote.audio 4.x returns a DiarizeOutput with a speaker_diarization field
         if hasattr(diarization, "speaker_diarization"):
