@@ -47,7 +47,7 @@ class Models:
 
         LOG.info("Initializing Sentence Tokenizer.")
         if stream:
-            from .transcript.sentences import FastSentenceTokenizer
+            from .transcript.sentences import FastSentenceTokenizer  # pylint: disable=import-outside-toplevel
 
             self.sentence_tokenizer = FastSentenceTokenizer()
         else:
