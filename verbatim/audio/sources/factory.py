@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 import numpy as np
 
 from verbatim_diarization import create_diarizer  # Add this import
-from verbatim_diarization.policy import assign_channels, parse_policy
+from verbatim_diarization.policy import assign_channels, parse_params, parse_policy
 from verbatim_diarization.separate import create_separator
 from verbatim_rttm import Annotation as RTTMAnnotation
 from verbatim_rttm import AudioRef, Segment, load_vttm, write_vttm
@@ -27,6 +27,10 @@ def parse_channel_indices(channels_spec: Union[str, int, None]) -> List[int]:
     """Parse channel selections like '0', '0-2,4' into zero-based indices."""
     if channels_spec is None:
         return []
+    if isinstance(channels_spec, str):
+        spec_lower = channels_spec.strip().lower()
+        if spec_lower in ("*", "stereo"):
+            return []
     if isinstance(channels_spec, int):
         return [channels_spec]
     indices: Set[int] = set()
@@ -83,6 +87,12 @@ def compute_diarization(
         PyAnnote Annotation object
     """
 
+    # Allow simple inline params: "energy?normalize=true"
+    strategy_kwargs = dict(strategy_kwargs)
+    if "?" in strategy and not any(sym in strategy for sym in ("=", ";", ",")):
+        strategy, param_str = strategy.split("?", 1)
+        strategy_kwargs.update(parse_params(param_str))
+
     # If strategy string looks like a policy (contains assignment or ranges), apply policy routing
     if any(sym in strategy for sym in ("=", ";", ",", "-", "*")):
         return compute_diarization_policy(
@@ -102,6 +112,13 @@ def compute_diarization(
         rttm_file,
         vttm_file,
     )
+    if strategy == "energy" and "normalize" in strategy_kwargs:
+        norm_val = strategy_kwargs.get("normalize")
+        if isinstance(norm_val, str):
+            norm_lower = norm_val.lower()
+            strategy_kwargs["normalize"] = norm_lower in ("1", "true", "yes", "y")
+        else:
+            strategy_kwargs["normalize"] = bool(norm_val)
     diarizer = create_diarizer(strategy=strategy, device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN"), **strategy_kwargs)
 
     return diarizer.compute_diarization(
@@ -152,6 +169,16 @@ def resolve_clause_params(clause, default_nb_speakers: Union[int, None]) -> Tupl
             offset_int = 0
         strategy_kwargs["speaker"] = pattern
         strategy_kwargs["offset"] = offset_int
+    elif clause.strategy == "energy":
+        normalize_val = params_copy.pop("normalize", None)
+        if isinstance(normalize_val, str):
+            normalize_lower = normalize_val.lower()
+            if normalize_lower in ("1", "true", "yes", "y"):
+                strategy_kwargs["normalize"] = True
+            elif normalize_lower in ("0", "false", "no", "n"):
+                strategy_kwargs["normalize"] = False
+        elif normalize_val is not None:
+            strategy_kwargs["normalize"] = bool(normalize_val)
 
     # Preserve any extra params for future strategies
     strategy_kwargs.update(params_copy)
@@ -441,8 +468,7 @@ def create_audio_sources(
         if source_config.vttm_file and not os.path.exists(source_config.vttm_file):
             LOG.info("No VTTM provided; creating minimal VTTM placeholder at %s", source_config.vttm_file)
             audio_id = os.path.splitext(os.path.basename(input_source))[0]
-            preserve_channels = source_config.diarize_strategy in ("energy", "channel")
-            audio_ref = AudioRef(id=audio_id, path=input_source, channels="stereo" if preserve_channels else "1")
+            audio_ref = AudioRef(id=audio_id, path=input_source, channels="*")
             write_vttm(source_config.vttm_file, audio=[audio_ref], annotation=RTTMAnnotation())
         if source_config.vttm_file:
             try:
