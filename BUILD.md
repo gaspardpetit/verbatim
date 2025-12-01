@@ -59,9 +59,11 @@ pip install uv
 ### Install Dependencies with Astral UV
 Use the `uv` CLI to install dependencies as per the configurations in `pyproject.toml`:
 ```bash
-uv pip install .
+uv pip install .  --group dev
 # or if you will be working on the project:
-# uv pip install -e .
+# uv pip install -e .  --group dev
+# or if you also want to pull pyannote diarization support:
+# uv pip install -e ".[diarization]" --group dev
 ```
 This will resolve dependencies, including those with custom indices or conditional markers.
 
