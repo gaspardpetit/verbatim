@@ -1,7 +1,7 @@
 import logging
 import os
 import time
-from typing import Optional
+from typing import Any, Optional
 
 import torch
 from pyannote.audio import Pipeline
@@ -30,7 +30,11 @@ class PyAnnoteDiarization(DiarizationStrategy):
         """Lazy initialization of PyAnnote pipeline"""
         if self.pipeline is None:
             # Allow safe loading of pyannote checkpoints under torch>=2.6
-            add_safe_globals([torch.torch_version.TorchVersion, Specifications, Problem, Resolution])
+            torch_version_mod: Any = getattr(torch, "torch_version", None)
+            safe_types = [Specifications, Problem, Resolution]
+            if torch_version_mod is not None:
+                safe_types.append(torch_version_mod.TorchVersion)  # type: ignore[attr-defined]
+            add_safe_globals(safe_types)  # pyright: ignore[reportArgumentType]
             # Default to community-friendly model
             self.pipeline = Pipeline.from_pretrained(self.model_id, token=self.huggingface_token)
         if self.pipeline is None:
@@ -56,7 +60,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
             try:
                 import pyannote.audio.core.io as pa_io
 
-                pa_io.AudioDecoder = AudioDecoder
+                setattr(pa_io, "AudioDecoder", AudioDecoder)  # pyright: ignore[reportPrivateImportUsage]
             except Exception:
                 pass
 
