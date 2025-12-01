@@ -546,7 +546,8 @@ def create_audio_sources(
                     working_prefix_no_ext=f"{working_prefix_no_ext}-{audio_ref.id}",
                     preserve_channels=True,
                 )
-            scoped_diarization = filter_annotation_by_file_id(source_config.diarization, audio_ref.id)
+            diarization_obj = source_config.diarization if isinstance(source_config.diarization, RTTMAnnotation) else None
+            scoped_diarization = filter_annotation_by_file_id(diarization_obj, audio_ref.id)
             sources.append(
                 FileAudioSource(
                     file=file_path,
