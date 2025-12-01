@@ -12,6 +12,7 @@ import yaml
 from verbatim.transcript.format.writer import LanguageStyle, ProbabilityStyle, SpeakerStyle, TimestampStyle
 
 OUTPUT_FLAGS = ("ass", "docx", "txt", "json", "md", "stdout", "stdout_nocolor")
+DEFAULT_MATCH = ["*.wav", "*.mp3", "*.m4a", "*.mp4"]
 
 
 def load_config_file(path: str) -> Dict[str, Any]:
@@ -44,8 +45,13 @@ def _normalize_styles(cfg: Dict[str, Any]) -> Dict[str, Any]:
 
 def _flatten_output(output_section: Dict[str, Any]) -> Dict[str, Any]:
     flat: Dict[str, Any] = {}
+    formats = None
     if "formats" in output_section and isinstance(output_section["formats"], list):
-        selected = set(output_section["formats"])
+        formats = output_section["formats"]
+    if "files" in output_section and isinstance(output_section["files"], list):
+        formats = output_section["files"]
+    if formats is not None:
+        selected = set(formats)
         for flag in OUTPUT_FLAGS:
             flat[flag] = flag.replace("_", "-") in selected or flag in selected
     else:
@@ -68,6 +74,12 @@ def flatten_profile(profile: Dict[str, Any]) -> Dict[str, Any]:
     flat: Dict[str, Any] = {}
     for key, val in profile.items():
         if key == "match":
+            if isinstance(val, dict):
+                filenames = val.get("filename")
+                if filenames:
+                    flat["match"] = filenames
+            elif isinstance(val, list):
+                flat["match"] = val
             continue
         if key == "include" and isinstance(val, dict):
             filenames = val.get("filename")
@@ -98,7 +110,7 @@ def _match_profile(profile: Dict[str, Any], filename: Optional[str]) -> bool:
         excludes = profile["ignore"].get("filename") or []
 
     if filename is None:
-        return False
+        return True
     name = Path(filename).name
     if includes:
         if not any(fnmatch.fnmatch(name, pat) for pat in includes):
@@ -113,7 +125,12 @@ def select_profile(config_data: Dict[str, Any], filename: Optional[str]) -> Dict
         return {}
 
     base_defaults = flatten_profile({k: v for k, v in config_data.items() if k != "profiles"})
+    if "match" not in base_defaults:
+        base_defaults["match"] = DEFAULT_MATCH
     profiles = config_data.get("profiles")
+    if filename is None and profiles:
+        # For global defaults (no filename), ignore profile matching and return root defaults only.
+        return base_defaults
     if isinstance(profiles, list) and profiles:
         fallback: Optional[Dict[str, Any]] = None
         for profile in profiles:
@@ -142,5 +159,14 @@ def select_profile(config_data: Dict[str, Any], filename: Optional[str]) -> Dict
 def merge_args(base_defaults: Namespace, profile_overrides: Dict[str, Any], user_args: Namespace) -> Namespace:
     merged = vars(base_defaults).copy()
     merged.update(profile_overrides)
-    merged.update(vars(user_args))
+    for key, val in vars(user_args).items():
+        # Only override when the user provided a value different from the parser default
+        if key in merged and val == getattr(base_defaults, key, None):
+            continue
+        merged[key] = val
+    # If match/ignore not specified by user or profile, ensure defaults
+    if "match" not in merged or merged["match"] is None:
+        merged["match"] = DEFAULT_MATCH
+    if "ignore" not in merged or merged["ignore"] is None:
+        merged["ignore"] = []
     return argparse.Namespace(**merged)

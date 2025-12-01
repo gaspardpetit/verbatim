@@ -54,7 +54,7 @@ class TestVTTM(unittest.TestCase):
                 Segment(start=0.0, end=2.0, speaker="A", file_id="audio1"),
             ]
         )
-        audio_refs = [AudioRef(id="audio1", path="/data/audio1.wav", channel="1")]
+        audio_refs = [AudioRef(id="audio1", path="/data/audio1.wav", channels="1")]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "sample.vttm")

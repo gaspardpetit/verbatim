@@ -15,7 +15,7 @@ class AudioRef:
 
     id: str
     path: str
-    channel: str | int = "1"
+    channels: str | int = "1"
 
 
 def load_vttm(path: str) -> Tuple[List[AudioRef], Annotation]:
@@ -52,7 +52,7 @@ def write_vttm(path: str, *, audio: Iterable[AudioRef], annotation: Annotation) 
         LiteralScalarString = str  # type: ignore
 
     payload = {
-        "audio": [{"id": ref.id, "path": ref.path, "channel": ref.channel} for ref in audio],
+        "audio": [{"id": ref.id, "path": ref.path, "channels": ref.channels} for ref in audio],
         "rttm": LiteralScalarString("\n".join(rttm_lines) + ("\n" if rttm_lines else "")),
     }
 
@@ -73,8 +73,8 @@ def _parse_audio(raw_audio) -> List[AudioRef]:
         path = entry.get("path") or entry.get("file_path")
         if not audio_id or not path:
             continue
-        channel = entry.get("channel", "1")
-        audio_refs.append(AudioRef(id=str(audio_id), path=str(path), channel=str(channel)))
+        channels = entry.get("channels", entry.get("channel", "1"))
+        audio_refs.append(AudioRef(id=str(audio_id), path=str(path), channels=str(channels)))
     return audio_refs
 
 

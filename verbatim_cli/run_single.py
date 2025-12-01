@@ -30,10 +30,10 @@ def build_audio_sources(
             output_prefix_no_ext=output_prefix_no_ext,
         )
     else:
-        from verbatim.audio.sources.factory import create_audio_source
+        from verbatim.audio.sources.factory import create_audio_sources
 
-        audio_sources.append(
-            create_audio_source(
+        audio_sources.extend(
+            create_audio_sources(
                 source_config=source_config,
                 device=config.device,
                 input_source=source_path,

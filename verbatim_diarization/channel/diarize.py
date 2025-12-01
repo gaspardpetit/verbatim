@@ -23,8 +23,11 @@ class ChannelDiarization(DiarizationStrategy):
         audio_info = sf.info(file_path)
         LOG.info("Input file channels: %s, sample rate: %s", audio_info.channels, audio_info.samplerate)
 
+        if audio.ndim == 1:
+            # Expand mono to (samples, 1) so channel labeling still applies
+            audio = audio[:, None]
         if audio.ndim < 2 or audio.shape[1] < 1:
-            raise ValueError("Channel diarization requires multi-channel audio")
+            raise ValueError("Channel diarization requires audio with at least one channel")
 
         uri = os.path.splitext(os.path.basename(file_path))[0]
         duration = len(audio) / sample_rate
@@ -35,7 +38,7 @@ class ChannelDiarization(DiarizationStrategy):
         for idx in range(num_channels):
             speaker = self.speaker_labels.get(idx, self.speaker_pattern.format(idx=idx + self.speaker_offset))
             segments.append(Segment(start=0.0, end=duration, speaker=speaker, file_id=uri))
-            audio_refs.append(AudioRef(id=f"{uri}_ch{idx}", path=file_path, channel=str(idx)))
+            audio_refs.append(AudioRef(id=f"{uri}#{idx}", path=file_path, channels=str(idx)))
 
         annotation = Annotation(segments=segments, file_id=uri)
 

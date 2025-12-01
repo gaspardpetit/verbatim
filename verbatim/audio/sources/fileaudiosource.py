@@ -22,9 +22,11 @@ class FileAudioStream(AudioStream):
     source: "FileAudioSource"
     stream: wave.Wave_read
 
-    def __init__(self, source: "FileAudioSource", diarization: Optional[Annotation]):
+    def __init__(self, source: "FileAudioSource", diarization: Optional[Annotation], channel_indices: Optional[list[int]], file_id: Optional[str]):
         super().__init__(start_offset=source.start_sample, diarization=diarization)
         self.source = source
+        self.channel_indices = channel_indices
+        self.file_id = file_id
         self.stream = wave.open(self.source.file_path, "rb")
         if self.source.start_sample != 0:
             self.setpos(self.source.start_sample)
@@ -51,6 +53,13 @@ class FileAudioStream(AudioStream):
 
         if len(audio_array) == 0:
             return audio_array
+
+        if self.channel_indices:
+            try:
+                audio_array = audio_array[:, self.channel_indices]
+            except IndexError:
+                LOG.warning("Requested channel indices %s exceed available channels %s", self.channel_indices, n_channels)
+                return np.array([], dtype=np.float32)
 
         # Convert to float32
         audio_array = audio_array.astype(np.float32) / 32768.0
@@ -96,10 +105,14 @@ class FileAudioSource(AudioSource):
         start_sample: int = 0,
         end_sample: Optional[int] = None,
         preserve_channels: bool = False,
+        channel_indices: Optional[list[int]] = None,
+        file_id: Optional[str] = None,
     ):
         super().__init__(source_name=file)
         self.file_path = file
         self.diarization = diarization
+        self.channel_indices = channel_indices
+        self.file_id = file_id
         self.preserve_channels = preserve_channels
         file_path_no_ext, file_path_ext = os.path.splitext(self.file_path)
         if file_path_ext in COMPATIBLE_FORMATS:
@@ -130,4 +143,4 @@ class FileAudioSource(AudioSource):
         return file_path, noise_path
 
     def open(self):
-        return FileAudioStream(source=self, diarization=self.diarization)
+        return FileAudioStream(source=self, diarization=self.diarization, channel_indices=self.channel_indices, file_id=self.file_id)

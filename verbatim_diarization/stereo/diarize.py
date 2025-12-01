@@ -118,7 +118,7 @@ class EnergyDiarization(DiarizationStrategy):
 
         if out_vttm_file:
             os.makedirs(os.path.dirname(out_vttm_file) or ".", exist_ok=True)
-            audio_refs = [AudioRef(id=uri, path=file_path, channel="stereo")]
+            audio_refs = [AudioRef(id=uri, path=file_path, channels="stereo")]
             write_vttm(out_vttm_file, audio=audio_refs, annotation=annotation)
             LOG.info("Wrote diarization to VTTM file: %s", out_vttm_file)
 

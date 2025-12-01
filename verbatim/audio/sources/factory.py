@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 import tempfile
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 
@@ -23,6 +23,42 @@ LOG = logging.getLogger(__name__)
 Annotation = RTTMAnnotation  # pylint: disable=invalid-name
 
 
+def parse_channel_indices(channels_spec: Union[str, int, None]) -> List[int]:
+    """Parse channel selections like '0', '0-2,4' into zero-based indices."""
+    if channels_spec is None:
+        return []
+    if isinstance(channels_spec, int):
+        return [channels_spec]
+    indices: Set[int] = set()
+    for part in str(channels_spec).split(","):
+        part = part.strip()
+        if not part:
+            continue
+        if "-" in part:
+            start_s, end_s = part.split("-", 1)
+            try:
+                start = int(start_s)
+                end = int(end_s)
+            except ValueError:
+                continue
+            if end < start:
+                start, end = end, start
+            indices.update(range(start, end + 1))
+        else:
+            try:
+                indices.add(int(part))
+            except ValueError:
+                continue
+    return sorted(indices)
+
+
+def filter_annotation_by_file_id(annotation: Optional[Annotation], file_id: Optional[str]) -> Optional[Annotation]:
+    if annotation is None or not file_id:
+        return annotation
+    filtered_segments = [seg for seg in getattr(annotation, "segments", []) if getattr(seg, "file_id", None) in (file_id, "", None)]
+    return Annotation(segments=filtered_segments, file_id=file_id)
+
+
 def compute_diarization(
     file_path: str,
     device: str,
@@ -32,6 +68,7 @@ def compute_diarization(
     strategy: str = "pyannote",
     nb_speakers: Union[int, None] = None,
     working_dir: Optional[str] = None,
+    **strategy_kwargs,
 ) -> Annotation:
     """
     Compute diarization for an audio file using the specified strategy.
@@ -65,7 +102,7 @@ def compute_diarization(
         rttm_file,
         vttm_file,
     )
-    diarizer = create_diarizer(strategy=strategy, device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN"))
+    diarizer = create_diarizer(strategy=strategy, device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN"), **strategy_kwargs)
 
     return diarizer.compute_diarization(
         file_path=file_path,
@@ -201,16 +238,38 @@ def compute_diarization_policy(
     combined_segments = []
     temp_paths: List[str] = []
     label_counts: Dict[str, int] = {}
+    audio_refs: List[AudioRef] = []
 
     try:
         for group in grouped.values():
             clause = group["clause"]
             channels = sorted(group["channels"])
+            if info.channels < 2 and clause.strategy == "channel":
+                LOG.warning("Channel diarization requested on mono input; skipping channel clause.")
+                continue
             subset_path = file_path if len(channels) == nchannels else _extract_channels(file_path, channels, working_dir)
             if subset_path != file_path:
                 temp_paths.append(subset_path)
 
             clause_nb_speakers, strategy_kwargs, base_label = resolve_clause_params(clause, nb_speakers)
+
+            # Encode channel set as string for IDs and VTTM
+            if channels:
+                ranges = []
+                start = prev = channels[0]
+                for ch in channels[1:]:
+                    if ch == prev + 1:
+                        prev = ch
+                        continue
+                    ranges.append(str(start) if start == prev else f"{start}-{prev}")
+                    start = prev = ch
+                ranges.append(str(start) if start == prev else f"{start}-{prev}")
+                channels_desc = ",".join(ranges)
+            else:
+                channels_desc = ""
+
+            file_id = f"{base_id}#{channels_desc}" if channels_desc else base_id
+            audio_refs.append(AudioRef(id=file_id, path=file_path, channels=channels_desc or "1"))
 
             diarization = compute_diarization(
                 file_path=subset_path,
@@ -223,9 +282,21 @@ def compute_diarization_policy(
                 **strategy_kwargs,
             )
 
-            relabeled_segments = relabel_speakers(diarization.segments, base_label, label_counts)
+            # Normalize diarizer output to a list of RTTM Segments
+            if hasattr(diarization, "segments"):
+                raw_segments = list(diarization.segments)  # verbatim_rttm.Annotation
+            elif hasattr(diarization, "itertracks"):
+                # pyannote-style Annotation
+                raw_segments = [
+                    Segment(start=seg.start, end=seg.end, speaker=str(label), file_id=file_id)
+                    for seg, _track, label in diarization.itertracks(yield_label=True)  # type: ignore[attr-defined]
+                ]
+            else:
+                raw_segments = []
+
+            relabeled_segments = relabel_speakers(raw_segments, base_label, label_counts)
             for segment in relabeled_segments:
-                segment.file_id = base_id
+                segment.file_id = file_id
                 combined_segments.append(segment)
     finally:
         for temp in temp_paths:
@@ -235,13 +306,26 @@ def compute_diarization_policy(
             except Exception:  # pragma: no cover
                 LOG.warning("Failed to remove temporary file %s", temp)
 
-    merged = Annotation(segments=combined_segments, file_id=base_id)
+    merged = Annotation(segments=combined_segments, file_id=None)
 
     if rttm_file:
         with open(rttm_file, "w", encoding="utf-8") as f:
             merged.write_rttm(f)
     if vttm_file:
-        write_vttm(vttm_file, audio=[AudioRef(id=base_id, path=file_path)], annotation=merged)
+        write_vttm(vttm_file, audio=audio_refs, annotation=merged)
+
+    # If all clauses were skipped/produced nothing, fall back to default strategy
+    if len(merged) == 0:
+        LOG.warning("Diarization policy produced no segments; falling back to strategy pyannote.")
+        return compute_diarization(
+            file_path=file_path,
+            device=device,
+            rttm_file=rttm_file,
+            vttm_file=vttm_file,
+            strategy="pyannote",
+            nb_speakers=nb_speakers,
+            working_dir=working_dir,
+        )
 
     return merged
 
@@ -257,23 +341,51 @@ def create_audio_source(
     working_prefix_no_ext: str = "out",
     stream: bool = False,
 ) -> AudioSource:
+    sources = create_audio_sources(
+        input_source=input_source,
+        device=device,
+        source_config=source_config,
+        start_time=start_time,
+        stop_time=stop_time,
+        output_prefix_no_ext=output_prefix_no_ext,
+        working_prefix_no_ext=working_prefix_no_ext,
+        stream=stream,
+    )
+    if not sources:
+        raise RuntimeError("No audio sources could be created.")
+    return sources[0]
+
+
+def create_audio_sources(
+    *,
+    input_source: str,
+    device: str,
+    source_config: SourceConfig = SourceConfig(),
+    start_time: Optional[str] = None,
+    stop_time: Optional[str] = None,
+    output_prefix_no_ext: str = "out",
+    working_prefix_no_ext: str = "out",
+    stream: bool = False,
+) -> List[AudioSource]:
     # pylint: disable=import-outside-toplevel
 
     if input_source == "-":
         from .pcmaudiosource import PCMInputStreamAudioSource
 
-        return PCMInputStreamAudioSource(
-            source_name="<stdin>",
-            stream=sys.stdin.buffer,
-            channels=1,
-            sampling_rate=16000,
-            dtype=np.dtype(np.int16),
-        )
+        return [
+            PCMInputStreamAudioSource(
+                source_name="<stdin>",
+                stream=sys.stdin.buffer,
+                channels=1,
+                sampling_rate=16000,
+                dtype=np.dtype(np.int16),
+            )
+        ]
 
     elif input_source is None or input_source == ">":
         from .micaudiosource import MicAudioSourcePyAudio as MicAudioSource
 
-        return MicAudioSource()
+        return [MicAudioSource()]
 
     start_sample: int = timestr_to_samples(start_time) if start_time else 0
     stop_sample: Optional[int] = timestr_to_samples(stop_time) if stop_time else None
@@ -292,16 +404,18 @@ def create_audio_source(
     from .ffmpegfileaudiosource import PyAVAudioSource
     from .fileaudiosource import FileAudioSource
 
-    preserve_for_diarization = source_config.diarize_strategy is not None
+    preserve_for_diarization = source_config.diarize_strategy is not None or source_config.vttm_file is not None
 
     if os.path.splitext(input_source)[-1] != ".wav":
-        if not (not stream and (source_config.isolate is not None or source_config.diarize_strategy is not None)):
-            return PyAVAudioSource(
-                file_path=input_source,
-                start_time=samples_to_seconds(start_sample),
-                end_time=samples_to_seconds(stop_sample) if stop_sample else None,
-                preserve_channels=preserve_for_diarization,
-            )
+        if not (not stream and (source_config.isolate is not None or preserve_for_diarization)):
+            return [
+                PyAVAudioSource(
+                    file_path=input_source,
+                    start_time=samples_to_seconds(start_sample),
+                    end_time=samples_to_seconds(stop_sample) if stop_sample else None,
+                    preserve_channels=preserve_for_diarization,
+                )
+            ]
 
         input_source = convert_to_wav(
             input_path=input_source,
@@ -309,7 +423,7 @@ def create_audio_source(
             preserve_channels=preserve_for_diarization,
         )
 
-        return create_audio_source(
+        return create_audio_sources(
             source_config=source_config,
             device=device,
             input_source=input_source,
@@ -319,6 +433,8 @@ def create_audio_source(
             output_prefix_no_ext=output_prefix_no_ext,
         )
 
+    audio_refs: List[AudioRef] = []
+
     if not stream:
         if source_config.isolate is not None:
             input_source, _noise_path = FileAudioSource.isolate_voices(file_path=input_source, out_path_prefix=working_prefix_no_ext)
@@ -326,11 +442,11 @@ def create_audio_source(
             LOG.info("No VTTM provided; creating minimal VTTM placeholder at %s", source_config.vttm_file)
             audio_id = os.path.splitext(os.path.basename(input_source))[0]
             preserve_channels = source_config.diarize_strategy in ("energy", "channel")
-            audio_ref = AudioRef(id=audio_id, path=input_source, channel="stereo" if preserve_channels else "1")
+            audio_ref = AudioRef(id=audio_id, path=input_source, channels="stereo" if preserve_channels else "1")
             write_vttm(source_config.vttm_file, audio=[audio_ref], annotation=RTTMAnnotation())
         if source_config.vttm_file:
             try:
-                _audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
+                audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
                 if len(source_config.diarization) == 0:
                     # Treat empty annotations as missing so diarization can be computed
                     source_config.diarization = None
@@ -360,7 +476,11 @@ def create_audio_source(
                 if source_config.vttm_file and source_config.diarization is not None:
                     audio_id = os.path.splitext(os.path.basename(input_source))[0]
                     # Derive VTTM from RTTM for compatibility
-                    write_vttm(source_config.vttm_file, audio=[AudioRef(id=audio_id, path=input_source)], annotation=source_config.diarization)
+                    write_vttm(
+                        source_config.vttm_file,
+                        audio=[AudioRef(id=audio_id, path=input_source, channels="1")],
+                        annotation=source_config.diarization,
+                    )
             except (StopIteration, FileNotFoundError):
                 # If the file doesn't exist or is empty, compute new diarization
                 nb_speakers = source_config.speakers if source_config.speakers not in (0, "") else None
@@ -376,19 +496,53 @@ def create_audio_source(
 
     if source_config.vttm_file and source_config.diarization is None:
         try:
-            _audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
+            audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
             if len(source_config.diarization) == 0:
                 source_config.diarization = None
         except (FileNotFoundError, ValueError):
             source_config.diarization = None
 
-    return FileAudioSource(
-        file=input_source,
-        start_sample=start_sample,
-        end_sample=stop_sample,
-        diarization=source_config.diarization,
-        preserve_channels=False,
-    )
+    # If VTTM defined multiple audio refs, emit one source per ref and scope diarization by file_id
+    sources: List[AudioSource] = []
+    if audio_refs:
+        for audio_ref in audio_refs:
+            channel_indices = parse_channel_indices(audio_ref.channels)
+            file_path = audio_ref.path or input_source
+            if not os.path.isabs(file_path):
+                file_path = os.path.join(os.getcwd(), file_path)
+            if not os.path.exists(file_path):
+                LOG.warning("Audio path %s from VTTM not found; falling back to %s", file_path, input_source)
+                file_path = input_source
+            if os.path.splitext(file_path)[-1] != ".wav":
+                # Ensure channel selection is preserved by converting to wav
+                file_path = convert_to_wav(
+                    input_path=file_path,
+                    working_prefix_no_ext=f"{working_prefix_no_ext}-{audio_ref.id}",
+                    preserve_channels=True,
+                )
+            scoped_diarization = filter_annotation_by_file_id(source_config.diarization, audio_ref.id)
+            sources.append(
+                FileAudioSource(
+                    file=file_path,
+                    start_sample=start_sample,
+                    end_sample=stop_sample,
+                    diarization=scoped_diarization,
+                    preserve_channels=False,
+                    channel_indices=channel_indices or None,
+                    file_id=audio_ref.id,
+                )
+            )
+        return sources
+
+    return [
+        FileAudioSource(
+            file=input_source,
+            start_sample=start_sample,
+            end_sample=stop_sample,
+            diarization=source_config.diarization,
+            preserve_channels=False,
+        )
+    ]
 
 
 def create_joint_speaker_sources(

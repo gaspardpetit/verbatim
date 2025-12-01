@@ -3,7 +3,7 @@ import os
 import sys
 import unittest
 
-from verbatim.audio.sources.factory import create_audio_source
+from verbatim.audio.sources.factory import create_audio_sources
 from verbatim.config import Config
 from verbatim.eval.compare import compute_metrics
 from verbatim.eval.find import find_reference_file
@@ -70,7 +70,8 @@ class TestPipeline(unittest.TestCase):
 
         # Initialize and run transcription (use cpu)
         config = Config(device="cpu").configure_languages(languages)
-        source = create_audio_source(input_source=audio_path, device=config.device)
+        sources = create_audio_sources(input_source=audio_path, device=config.device)
+        source = sources[0]
         verbatim = Verbatim(config=config)
 
         # Process audio

@@ -90,7 +90,7 @@ async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
 
 
 def iterate_transcription(path: str, base_config: Config, language: Optional[str] = None) -> Iterable[str]:
-    from verbatim.audio.sources.factory import create_audio_source  # pylint: disable=import-outside-toplevel
+    from verbatim.audio.sources.factory import create_audio_sources  # pylint: disable=import-outside-toplevel
     from verbatim.audio.sources.sourceconfig import SourceConfig  # pylint: disable=import-outside-toplevel
     from verbatim.verbatim import Verbatim  # pylint: disable=import-outside-toplevel
 
@@ -101,7 +101,8 @@ def iterate_transcription(path: str, base_config: Config, language: Optional[str
     working_prefix = os.path.join(cfg.working_dir, basename)
     output_prefix = os.path.join(cfg.output_dir, basename)
     source_config = SourceConfig()
-    audio_source = create_audio_source(
+    transcriber = Verbatim(cfg)
+    for audio_source in create_audio_sources(
         source_config=source_config,
         device=cfg.device,
         input_source=path,
@@ -110,11 +111,10 @@ def iterate_transcription(path: str, base_config: Config, language: Optional[str
         working_prefix_no_ext=working_prefix,
         output_prefix_no_ext=output_prefix,
         stream=cfg.stream,
-    )
-    transcriber = Verbatim(cfg)
-    with audio_source.open() as audio_stream:
-        for utterance, _, _ in transcriber.transcribe(audio_stream=audio_stream, working_prefix_no_ext=working_prefix):
-            yield utterance.text
+    ):
+        with audio_source.open() as audio_stream:
+            for utterance, _, _ in transcriber.transcribe(audio_stream=audio_stream, working_prefix_no_ext=working_prefix):
+                yield utterance.text
 
 
 def transcribe_file(path: str, base_config: Config, language: Optional[str] = None) -> str:
