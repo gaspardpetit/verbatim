@@ -20,10 +20,6 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 
-# disable INFO:speechbrain.utils.quirks:Applied quirks (see `speechbrain.utils.quirks`): [disable_jit_profiling, allow_tf32]
-#         INFO:speechbrain.utils.quirks:Excluded quirks specified by the `SB_DISABLE_QUIRKS` environment (comma-separated list): []
-logging.getLogger("speechbrain.utils.quirks").setLevel(logging.WARNING)
-
 try:
     # Prefer version file generated at build time by hatch-vcs
     from ._version import __version__  # type: ignore

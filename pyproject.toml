@@ -60,7 +60,6 @@ dependencies = [
     "silero-vad>=5.1.2",
     "sounddevice>=0.5.1",
     "soundfile>=0.13.0",
-    "speechbrain>=1.0.2",
     "torch>=2.4.1",
     "torchaudio>=2.4.1",
     "wheel>=0.45.1",
