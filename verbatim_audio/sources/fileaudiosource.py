@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from ...voices.isolation import VoiceIsolation
+from verbatim.voices.isolation import VoiceIsolation
 from ..audio import format_audio, sample_to_timestr
 from ..convert import convert_to_wav
 from .audiosource import AudioSource, AudioStream
