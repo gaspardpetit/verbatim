@@ -2,11 +2,13 @@ import errno
 import logging
 import os
 import sys
-from typing import List, Optional, Union
+import tempfile
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 
 from verbatim_diarization import create_diarizer  # Add this import
+from verbatim_diarization.policy import assign_channels, parse_policy
 from verbatim_diarization.separate import create_separator
 from verbatim_rttm import Annotation as RTTMAnnotation
 from verbatim_rttm import AudioRef, load_vttm, write_vttm
@@ -44,6 +46,18 @@ def compute_diarization(
         PyAnnote Annotation object
     """
 
+    # If strategy string looks like a policy (contains assignment or ranges), apply policy routing
+    if any(sym in strategy for sym in ("=", ";", ",", "-", "*")):
+        return compute_diarization_policy(
+            file_path=file_path,
+            device=device,
+            policy=strategy,
+            rttm_file=rttm_file,
+            vttm_file=vttm_file,
+            nb_speakers=nb_speakers,
+            working_dir=working_dir,
+        )
+
     LOG.info(
         "Running diarization: strategy=%s nb_speakers=%s rttm_file=%s vttm_file=%s",
         strategy,
@@ -60,6 +74,93 @@ def compute_diarization(
         nb_speakers=nb_speakers,
         working_dir=working_dir,
     )
+
+
+def _extract_channels(file_path: str, channels: List[int], working_dir: Optional[str]) -> str:
+    # pylint: disable=import-outside-toplevel
+    import soundfile as sf  # lazy import
+
+    audio, sample_rate = sf.read(file_path)
+    if isinstance(audio, np.ndarray) and audio.ndim > 1 and len(channels) > 0:
+        subset = audio[:, channels]
+    else:
+        subset = audio
+    tmp_dir = working_dir or tempfile.gettempdir()
+    fd, temp_path = tempfile.mkstemp(suffix=".wav", dir=tmp_dir)
+    os.close(fd)
+    sf.write(temp_path, subset, sample_rate)
+    return temp_path
+
+
+def compute_diarization_policy(
+    *,
+    file_path: str,
+    device: str,
+    policy: str,
+    rttm_file: Optional[str],
+    vttm_file: Optional[str],
+    nb_speakers: Union[int, None],
+    working_dir: Optional[str],
+) -> Annotation:
+    # pylint: disable=import-outside-toplevel
+    import soundfile as sf  # lazy import
+
+    clauses = parse_policy(policy)
+    if len(clauses) == 0:
+        return Annotation()
+
+    info = sf.info(file_path)
+    nchannels = info.channels
+    assignments = assign_channels(clauses, nchannels=nchannels)
+
+    grouped: Dict[str, Dict] = {}
+    for ch, clause in assignments.items():
+        key = f"{clause.strategy}|{tuple(sorted(clause.params.items()))}"
+        grouped.setdefault(key, {"clause": clause, "channels": set()})
+        grouped[key]["channels"].add(ch)
+
+    base_id = os.path.splitext(os.path.basename(file_path))[0]
+    combined_segments = []
+    temp_paths: List[str] = []
+
+    try:
+        for group in grouped.values():
+            clause = group["clause"]
+            channels = sorted(group["channels"])
+            subset_path = file_path if len(channels) == nchannels else _extract_channels(file_path, channels, working_dir)
+            if subset_path != file_path:
+                temp_paths.append(subset_path)
+
+            diarization = compute_diarization(
+                file_path=subset_path,
+                device=device,
+                rttm_file=None,
+                vttm_file=None,
+                strategy=clause.strategy,
+                nb_speakers=nb_speakers,
+                working_dir=working_dir,
+            )
+
+            for segment in diarization.segments:
+                segment.file_id = base_id
+                combined_segments.append(segment)
+    finally:
+        for temp in temp_paths:
+            # pylint: disable=broad-exception-caught
+            try:
+                os.unlink(temp)
+            except Exception:  # pragma: no cover
+                pass
+
+    merged = Annotation(segments=combined_segments, file_id=base_id)
+
+    if rttm_file:
+        with open(rttm_file, "w", encoding="utf-8") as f:
+            merged.write_rttm(f)
+    if vttm_file:
+        write_vttm(vttm_file, audio=[AudioRef(id=base_id, path=file_path)], annotation=merged)
+
+    return merged
 
 
 def create_audio_source(
@@ -108,7 +209,7 @@ def create_audio_source(
     from .ffmpegfileaudiosource import PyAVAudioSource
     from .fileaudiosource import FileAudioSource
 
-    preserve_for_diarization = source_config.diarize_strategy in ("energy", "channel", "pyannote")
+    preserve_for_diarization = source_config.diarize_strategy is not None
 
     if os.path.splitext(input_source)[-1] != ".wav":
         if not (not stream and (source_config.isolate is not None or source_config.diarize_strategy is not None)):
