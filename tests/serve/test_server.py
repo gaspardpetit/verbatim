@@ -6,7 +6,7 @@ import aiohttp
 from aiohttp.test_utils import TestClient, TestServer
 
 from verbatim.config import Config
-from verbatim.server import create_app
+from verbatim_serve.server import create_app
 
 
 class ServerEndpointTests(IsolatedAsyncioTestCase):

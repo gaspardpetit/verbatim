@@ -9,7 +9,7 @@ from typing import Callable, Iterable, Optional, Union, cast
 from aiohttp import web
 from aiohttp.multipart import BodyPartReader
 
-from .config import Config
+from verbatim.config import Config
 
 CONFIG_KEY = web.AppKey("config", Config)
 # Use loose types for callbacks to avoid over-constraining AppKey typing
@@ -90,9 +90,9 @@ async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
 
 
 def iterate_transcription(path: str, base_config: Config, language: Optional[str] = None) -> Iterable[str]:
-    from .audio.sources.factory import create_audio_source  # pylint: disable=import-outside-toplevel
-    from .audio.sources.sourceconfig import SourceConfig  # pylint: disable=import-outside-toplevel
-    from .verbatim import Verbatim  # pylint: disable=import-outside-toplevel
+    from verbatim.audio.sources.factory import create_audio_source  # pylint: disable=import-outside-toplevel
+    from verbatim.audio.sources.sourceconfig import SourceConfig  # pylint: disable=import-outside-toplevel
+    from verbatim.verbatim import Verbatim  # pylint: disable=import-outside-toplevel
 
     cfg = replace(base_config)
     if language:
