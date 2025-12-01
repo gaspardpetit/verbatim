@@ -83,15 +83,13 @@ dev = [
     "ruff>=0.8.6",
 ]
 
-[tool.uv.optional-dependencies]
-diarization = [
-    "pyannote-audio[separation]>=4.0.2",
-    "pyannote-core==6.0.1",
-]
-
 [project.optional-dependencies]
 cuda_gpu = [
     "onnxruntime-gpu>=1.16.0,<1.20",
+]
+diarization = [
+    "pyannote-audio[separation]>=4.0.2",
+    "pyannote-core==6.0.1",
 ]
 
 [project.urls]

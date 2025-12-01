@@ -84,16 +84,28 @@ class StereoDiarization(DiarizationStrategy):
 
             if speaker != current_speaker and speaker != "UNKNOWN":
                 if current_speaker is not None:
-                    segment = Segment(segment_start / sample_rate, start_sample / sample_rate)
-                    segments.append(Segment(start=segment.start, end=segment.end, speaker=current_speaker, file_id=uri))
+                    segments.append(
+                        Segment(
+                            start=segment_start / sample_rate,
+                            end=start_sample / sample_rate,
+                            speaker=current_speaker,
+                            file_id=uri,
+                        )
+                    )
 
                 current_speaker = speaker
                 segment_start = start_sample
 
         # Add the final segment
         if current_speaker is not None:
-            segment = Segment(segment_start / sample_rate, total_samples / sample_rate)
-            segments.append(Segment(start=segment.start, end=segment.end, speaker=current_speaker, file_id=uri))
+            segments.append(
+                Segment(
+                    start=segment_start / sample_rate,
+                    end=total_samples / sample_rate,
+                    speaker=current_speaker,
+                    file_id=uri,
+                )
+            )
 
         annotation = Annotation(segments=segments, file_id=uri)
 
