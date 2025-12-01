@@ -5,7 +5,8 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 
 from numpy.typing import NDArray
 
-from ...audio.audio import samples_to_seconds
+from verbatim_audio.audio import samples_to_seconds
+
 from ...transcript.words import Word
 from .transcribe import Transcriber
 

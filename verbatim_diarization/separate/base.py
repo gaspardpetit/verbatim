@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from verbatim.audio.sources.audiosource import AudioSource
+from verbatim_audio.sources.audiosource import AudioSource
 
 # Configure logger
 LOG = logging.getLogger(__name__)

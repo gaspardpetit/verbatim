@@ -90,9 +90,9 @@ async def _handle_transcriptions(request: web.Request) -> web.StreamResponse:
 
 
 def iterate_transcription(path: str, base_config: Config, language: Optional[str] = None) -> Iterable[str]:
-    from verbatim.audio.sources.factory import create_audio_sources  # pylint: disable=import-outside-toplevel
-    from verbatim.audio.sources.sourceconfig import SourceConfig  # pylint: disable=import-outside-toplevel
     from verbatim.verbatim import Verbatim  # pylint: disable=import-outside-toplevel
+    from verbatim_audio.sources.factory import create_audio_sources  # pylint: disable=import-outside-toplevel
+    from verbatim_audio.sources.sourceconfig import SourceConfig  # pylint: disable=import-outside-toplevel
 
     cfg = replace(base_config)
     if language:

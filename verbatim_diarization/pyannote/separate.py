@@ -9,9 +9,9 @@ from pyannote.audio.core.task import Problem, Resolution, Specifications
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 from torch.serialization import add_safe_globals
 
-from verbatim.audio.audio import wav_to_int16
-from verbatim.audio.sources.audiosource import AudioSource
-from verbatim.audio.sources.fileaudiosource import FileAudioSource
+from verbatim_audio.audio import wav_to_int16
+from verbatim_audio.sources.audiosource import AudioSource
+from verbatim_audio.sources.fileaudiosource import FileAudioSource
 from verbatim_diarization.diarize.factory import create_diarizer
 from verbatim_diarization.separate.base import SeparationStrategy
 

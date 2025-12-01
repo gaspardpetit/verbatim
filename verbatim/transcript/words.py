@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, List, Optional
 
-from ..audio.audio import samples_to_seconds, seconds_to_samples
+from verbatim_audio.audio import samples_to_seconds, seconds_to_samples
 
 if TYPE_CHECKING:
     from faster_whisper.transcribe import Word as WhisperWord

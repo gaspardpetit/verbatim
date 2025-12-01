@@ -28,16 +28,16 @@
 
 ## Architecture Overview
 - Read `doc/architecture.md` for the end-to-end pipeline, data flow, and component contracts.
-- Key areas: audio sources (`verbatim/audio/`), transcription/diarization/separation (`verbatim/voices/`), transcript formatting (`verbatim/transcript/`), metrics (`verbatim/eval/`).
+- Key areas: audio sources (`verbatim_audio/`), transcription/diarization/separation (`verbatim/voices/`), transcript formatting (`verbatim/transcript/`), metrics (`verbatim/eval/`).
 - If you change stage interfaces or file formats, update `doc/architecture.md` and related diagrams in `doc/img/`.
 
 ## Audio Parameters
-- Runtime audio parameters (sample rate, frame size, max attention window) live in `verbatim/audio/settings.py` as `AudioParams`.
+- Runtime audio parameters (sample rate, frame size, max attention window) live in `verbatim_audio/settings.py` as `AudioParams`.
 - Override defaults with environment variables:
   - `VERBATIM_SAMPLE_RATE` (default 16000)
   - `VERBATIM_FRAME_SIZE` (default 160)
   - `VERBATIM_MAX_WINDOW_FRAMES` (default 3000)
-- Access them via `verbatim.audio.settings.AUDIO_PARAMS` for consistent configuration.
+- Access them via `verbatim_audio.settings.AUDIO_PARAMS` for consistent configuration.
 
 ## Coding Style & Naming Conventions
 - Indentation: 4 spaces; line length: 150 (see `[tool.ruff]`).

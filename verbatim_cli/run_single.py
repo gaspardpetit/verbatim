@@ -2,8 +2,8 @@
 
 from typing import List
 
-from verbatim.audio.sources.audiosource import AudioSource
 from verbatim.verbatim import execute
+from verbatim_audio.sources.audiosource import AudioSource
 
 
 def build_audio_sources(
@@ -17,7 +17,7 @@ def build_audio_sources(
 ) -> List[AudioSource]:
     audio_sources: List[AudioSource] = []
     if args.separate:
-        from verbatim.audio.sources.factory import create_separate_speaker_sources
+        from verbatim_audio.sources.factory import create_separate_speaker_sources
 
         audio_sources += create_separate_speaker_sources(
             strategy=args.separate or "pyannote",
@@ -30,7 +30,7 @@ def build_audio_sources(
             output_prefix_no_ext=output_prefix_no_ext,
         )
     else:
-        from verbatim.audio.sources.factory import create_audio_sources
+        from verbatim_audio.sources.factory import create_audio_sources
 
         audio_sources.extend(
             create_audio_sources(

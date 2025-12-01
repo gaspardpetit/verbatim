@@ -145,8 +145,8 @@ pipeline.execute()
 The project is organized to be modular, such that individual components can be used outside the full pipeline, and the pipeline can be customized to use custom stages. For example, to use a custom diarization stage:
 
 ```python
-from verbatim.audio.sources.sourceconfig import SourceConfig
-from verbatim.audio.sources.factory import create_audio_source
+from verbatim_audio.sources.sourceconfig import SourceConfig
+from verbatim_audio.sources.factory import create_audio_source
 source = create_audio_source(input_source="ext/samples/audio/1ch_2spk_en-fr_AirFrance_00h03m54s.wav", device="cuda", source_config=SourceConfig(diarize=2))
 
 from verbatim.config import Config
