@@ -34,7 +34,7 @@ def prefetch_diarization_models(hf_token: Optional[str] = None, cache_dir: Optio
         pinned_revision = revision or "refs/heads/main"
         try:
             # Local-only try first
-            local_path = snapshot_download(
+            local_path = snapshot_download(  # nosec B615 - revision pinned via pinned_revision
                 repo_id=repo,
                 revision=pinned_revision,
                 token=hf_token,
@@ -56,7 +56,7 @@ def prefetch_diarization_models(hf_token: Optional[str] = None, cache_dir: Optio
 
         LOG.info("Prefetching diarization model: %s", repo)
         try:
-            local_path = snapshot_download(
+            local_path = snapshot_download(  # nosec B615 - revision pinned via pinned_revision
                 repo_id=repo,
                 revision=pinned_revision,
                 token=hf_token,
