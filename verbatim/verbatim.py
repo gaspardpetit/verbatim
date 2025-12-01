@@ -24,7 +24,6 @@ from verbatim_transcript import (
 from .audio.audio import samples_to_seconds
 from .audio.sources.audiosource import AudioSource, AudioStream
 from .config import Config
-from .eval.compare import compute_metrics
 from .models import Models
 from .transcript.format.factory import configure_writers
 from .transcript.format.json import read_utterances
@@ -932,6 +931,9 @@ def execute(
         writer.close()
 
     if eval_file:
+        LOG.info("Lazy-loading evaluation metrics.")
+        from .eval.compare import compute_metrics  # pylint: disable=import-outside-toplevel
+
         sorted_utterances: List[Utterance] = sorted(all_utterances, key=lambda x: x.start_ts)
         ref_utterances: List[Utterance] = read_utterances(eval_file)
         metrics = compute_metrics(sorted_utterances, ref_utterances)

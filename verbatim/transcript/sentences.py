@@ -2,9 +2,8 @@ import logging
 import math
 import re
 from abc import ABC, abstractmethod
+from time import perf_counter
 from typing import List
-
-from wtpsplit import SaT
 
 from verbatim.audio.audio import samples_to_seconds
 from verbatim.transcript.words import Word
@@ -55,9 +54,13 @@ class FastSentenceTokenizer(SentenceTokenizer):
 
 class SaTSentenceTokenizer(SentenceTokenizer):
     def __init__(self, device: str, model="sat-3l-sm"):
-        LOG.info(f"Initializing SaT Sentence Tokenizer with model {model}")
+        LOG.info("Lazy-loading SaT Sentence Tokenizer (model=%s)", model)
+        start = perf_counter()
+        from wtpsplit import SaT  # pylint: disable=import-outside-toplevel
+
         self.sat_sm = SaT(model)
         self.sat_sm.half().to(device)
+        LOG.info("SaT Sentence Tokenizer ready in %.2fs", perf_counter() - start)
 
     def split(self, words: List[Word]) -> List[str]:
         text = "".join(w.word for w in words)

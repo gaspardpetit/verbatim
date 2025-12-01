@@ -4,7 +4,6 @@ import re
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.signal import resample
 
 from .settings import AUDIO_PARAMS
 
@@ -42,6 +41,9 @@ def format_audio(audio: NDArray, from_sampling_rate: int) -> NDArray:
         resampled_audio = mono_audio
     else:
         LOG.info(f"Resampling from {from_sampling_rate} Hz to {to_sampling_rate} Hz.")
+        # Lazy import to avoid pulling scipy.signal during CLI startup
+        from scipy.signal import resample  # type: ignore  # pylint: disable=import-outside-toplevel
+
         num_samples = int(len(mono_audio) * to_sampling_rate / from_sampling_rate)
         if num_samples == 0:
             return np.array([], dtype=np.int16)

@@ -42,6 +42,12 @@ def build_batch_parser() -> argparse.ArgumentParser:
         default=["*.wav", "*.mp3", "*.m4a", "*.mp4"],
         help="Glob patterns to include (default: *.wav *.mp3 *.m4a *.mp4)",
     )
+    parser.add_argument(
+        "--ignore",
+        nargs="*",
+        default=[],
+        help="Glob patterns to ignore",
+    )
     parser.add_argument("--recursive", action="store_true", help="Recurse into subdirectories when searching for input files")
     parser.add_argument("--skip-existing", action="store_true", help="Skip files when at least one output artifact already exists")
 
@@ -68,6 +74,8 @@ def main():
     cfg_data = {}
     if getattr(user_args, "config", None):
         cfg_data = load_config_file(user_args.config)
+        if "match" in cfg_data:
+            user_args.match = cfg_data["match"]
 
     global_profile = select_profile(cfg_data, filename=None)
     args = merge_args(base_defaults, global_profile, user_args)
@@ -102,6 +110,8 @@ def main():
         parser.error(f"Batch directory does not exist: {batch_dir}")
 
     inputs = iter_input_files(batch_dir, args.match, args.recursive)
+    if args.ignore:
+        inputs = [p for p in inputs if not any(p.match(pattern) for pattern in args.ignore)]
     if not inputs:
         LOG.info("No input files found under %s with patterns %s", batch_dir, args.match)
         return

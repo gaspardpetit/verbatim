@@ -1,7 +1,6 @@
 import wave
 
 import numpy as np
-from scipy.signal import resample
 
 from .audiosource import AudioSource
 
@@ -29,6 +28,9 @@ class WavSink:
 
                     # Resample the audio if needed
                     if input_sample_rate != sample_rate:
+                        # Lazy import to avoid pulling scipy.signal during CLI startup
+                        from scipy.signal import resample  # type: ignore  # pylint: disable=import-outside-toplevel
+
                         target_len = int(len(audio_chunk) * sample_rate / input_sample_rate)
                         audio_chunk = np.asarray(resample(audio_chunk, target_len))
 

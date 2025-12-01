@@ -69,6 +69,16 @@ def flatten_profile(profile: Dict[str, Any]) -> Dict[str, Any]:
     for key, val in profile.items():
         if key == "match":
             continue
+        if key == "include" and isinstance(val, dict):
+            filenames = val.get("filename")
+            if filenames:
+                flat["match"] = filenames
+            continue
+        if key == "ignore" and isinstance(val, dict):
+            filenames = val.get("filename")
+            if filenames:
+                flat["ignore"] = filenames
+            continue
         if key == "output" and isinstance(val, dict):
             flat.update(_flatten_output(val))
             continue
@@ -80,20 +90,29 @@ def flatten_profile(profile: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _match_profile(profile: Dict[str, Any], filename: Optional[str]) -> bool:
-    match = profile.get("match")
-    if match is None:
-        return True  # wildcard
-    patterns = match.get("filename") if isinstance(match, dict) else None
-    if not patterns:
-        return True
+    includes = []
+    excludes = []
+    if isinstance(profile.get("include"), dict):
+        includes = profile["include"].get("filename") or []
+    if isinstance(profile.get("ignore"), dict):
+        excludes = profile["ignore"].get("filename") or []
+
     if filename is None:
         return False
-    return any(fnmatch.fnmatch(Path(filename).name, pattern) for pattern in patterns)
+    name = Path(filename).name
+    if includes:
+        if not any(fnmatch.fnmatch(name, pat) for pat in includes):
+            return False
+    if excludes and any(fnmatch.fnmatch(name, pat) for pat in excludes):
+        return False
+    return True
 
 
 def select_profile(config_data: Dict[str, Any], filename: Optional[str]) -> Dict[str, Any]:
     if not config_data:
         return {}
+
+    base_defaults = flatten_profile({k: v for k, v in config_data.items() if k != "profiles"})
     profiles = config_data.get("profiles")
     if isinstance(profiles, list) and profiles:
         fallback: Optional[Dict[str, Any]] = None
@@ -101,12 +120,23 @@ def select_profile(config_data: Dict[str, Any], filename: Optional[str]) -> Dict
             if not isinstance(profile, dict):
                 continue
             if _match_profile(profile, filename):
-                return flatten_profile(profile)
+                merged = base_defaults.copy()
+                merged.update(flatten_profile(profile))
+                return merged
             if profile.get("match") is None and fallback is None:
                 fallback = profile
-        return flatten_profile(fallback) if fallback else {}
-    # Treat entire config as single profile
-    return flatten_profile(config_data)
+        if fallback:
+            merged = base_defaults.copy()
+            merged.update(flatten_profile(fallback))
+            return merged
+        return base_defaults
+
+    # Single-profile config; honor match at root
+    if filename is not None and not _match_profile(config_data, filename):
+        return {}
+    merged = base_defaults.copy()
+    merged.update(flatten_profile(config_data))
+    return merged
 
 
 def merge_args(base_defaults: Namespace, profile_overrides: Dict[str, Any], user_args: Namespace) -> Namespace:
