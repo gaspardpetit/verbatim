@@ -11,7 +11,7 @@ from verbatim_rttm import Annotation, AudioRef, Segment, write_vttm
 LOG = logging.getLogger(__name__)
 
 
-class StereoDiarization(DiarizationStrategy):
+class EnergyDiarization(DiarizationStrategy):
     def __init__(self, energy_ratio_threshold: float = 1.18):
         self.energy_ratio_threshold = energy_ratio_threshold
 

@@ -1,4 +1,4 @@
-from .diarize import StereoDiarization
+from .diarize import EnergyDiarization
 from .separate import ChannelSeparation
 
-__all__ = ["StereoDiarization", "ChannelSeparation"]
+__all__ = ["EnergyDiarization", "ChannelSeparation"]

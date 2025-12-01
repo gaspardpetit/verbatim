@@ -37,7 +37,7 @@ def compute_diarization(
         file_path: Path to audio file
         device: Device to use ('cpu' or 'cuda')
         rttm_file: Optional path to save RTTM file
-        strategy: Diarization strategy ('pyannote' or 'stereo')
+        strategy: Diarization strategy ('pyannote', 'energy', or 'channel')
     nb_speakers: Optional number of speakers
 
         PyAnnote Annotation object
@@ -106,10 +106,10 @@ def create_audio_source(
                 file_path=input_source,
                 start_time=samples_to_seconds(start_sample),
                 end_time=samples_to_seconds(stop_sample) if stop_sample else None,
-                preserve_channels=source_config.diarize_strategy == "stereo",
+                preserve_channels=source_config.diarize_strategy in ("energy", "channel"),
             )
 
-        preserve_channels = source_config.diarize_strategy == "stereo"
+        preserve_channels = source_config.diarize_strategy in ("energy", "channel")
 
         input_source = convert_to_wav(
             input_path=input_source,
@@ -133,7 +133,8 @@ def create_audio_source(
         if source_config.vttm_file and not os.path.exists(source_config.vttm_file):
             LOG.info("No VTTM provided; creating minimal VTTM placeholder at %s", source_config.vttm_file)
             audio_id = os.path.splitext(os.path.basename(input_source))[0]
-            audio_ref = AudioRef(id=audio_id, path=input_source, channel="stereo" if source_config.diarize_strategy == "stereo" else "1")
+            preserve_channels = source_config.diarize_strategy in ("energy", "channel")
+            audio_ref = AudioRef(id=audio_id, path=input_source, channel="stereo" if preserve_channels else "1")
             write_vttm(source_config.vttm_file, audio=[audio_ref], annotation=RTTMAnnotation())
         if source_config.vttm_file:
             try:
@@ -192,7 +193,7 @@ def create_audio_source(
         start_sample=start_sample,
         end_sample=stop_sample,
         diarization=source_config.diarization,
-        preserve_channels=source_config.diarize_strategy == "stereo",
+        preserve_channels=source_config.diarize_strategy in ("energy", "channel"),
     )
 
 
