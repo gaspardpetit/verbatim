@@ -207,7 +207,9 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
                 file_id = seg_label if seg_label in label_to_path else uri
                 segments.append(Segment(start=segment.start, end=segment.end, speaker=seg_label, file_id=file_id))
 
-            audio_refs = [AudioRef(id=label, path=path, channel="1") for label, path in audio_refs_meta] or [AudioRef(id=uri, path=file_path)]
+            audio_refs = [AudioRef(id=label, path=path, channels="1") for label, path in audio_refs_meta] or [
+                AudioRef(id=uri, path=file_path, channels="1")
+            ]
 
             write_vttm(out_vttm_file, audio=audio_refs, annotation=RTTMAnnotation(segments=segments, file_id=uri))
 

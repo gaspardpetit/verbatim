@@ -12,17 +12,35 @@ LOG = logging.getLogger(__name__)
 
 
 class EnergyDiarization(DiarizationStrategy):
-    def __init__(self, energy_ratio_threshold: float = 1.18):
+    def __init__(self, energy_ratio_threshold: float = 1.18, normalize: bool = False):
         self.energy_ratio_threshold = energy_ratio_threshold
+        self.normalize = normalize
 
     def _compute_channel_energies(self, audio: np.ndarray, start_sample: int, end_sample: int) -> tuple[float, float, float, float]:
         segment = audio[start_sample:end_sample]
-        energy_left = np.sum(np.abs(segment[:, 0]))
-        energy_right = np.sum(np.abs(segment[:, 1]))
+        left = segment[:, 0]
+        right = segment[:, 1]
 
-        # Also compute peak energies for tiebreaking
-        peak_left = np.max(np.abs(segment[:, 0]))
-        peak_right = np.max(np.abs(segment[:, 1]))
+        if self.normalize:
+            # Normalize each channel independently to reduce bias from gain/DC offsets
+            left = left - np.mean(left)
+            right = right - np.mean(right)
+            # Scale to +/-0.8 per channel to avoid over-amplification
+            max_left = np.max(np.abs(left)) if left.size else 0.0
+            max_right = np.max(np.abs(right)) if right.size else 0.0
+            if max_left > 0:
+                left = left * (0.8 / max_left)
+            if max_right > 0:
+                right = right * (0.8 / max_right)
+            energy_left = np.sqrt(np.mean(left**2)) if left.size else 0.0
+            energy_right = np.sqrt(np.mean(right**2)) if right.size else 0.0
+        else:
+            energy_left = float(np.sum(np.abs(left)))
+            energy_right = float(np.sum(np.abs(right)))
+
+        # Also compute peak energies for tiebreaking (use centered signals when normalized)
+        peak_left = np.max(np.abs(left)) if left.size else 0.0
+        peak_right = np.max(np.abs(right)) if right.size else 0.0
 
         return energy_left, energy_right, peak_left, peak_right
 
@@ -118,7 +136,7 @@ class EnergyDiarization(DiarizationStrategy):
 
         if out_vttm_file:
             os.makedirs(os.path.dirname(out_vttm_file) or ".", exist_ok=True)
-            audio_refs = [AudioRef(id=uri, path=file_path, channel="stereo")]
+            audio_refs = [AudioRef(id=uri, path=file_path, channels="stereo")]
             write_vttm(out_vttm_file, audio=audio_refs, annotation=annotation)
             LOG.info("Wrote diarization to VTTM file: %s", out_vttm_file)
 

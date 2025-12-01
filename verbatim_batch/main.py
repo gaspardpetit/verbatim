@@ -74,8 +74,6 @@ def main():
     cfg_data = {}
     if getattr(user_args, "config", None):
         cfg_data = load_config_file(user_args.config)
-        if "match" in cfg_data:
-            user_args.match = cfg_data["match"]
 
     global_profile = select_profile(cfg_data, filename=None)
     args = merge_args(base_defaults, global_profile, user_args)
@@ -109,11 +107,25 @@ def main():
     if not batch_dir.exists():
         parser.error(f"Batch directory does not exist: {batch_dir}")
 
-    inputs = iter_input_files(batch_dir, args.match, args.recursive)
+    from verbatim_cli.config_file import DEFAULT_MATCH
+
+    include_patterns = DEFAULT_MATCH
+    inputs = iter_input_files(batch_dir, include_patterns, args.recursive)
+    user_match_filter = args.match if args.match and args.match != DEFAULT_MATCH else None
+    if user_match_filter:
+        inputs = [p for p in inputs if any(p.match(pattern) for pattern in user_match_filter)]
     if args.ignore:
         inputs = [p for p in inputs if not any(p.match(pattern) for pattern in args.ignore)]
     if not inputs:
-        LOG.info("No input files found under %s with patterns %s", batch_dir, args.match)
+        if user_match_filter:
+            LOG.info(
+                "No input files found under %s with default patterns %s and match filter %s",
+                batch_dir,
+                DEFAULT_MATCH,
+                user_match_filter,
+            )
+        else:
+            LOG.info("No input files found under %s with patterns %s", batch_dir, DEFAULT_MATCH)
         return
 
     LOG.info("Found %d input files to process", len(inputs))

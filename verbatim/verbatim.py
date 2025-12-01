@@ -901,14 +901,19 @@ def execute(
 ):
     all_utterances: List[Utterance] = []
     transcriber = Verbatim(config)
-    for audio_source in audio_sources:
+    for idx, audio_source in enumerate(audio_sources):
         LOG.info(f"Transcribing from audio source: {audio_source.source_name}")
         writer: TranscriptWriter = configure_writers(
             write_config,
             output_formats=output_formats,
             original_audio_file=audio_source.source_name,
         )
-        writer.open(path_no_ext=output_prefix_no_ext)
+        # When multiple sources are present (e.g., per-channel VTTM), isolate per-source outputs to avoid clobbering.
+        per_source_prefix = output_prefix_no_ext
+        if len(audio_sources) > 1:
+            suffix = getattr(audio_source, "file_id", None) or f"src{idx}"
+            per_source_prefix = f"{output_prefix_no_ext}-{suffix}"
+        writer.open(path_no_ext=per_source_prefix)
         with audio_source.open() as audio_stream:
             for utterance, unacknowledged, unconfirmed in transcriber.transcribe(
                 audio_stream=audio_stream, working_prefix_no_ext=working_prefix_no_ext

@@ -82,7 +82,7 @@ class ChannelSeparation(SeparationStrategy):
             file_id = os.path.splitext(os.path.basename(file_name))[0]
             segment = Segment(start=0.0, end=len(channel_data) / sample_rate, speaker=speaker_label, file_id=file_id)
             segments.append(segment)
-            audio_refs.append(AudioRef(id=file_id, path=file_name, channel=str(channel_idx)))
+            audio_refs.append(AudioRef(id=file_id, path=file_name, channels=str(channel_idx)))
             ann = Annotation([segment])
             results.append(FileAudioSource(file=file_name, diarization=ann, start_sample=start_sample, end_sample=end_sample))
 
