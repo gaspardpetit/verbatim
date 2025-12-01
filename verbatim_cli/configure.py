@@ -52,7 +52,7 @@ def make_source_config(args, speakers: Optional[int]) -> SourceConfig:
     vttm_path = args.vttm if args.vttm not in (None, "") else None
     return SourceConfig(
         isolate=args.isolate,
-        diarize_strategy=args.diarize,
+        diarize_strategy=args.diarize_policy or args.diarize,
         speakers=speakers,
         diarization_file=args.diarization,
         vttm_file=vttm_path,

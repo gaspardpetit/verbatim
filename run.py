@@ -16,7 +16,6 @@ if len(sys.argv) == 1:
         "en",
         "fr",
         "--diarize",
-        "--diarization-strategy",
         "pyannote",
         "--txt",
         "--md",

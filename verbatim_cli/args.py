@@ -26,6 +26,10 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
     parser.add_argument("-o", "--outdir", default=".", help="Path to the output directory")
     parser.add_argument("--diarize", choices=["pyannote", "energy", "channel"], default=None, help="Diarization strategy to use")
     parser.add_argument(
+        "--diarize-policy",
+        help="Channel/range policy like '1,2=energy;3=pyannote;*=channel' (overrides --diarize if set)",
+    )
+    parser.add_argument(
         "--vttm",
         nargs="?",
         action=OptionalValueAction,

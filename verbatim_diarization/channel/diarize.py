@@ -13,8 +13,10 @@ LOG = logging.getLogger(__name__)
 class ChannelDiarization(DiarizationStrategy):
     """Treat each channel as a separate speaker without further diarization."""
 
-    def __init__(self, speaker_labels: Optional[dict[int, str]] = None):
+    def __init__(self, speaker_labels: Optional[dict[int, str]] = None, speaker_pattern: str = "SPEAKER_{idx}", speaker_offset: int = 0):
         self.speaker_labels = speaker_labels or {}
+        self.speaker_pattern = speaker_pattern
+        self.speaker_offset = speaker_offset
 
     def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, out_vttm_file: Optional[str] = None, **kwargs) -> Annotation:
         audio, sample_rate = sf.read(file_path)
@@ -31,7 +33,7 @@ class ChannelDiarization(DiarizationStrategy):
         audio_refs = []
         num_channels = audio.shape[1]
         for idx in range(num_channels):
-            speaker = self.speaker_labels.get(idx, f"SPEAKER_{idx}")
+            speaker = self.speaker_labels.get(idx, self.speaker_pattern.format(idx=idx + self.speaker_offset))
             segments.append(Segment(start=0.0, end=duration, speaker=speaker, file_id=uri))
             audio_refs.append(AudioRef(id=f"{uri}_ch{idx}", path=file_path, channel=str(idx)))
 
