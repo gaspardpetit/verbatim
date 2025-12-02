@@ -14,6 +14,7 @@ from pyannote.core.annotation import Annotation
 from torch.serialization import add_safe_globals
 
 from verbatim_diarization.diarize.base import DiarizationStrategy
+from verbatim_diarization.pyannote.separate import PyannoteSpeakerSeparation, _build_rttm_annotation
 from verbatim_files.rttm import Annotation as RTTMAnnotation
 from verbatim_files.rttm import Segment
 from verbatim_files.vttm import AudioRef, write_vttm
@@ -132,3 +133,46 @@ class PyAnnoteDiarization(DiarizationStrategy):
             write_vttm(out_vttm_file, audio=[AudioRef(id=uri, path=file_path, channels=None)], annotation=rttm_ann)
 
         return diarization_annotation
+
+
+class PyAnnoteSeparationDiarization(DiarizationStrategy):
+    def __init__(self, device: str, huggingface_token: str):
+        self.device = device
+        self.huggingface_token = huggingface_token
+        self._separator = PyannoteSpeakerSeparation(device=device, huggingface_token=huggingface_token)
+
+    # pylint: disable=too-many-positional-arguments
+    def compute_diarization(
+        self,
+        file_path: str,
+        out_rttm_file: Optional[str] = None,
+        out_vttm_file: Optional[str] = None,
+        nb_speakers: Optional[int] = None,
+        working_dir: Optional[str] = None,
+        stem_prefix: Optional[str] = None,
+        **kwargs,
+    ) -> RTTMAnnotation:
+        del kwargs
+        uri = os.path.splitext(os.path.basename(file_path))[0]
+        base_dir = working_dir or os.path.dirname(stem_prefix or "") or tempfile.gettempdir()
+        if not stem_prefix:
+            stem_prefix = os.path.join(base_dir or ".", f"{uri}-speaker")
+
+        diarization, audio_refs_meta = self._separator._separate_to_audio_refs(  # pylint: disable=protected-access
+            file_path=file_path,
+            out_speaker_wav_prefix=stem_prefix,
+            nb_speakers=nb_speakers,
+            working_dir=working_dir,
+        )
+        label_to_ref = dict(audio_refs_meta)
+        annotation = _build_rttm_annotation(diarization, label_to_ref, uri)
+
+        if out_rttm_file:
+            self.save_rttm(annotation, out_rttm_file)
+
+        if out_vttm_file:
+            os.makedirs(os.path.dirname(out_vttm_file) or ".", exist_ok=True)
+            audio_refs = [ref for _label, ref in audio_refs_meta]
+            write_vttm(out_vttm_file, audio=audio_refs, annotation=annotation)
+
+        return annotation

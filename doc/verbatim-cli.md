@@ -27,10 +27,9 @@ If no input file is provided, Verbatim expects input from stdin or can use the m
 - `-e, --eval <file>`: Path to a reference JSON file for evaluation
 
 #### Diarization & Speaker Handling
-- `--diarization-strategy <strategy>`: Select diarization strategy (`pyannote` or `stereo`, default: `pyannote`)
+- `--diarization-strategy <strategy>`: Select diarization strategy (`pyannote`, `energy`, `channel`, or `separate`; default: `pyannote`)
 - `--vttm <file>`: VTTM diarization manifest to consume (preferred). If omitted, a minimal VTTM is created and filled if diarization runs.
 - `-d, --diarization <file>`: (Deprecated) RTTM file; wrapped into VTTM for processing.
-- `--separate`: Enable speaker voice separation
 - `-n, --diarize <num>`: Number of speakers in the audio file
 
 #### Language & Transcription Settings
@@ -98,4 +97,3 @@ verbatim input.wav -b 12 --cpu
 
 ## Exit Codes
 - `0`: Success
-

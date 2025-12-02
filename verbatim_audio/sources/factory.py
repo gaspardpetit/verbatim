@@ -9,7 +9,6 @@ import numpy as np
 
 from verbatim_diarization import create_diarizer  # Add this import
 from verbatim_diarization.policy import assign_channels, parse_params, parse_policy
-from verbatim_diarization.separate import create_separator
 from verbatim_files.rttm import Annotation as RTTMAnnotation
 from verbatim_files.rttm import Segment, rttm_to_vttm
 from verbatim_files.vttm import AudioRef, load_vttm, normalize_channel_spec, write_vttm
@@ -286,18 +285,36 @@ def compute_diarization_policy(
 
             file_id = f"{base_id}#{channels_desc}" if channels_desc else base_id
             channel_spec = channels_desc or None
-            audio_refs.append(AudioRef(id=file_id, path=file_path, channels=channel_spec))
+            clause_vttm_path: Optional[str] = None
+            clause_audio_refs: List[AudioRef] = []
+            if clause.strategy == "separate":
+                tmp_dir = working_dir or tempfile.gettempdir()
+                fd, clause_vttm_path = tempfile.mkstemp(suffix=".vttm", dir=tmp_dir)
+                os.close(fd)
 
             diarization = compute_diarization(
                 file_path=subset_path,
                 device=device,
                 rttm_file=None,
-                vttm_file=None,
+                vttm_file=clause_vttm_path,
                 strategy=clause.strategy,
                 nb_speakers=clause_nb_speakers,
                 working_dir=working_dir,
                 **strategy_kwargs,
             )
+
+            if clause_vttm_path:
+                try:
+                    clause_audio_refs, diarization_from_vttm = load_vttm(clause_vttm_path)
+                    if len(diarization_from_vttm) > 0:
+                        diarization = diarization_from_vttm
+                except (FileNotFoundError, ValueError) as exc:  # pragma: no cover
+                    LOG.warning("Failed to load intermediate VTTM %s: %s", clause_vttm_path, exc)
+                finally:
+                    try:
+                        os.unlink(clause_vttm_path)
+                    except OSError:
+                        pass
 
             # Normalize diarizer output to a list of RTTM Segments
             if hasattr(diarization, "segments"):
@@ -313,8 +330,14 @@ def compute_diarization_policy(
 
             relabeled_segments = relabel_speakers(raw_segments, base_label, label_counts)
             for segment in relabeled_segments:
-                segment.file_id = file_id
+                if not clause_audio_refs:
+                    segment.file_id = file_id
                 combined_segments.append(segment)
+
+            if clause_audio_refs:
+                audio_refs.extend(clause_audio_refs)
+            else:
+                audio_refs.append(AudioRef(id=file_id, path=file_path, channels=channel_spec))
     finally:
         for temp in temp_paths:
             # pylint: disable=broad-exception-caught
@@ -481,6 +504,13 @@ def create_audio_sources(
                 nb_speakers=nb_speakers,
                 working_dir=working_dir,
             )
+            if source_config.vttm_file:
+                try:
+                    audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
+                    if len(source_config.diarization) == 0:
+                        source_config.diarization = None
+                except (FileNotFoundError, ValueError):
+                    pass
         elif source_config.diarization is None:
             LOG.info("Diarization not requested; proceeding without diarization.")
         elif source_config.diarization_file and source_config.diarization is None:
@@ -508,6 +538,13 @@ def create_audio_sources(
                     nb_speakers=nb_speakers,
                     working_dir=working_dir,
                 )
+                if source_config.vttm_file:
+                    try:
+                        audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
+                        if len(source_config.diarization) == 0:
+                            source_config.diarization = None
+                    except (FileNotFoundError, ValueError):
+                        pass
 
     if source_config.vttm_file and source_config.diarization is None:
         try:
@@ -606,60 +643,3 @@ def create_joint_speaker_sources(
     from ..sources.fileaudiosource import FileAudioSource
 
     return [FileAudioSource(file=input_source, diarization=annotation, start_sample=start_sample, end_sample=stop_sample)]
-
-
-def create_separate_speaker_sources(
-    *,
-    strategy: str = "pyannote",
-    input_source: str,
-    device: str,
-    source_config: SourceConfig = SourceConfig(),
-    start_time: Optional[str] = None,
-    stop_time: Optional[str] = None,
-    output_prefix_no_ext: str = "out",
-    working_prefix_no_ext: str = "out",
-) -> List[AudioSource]:
-    # pylint: disable=import-outside-toplevel
-
-    if os.path.splitext(input_source)[-1] != ".wav":
-        converted_input_source = convert_to_wav(input_path=input_source, working_prefix_no_ext=working_prefix_no_ext, preserve_channels=True)
-        return create_separate_speaker_sources(
-            input_source=converted_input_source,
-            strategy=strategy,
-            device=device,
-            source_config=source_config,
-            start_time=start_time,
-            stop_time=stop_time,
-            output_prefix_no_ext=output_prefix_no_ext,
-            working_prefix_no_ext=working_prefix_no_ext,
-        )
-
-    if source_config.diarization_file == "" or (source_config.diarize_strategy is not None and source_config.diarization_file is None):
-        source_config.diarization_file = output_prefix_no_ext + ".rttm"
-    if source_config.vttm_file is None:
-        source_config.vttm_file = output_prefix_no_ext + ".vttm"
-    if source_config.vttm_file == "":
-        source_config.vttm_file = None
-
-    nb_speakers = source_config.speakers if source_config.speakers not in (0, "") else None
-
-    start_sample: int = timestr_to_samples(start_time) if start_time else 0
-    stop_sample: Optional[int] = timestr_to_samples(stop_time) if stop_time else None
-
-    with create_separator(
-        strategy=strategy,
-        device=device,
-        huggingface_token=os.getenv("HUGGINGFACE_TOKEN", ""),
-        diarization_strategy=source_config.diarize_strategy or "pyannote",
-    ) as separation:
-        sources = separation.separate_speakers(
-            file_path=input_source,
-            out_rttm_file=source_config.diarization_file,
-            out_vttm_file=source_config.vttm_file,
-            out_speaker_wav_prefix=working_prefix_no_ext,
-            nb_speakers=nb_speakers,
-            start_sample=start_sample,
-            end_sample=stop_sample,
-        )
-
-    return sources

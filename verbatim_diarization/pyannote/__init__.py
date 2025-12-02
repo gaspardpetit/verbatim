@@ -1,4 +1,4 @@
-from .diarize import PyAnnoteDiarization
+from .diarize import PyAnnoteDiarization, PyAnnoteSeparationDiarization
 from .separate import PyannoteSpeakerSeparation
 
-__all__ = ["PyAnnoteDiarization", "PyannoteSpeakerSeparation"]
+__all__ = ["PyAnnoteDiarization", "PyAnnoteSeparationDiarization", "PyannoteSpeakerSeparation"]
