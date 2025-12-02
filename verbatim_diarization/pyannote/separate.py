@@ -1,5 +1,6 @@
 import logging
-from typing import Any, List, Optional, cast
+import os
+from typing import Any, Dict, List, Optional, cast
 
 # pylint: disable=import-outside-toplevel,broad-exception-caught
 import numpy as np
@@ -14,12 +15,24 @@ from verbatim_audio.audio import wav_to_int16
 from verbatim_audio.sources.audiosource import AudioSource
 from verbatim_audio.sources.fileaudiosource import FileAudioSource
 from verbatim_diarization.separate.base import SeparationStrategy
+from verbatim_files.rttm import Annotation as RTTMAnnotation
+from verbatim_files.rttm import Segment, write_rttm
+from verbatim_files.vttm import AudioRef, write_vttm
 
 from .constants import PYANNOTE_SEPARATION_MODEL_ID
 from .ffmpeg_loader import ensure_torchcodec_audio_decoder
 
 # Configure logger
 LOG = logging.getLogger(__name__)
+
+
+def _build_rttm_annotation(diarization, label_to_path: Dict[str, str], default_uri: str) -> RTTMAnnotation:
+    segments = []
+    for segment, _track, label in diarization.itertracks(yield_label=True):
+        seg_label = str(label)
+        file_id = seg_label if seg_label in label_to_path else default_uri
+        segments.append(Segment(start=segment.start, end=segment.end, speaker=seg_label, file_id=file_id))
+    return RTTMAnnotation(segments=segments, file_id=default_uri)
 
 
 class PyannoteSpeakerSeparation(SeparationStrategy):
@@ -112,10 +125,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         diarization = diarization_output.speaker_diarization if hasattr(diarization_output, "speaker_diarization") else diarization_output
 
         # Save diarization to RTTM file if requested
-        if out_rttm_file:
-            with open(out_rttm_file, "w", encoding="utf-8") as rttm:
-                diarization.write_rttm(rttm)
-        diarization_annotation = diarization
+        uri = os.path.splitext(os.path.basename(file_path))[0]
 
         # Save separated sources to WAV files
         sources_data = np.asarray(sources.data)
@@ -140,25 +150,22 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             else:
                 LOG.debug(f"Skipping speaker {s} as it is out of bounds.")
 
-        if out_vttm_file and diarization_annotation is not None:
-            import os
+        label_to_path = dict(audio_refs_meta)
+        cached_annotation: Optional[RTTMAnnotation] = None
 
-            from verbatim_files.rttm import Annotation as RTTMAnnotation
-            from verbatim_files.rttm import Segment
-            from verbatim_files.vttm import AudioRef, write_vttm
+        def ensure_rttm_annotation() -> RTTMAnnotation:
+            nonlocal cached_annotation
+            if cached_annotation is None:
+                cached_annotation = _build_rttm_annotation(diarization_annotation, label_to_path, uri)
+            return cached_annotation
 
-            uri = os.path.splitext(os.path.basename(file_path))[0]
-            label_to_path = dict(audio_refs_meta)
-            segments = []
-            for segment, _track, label in diarization_annotation.itertracks(yield_label=True):
-                seg_label = str(label)
-                file_id = seg_label if seg_label in label_to_path else uri
-                segments.append(Segment(start=segment.start, end=segment.end, speaker=seg_label, file_id=file_id))
+        if out_rttm_file:
+            write_rttm(ensure_rttm_annotation(), out_rttm_file)
 
+        if out_vttm_file:
             audio_refs = [AudioRef(id=label, path=path, channels="1") for label, path in audio_refs_meta] or [
                 AudioRef(id=uri, path=file_path, channels="1")
             ]
-
-            write_vttm(out_vttm_file, audio=audio_refs, annotation=RTTMAnnotation(segments=segments, file_id=uri))
+            write_vttm(out_vttm_file, audio=audio_refs, annotation=ensure_rttm_annotation())
 
         return separated_sources

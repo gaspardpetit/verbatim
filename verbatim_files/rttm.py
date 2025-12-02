@@ -1,6 +1,10 @@
 import dataclasses
+import os
 from io import StringIO
-from typing import IO, Iterable, Iterator, List, Optional, Tuple
+from typing import IO, TYPE_CHECKING, Iterable, Iterator, List, Optional, Tuple
+
+if TYPE_CHECKING:
+    from .vttm import AudioRef
 
 
 @dataclasses.dataclass(order=True)
@@ -122,3 +126,47 @@ def write_rttm(annotation: Annotation, dest: str | IO[str]) -> None:
     else:
         for line in _serialize_segments(annotation.segments):
             dest.write(line)
+
+
+def _resolve_audio_refs(
+    annotation: Annotation,
+    audio_refs: Iterable["AudioRef"] | None,
+    audio_path: str | None,
+    channels: str | int,
+) -> List["AudioRef"]:
+    from .vttm import AudioRef  # pylint: disable=import-outside-toplevel
+
+    provided = [AudioRef(id=str(ref.id), path=str(ref.path), channels=str(ref.channels)) for ref in (audio_refs or [])]
+    if provided:
+        return provided
+    channel_spec = str(channels)
+    if audio_path:
+        audio_id = annotation.file_id or os.path.splitext(os.path.basename(audio_path))[0] or os.path.basename(audio_path)
+        return [AudioRef(id=str(audio_id), path=audio_path, channels=channel_spec)]
+    if annotation.file_id:
+        return [AudioRef(id=str(annotation.file_id), path=str(annotation.file_id), channels=channel_spec)]
+    raise ValueError("Cannot infer audio metadata for RTTM→VTTM conversion; provide audio_refs or audio_path.")
+
+
+def rttm_to_vttm(
+    rttm_path: str,
+    vttm_path: str,
+    *,
+    audio_refs: Iterable["AudioRef"] | None = None,
+    audio_path: str | None = None,
+    channels: str | int = "1",
+) -> Tuple[List["AudioRef"], Annotation]:
+    from .vttm import write_vttm  # pylint: disable=import-outside-toplevel
+
+    annotation = load_rttm(rttm_path)
+    resolved = _resolve_audio_refs(annotation, audio_refs, audio_path, channels)
+    write_vttm(vttm_path, audio=resolved, annotation=annotation)
+    return resolved, annotation
+
+
+def vttm_to_rttm(vttm_path: str, rttm_path: str) -> Annotation:
+    from .vttm import load_vttm  # pylint: disable=import-outside-toplevel
+
+    _audio_refs, annotation = load_vttm(vttm_path)
+    write_rttm(annotation, rttm_path)
+    return annotation

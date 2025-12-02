@@ -11,7 +11,7 @@ from verbatim_diarization import create_diarizer  # Add this import
 from verbatim_diarization.policy import assign_channels, parse_params, parse_policy
 from verbatim_diarization.separate import create_separator
 from verbatim_files.rttm import Annotation as RTTMAnnotation
-from verbatim_files.rttm import Segment
+from verbatim_files.rttm import Segment, rttm_to_vttm
 from verbatim_files.vttm import AudioRef, load_vttm, write_vttm
 
 from ..audio import samples_to_seconds, timestr_to_samples
@@ -502,11 +502,10 @@ def create_audio_sources(
                 source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
                 if source_config.vttm_file and source_config.diarization is not None:
                     audio_id = os.path.splitext(os.path.basename(input_source))[0]
-                    # Derive VTTM from RTTM for compatibility
-                    write_vttm(
+                    rttm_to_vttm(
+                        source_config.diarization_file,
                         source_config.vttm_file,
-                        audio=[AudioRef(id=audio_id, path=input_source, channels="1")],
-                        annotation=source_config.diarization,
+                        audio_refs=[AudioRef(id=audio_id, path=input_source, channels="1")],
                     )
             except (StopIteration, FileNotFoundError):
                 # If the file doesn't exist or is empty, compute new diarization
