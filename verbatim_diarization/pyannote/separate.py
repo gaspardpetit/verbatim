@@ -163,8 +163,8 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             write_rttm(ensure_rttm_annotation(), out_rttm_file)
 
         if out_vttm_file:
-            audio_refs = [AudioRef(id=label, path=path, channels="1") for label, path in audio_refs_meta] or [
-                AudioRef(id=uri, path=file_path, channels="1")
+            audio_refs = [AudioRef(id=label, path=path, channels=0) for label, path in audio_refs_meta] or [
+                AudioRef(id=uri, path=file_path, channels=None)
             ]
             write_vttm(out_vttm_file, audio=audio_refs, annotation=ensure_rttm_annotation())
 

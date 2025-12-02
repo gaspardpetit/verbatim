@@ -46,7 +46,7 @@ class TestVTTM(unittest.TestCase):
                 Segment(start=0.0, end=2.0, speaker="A", file_id="audio1"),
             ]
         )
-        audio_refs = [AudioRef(id="audio1", path="/data/audio1.wav", channels="1")]
+        audio_refs = [AudioRef(id="audio1", path="/data/audio1.wav", channels=0)]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "sample.vttm")
@@ -63,7 +63,7 @@ class TestVTTM(unittest.TestCase):
         annotation = Annotation(segments=[Segment(start=0.0, end=1.0, speaker="S1", file_id="clip")])
         with tempfile.TemporaryDirectory() as tmpdir:
             audio_path = os.path.join(tmpdir, "audio.wav")
-            audio_refs = [AudioRef(id="clip", path=audio_path, channels="1")]
+            audio_refs = [AudioRef(id="clip", path=audio_path, channels=None)]
             rttm_path = os.path.join(tmpdir, "input.rttm")
             vttm_path = os.path.join(tmpdir, "converted.vttm")
             write_rttm(annotation, rttm_path)
@@ -76,13 +76,23 @@ class TestVTTM(unittest.TestCase):
         annotation = Annotation(segments=[Segment(start=0.0, end=1.0, speaker="S1", file_id="clip")])
         with tempfile.TemporaryDirectory() as tmpdir:
             audio_path = os.path.join(tmpdir, "audio.wav")
-            audio_refs = [AudioRef(id="clip", path=audio_path, channels="1")]
+            audio_refs = [AudioRef(id="clip", path=audio_path, channels=None)]
             vttm_path = os.path.join(tmpdir, "input.vttm")
             rttm_path = os.path.join(tmpdir, "converted.rttm")
             write_vttm(vttm_path, audio=audio_refs, annotation=annotation)
             vttm_to_rttm(vttm_path, rttm_path)
             parsed = load_rttm(rttm_path)
         self.assertEqual(len(parsed.segments), 1)
+
+    def test_audio_ref_rejects_invalid_channel_spec(self):
+        with tempfile.NamedTemporaryFile(suffix=".wav") as tmp:
+            bad_path = tmp.name
+            with self.assertRaises(ValueError):
+                AudioRef(id="bad", path=bad_path, channels="")
+            with self.assertRaises(ValueError):
+                AudioRef(id="bad", path=bad_path, channels="*")
+            with self.assertRaises(ValueError):
+                AudioRef(id="bad", path=bad_path, channels="2-1")
 
 
 if __name__ == "__main__":

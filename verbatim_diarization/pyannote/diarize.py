@@ -129,6 +129,6 @@ class PyAnnoteDiarization(DiarizationStrategy):
                 for segment, _track, label in diarization_annotation.itertracks(yield_label=True)
             ]
             rttm_ann = RTTMAnnotation(segments=segments, file_id=uri)
-            write_vttm(out_vttm_file, audio=[AudioRef(id=uri, path=file_path, channels="stereo")], annotation=rttm_ann)
+            write_vttm(out_vttm_file, audio=[AudioRef(id=uri, path=file_path, channels=None)], annotation=rttm_ann)
 
         return diarization_annotation

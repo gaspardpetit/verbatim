@@ -132,14 +132,18 @@ def _resolve_audio_refs(
     annotation: Annotation,
     audio_refs: Iterable["AudioRef"] | None,
     audio_path: str | None,
-    channels: str | int,
+    channels: str | int | None,
 ) -> List["AudioRef"]:
     from .vttm import AudioRef  # pylint: disable=import-outside-toplevel
 
-    provided = [AudioRef(id=str(ref.id), path=str(ref.path), channels=str(ref.channels)) for ref in (audio_refs or [])]
+    provided = [AudioRef(id=str(ref.id), path=str(ref.path), channels=ref.channels) for ref in (audio_refs or [])]
     if provided:
         return provided
-    channel_spec = str(channels)
+    channel_spec: str | int | None
+    if channels is None or isinstance(channels, int):
+        channel_spec = channels
+    else:
+        channel_spec = str(channels)
     if audio_path:
         audio_id = annotation.file_id or os.path.splitext(os.path.basename(audio_path))[0] or os.path.basename(audio_path)
         return [AudioRef(id=str(audio_id), path=audio_path, channels=channel_spec)]
@@ -154,7 +158,7 @@ def rttm_to_vttm(
     *,
     audio_refs: Iterable["AudioRef"] | None = None,
     audio_path: str | None = None,
-    channels: str | int = "1",
+    channels: str | int | None = None,
 ) -> Tuple[List["AudioRef"], Annotation]:
     from .vttm import write_vttm  # pylint: disable=import-outside-toplevel
 

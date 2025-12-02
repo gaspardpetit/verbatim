@@ -6,9 +6,56 @@ VTTM: YAML-wrapped RTTM for self-contained diarization + audio references.
 import io
 import sys
 from dataclasses import dataclass
-from typing import Iterable, List, Tuple
+from typing import Iterable, List, Tuple, Union
 
 from .rttm import Annotation, loads_rttm, write_rttm
+
+ChannelSpec = Union[str, int, None]
+
+
+def normalize_channel_spec(channels: ChannelSpec) -> ChannelSpec:
+    """Validate and normalize a channel specification.
+
+    Returns the sanitized value (strip whitespace for strings) or raises ValueError
+    if the spec is malformed. Use ``None`` to indicate that all channels should be used.
+    """
+
+    if channels is None:
+        return None
+    if isinstance(channels, int):
+        if channels < 0:
+            raise ValueError("Channel index must be >= 0")
+        return channels
+    if not isinstance(channels, str):
+        raise TypeError("Channel specification must be str, int, or None")
+
+    spec = channels.strip()
+    if not spec:
+        raise ValueError("Channel specification cannot be empty; use None for all channels")
+
+    for part in spec.split(","):
+        token = part.strip()
+        if not token:
+            raise ValueError("Malformed channel specification: consecutive commas detected")
+        if "-" in token:
+            left, right = token.split("-", 1)
+            if not left or not right:
+                raise ValueError(f"Malformed channel range '{token}'")
+            if not (left.isdigit() and right.isdigit()):
+                raise ValueError(f"Channel range '{token}' must contain integers")
+            start = int(left)
+            end = int(right)
+            if start < 0 or end < 0:
+                raise ValueError("Channel indices must be >= 0")
+            if end < start:
+                raise ValueError(f"Channel range '{token}' must be ascending")
+        else:
+            if not token.isdigit():
+                raise ValueError(f"Channel index '{token}' must be a non-negative integer")
+            if int(token) < 0:
+                raise ValueError("Channel indices must be >= 0")
+
+    return spec
 
 
 @dataclass
@@ -17,7 +64,10 @@ class AudioRef:
 
     id: str
     path: str
-    channels: str | int = "1"
+    channels: ChannelSpec = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "channels", normalize_channel_spec(self.channels))
 
 
 def load_vttm(path: str) -> Tuple[List[AudioRef], Annotation]:
@@ -75,8 +125,8 @@ def _parse_audio(raw_audio) -> List[AudioRef]:
         path = entry.get("path") or entry.get("file_path")
         if not audio_id or not path:
             continue
-        channels = entry.get("channels", entry.get("channel", "1"))
-        audio_refs.append(AudioRef(id=str(audio_id), path=str(path), channels=str(channels)))
+        channels = entry.get("channels", entry.get("channel"))
+        audio_refs.append(AudioRef(id=str(audio_id), path=str(path), channels=channels))
     return audio_refs
 
 
