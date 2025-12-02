@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from verbatim_rttm import load_rttm, write_rttm
+from verbatim_files.rttm import load_rttm, write_rttm
 
 
 class TestPyannoteRTTMInterop(unittest.TestCase):

@@ -4,6 +4,7 @@ import sys
 
 from verbatim_serve.server import serve
 
+# pylint: disable=import-outside-toplevel
 LOG = logging.getLogger(__name__)
 
 

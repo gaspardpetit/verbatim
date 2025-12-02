@@ -14,6 +14,22 @@ from numpy.typing import NDArray
 
 from verbatim_audio.audio import samples_to_seconds
 from verbatim_audio.sources.audiosource import AudioSource, AudioStream
+from verbatim_files.format.factory import configure_writers
+from verbatim_files.format.json import read_utterances
+from verbatim_files.format.txt import (
+    COLORSCHEME_ACKNOWLEDGED,
+    COLORSCHEME_UNACKNOWLEDGED,
+    COLORSCHEME_UNCONFIRMED,
+    TranscriptFormatter,
+)
+from verbatim_files.format.writer import (
+    LanguageStyle,
+    ProbabilityStyle,
+    SpeakerStyle,
+    TimestampStyle,
+    TranscriptWriter,
+    TranscriptWriterConfig,
+)
 from verbatim_transcript import (
     LanguageDetectionRequest,
     LanguageDetectionResult,
@@ -25,22 +41,6 @@ from verbatim_transcript import (
 
 from .config import Config
 from .models import Models
-from .transcript.format.factory import configure_writers
-from .transcript.format.json import read_utterances
-from .transcript.format.txt import (
-    COLORSCHEME_ACKNOWLEDGED,
-    COLORSCHEME_UNACKNOWLEDGED,
-    COLORSCHEME_UNCONFIRMED,
-    TranscriptFormatter,
-)
-from .transcript.format.writer import (
-    LanguageStyle,
-    ProbabilityStyle,
-    SpeakerStyle,
-    TimestampStyle,
-    TranscriptWriter,
-    TranscriptWriterConfig,
-)
 from .transcript.idprovider import CounterIdProvider, IdProvider
 from .transcript.sentences import SentenceTokenizer, SilenceSentenceTokenizer
 from .transcript.words import Utterance, Word

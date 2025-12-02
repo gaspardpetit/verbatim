@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import List, Optional
 
-from ..words import Utterance, Word
+from verbatim.transcript.words import Utterance, Word
 
 
 # pylint: disable=invalid-name

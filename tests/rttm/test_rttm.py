@@ -2,16 +2,8 @@ import os
 import tempfile
 import unittest
 
-from verbatim_rttm import (
-    Annotation,
-    AudioRef,
-    Segment,
-    load_rttm,
-    load_vttm,
-    loads_rttm,
-    write_rttm,
-    write_vttm,
-)
+from verbatim_files.rttm import Annotation, Segment, load_rttm, loads_rttm, write_rttm
+from verbatim_files.vttm import AudioRef, load_vttm, write_vttm
 
 
 class TestRTTM(unittest.TestCase):

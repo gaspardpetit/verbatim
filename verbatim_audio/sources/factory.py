@@ -10,8 +10,9 @@ import numpy as np
 from verbatim_diarization import create_diarizer  # Add this import
 from verbatim_diarization.policy import assign_channels, parse_params, parse_policy
 from verbatim_diarization.separate import create_separator
-from verbatim_rttm import Annotation as RTTMAnnotation
-from verbatim_rttm import AudioRef, Segment, load_vttm, write_vttm
+from verbatim_files.rttm import Annotation as RTTMAnnotation
+from verbatim_files.rttm import Segment
+from verbatim_files.vttm import AudioRef, load_vttm, write_vttm
 
 from ..audio import samples_to_seconds, timestr_to_samples
 from ..convert import convert_to_wav
@@ -311,7 +312,7 @@ def compute_diarization_policy(
 
             # Normalize diarizer output to a list of RTTM Segments
             if hasattr(diarization, "segments"):
-                raw_segments = list(diarization.segments)  # verbatim_rttm.Annotation
+                raw_segments = list(diarization.segments)  # verbatim_files.rttm.Annotation
             elif hasattr(diarization, "itertracks"):
                 # pyannote-style Annotation
                 raw_segments = [

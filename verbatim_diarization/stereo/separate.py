@@ -9,7 +9,8 @@ from verbatim_audio.audio import wav_to_int16
 from verbatim_audio.sources.audiosource import AudioSource
 from verbatim_audio.sources.fileaudiosource import FileAudioSource
 from verbatim_diarization.separate.base import SeparationStrategy
-from verbatim_rttm import Annotation, AudioRef, Segment, write_vttm
+from verbatim_files.rttm import Annotation, Segment
+from verbatim_files.vttm import AudioRef, write_vttm
 
 # Configure logger
 LOG = logging.getLogger(__name__)

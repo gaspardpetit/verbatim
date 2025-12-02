@@ -4,13 +4,13 @@ import os
 import tempfile
 import unittest
 
-from verbatim.transcript.format.json import (
+from verbatim.transcript.words import Utterance, Word
+from verbatim_files.format.json import (
     TranscriptFormatter,
     TranscriptParser,
     read_utterances,
     save_utterances,
 )
-from verbatim.transcript.words import Utterance, Word
 
 # =============================================================================
 # Unit Tests

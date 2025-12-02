@@ -4,6 +4,7 @@ import tempfile
 import time
 from typing import Any, Optional
 
+# pylint: disable=import-outside-toplevel,broad-exception-caught
 import numpy as np
 import torch
 from pyannote.audio import Pipeline
@@ -13,11 +14,12 @@ from pyannote.core.annotation import Annotation
 from torch.serialization import add_safe_globals
 
 from verbatim_diarization.diarize.base import DiarizationStrategy
-from verbatim_rttm import Annotation as RTTMAnnotation
-from verbatim_rttm import AudioRef, Segment, write_vttm
+from verbatim_files.rttm import Annotation as RTTMAnnotation
+from verbatim_files.rttm import Segment
+from verbatim_files.vttm import AudioRef, write_vttm
 
 from .constants import PYANNOTE_DIARIZATION_MODEL_ID
-from .ffmpeg_loader import ensure_ffmpeg_for_torchcodec
+from .ffmpeg_loader import ensure_torchcodec_audio_decoder
 
 LOG = logging.getLogger(__name__)
 
@@ -45,6 +47,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
         self.pipeline.instantiate({})
         self.pipeline.to(torch.device(self.device))
 
+    # pylint: disable=too-many-positional-arguments
     def compute_diarization(
         self,
         file_path: str,
@@ -60,31 +63,8 @@ class PyAnnoteDiarization(DiarizationStrategy):
         Additional kwargs:
             nb_speakers: Optional number of speakers
         """
-        # pyannote.audio 4.x requires torchcodec; attempt to ensure FFmpeg DLLs first.
-        ensure_ffmpeg_for_torchcodec()
-
-        def _import_torchcodec():
-            from torchcodec.decoders import AudioDecoder  # noqa: F401
-
-            try:
-                import pyannote.audio.core.io as pa_io
-
-                setattr(pa_io, "AudioDecoder", AudioDecoder)  # pyright: ignore[reportPrivateImportUsage]
-            except Exception as exc:  # pragma: no cover - best effort hook
-                LOG.debug("Failed to register torchcodec AudioDecoder with pyannote: %s", exc)
-
-        try:
-            _import_torchcodec()
-        except Exception:
-            # Retry after another FFmpeg scan; surface a clearer error if still broken.
-            ensure_ffmpeg_for_torchcodec()
-            try:
-                _import_torchcodec()
-            except Exception as exc2:  # pragma: no cover - defensive import
-                raise RuntimeError(
-                    "pyannote diarization could not load torchcodec (FFmpeg dependency). "
-                    "Install FFmpeg shared libraries (4–7) and set FFMPEG_DLL_DIR or add them to PATH."
-                ) from exc2
+        # pyannote.audio 4.x requires torchcodec; ensure it is ready before pipeline work.
+        ensure_torchcodec_audio_decoder("pyannote diarization")
         # Downmix multi-channel audio to mono for pyannote
         temp_path: Optional[str] = None
         diarization = None
