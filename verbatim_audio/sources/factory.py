@@ -12,7 +12,7 @@ from verbatim_diarization.policy import assign_channels, parse_params, parse_pol
 from verbatim_diarization.separate import create_separator
 from verbatim_files.rttm import Annotation as RTTMAnnotation
 from verbatim_files.rttm import Segment, rttm_to_vttm
-from verbatim_files.vttm import AudioRef, load_vttm, write_vttm
+from verbatim_files.vttm import AudioRef, load_vttm, normalize_channel_spec, write_vttm
 
 from ..audio import samples_to_seconds, timestr_to_samples
 from ..convert import convert_to_wav
@@ -26,34 +26,22 @@ Annotation = RTTMAnnotation  # pylint: disable=invalid-name
 
 def parse_channel_indices(channels_spec: Union[str, int, None]) -> List[int]:
     """Parse channel selections like '0', '0-2,4' into zero-based indices."""
-    if channels_spec is None:
+
+    normalized = normalize_channel_spec(channels_spec)
+    if normalized is None:
         return []
-    if isinstance(channels_spec, str):
-        spec_lower = channels_spec.strip().lower()
-        if spec_lower in ("*", "stereo"):
-            return []
-    if isinstance(channels_spec, int):
-        return [channels_spec]
+    if isinstance(normalized, int):
+        return [normalized]
+
     indices: Set[int] = set()
-    for part in str(channels_spec).split(","):
-        part = part.strip()
-        if not part:
-            continue
+    for part in normalized.split(","):
         if "-" in part:
             start_s, end_s = part.split("-", 1)
-            try:
-                start = int(start_s)
-                end = int(end_s)
-            except ValueError:
-                continue
-            if end < start:
-                start, end = end, start
+            start = int(start_s)
+            end = int(end_s)
             indices.update(range(start, end + 1))
         else:
-            try:
-                indices.add(int(part))
-            except ValueError:
-                continue
+            indices.add(int(part))
     return sorted(indices)
 
 
@@ -297,7 +285,8 @@ def compute_diarization_policy(
                 channels_desc = ""
 
             file_id = f"{base_id}#{channels_desc}" if channels_desc else base_id
-            audio_refs.append(AudioRef(id=file_id, path=file_path, channels=channels_desc or "1"))
+            channel_spec = channels_desc or None
+            audio_refs.append(AudioRef(id=file_id, path=file_path, channels=channel_spec))
 
             diarization = compute_diarization(
                 file_path=subset_path,
@@ -469,7 +458,7 @@ def create_audio_sources(
         if source_config.vttm_file and not os.path.exists(source_config.vttm_file):
             LOG.info("No VTTM provided; creating minimal VTTM placeholder at %s", source_config.vttm_file)
             audio_id = os.path.splitext(os.path.basename(input_source))[0]
-            audio_ref = AudioRef(id=audio_id, path=input_source, channels="*")
+            audio_ref = AudioRef(id=audio_id, path=input_source, channels=None)
             write_vttm(source_config.vttm_file, audio=[audio_ref], annotation=RTTMAnnotation())
         if source_config.vttm_file:
             try:
@@ -505,7 +494,7 @@ def create_audio_sources(
                     rttm_to_vttm(
                         source_config.diarization_file,
                         source_config.vttm_file,
-                        audio_refs=[AudioRef(id=audio_id, path=input_source, channels="1")],
+                        audio_refs=[AudioRef(id=audio_id, path=input_source, channels=None)],
                     )
             except (StopIteration, FileNotFoundError):
                 # If the file doesn't exist or is empty, compute new diarization
