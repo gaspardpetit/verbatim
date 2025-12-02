@@ -85,12 +85,14 @@ class TestVTTM(unittest.TestCase):
         self.assertEqual(len(parsed.segments), 1)
 
     def test_audio_ref_rejects_invalid_channel_spec(self):
-        with self.assertRaises(ValueError):
-            AudioRef(id="bad", path="/tmp/bad.wav", channels="")
-        with self.assertRaises(ValueError):
-            AudioRef(id="bad", path="/tmp/bad.wav", channels="*")
-        with self.assertRaises(ValueError):
-            AudioRef(id="bad", path="/tmp/bad.wav", channels="2-1")
+        with tempfile.NamedTemporaryFile(suffix=".wav") as tmp:
+            bad_path = tmp.name
+            with self.assertRaises(ValueError):
+                AudioRef(id="bad", path=bad_path, channels="")
+            with self.assertRaises(ValueError):
+                AudioRef(id="bad", path=bad_path, channels="*")
+            with self.assertRaises(ValueError):
+                AudioRef(id="bad", path=bad_path, channels="2-1")
 
 
 if __name__ == "__main__":
