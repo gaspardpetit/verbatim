@@ -1,8 +1,14 @@
+"""Helpers to ensure torchcodec can load FFmpeg DLLs for pyannote."""
+
+# pylint: disable=import-outside-toplevel,broad-exception-caught
+
+import logging
 import os
 from pathlib import Path
 from typing import Optional
 
 REQUIRED_PREFIXES = ("avcodec-", "avformat-", "avutil-")
+LOG = logging.getLogger(__name__)
 
 
 def _dir_has_ffmpeg_dlls(path: Path) -> bool:
@@ -78,3 +84,31 @@ def ensure_ffmpeg_for_torchcodec() -> Optional[str]:
         "  - Add that directory to PATH, or\n"
         "  - Copy the DLLs into an 'ffmpeg' folder next to this app.\n"
     )
+
+
+def _register_torchcodec_audio_decoder() -> None:
+    from torchcodec.decoders import AudioDecoder  # noqa: F401
+
+    try:
+        import pyannote.audio.core.io as pa_io
+
+        setattr(pa_io, "AudioDecoder", AudioDecoder)  # pyright: ignore[reportPrivateImportUsage]
+    except Exception as exc:  # pragma: no cover - best effort hook
+        LOG.debug("Failed to register torchcodec AudioDecoder with pyannote: %s", exc)
+
+
+def ensure_torchcodec_audio_decoder(context: str) -> None:
+    """Ensure torchcodec is importable and wired into pyannote audio IO."""
+    ensure_ffmpeg_for_torchcodec()
+
+    try:
+        _register_torchcodec_audio_decoder()
+    except Exception:
+        ensure_ffmpeg_for_torchcodec()
+        try:
+            _register_torchcodec_audio_decoder()
+        except Exception as exc2:  # pragma: no cover - defensive import
+            raise RuntimeError(
+                f"{context} could not load torchcodec (FFmpeg dependency). "
+                "Install FFmpeg shared libraries (4–7) and set FFMPEG_DLL_DIR or add them to PATH."
+            ) from exc2

@@ -5,7 +5,8 @@ from typing import Optional
 import soundfile as sf
 
 from verbatim_diarization.diarize.base import DiarizationStrategy
-from verbatim_rttm import Annotation, AudioRef, Segment, write_vttm
+from verbatim_files.rttm import Annotation, Segment
+from verbatim_files.vttm import AudioRef, write_vttm
 
 LOG = logging.getLogger(__name__)
 

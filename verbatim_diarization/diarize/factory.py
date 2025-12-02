@@ -10,6 +10,7 @@ import sys
 from getpass import getpass
 from typing import Optional
 
+# pylint: disable=import-outside-toplevel,broad-exception-caught
 from verbatim_diarization.diarize.base import DiarizationStrategy
 
 

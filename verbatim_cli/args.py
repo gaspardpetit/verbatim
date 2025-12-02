@@ -3,7 +3,7 @@
 import argparse
 
 from verbatim import __version__
-from verbatim.transcript.format.writer import LanguageStyle, ProbabilityStyle, SpeakerStyle, TimestampStyle
+from verbatim_files.format.writer import LanguageStyle, ProbabilityStyle, SpeakerStyle, TimestampStyle
 
 
 class OptionalValueAction(argparse.Action):

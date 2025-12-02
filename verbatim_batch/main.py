@@ -5,6 +5,7 @@ from argparse import Namespace
 from pathlib import Path
 from typing import Iterable, List
 
+# pylint: disable=import-outside-toplevel
 from verbatim_cli.args import add_shared_arguments
 from verbatim_cli.config_file import load_config_file, merge_args, select_profile
 from verbatim_cli.configure import (
@@ -57,7 +58,7 @@ def build_batch_parser() -> argparse.ArgumentParser:
 
 def outputs_exist(output_prefix_no_ext: str, output_formats: List[str]) -> bool:
     for fmt in output_formats:
-        if fmt == "stdout" or fmt == "stdout-nocolor":
+        if fmt in ("stdout", "stdout-nocolor"):
             continue
         suffix = f".{fmt}" if fmt != "json" else ".json"
         candidate = Path(f"{output_prefix_no_ext}{suffix}")

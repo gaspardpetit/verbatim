@@ -10,7 +10,8 @@ import warnings
 from itertools import chain
 from typing import Any, Callable, List, Optional, Tuple, Union
 
-from ..words import Utterance, Word
+from verbatim.transcript.words import Utterance, Word
+
 from .writer import TranscriptWriter, TranscriptWriterConfig
 
 LOG = logging.getLogger(__name__)

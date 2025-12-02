@@ -1,7 +1,9 @@
 """
 VTTM: YAML-wrapped RTTM for self-contained diarization + audio references.
 """
+# pylint: disable=import-outside-toplevel,broad-exception-caught,no-name-in-module
 
+import io
 import sys
 from dataclasses import dataclass
 from typing import Iterable, List, Tuple
@@ -81,10 +83,7 @@ def _parse_audio(raw_audio) -> List[AudioRef]:
 def _serialize_annotation(annotation: Annotation):
     """Yield RTTM lines from an Annotation."""
     # Reuse write_rttm logic via an in-memory buffer
-    import io
-
     buffer = io.StringIO()
     write_rttm(annotation, buffer)  # type: ignore[arg-type]
     buffer.seek(0)
-    for line in buffer:
-        yield line
+    yield from buffer

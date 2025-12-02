@@ -3,6 +3,8 @@
 import logging
 from typing import Optional
 
+# pylint: disable=import-outside-toplevel,broad-exception-caught
+
 LOG = logging.getLogger(__name__)
 
 

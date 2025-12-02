@@ -104,7 +104,7 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
-include = ["verbatim/**/*", "verbatim_audio/**/*", "verbatim_cli/**/*", "verbatim_serve/**/*", "verbatim_batch/**/*", "verbatim_transcript/**/*", "verbatim_rttm/**/*", "verbatim_diarization/**/*"]
+include = ["verbatim/**/*", "verbatim_audio/**/*", "verbatim_cli/**/*", "verbatim_serve/**/*", "verbatim_batch/**/*", "verbatim_transcript/**/*", "verbatim_files/**/*", "verbatim_diarization/**/*"]
 
 [tool.hatch.version]
 source = "vcs"
@@ -133,7 +133,7 @@ pythonVersion = "3.11"
 reportMissingImports = "warning"
 exclude = [
     # Highly dynamic formatting helpers; complex typing provides low value
-    "verbatim/transcript/format/ass.py",
+    "verbatim_files/format/ass.py",
     # Exclude local virtual envs and non-source directories
     ".venv",
     ".venv/**",
@@ -180,7 +180,7 @@ known-first-party = [
     "verbatim_batch",
     "verbatim_cli",
     "verbatim_diarization",
-    "verbatim_rttm",
+    "verbatim_files",
     "verbatim_serve",
     "verbatim_transcript",
     "tests",

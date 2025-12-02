@@ -5,8 +5,8 @@ import os
 from typing import List, Optional
 
 from verbatim.config import Config
-from verbatim.transcript.format.writer import TranscriptWriterConfig
 from verbatim_audio.sources.sourceconfig import SourceConfig
+from verbatim_files.format.writer import TranscriptWriterConfig
 
 
 def compute_log_level(verbose: int) -> int:

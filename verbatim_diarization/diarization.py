@@ -2,7 +2,7 @@ import logging
 import os
 from typing import Optional
 
-from verbatim_rttm import Annotation, load_rttm, loads_rttm
+from verbatim_files.rttm import Annotation, load_rttm, loads_rttm
 
 from .diarize.factory import create_diarizer
 
@@ -46,7 +46,7 @@ class Diarization:
     @staticmethod
     def load_diarization_vttm(vttm_path: str) -> tuple[list, Annotation]:
         """Load diarization and audio references from a VTTM file."""
-        from verbatim_rttm import load_vttm
+        from verbatim_files.vttm import load_vttm  # pylint: disable=import-outside-toplevel
 
         return load_vttm(vttm_path)
 
@@ -60,7 +60,7 @@ class Diarization:
         Args:
             file_path: Path to audio file
             out_rttm_file: Output RTTM file path
-            strategy: Diarization strategy to use ('pyannote' or 'stereo')
+            strategy: Diarization strategy to use ('pyannote', 'energy', or 'channel')
             **kwargs: Strategy-specific parameters
         """
         self.diarizer = create_diarizer(strategy=strategy, device=self.device, huggingface_token=self.huggingface_token)

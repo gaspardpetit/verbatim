@@ -4,10 +4,10 @@ from typing import List, Optional, TextIO
 import numpy as np
 from colorama import Fore, Style
 
+from verbatim.transcript.words import Utterance, Word
 from verbatim_diarization import UNKNOWN_SPEAKER
 
 from ..formatting import format_milliseconds
-from ..words import Utterance, Word
 from .writer import (
     LanguageStyle,
     ProbabilityStyle,

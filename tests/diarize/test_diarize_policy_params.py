@@ -2,7 +2,7 @@ import unittest
 
 from verbatim_audio.sources.factory import relabel_speakers, resolve_clause_params
 from verbatim_diarization.policy import PolicyClause
-from verbatim_rttm import Segment
+from verbatim_files.rttm import Segment
 
 
 class TestDiarizePolicyParams(unittest.TestCase):

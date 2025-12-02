@@ -2,7 +2,8 @@ import json
 import os
 from typing import List, Optional, TextIO
 
-from ..words import Utterance, Word
+from verbatim.transcript.words import Utterance, Word
+
 from .writer import TranscriptWriter, TranscriptWriterConfig
 
 

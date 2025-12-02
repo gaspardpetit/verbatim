@@ -6,7 +6,8 @@ import numpy as np
 import soundfile as sf
 
 from verbatim_diarization.diarize.base import DiarizationStrategy
-from verbatim_rttm import Annotation, AudioRef, Segment, write_vttm
+from verbatim_files.rttm import Annotation, Segment
+from verbatim_files.vttm import AudioRef, write_vttm
 
 LOG = logging.getLogger(__name__)
 
@@ -100,7 +101,7 @@ class EnergyDiarization(DiarizationStrategy):
             energy_left, energy_right, peak_left, peak_right = self._compute_channel_energies(audio, start_sample, end_sample)
             speaker = self._determine_speaker(energy_left, energy_right, peak_left, peak_right)
 
-            if speaker != current_speaker and speaker != "UNKNOWN":
+            if speaker not in (current_speaker, "UNKNOWN"):
                 if current_speaker is not None:
                     segments.append(
                         Segment(

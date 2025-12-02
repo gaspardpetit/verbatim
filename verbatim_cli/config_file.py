@@ -1,4 +1,5 @@
 """Config file loading and parser defaults application for CLIs."""
+# pylint: disable=too-many-return-statements
 
 import argparse
 import fnmatch
@@ -9,7 +10,7 @@ from typing import Any, Dict, Optional
 
 import yaml
 
-from verbatim.transcript.format.writer import LanguageStyle, ProbabilityStyle, SpeakerStyle, TimestampStyle
+from verbatim_files.format.writer import LanguageStyle, ProbabilityStyle, SpeakerStyle, TimestampStyle
 
 OUTPUT_FLAGS = ("ass", "docx", "txt", "json", "md", "stdout", "stdout_nocolor")
 DEFAULT_MATCH = ["*.wav", "*.mp3", "*.m4a", "*.mp4"]

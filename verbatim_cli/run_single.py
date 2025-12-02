@@ -1,4 +1,5 @@
 """Single-file execution helpers for the CLI."""
+# pylint: disable=import-outside-toplevel
 
 from typing import List
 

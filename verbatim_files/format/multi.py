@@ -1,6 +1,7 @@
 from typing import List, Optional
 
-from ..words import Utterance, Word
+from verbatim.transcript.words import Utterance, Word
+
 from .writer import TranscriptWriter, TranscriptWriterConfig
 
 

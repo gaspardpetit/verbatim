@@ -19,16 +19,16 @@
 
 ## Local Checks
 - Always run the basic static checks when you modify files:
-  - Ruff: `ruff check verbatim tests`
-  - Flake8: `flake8 verbatim tests`
-  - Pylint: `pylint --disable=import-error verbatim $(git ls-files 'tests/*.py')`
+  - Ruff: `ruff check verbatim verbatim_audio verbatim_files tests`
+  - Flake8: `flake8 verbatim verbatim_audio verbatim_files tests`
+  - Pylint: `pylint --disable=import-error verbatim verbatim_audio verbatim_files $(git ls-files 'tests/**/*.py')`
   - Pyright: `pyright`
-  - Bandit: `bandit -r verbatim tests run.py`
+  - Bandit: `bandit -r verbatim verbatim_audio verbatim_files tests run.py`
 - Shortcut: `make check` groups all of the above.
 
 ## Architecture Overview
 - Read `doc/architecture.md` for the end-to-end pipeline, data flow, and component contracts.
-- Key areas: audio sources (`verbatim_audio/`), transcription/diarization/separation (`verbatim/voices/`), transcript formatting (`verbatim/transcript/`), metrics (`verbatim/eval/`).
+- Key areas: audio sources (`verbatim_audio/`), transcription/diarization/separation (`verbatim/voices/`), transcript/output formats (`verbatim_files/`), metrics (`verbatim/eval/`).
 - If you change stage interfaces or file formats, update `doc/architecture.md` and related diagrams in `doc/img/`.
 
 ## Audio Parameters
@@ -46,7 +46,7 @@
 
 ## Testing Guidelines
 - Framework: `unittest` (pytest-compatible). Place tests under `tests/`, name `test_*.py`.
-- Run a single test: `python -m unittest tests/test_audio.py -v`.
+- Run a single test: `python -m unittest tests/audio/test_audio.py -v`.
 - Determinism: force CPU when needed `CUDA_VISIBLE_DEVICES=-1`.
 - Include minimal sample inputs and assert concrete outputs (see `tests/test_pipeline.py`).
 

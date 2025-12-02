@@ -1,6 +1,7 @@
 import logging
 from typing import Any, List, Optional, cast
 
+# pylint: disable=import-outside-toplevel,broad-exception-caught
 import numpy as np
 import scipy.io.wavfile
 import torch
@@ -12,11 +13,10 @@ from torch.serialization import add_safe_globals
 from verbatim_audio.audio import wav_to_int16
 from verbatim_audio.sources.audiosource import AudioSource
 from verbatim_audio.sources.fileaudiosource import FileAudioSource
-from verbatim_diarization.diarize.factory import create_diarizer
 from verbatim_diarization.separate.base import SeparationStrategy
 
 from .constants import PYANNOTE_SEPARATION_MODEL_ID
-from .ffmpeg_loader import ensure_ffmpeg_for_torchcodec
+from .ffmpeg_loader import ensure_torchcodec_audio_decoder
 
 # Configure logger
 LOG = logging.getLogger(__name__)
@@ -32,6 +32,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         **kwargs,
     ):
         super().__init__()
+        del kwargs  # unused
         LOG.info("Initializing Separation Pipeline.")
         self.diarization_strategy = diarization_strategy
         self.device = device
@@ -100,26 +101,33 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         if not out_rttm_file:
             out_rttm_file = None
 
-        # For stereo strategy, we might want to handle separation differently
-        if self.diarization_strategy == "stereo":
-            # For stereo files, we can simply split the channels
-            sample_rate, audio_data = scipy.io.wavfile.read(file_path)
-            if audio_data.ndim != 2 or audio_data.shape[1] != 2:  # type: ignore[index]
-                raise ValueError("Stereo separation requires stereo audio input")
+        # Use PyAnnote's neural separation for mono/mixed audio
+        ensure_torchcodec_audio_decoder("pyannote separation")
+        with ProgressHook() as hook:
+            if self.pipeline is None:
+                raise RuntimeError("Pyannote separation pipeline is not initialized")
+            diarization_output, sources = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
 
-            # Create diarization annotation
-            diarizer = create_diarizer(strategy="energy", device=self.device, huggingface_token=self.huggingface_token)
-            diarization = diarizer.compute_diarization(
-                file_path=file_path, out_rttm_file=out_rttm_file, out_vttm_file=out_vttm_file, nb_speakers=nb_speakers
-            )
+        # pyannote.audio 4.x returns DiarizeOutput; normalize to Annotation
+        diarization = diarization_output.speaker_diarization if hasattr(diarization_output, "speaker_diarization") else diarization_output
 
-            # Split channels into separate files
-            for channel, speaker in enumerate(["SPEAKER_0", "SPEAKER_1"]):
-                channel_data = audio_data[:, channel]
-                if channel_data.dtype != np.int16:
-                    channel_data = wav_to_int16(channel_data)
+        # Save diarization to RTTM file if requested
+        if out_rttm_file:
+            with open(out_rttm_file, "w", encoding="utf-8") as rttm:
+                diarization.write_rttm(rttm)
+        diarization_annotation = diarization
+
+        # Save separated sources to WAV files
+        sources_data = np.asarray(sources.data)
+        shape = cast(tuple[int, int], tuple(sources_data.shape[:2]))
+
+        for s, speaker in enumerate(diarization.labels()):
+            if s < shape[1]:
+                speaker_data = sources_data[:, s]
+                if speaker_data.dtype != np.int16:
+                    speaker_data = wav_to_int16(speaker_data)
                 file_name = f"{out_speaker_wav_prefix}-{speaker}.wav" if out_speaker_wav_prefix else f"{speaker}.wav"
-                scipy.io.wavfile.write(file_name, sample_rate, channel_data)
+                scipy.io.wavfile.write(file_name, 16000, speaker_data)
                 audio_refs_meta.append((speaker, file_name))
                 separated_sources.append(
                     FileAudioSource(
@@ -129,78 +137,18 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
                         diarization=diarization,
                     )
                 )
-            diarization_annotation = diarization
-
-        else:
-            # Use PyAnnote's neural separation for mono files
-            ensure_ffmpeg_for_torchcodec()
-
-            def _import_torchcodec():
-                from torchcodec.decoders import AudioDecoder  # noqa: F401
-
-                try:
-                    import pyannote.audio.core.io as pa_io
-
-                    setattr(pa_io, "AudioDecoder", AudioDecoder)  # pyright: ignore[reportPrivateImportUsage]
-                except Exception as exc:  # pragma: no cover - best effort hook
-                    LOG.debug("Failed to register torchcodec AudioDecoder with pyannote: %s", exc)
-
-            try:
-                _import_torchcodec()
-            except Exception:
-                ensure_ffmpeg_for_torchcodec()
-                try:
-                    _import_torchcodec()
-                except Exception as exc2:  # pragma: no cover - defensive import
-                    raise RuntimeError(
-                        "pyannote separation could not load torchcodec (FFmpeg dependency). "
-                        "Install FFmpeg shared libraries (4–7) and set FFMPEG_DLL_DIR or add them to PATH."
-                    ) from exc2
-            with ProgressHook() as hook:
-                if self.pipeline is None:
-                    raise RuntimeError("Pyannote separation pipeline is not initialized")
-                diarization_output, sources = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
-
-            # pyannote.audio 4.x returns DiarizeOutput; normalize to Annotation
-            diarization = diarization_output.speaker_diarization if hasattr(diarization_output, "speaker_diarization") else diarization_output
-
-            # Save diarization to RTTM file if requested
-            if out_rttm_file:
-                with open(out_rttm_file, "w", encoding="utf-8") as rttm:
-                    diarization.write_rttm(rttm)
-            diarization_annotation = diarization
-
-            # Save separated sources to WAV files
-            sources_data = np.asarray(sources.data)
-            shape = cast(tuple[int, int], tuple(sources_data.shape[:2]))
-
-            for s, speaker in enumerate(diarization.labels()):
-                if s < shape[1]:
-                    speaker_data = sources_data[:, s]
-                    if speaker_data.dtype != np.int16:
-                        speaker_data = wav_to_int16(speaker_data)
-                    file_name = f"{out_speaker_wav_prefix}-{speaker}.wav" if out_speaker_wav_prefix else f"{speaker}.wav"
-                    scipy.io.wavfile.write(file_name, 16000, speaker_data)
-                    audio_refs_meta.append((speaker, file_name))
-                    separated_sources.append(
-                        FileAudioSource(
-                            file=file_name,
-                            start_sample=start_sample,
-                            end_sample=end_sample,
-                            diarization=diarization,
-                        )
-                    )
-                else:
-                    LOG.debug(f"Skipping speaker {s} as it is out of bounds.")
+            else:
+                LOG.debug(f"Skipping speaker {s} as it is out of bounds.")
 
         if out_vttm_file and diarization_annotation is not None:
             import os
 
-            from verbatim_rttm import Annotation as RTTMAnnotation
-            from verbatim_rttm import AudioRef, Segment, write_vttm
+            from verbatim_files.rttm import Annotation as RTTMAnnotation
+            from verbatim_files.rttm import Segment
+            from verbatim_files.vttm import AudioRef, write_vttm
 
             uri = os.path.splitext(os.path.basename(file_path))[0]
-            label_to_path = {label: path for label, path in audio_refs_meta}
+            label_to_path = dict(audio_refs_meta)
             segments = []
             for segment, _track, label in diarization_annotation.itertracks(yield_label=True):
                 seg_label = str(label)

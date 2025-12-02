@@ -1,4 +1,5 @@
 """Factory for separation strategies with optional interactive HF-token prompt."""
+# pylint: disable=import-outside-toplevel,broad-exception-caught
 
 import os
 import sys
