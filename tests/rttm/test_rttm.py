@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from verbatim_files.rttm import Annotation, Segment, load_rttm, loads_rttm, write_rttm
+from verbatim_files.rttm import Annotation, Segment, load_rttm, loads_rttm, rttm_to_vttm, vttm_to_rttm, write_rttm
 from verbatim_files.vttm import AudioRef, load_vttm, write_vttm
 
 
@@ -58,6 +58,31 @@ class TestVTTM(unittest.TestCase):
         self.assertEqual(loaded_audio[0].path, "/data/audio1.wav")
         self.assertEqual(len(loaded_annotation.segments), 1)
         self.assertEqual(loaded_annotation.segments[0].speaker, "A")
+
+    def test_rttm_to_vttm_helper(self):
+        annotation = Annotation(segments=[Segment(start=0.0, end=1.0, speaker="S1", file_id="clip")])
+        with tempfile.TemporaryDirectory() as tmpdir:
+            audio_path = os.path.join(tmpdir, "audio.wav")
+            audio_refs = [AudioRef(id="clip", path=audio_path, channels="1")]
+            rttm_path = os.path.join(tmpdir, "input.rttm")
+            vttm_path = os.path.join(tmpdir, "converted.vttm")
+            write_rttm(annotation, rttm_path)
+            rttm_to_vttm(rttm_path, vttm_path, audio_refs=audio_refs)
+            loaded_audio, loaded_annotation = load_vttm(vttm_path)
+        self.assertEqual(loaded_audio[0].path, audio_path)
+        self.assertEqual(len(loaded_annotation.segments), 1)
+
+    def test_vttm_to_rttm_helper(self):
+        annotation = Annotation(segments=[Segment(start=0.0, end=1.0, speaker="S1", file_id="clip")])
+        with tempfile.TemporaryDirectory() as tmpdir:
+            audio_path = os.path.join(tmpdir, "audio.wav")
+            audio_refs = [AudioRef(id="clip", path=audio_path, channels="1")]
+            vttm_path = os.path.join(tmpdir, "input.vttm")
+            rttm_path = os.path.join(tmpdir, "converted.rttm")
+            write_vttm(vttm_path, audio=audio_refs, annotation=annotation)
+            vttm_to_rttm(vttm_path, rttm_path)
+            parsed = load_rttm(rttm_path)
+        self.assertEqual(len(parsed.segments), 1)
 
 
 if __name__ == "__main__":
