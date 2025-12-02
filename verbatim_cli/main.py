@@ -73,12 +73,11 @@ def main():
     speakers = resolve_speakers(args)
 
     LOG.info(
-        "Diarization settings: strategy=%s speakers=%s vttm=%s rttm=%s separate=%s",
+        "Diarization settings: strategy=%s speakers=%s vttm=%s rttm=%s",
         args.diarize,
         speakers,
         args.vttm,
         args.diarization,
-        args.separate,
     )
 
     source_config = make_source_config(args, speakers)

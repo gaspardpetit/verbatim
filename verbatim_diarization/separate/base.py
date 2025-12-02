@@ -29,5 +29,6 @@ class SeparationStrategy(ABC):
         nb_speakers: Optional[int] = None,
         start_sample: int = 0,
         end_sample: Optional[int] = None,
+        working_dir: Optional[str] = None,
     ) -> List[AudioSource]:
         pass

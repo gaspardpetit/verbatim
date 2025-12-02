@@ -27,7 +27,7 @@ def create_diarizer(strategy: str = "pyannote", device: str = "cpu", huggingface
     Returns:
         DiarizationStrategy instance
     """
-    if strategy == "pyannote":
+    if strategy in ("pyannote", "separate"):
         offline_env = os.getenv("VERBATIM_OFFLINE", "0").lower() in ("1", "true", "yes")
         token = (huggingface_token or os.getenv("HUGGINGFACE_TOKEN") or "").strip()
 
@@ -47,9 +47,14 @@ def create_diarizer(strategy: str = "pyannote", device: str = "cpu", huggingface
             raise ValueError("huggingface_token is required for PyAnnote diarization. Set HUGGINGFACE_TOKEN or run interactively to be prompted.")
 
         # When offline, allow missing token (loading from local cache only)
-        from verbatim_diarization.pyannote import PyAnnoteDiarization
+        if strategy == "pyannote":
+            from verbatim_diarization.pyannote import PyAnnoteDiarization
 
-        return PyAnnoteDiarization(device=device, huggingface_token=token)
+            return PyAnnoteDiarization(device=device, huggingface_token=token)
+
+        from verbatim_diarization.pyannote import PyAnnoteSeparationDiarization
+
+        return PyAnnoteSeparationDiarization(device=device, huggingface_token=token)
 
     if strategy == "energy":
         from verbatim_diarization.stereo import EnergyDiarization

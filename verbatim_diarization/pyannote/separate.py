@@ -1,6 +1,7 @@
 import logging
 import os
-from typing import Any, Dict, List, Optional, cast
+import tempfile
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 # pylint: disable=import-outside-toplevel,broad-exception-caught
 import numpy as np
@@ -26,11 +27,12 @@ from .ffmpeg_loader import ensure_torchcodec_audio_decoder
 LOG = logging.getLogger(__name__)
 
 
-def _build_rttm_annotation(diarization, label_to_path: Dict[str, str], default_uri: str) -> RTTMAnnotation:
+def _build_rttm_annotation(diarization, label_to_ref: Dict[str, AudioRef], default_uri: str) -> RTTMAnnotation:
     segments = []
     for segment, _track, label in diarization.itertracks(yield_label=True):
         seg_label = str(label)
-        file_id = seg_label if seg_label in label_to_path else default_uri
+        audio_ref = label_to_ref.get(seg_label)
+        file_id = audio_ref.id if audio_ref else default_uri
         segments.append(Segment(start=segment.start, end=segment.end, speaker=seg_label, file_id=file_id))
     return RTTMAnnotation(segments=segments, file_id=default_uri)
 
@@ -84,6 +86,78 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         del self.pipeline
         return False
 
+    def _prepare_pipeline_input(self, file_path: str, working_dir: Optional[str]) -> Tuple[str, Optional[str]]:
+        temp_path: Optional[str] = None
+        try:
+            import soundfile as sf  # lazy import
+
+            audio, sample_rate = sf.read(file_path)
+            if isinstance(audio, np.ndarray) and audio.ndim > 1 and audio.shape[1] > 1:
+                mono = np.mean(audio, axis=1)
+                tmp_dir = working_dir or tempfile.gettempdir()
+                fd, temp_path = tempfile.mkstemp(suffix=".wav", dir=tmp_dir)
+                os.close(fd)
+                sf.write(temp_path, mono, sample_rate)
+                LOG.info("Downmixed %s to mono for pyannote separation at %s", file_path, temp_path)
+                return temp_path, temp_path
+        except Exception:
+            temp_path = None
+        return file_path, temp_path
+
+    def _separate_to_audio_refs(
+        self,
+        *,
+        file_path: str,
+        out_speaker_wav_prefix: str,
+        nb_speakers: Optional[int],
+        working_dir: Optional[str],
+    ) -> Tuple[Any, List[Tuple[str, AudioRef]]]:
+        ensure_torchcodec_audio_decoder("pyannote separation")
+        file_for_pipeline, temp_path = self._prepare_pipeline_input(file_path, working_dir)
+        try:
+            with ProgressHook() as hook:
+                if self.pipeline is None:
+                    raise RuntimeError("Pyannote separation pipeline is not initialized")
+                diarization_output, sources = self.pipeline(file_for_pipeline, hook=hook, num_speakers=nb_speakers)
+        finally:
+            if temp_path and temp_path != file_path and os.path.exists(temp_path):
+                try:
+                    os.unlink(temp_path)
+                except Exception:  # pragma: no cover
+                    LOG.debug("Failed to clean up temporary separation file %s", temp_path)
+
+        diarization = diarization_output.speaker_diarization if hasattr(diarization_output, "speaker_diarization") else diarization_output
+
+        sources_data = np.asarray(sources.data)
+        shape = cast(tuple[int, int], tuple(sources_data.shape[:2]))
+
+        prefix_dir = os.path.dirname(out_speaker_wav_prefix)
+        if prefix_dir:
+            os.makedirs(prefix_dir, exist_ok=True)
+
+        audio_refs_meta: List[Tuple[str, AudioRef]] = []
+        for s, speaker in enumerate(diarization.labels()):
+            if s >= shape[1]:
+                LOG.debug("Skipping speaker index %s as it is out of bounds for separated sources", s)
+                continue
+
+            speaker_data = sources_data[:, s]
+            if speaker_data.dtype != np.int16:
+                speaker_data = wav_to_int16(speaker_data)
+
+            file_name = f"{out_speaker_wav_prefix}-{speaker}.wav" if out_speaker_wav_prefix else f"{speaker}.wav"
+            os.makedirs(os.path.dirname(file_name) or ".", exist_ok=True)
+            scipy.io.wavfile.write(file_name, 16000, speaker_data)
+
+            audio_ref = AudioRef(id=os.path.splitext(os.path.basename(file_name))[0], path=file_name, channels=None)
+            audio_refs_meta.append((str(speaker), audio_ref))
+
+        if not audio_refs_meta:
+            uri = os.path.splitext(os.path.basename(file_path))[0]
+            audio_refs_meta.append((uri, AudioRef(id=uri, path=file_path, channels=None)))
+
+        return diarization, audio_refs_meta
+
     # pylint: disable=unused-argument
     def separate_speakers(
         self,
@@ -95,6 +169,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         nb_speakers: Optional[int] = None,
         start_sample: int = 0,
         end_sample: Optional[int] = None,
+        working_dir: Optional[str] = None,
     ) -> List[AudioSource]:
         """
         Separate speakers in an audio file.
@@ -106,66 +181,36 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             nb_speakers: Optional number of speakers
 
         Returns:
-            Tuple of (diarization annotation, dictionary mapping speaker IDs to WAV files)
+            List of FileAudioSource entries, one per separated speaker.
         """
-        separated_sources: List[AudioSource] = []
-        audio_refs_meta: List[tuple[str, str]] = []
-        diarization_annotation = None
-        if not out_rttm_file:
-            out_rttm_file = None
+        diarization, audio_refs_meta = self._separate_to_audio_refs(
+            file_path=file_path,
+            out_speaker_wav_prefix=out_speaker_wav_prefix,
+            nb_speakers=nb_speakers,
+            working_dir=working_dir,
+        )
 
-        # Use PyAnnote's neural separation for mono/mixed audio
-        ensure_torchcodec_audio_decoder("pyannote separation")
-        with ProgressHook() as hook:
-            if self.pipeline is None:
-                raise RuntimeError("Pyannote separation pipeline is not initialized")
-            diarization_output, sources = self.pipeline(file_path, hook=hook, num_speakers=nb_speakers)
-
-        # pyannote.audio 4.x returns DiarizeOutput; normalize to Annotation
-        diarization = diarization_output.speaker_diarization if hasattr(diarization_output, "speaker_diarization") else diarization_output
-
-        # Save diarization to RTTM file if requested
         uri = os.path.splitext(os.path.basename(file_path))[0]
+        label_to_ref = dict(audio_refs_meta)
+        diarization_annotation = _build_rttm_annotation(diarization, label_to_ref, uri)
 
-        # Save separated sources to WAV files
-        sources_data = np.asarray(sources.data)
-        shape = cast(tuple[int, int], tuple(sources_data.shape[:2]))
-
-        for s, speaker in enumerate(diarization.labels()):
-            if s < shape[1]:
-                speaker_data = sources_data[:, s]
-                if speaker_data.dtype != np.int16:
-                    speaker_data = wav_to_int16(speaker_data)
-                file_name = f"{out_speaker_wav_prefix}-{speaker}.wav" if out_speaker_wav_prefix else f"{speaker}.wav"
-                scipy.io.wavfile.write(file_name, 16000, speaker_data)
-                audio_refs_meta.append((speaker, file_name))
-                separated_sources.append(
-                    FileAudioSource(
-                        file=file_name,
-                        start_sample=start_sample,
-                        end_sample=end_sample,
-                        diarization=diarization,
-                    )
+        separated_sources: List[AudioSource] = []
+        for _label, audio_ref in audio_refs_meta:
+            separated_sources.append(
+                FileAudioSource(
+                    file=audio_ref.path,
+                    start_sample=start_sample,
+                    end_sample=end_sample,
+                    diarization=diarization_annotation,
+                    file_id=audio_ref.id,
                 )
-            else:
-                LOG.debug(f"Skipping speaker {s} as it is out of bounds.")
-
-        label_to_path = dict(audio_refs_meta)
-        cached_annotation: Optional[RTTMAnnotation] = None
-
-        def ensure_rttm_annotation() -> RTTMAnnotation:
-            nonlocal cached_annotation
-            if cached_annotation is None:
-                cached_annotation = _build_rttm_annotation(diarization_annotation, label_to_path, uri)
-            return cached_annotation
+            )
 
         if out_rttm_file:
-            write_rttm(ensure_rttm_annotation(), out_rttm_file)
+            write_rttm(diarization_annotation, out_rttm_file)
 
         if out_vttm_file:
-            audio_refs = [AudioRef(id=label, path=path, channels=0) for label, path in audio_refs_meta] or [
-                AudioRef(id=uri, path=file_path, channels=None)
-            ]
-            write_vttm(out_vttm_file, audio=audio_refs, annotation=ensure_rttm_annotation())
+            audio_refs = [ref for _label, ref in audio_refs_meta]
+            write_vttm(out_vttm_file, audio=audio_refs, annotation=diarization_annotation)
 
         return separated_sources
