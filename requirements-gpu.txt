@@ -177,14 +177,11 @@ huggingface-hub==0.34.4
     #   faster-whisper
     #   mlx-whisper
     #   pyannote-audio
-    #   speechbrain
     #   tokenizers
     #   transformers
     #   wtpsplit
 humanfriendly==10.0
     # via coloredlogs
-hyperpyyaml==1.2.2
-    # via speechbrain
 idna==3.10
     # via
     #   anyio
@@ -205,7 +202,6 @@ joblib==1.5.2
     # via
     #   librosa
     #   scikit-learn
-    #   speechbrain
 julius==0.2.7
     # via
     #   asteroid
@@ -332,7 +328,6 @@ numpy==2.2.6 ; python_full_version < '3.11'
     #   skops
     #   soundfile
     #   soxr
-    #   speechbrain
     #   tensorboard
     #   torch-stoi
     #   torchmetrics
@@ -377,7 +372,6 @@ numpy==2.3.5 ; python_full_version >= '3.11'
     #   skops
     #   soundfile
     #   soxr
-    #   speechbrain
     #   tensorboard
     #   torch-stoi
     #   torchmetrics
@@ -493,7 +487,6 @@ packaging==25.0
     #   pytest
     #   pytorch-lightning
     #   skops
-    #   speechbrain
     #   tensorboard
     #   torch-pitch-shift
     #   torchmetrics
@@ -619,7 +612,6 @@ pyyaml==6.0.2
     #   datasets
     #   demucs
     #   huggingface-hub
-    #   hyperpyyaml
     #   lightning
     #   ml-collections
     #   omegaconf
@@ -652,10 +644,6 @@ rich==14.1.0
     # via pyannote-audio
 rotary-embedding-torch==0.6.5
     # via audio-separator
-ruamel-yaml==0.18.15
-    # via hyperpyyaml
-ruamel-yaml-clib==0.2.12 ; platform_python_implementation == 'CPython'
-    # via ruamel-yaml
 ruff==0.12.11
 safetensors==0.6.2
     # via
@@ -681,7 +669,6 @@ scipy==1.15.3 ; python_full_version < '3.11'
     #   pystoi
     #   scikit-learn
     #   skops
-    #   speechbrain
 scipy==1.16.1 ; python_full_version >= '3.11'
     # via
     #   asteroid
@@ -693,9 +680,6 @@ scipy==1.16.1 ; python_full_version >= '3.11'
     #   pystoi
     #   scikit-learn
     #   skops
-    #   speechbrain
-sentencepiece==0.2.1
-    # via speechbrain
 setuptools==80.9.0
     # via
     #   ctranslate2
@@ -728,8 +712,6 @@ soundfile==0.13.1
     #   verbatim
 soxr==0.5.0.post1
     # via librosa
-speechbrain==1.0.3
-    # via verbatim
 sqlalchemy==2.0.43
     # via
     #   alembic
@@ -787,7 +769,6 @@ torch==2.8.0
     #   pytorch-ranger
     #   rotary-embedding-torch
     #   silero-vad
-    #   speechbrain
     #   torch-audiomentations
     #   torch-optimizer
     #   torch-pitch-shift
@@ -811,7 +792,6 @@ torchaudio==2.8.0
     #   openunmix
     #   pyannote-audio
     #   silero-vad
-    #   speechbrain
     #   torch-audiomentations
     #   torch-pitch-shift
     #   torch-stoi
@@ -842,7 +822,6 @@ tqdm==4.67.1
     #   pytorch-lightning
     #   pytorch-metric-learning
     #   pywhispercpp
-    #   speechbrain
     #   transformers
     #   wtpsplit
 transformers==4.51.3
