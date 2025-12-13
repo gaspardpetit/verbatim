@@ -332,6 +332,7 @@ class Verbatim:
         result = []
         current_char_index = 0
         current_word_index = 0
+        word_char_offset = 0
 
         def remove_spaces_and_punctuation(string: str) -> str:
             return string.translate(str.maketrans("", "", " " + PREPEND_PUNCTUATIONS + APPEND_PUNCTUATIONS))
@@ -346,17 +347,41 @@ class Verbatim:
             sentence_words = []
             # Accumulate words until we have accounted for all chars of this sentence
             while current_char_index < target_end:
-                # Pick the next word
-                w = window_words[current_word_index]
-                sentence_words.append(w)
-                word_text = remove_spaces_and_punctuation(w.word)
-                current_char_index += len(word_text)
-                current_word_index += 1
+                if current_word_index >= len(window_words):
+                    raise ValueError("Ran out of words while aligning sentences.")
 
-                # If we overshoot, something is wrong,
-                # but given the perfect alignment we expect to land exactly on target_end
-                if current_char_index > target_end:
-                    raise ValueError("Mismatch in alignment between sentences and words.")
+                w = window_words[current_word_index]
+                word_text = remove_spaces_and_punctuation(w.word)
+                word_length = len(word_text)
+
+                # Words that resolve to only punctuation/whitespace carry no characters; assign them directly.
+                if word_length == 0:
+                    sentence_words.append(w)
+                    current_word_index += 1
+                    word_char_offset = 0
+                    continue
+
+                remaining_word_chars = word_length - word_char_offset
+                if remaining_word_chars <= 0:
+                    # Safety: reset offset if we somehow consumed the full word previously.
+                    word_char_offset = 0
+                    continue
+
+                remaining_sentence_chars = target_end - current_char_index
+                if remaining_sentence_chars <= 0:
+                    break
+
+                if remaining_word_chars <= remaining_sentence_chars:
+                    # Entire remaining portion of the word fits in this sentence.
+                    current_char_index += remaining_word_chars
+                    sentence_words.append(w)
+                    current_word_index += 1
+                    word_char_offset = 0
+                else:
+                    # Only part of the word belongs to this sentence; defer adding the word until it is fully consumed.
+                    current_char_index += remaining_sentence_chars
+                    word_char_offset += remaining_sentence_chars
+                    break
 
             # Now we have all the words for this sentence
             if len(sentence_words) > 0:

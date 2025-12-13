@@ -126,8 +126,8 @@ uv lock --upgrade
 # Regenerating the requirements.txt files
 
 ```
-uv export --no-hashes --extra diarization > .\requirements.txt
-uv export --no-hashes --extra diarization --extra cuda_gpu > .\requirements-gpu.txt
+uv export --no-hashes --extra diarization > ./requirements.txt
+uv export --no-hashes --extra diarization --extra cuda_gpu > ./requirements-gpu.txt
 ```
 
 On windows, make sure the output is in utf-8, not utf-16 is it would be by default:
