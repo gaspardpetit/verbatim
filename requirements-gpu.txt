@@ -263,10 +263,8 @@ mlx-metal==0.29.0 ; sys_platform == 'darwin'
     # via mlx
 mlx-whisper==0.4.3 ; sys_platform == 'darwin'
     # via verbatim
-more-itertools==10.7.0
-    # via
-    #   mlx-whisper
-    #   openai-whisper
+more-itertools==10.7.0 ; sys_platform == 'darwin'
+    # via mlx-whisper
 mosestokenizer==1.2.1
     # via wtpsplit
 mpmath==1.3.0
@@ -289,7 +287,6 @@ numba==0.62.1
     # via
     #   librosa
     #   mlx-whisper
-    #   openai-whisper
     #   resampy
 numpy==2.2.6 ; python_full_version < '3.11'
     # via
@@ -311,7 +308,6 @@ numpy==2.2.6 ; python_full_version < '3.11'
     #   onnx2torch-py313
     #   onnxruntime
     #   onnxruntime-gpu
-    #   openai-whisper
     #   openunmix
     #   optuna
     #   pandas
@@ -355,7 +351,6 @@ numpy==2.3.5 ; python_full_version >= '3.11'
     #   onnx2torch-py313
     #   onnxruntime
     #   onnxruntime-gpu
-    #   openai-whisper
     #   openunmix
     #   optuna
     #   pandas
@@ -432,8 +427,6 @@ onnxruntime==1.19.2
 onnxruntime-gpu==1.19.2
     # via verbatim
 openai==1.102.0
-    # via verbatim
-openai-whisper==20250625
     # via verbatim
 openfile==0.0.7
     # via mosestokenizer
@@ -731,10 +724,8 @@ termcolor==3.1.0
     # via verbatim
 threadpoolctl==3.6.0
     # via scikit-learn
-tiktoken==0.11.0
-    # via
-    #   mlx-whisper
-    #   openai-whisper
+tiktoken==0.11.0 ; sys_platform == 'darwin'
+    # via mlx-whisper
 tokenizers==0.21.4
     # via
     #   faster-whisper
@@ -761,7 +752,6 @@ torch==2.8.0
     #   lightning
     #   mlx-whisper
     #   onnx2torch-py313
-    #   openai-whisper
     #   openunmix
     #   pyannote-audio
     #   pytorch-lightning
@@ -815,7 +805,6 @@ tqdm==4.67.1
     #   lightning
     #   mlx-whisper
     #   openai
-    #   openai-whisper
     #   openunmix
     #   optuna
     #   pyannote-pipeline
@@ -831,10 +820,8 @@ transformers==4.51.3
     #   wtpsplit
 treetable==0.2.5
     # via dora-search
-triton==3.4.0 ; (platform_machine == 'x86_64' and sys_platform == 'linux') or sys_platform == 'linux2'
-    # via
-    #   openai-whisper
-    #   torch
+triton==3.4.0 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+    # via torch
 typing-extensions==4.15.0
     # via
     #   aiosignal

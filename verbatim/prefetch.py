@@ -12,11 +12,6 @@ from typing import Optional
 # the library picks up VERBATIM/HF_* cache dirs. Importing at module level would make
 # it stick to the user's default ~/.cache path.
 
-try:
-    import whisper as openai_whisper  # type: ignore
-except ImportError:  # pragma: no cover
-    openai_whisper = None  # type: ignore
-
 LOG = logging.getLogger(__name__)
 
 
@@ -53,10 +48,6 @@ def apply_cache_env(model_cache_dir: Optional[str], offline: bool = False) -> No
         xdg_cache = os.path.join(model_cache_dir, "xdg")
         os.makedirs(xdg_cache, exist_ok=True)
         os.environ.setdefault("XDG_CACHE_HOME", xdg_cache)
-
-        whisper_cache = os.path.join(model_cache_dir, "whisper")
-        os.makedirs(whisper_cache, exist_ok=True)
-        os.environ.setdefault("WHISPER_CACHE_DIR", whisper_cache)
 
         hf_home = os.path.join(model_cache_dir, "hf")
         os.makedirs(hf_home, exist_ok=True)
@@ -128,7 +119,6 @@ def prefetch(
     model_cache_dir: Optional[str],
     whisper_size: str = "large-v3",
     include_pyannote: bool = True,
-    include_whisper_openai: bool = True,
     include_faster_whisper: bool = True,
     # Defer platform checks to runtime to keep import safe on Windows
     include_mlx_whisper: Optional[bool] = None,
@@ -232,24 +222,7 @@ def prefetch(
         except (OSError, HfHubHTTPError) as e:  # pragma: no cover
             LOG.warning(f"Failed to prefetch faster-whisper {whisper_size}: {e}")
 
-    # 3) OpenAI Whisper (downloads .pt to WHISPER_CACHE_DIR)
-    if include_whisper_openai:
-        whisper_cache = os.getenv("WHISPER_CACHE_DIR", os.path.join(os.getenv("XDG_CACHE_HOME", os.path.expanduser("~/.cache")), "whisper"))
-        try:
-            os.makedirs(whisper_cache, exist_ok=True)
-        except OSError:  # pragma: no cover
-            pass
-        target = os.path.join(whisper_cache, f"{whisper_size}.pt")
-        if os.path.exists(target):
-            LOG.info("Already cached: openai/whisper (%s)", whisper_size)
-        else:
-            if openai_whisper is None:  # pragma: no cover
-                LOG.warning("openai-whisper not available: cannot prefetch %s", whisper_size)
-            else:
-                LOG.info(f"Prefetching OpenAI whisper model: {whisper_size}")
-                _ = openai_whisper.load_model(whisper_size, device="cpu")
-
-    # 4) Voice isolation: provide guidance; download may be manual depending on backend
+    # 3) Voice isolation: provide guidance; download may be manual depending on backend
     cache_root = os.getenv("VERBATIM_MODEL_CACHE")
     if cache_root:
         iso_dir = os.path.join(cache_root, "audio-separator")
