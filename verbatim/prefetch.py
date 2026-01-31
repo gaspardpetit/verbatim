@@ -159,7 +159,10 @@ def prefetch(
         except ImportError as exc:  # pragma: no cover - defensive
             LOG.warning("verbatim_diarization not available; skipping diarization prefetch: %s", exc)
         else:
-            prefetch_diarization_models(hf_token=hf_token, cache_dir=hub_cache, offline=False)
+            try:
+                prefetch_diarization_models(hf_token=hf_token, cache_dir=hub_cache, offline=False)
+            except ImportError as exc:  # pragma: no cover - optional dependency missing
+                LOG.warning("pyannote not available; skipping diarization prefetch: %s", exc)
 
     # MLX Whisper models (macOS/Apple Silicon) hosted on HF
     if include_mlx_whisper and snapshot_download is not None:
