@@ -1,4 +1,6 @@
-.PHONY: check lint type sec
+.PHONY: check lint type sec install-cpu install-cuda
+
+PYTHON ?= 3.11
 
 # Run local static checks. Ensure tools are installed: pip install ruff pylint flake8 bandit pyright
 check: lint type sec
@@ -48,8 +50,15 @@ release:
 	  python -m pip install dist/*.whl && \
 	  python -c "import verbatim; print('Imported verbatim', getattr(verbatim, '__version__', 'unknown'))"
 
-install:
-	uv pip install .
+install-cpu:
+	uv sync --python $(PYTHON) --extra diarization
+	uv pip install --python $(PYTHON) torch==2.8.0+cpu torchvision==0.23.0+cpu torchaudio==2.8.0+cpu --index-url https://download.pytorch.org/whl/cpu --reinstall
+	@echo "Note: if diarization fails with torchcodec/FFmpeg errors, install FFmpeg 4–7 and set FFMPEG_DLL_DIR (Windows) or add ffmpeg to PATH."
+
+install-cuda:
+	uv sync --python $(PYTHON) --extra diarization
+	uv pip install --python $(PYTHON) torch==2.8.0+cu126 torchvision==0.23.0+cu126 torchaudio==2.8.0+cu126 --index-url https://download.pytorch.org/whl/cu126 --reinstall
+	@echo "Note: if diarization fails with torchcodec/FFmpeg errors, install FFmpeg 4–7 and set FFMPEG_DLL_DIR (Windows) or add ffmpeg to PATH."
 
 .PHONY: docker docker-cpu docker-gpu
 

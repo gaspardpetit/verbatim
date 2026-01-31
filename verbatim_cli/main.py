@@ -54,6 +54,11 @@ def main():
 
     config = make_config(args)
 
+    if args.input is None and not args.install:
+        parser.print_usage(sys.stderr)
+        LOG.error("Missing input path. Provide an audio file, '-' for stdin, or '>' for microphone.")
+        return
+
     # Handle install-only mode
     if args.install:
         LOG.info("Installing/prefetching models into cache...")
