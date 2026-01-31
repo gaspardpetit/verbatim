@@ -49,10 +49,6 @@ def apply_cache_env(model_cache_dir: Optional[str], offline: bool = False) -> No
         os.makedirs(xdg_cache, exist_ok=True)
         os.environ.setdefault("XDG_CACHE_HOME", xdg_cache)
 
-        whisper_cache = os.path.join(model_cache_dir, "whisper")
-        os.makedirs(whisper_cache, exist_ok=True)
-        os.environ.setdefault("WHISPER_CACHE_DIR", whisper_cache)
-
         hf_home = os.path.join(model_cache_dir, "hf")
         os.makedirs(hf_home, exist_ok=True)
         os.environ.setdefault("HF_HOME", hf_home)

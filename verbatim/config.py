@@ -258,8 +258,8 @@ class Config:
         """Configure deterministic cache directories and offline mode.
 
         - Sets environment variables that major libs honor:
-          HF_HOME/HUGGINGFACE_HUB_CACHE for Hugging Face, XDG_CACHE_HOME/WHISPER_CACHE_DIR
-          for Whisper, and a project-specific VERBATIM_MODEL_CACHE and VERBATIM_OFFLINE.
+          HF_HOME/HUGGINGFACE_HUB_CACHE for Hugging Face, and a project-specific
+          VERBATIM_MODEL_CACHE and VERBATIM_OFFLINE.
         - Creates directories if they do not exist.
         """
         # Offline toggle
@@ -304,14 +304,6 @@ class Config:
                 os.environ.setdefault("XDG_CACHE_HOME", xdg_cache)
             except OSError:
                 LOG.warning(f"Could not prepare XDG cache under {model_cache_dir}")
-
-            # Whisper cache (OpenAI whisper)
-            try:
-                whisper_cache = os.path.join(model_cache_dir, "whisper")
-                os.makedirs(whisper_cache, exist_ok=True)
-                os.environ.setdefault("WHISPER_CACHE_DIR", whisper_cache)
-            except OSError:
-                LOG.warning(f"Could not prepare Whisper cache under {model_cache_dir}")
 
             # Hugging Face cache
             try:
