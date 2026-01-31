@@ -2359,22 +2359,6 @@ wheels = [
 ]
 
 [[package]]
-name = "openai-whisper"
-version = "20250625"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "more-itertools" },
-    { name = "numba" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "tiktoken" },
-    { name = "torch" },
-    { name = "tqdm" },
-    { name = "triton", marker = "(platform_machine == 'x86_64' and sys_platform == 'linux') or sys_platform == 'linux2'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/35/8e/d36f8880bcf18ec026a55807d02fe4c7357da9f25aebd92f85178000c0dc/openai_whisper-20250625.tar.gz", hash = "sha256:37a91a3921809d9f44748ffc73c0a55c9f366c85a3ef5c2ae0cc09540432eb96", size = 803191, upload-time = "2025-06-26T01:06:13.34Z" }
-
-[[package]]
 name = "openfile"
 version = "0.0.7"
 source = { registry = "https://pypi.org/simple" }
@@ -4217,7 +4201,6 @@ dependencies = [
     { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "onnxruntime" },
     { name = "openai" },
-    { name = "openai-whisper" },
     { name = "pillow" },
     { name = "pyaudio" },
     { name = "pydub" },
@@ -4267,7 +4250,6 @@ requires-dist = [
     { name = "onnxruntime", specifier = ">=1.16.0,<1.20" },
     { name = "onnxruntime-gpu", marker = "extra == 'cuda-gpu'", specifier = ">=1.16.0,<1.20" },
     { name = "openai", specifier = ">=1.59.8" },
-    { name = "openai-whisper", specifier = ">=20240930" },
     { name = "pillow", specifier = "==10.4.0" },
     { name = "pyannote-audio", extras = ["separation"], marker = "extra == 'diarization'", specifier = ">=4.0.2" },
     { name = "pyannote-core", marker = "extra == 'diarization'", specifier = "==6.0.1" },

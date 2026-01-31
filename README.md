@@ -536,7 +536,7 @@ A direct use of whisper on an audio clip like this one results in many errors. S
 
 Verbatim can prefetch and reuse models from a deterministic cache directory, and can run 100% offline once the cache is warmed.
 
-- `--model-cache <dir>`: sets a shared cache directory used by Hugging Face, Whisper, and faster-whisper.
+- `--model-cache <dir>`: sets a shared cache directory used by Hugging Face and faster-whisper.
 - `--offline`: prevents any network access and model downloads. All models must already be present in the cache; otherwise a clear error is raised.
 - `--install`: prefetches commonly used models into the selected cache and exits.
 
