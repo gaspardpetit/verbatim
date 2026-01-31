@@ -15,6 +15,7 @@ from torch.serialization import add_safe_globals
 
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.pyannote.separate import PyannoteSpeakerSeparation, _build_rttm_annotation
+from verbatim_diarization.utils import sanitize_uri_component
 from verbatim_files.rttm import Annotation as RTTMAnnotation
 from verbatim_files.rttm import Segment
 from verbatim_files.vttm import AudioRef, write_vttm
@@ -119,12 +120,18 @@ class PyAnnoteDiarization(DiarizationStrategy):
         else:
             diarization_annotation = diarization
 
+        raw_uri = getattr(diarization_annotation, "uri", None) or os.path.splitext(os.path.basename(file_path))[0]
+        uri = sanitize_uri_component(str(raw_uri))
+        try:
+            diarization_annotation.uri = uri  # type: ignore[attr-defined]
+        except Exception:  # pragma: no cover - defensive: Annotation may freeze attributes
+            LOG.debug("Unable to set sanitized URI on diarization annotation", exc_info=True)
+
         if out_rttm_file:
             self.save_rttm(diarization_annotation, out_rttm_file)
 
         if out_vttm_file:
             os.makedirs(os.path.dirname(out_vttm_file) or ".", exist_ok=True)
-            uri = os.path.splitext(os.path.basename(file_path))[0]
             segments = [
                 Segment(start=segment.start, end=segment.end, speaker=str(label), file_id=uri)
                 for segment, _track, label in diarization_annotation.itertracks(yield_label=True)
@@ -153,7 +160,7 @@ class PyAnnoteSeparationDiarization(DiarizationStrategy):
         **kwargs,
     ) -> RTTMAnnotation:
         del kwargs
-        uri = os.path.splitext(os.path.basename(file_path))[0]
+        uri = sanitize_uri_component(os.path.splitext(os.path.basename(file_path))[0])
         base_dir = working_dir or os.path.dirname(stem_prefix or "") or tempfile.gettempdir()
         if not stem_prefix:
             stem_prefix = os.path.join(base_dir or ".", f"{uri}-speaker")

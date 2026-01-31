@@ -6,6 +6,7 @@ import numpy as np
 import soundfile as sf
 
 from verbatim_diarization.diarize.base import DiarizationStrategy
+from verbatim_diarization.utils import sanitize_uri_component
 from verbatim_files.rttm import Annotation, Segment
 from verbatim_files.vttm import AudioRef, write_vttm
 
@@ -94,7 +95,7 @@ class EnergyDiarization(DiarizationStrategy):
         segment_start = 0
 
         # Use the file name as the uri for the annotation
-        uri = os.path.splitext(os.path.basename(file_path))[0]
+        uri = sanitize_uri_component(os.path.splitext(os.path.basename(file_path))[0])
 
         for start_sample in range(0, total_samples, segment_samples):
             end_sample = min(start_sample + segment_samples, total_samples)
