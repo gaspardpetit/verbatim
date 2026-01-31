@@ -16,6 +16,7 @@ from verbatim_audio.audio import wav_to_int16
 from verbatim_audio.sources.audiosource import AudioSource
 from verbatim_audio.sources.fileaudiosource import FileAudioSource
 from verbatim_diarization.separate.base import SeparationStrategy
+from verbatim_diarization.utils import sanitize_uri_component
 from verbatim_files.rttm import Annotation as RTTMAnnotation
 from verbatim_files.rttm import Segment, write_rttm
 from verbatim_files.vttm import AudioRef, write_vttm
@@ -149,11 +150,12 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             os.makedirs(os.path.dirname(file_name) or ".", exist_ok=True)
             scipy.io.wavfile.write(file_name, 16000, speaker_data)
 
-            audio_ref = AudioRef(id=os.path.splitext(os.path.basename(file_name))[0], path=file_name, channels=None)
+            sanitized_id = sanitize_uri_component(os.path.splitext(os.path.basename(file_name))[0])
+            audio_ref = AudioRef(id=sanitized_id, path=file_name, channels=None)
             audio_refs_meta.append((str(speaker), audio_ref))
 
         if not audio_refs_meta:
-            uri = os.path.splitext(os.path.basename(file_path))[0]
+            uri = sanitize_uri_component(os.path.splitext(os.path.basename(file_path))[0])
             audio_refs_meta.append((uri, AudioRef(id=uri, path=file_path, channels=None)))
 
         return diarization, audio_refs_meta
@@ -190,7 +192,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             working_dir=working_dir,
         )
 
-        uri = os.path.splitext(os.path.basename(file_path))[0]
+        uri = sanitize_uri_component(os.path.splitext(os.path.basename(file_path))[0])
         label_to_ref = dict(audio_refs_meta)
         diarization_annotation = _build_rttm_annotation(diarization, label_to_ref, uri)
 

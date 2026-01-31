@@ -9,6 +9,7 @@ import numpy as np
 
 from verbatim_diarization import create_diarizer  # Add this import
 from verbatim_diarization.policy import assign_channels, parse_params, parse_policy
+from verbatim_diarization.utils import sanitize_uri_component
 from verbatim_files.rttm import Annotation as RTTMAnnotation
 from verbatim_files.rttm import Segment, rttm_to_vttm
 from verbatim_files.vttm import AudioRef, load_vttm, normalize_channel_spec, write_vttm
@@ -249,7 +250,7 @@ def compute_diarization_policy(
         grouped.setdefault(key, {"clause": clause, "channels": set()})
         grouped[key]["channels"].add(ch)
 
-    base_id = os.path.splitext(os.path.basename(file_path))[0]
+    base_id = sanitize_uri_component(os.path.splitext(os.path.basename(file_path))[0])
     combined_segments = []
     temp_paths: List[str] = []
     label_counts: Dict[str, int] = {}
@@ -283,7 +284,11 @@ def compute_diarization_policy(
             else:
                 channels_desc = ""
 
-            file_id = f"{base_id}#{channels_desc}" if channels_desc else base_id
+            if channels_desc:
+                channel_suffix = channels_desc.replace(",", "_")
+                file_id = sanitize_uri_component(f"{base_id}_{channel_suffix}")
+            else:
+                file_id = base_id
             channel_spec = channels_desc or None
             clause_vttm_path: Optional[str] = None
             clause_audio_refs: List[AudioRef] = []
@@ -480,7 +485,7 @@ def create_audio_sources(
             input_source, _noise_path = FileAudioSource.isolate_voices(file_path=input_source, out_path_prefix=working_prefix_no_ext)
         if source_config.vttm_file and not os.path.exists(source_config.vttm_file):
             LOG.info("No VTTM provided; creating minimal VTTM placeholder at %s", source_config.vttm_file)
-            audio_id = os.path.splitext(os.path.basename(input_source))[0]
+            audio_id = sanitize_uri_component(os.path.splitext(os.path.basename(input_source))[0])
             audio_ref = AudioRef(id=audio_id, path=input_source, channels=None)
             write_vttm(source_config.vttm_file, audio=[audio_ref], annotation=RTTMAnnotation())
         if source_config.vttm_file:
@@ -520,7 +525,7 @@ def create_audio_sources(
             try:
                 source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
                 if source_config.vttm_file and source_config.diarization is not None:
-                    audio_id = os.path.splitext(os.path.basename(input_source))[0]
+                    audio_id = sanitize_uri_component(os.path.splitext(os.path.basename(input_source))[0])
                     rttm_to_vttm(
                         source_config.diarization_file,
                         source_config.vttm_file,
