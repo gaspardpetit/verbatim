@@ -22,7 +22,7 @@ If no input file is provided, Verbatim expects input from stdin or can use the m
 #### File Processing
 - `-f, --from <timestamp>`: Start time within the file (hh:mm:ss.ms or mm:ss.ms)
 - `-t, --to <timestamp>`: Stop time within the file (hh:mm:ss.ms or mm:ss.ms)
-- `-o, --outdir <path>`: Path to the output directory
+- `-o, --outdir <path>`: Path to the output directory (use `-` to write the output to stdout)
 - `-w, --workdir <path>`: Set the working directory for temporary files
 - `-e, --eval <file>`: Path to a reference JSON file for evaluation
 
@@ -45,9 +45,8 @@ If no input file is provided, Verbatim expects input from stdin or can use the m
 - `--docx`: Enable Microsoft Word DOCX output
 - `--txt`: Enable plain text output
 - `--json`: Enable JSON file output
+- `--jsonl`: Enable JSONL output
 - `--md`: Enable Markdown output
-- `--stdout`: Enable stdout output (default: enabled)
-- `--stdout-nocolor`: Enable stdout output without colors
 
 #### Performance & Debugging
 - `--cpu`: Force CPU usage
@@ -78,7 +77,12 @@ verbatim input.wav -l en fr --txt
 
 ### Stream Audio from Microphone
 ```
-verbatim '>' --stream --stdout
+verbatim '>' --stream --txt -o -
+```
+
+### Send Output to Stdout via -o -
+```
+verbatim input.wav --jsonl -o -
 ```
 
 ### Save Output in Multiple Formats
