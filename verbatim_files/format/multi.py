@@ -15,26 +15,24 @@ class MultiTranscriptWriter(TranscriptWriter):
     def get_extension(self):
         return ""
 
-    def open(self, path_no_ext: str):
-        for w in self.writers:
-            w.open(path_no_ext)
-
-    def close(self):
-        for w in self.writers:
-            w.close()
-
-    def write(
+    def format_utterance(
         self,
         utterance: Utterance,
         unacknowledged_utterance: Optional[List[Utterance]] = None,
         unconfirmed_words: Optional[List[Word]] = None,
-    ):
+    ) -> bytes:
         for w in self.writers:
-            w.write(
+            w.format_utterance(
                 utterance=utterance,
                 unacknowledged_utterance=unacknowledged_utterance,
                 unconfirmed_words=unconfirmed_words,
             )
+        return b""
+
+    def flush(self) -> bytes:
+        for w in self.writers:
+            w.flush()
+        return b""
 
     def add_writer(self, writer: TranscriptWriter):
         self.writers.append(writer)

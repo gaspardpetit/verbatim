@@ -4,6 +4,7 @@ from typing import List, Optional, TextIO
 
 from verbatim.transcript.words import Utterance, Word
 
+from .file import FileFormatter
 from .writer import TranscriptWriter, TranscriptWriterConfig
 
 
@@ -11,15 +12,17 @@ class TranscriptFormatter:
     def __init__(self):
         self.first_utterance = True
 
-    def open(self, out: TextIO):
-        out.write('{\n  "utterances": [\n')
+    def start(self) -> bytes:
+        self.first_utterance = True
+        return '{\n  "utterances": [\n'.encode("utf-8")
 
-    def close(self, out: TextIO):
-        out.write("\n  ]\n}\n")
+    def finish(self) -> bytes:
+        return "\n  ]\n}\n".encode("utf-8")
 
-    def format_utterance(self, utterance: Utterance, out: TextIO, with_words: bool = True):
+    def format_utterance(self, utterance: Utterance, with_words: bool = True) -> bytes:
+        chunks: List[str] = []
         if not self.first_utterance:
-            out.write(",\n")
+            chunks.append(",\n")
         else:
             self.first_utterance = False
 
@@ -48,7 +51,8 @@ class TranscriptFormatter:
         indented_lines = "\n".join("    " + line for line in json.dumps(utterance_dict, indent=2).splitlines())
 
         # Use json.dumps to write the formatted JSON
-        out.write(indented_lines)
+        chunks.append(indented_lines)
+        return "".join(chunks).encode("utf-8")
 
 
 class TranscriptParser:
@@ -110,46 +114,30 @@ class TranscriptParser:
 
 
 class JsonTranscriptWriter(TranscriptWriter):
-    out: TextIO
-
     def __init__(self, config: TranscriptWriterConfig):
         super().__init__(config)
         self.formatter: TranscriptFormatter = TranscriptFormatter()
 
-    def open(self, path_no_ext: str):
-        # Open the output file
-        # pylint: disable=consider-using-with
-        self.out = open(f"{path_no_ext}.json", "w", encoding="utf-8")
-        self.formatter.open(out=self.out)
+    def format_start(self) -> bytes:
+        return self.formatter.start()
 
-    def close(self):
-        self.formatter.close(out=self.out)
-        self.out.close()
-
-    def write(
+    def format_utterance(
         self,
         utterance: Utterance,
         unacknowledged_utterance: Optional[List[Utterance]] = None,
         unconfirmed_words: Optional[List[Word]] = None,
     ):
-        self.formatter.format_utterance(utterance=utterance, out=self.out)
-        self.out.flush()
+        return self.formatter.format_utterance(utterance=utterance)
+
+    def format_end(self) -> bytes:
+        return self.formatter.finish()
 
 
 class JsonlTranscriptWriter(TranscriptWriter):
-    out: TextIO
-
     def __init__(self, config: TranscriptWriterConfig):
         super().__init__(config)
 
-    def open(self, path_no_ext: str):
-        # pylint: disable=consider-using-with
-        self.out = open(f"{path_no_ext}.jsonl", "w", encoding="utf-8")
-
-    def close(self):
-        self.out.close()
-
-    def write(
+    def format_utterance(
         self,
         utterance: Utterance,
         unacknowledged_utterance: Optional[List[Utterance]] = None,
@@ -173,19 +161,18 @@ class JsonlTranscriptWriter(TranscriptWriter):
                 for word in utterance.words
             ],
         }
-        self.out.write(json.dumps(utterance_dict, ensure_ascii=False))
-        self.out.write("\n")
-        self.out.flush()
+        return (json.dumps(utterance_dict, ensure_ascii=False) + "\n").encode("utf-8")
 
 
 def save_utterances(path: str, utterance: List[Utterance], config: Optional[TranscriptWriterConfig]):
     if config is None:
         config = TranscriptWriterConfig()
     writer: JsonTranscriptWriter = JsonTranscriptWriter(config=config)
-    writer.open(path_no_ext=os.path.splitext(path)[0])
+    formatter = FileFormatter(writer=writer, output_path=os.path.splitext(path)[0] + ".json")
+    formatter.open()
     for u in utterance:
-        writer.write(u)
-    writer.close()
+        formatter.write(u)
+    formatter.close()
 
 
 def read_utterances(path: str) -> List[Utterance]:

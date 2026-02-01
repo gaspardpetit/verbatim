@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, TextIO, Union
+from typing import List, Optional, Union
 
 import numpy as np
 
@@ -216,7 +216,7 @@ class TranscriptFormatter:
         else:
             md.append(word)
 
-    def format_utterance(self, utterance: Utterance, out: TextIO):
+    def format_utterance(self, utterance: Utterance) -> bytes:
         md: MarkdownText = MarkdownText()
         self._format_timestamp(md=md, start_ts=utterance.start_ts, end_ts=utterance.end_ts)
         self._format_speaker(md=md, speaker=utterance.speaker or UNKNOWN_SPEAKER)
@@ -233,12 +233,10 @@ class TranscriptFormatter:
                 utterance_probability=percentile_25,
             )
         md.append("\n\n")
-        out.write(str(md))
+        return str(md).encode("utf-8")
 
 
 class MarkdownTranscriptWriter(TranscriptWriter):
-    out: TextIO
-
     def __init__(self, config: TranscriptWriterConfig):
         super().__init__(config)
         self.formatter: TranscriptFormatter = TranscriptFormatter(
@@ -248,18 +246,10 @@ class MarkdownTranscriptWriter(TranscriptWriter):
             probability_style=config.probability_style,
         )
 
-    def open(self, path_no_ext: str):
-        # pylint: disable=consider-using-with
-        self.out = open(f"{path_no_ext}.md", "w", encoding="utf-8")
-
-    def close(self):
-        self.out.close()
-
-    def write(
+    def format_utterance(
         self,
         utterance: Utterance,
         unacknowledged_utterance: Optional[List[Utterance]] = None,
         unconfirmed_words: Optional[List[Word]] = None,
     ):
-        self.formatter.format_utterance(utterance=utterance, out=self.out)
-        self.out.flush()
+        return self.formatter.format_utterance(utterance=utterance)

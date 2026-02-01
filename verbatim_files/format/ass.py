@@ -480,22 +480,19 @@ class AssTranscriptWriter(TranscriptWriter):
     def __init__(self, config: TranscriptWriterConfig, original_audio_file: str):
         super().__init__(config)
         self.utterances: List[Utterance] = []
-        self.output_file = None
         self.original_audio_file = original_audio_file
 
-    def open(self, path_no_ext: str):
-        self.output_file = f"{path_no_ext}.ass"
-
-    def write(
+    def format_utterance(
         self,
         utterance: Utterance,
         unacknowledged_utterance: Optional[List[Utterance]] = None,
         unconfirmed_words: Optional[List[Word]] = None,
-    ):
+    ) -> bytes:
         self.utterances.append(utterance)
+        return b""
 
-    def close(self):
-        result_to_ass(
+    def flush(self) -> bytes:
+        subtitle_text = result_to_ass(
             result={
                 "segments": [
                     {
@@ -520,12 +517,14 @@ class AssTranscriptWriter(TranscriptWriter):
                     }
                     for u in self.utterances
                 ]
-            },
-            filepath=self.output_file,
+            }
         )
+        return subtitle_text.encode("utf-8")
+
+    def post_close(self, output_path: str) -> None:
         LOG.info("To combine the subtitles with the original file:")
         LOG.info(
             f"""ffmpeg -f lavfi -i color=size=720x120:rate=25:color=black -i "{self.original_audio_file}" """
-            + f"""-vf "subtitles={self.output_file}:force_style='Fontsize=70'" """
-            + f"""-shortest "{self.output_file}.mp4" """
+            + f"""-vf "subtitles={output_path}:force_style='Fontsize=70'" """
+            + f"""-shortest "{output_path}.mp4" """
         )

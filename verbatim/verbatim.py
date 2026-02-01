@@ -27,7 +27,6 @@ from verbatim_files.format.writer import (
     ProbabilityStyle,
     SpeakerStyle,
     TimestampStyle,
-    TranscriptWriter,
     TranscriptWriterConfig,
 )
 from verbatim_transcript import (
@@ -928,17 +927,18 @@ def execute(
     transcriber = Verbatim(config)
     for idx, audio_source in enumerate(audio_sources):
         LOG.info(f"Transcribing from audio source: {audio_source.source_name}")
-        writer: TranscriptWriter = configure_writers(
-            write_config,
-            output_formats=output_formats,
-            original_audio_file=audio_source.source_name,
-        )
         # When multiple sources are present (e.g., per-channel VTTM), isolate per-source outputs to avoid clobbering.
         per_source_prefix = output_prefix_no_ext
         if len(audio_sources) > 1:
             suffix = getattr(audio_source, "file_id", None) or f"src{idx}"
             per_source_prefix = f"{output_prefix_no_ext}-{suffix}"
-        writer.open(path_no_ext=per_source_prefix)
+        writer = configure_writers(
+            write_config,
+            output_formats=output_formats,
+            original_audio_file=audio_source.source_name,
+            output_prefix_no_ext=per_source_prefix,
+        )
+        writer.open()
         with audio_source.open() as audio_stream:
             for utterance, unacknowledged, unconfirmed in transcriber.transcribe(
                 audio_stream=audio_stream, working_prefix_no_ext=working_prefix_no_ext
@@ -954,8 +954,13 @@ def execute(
 
     if len(audio_sources) > 1:
         sorted_utterances: List[Utterance] = sorted(all_utterances, key=lambda x: x.start_ts)
-        writer: TranscriptWriter = configure_writers(write_config, output_formats=output_formats, original_audio_file=source_path)
-        writer.open(path_no_ext=output_prefix_no_ext)
+        writer = configure_writers(
+            write_config,
+            output_formats=output_formats,
+            original_audio_file=source_path,
+            output_prefix_no_ext=output_prefix_no_ext,
+        )
+        writer.open()
         for sorted_utterance in sorted_utterances:
             writer.write(utterance=sorted_utterance)
         writer.close()

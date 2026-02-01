@@ -59,18 +59,20 @@ class TranscriptWriter(ABC):
         self.config = config
 
     @abstractmethod
-    def open(self, path_no_ext: str):
-        pass
+    def format_start(self) -> bytes:
+        return b""
 
     @abstractmethod
-    def close(self):
-        pass
-
-    @abstractmethod
-    def write(
+    def format_utterance(
         self,
         utterance: Utterance,
         unacknowledged_utterance: Optional[List[Utterance]] = None,
         unconfirmed_words: Optional[List[Word]] = None,
-    ):
+    ) -> bytes:
         pass
+
+    def format_end(self) -> bytes:
+        return b""
+
+    def flush(self) -> bytes:
+        return b""
