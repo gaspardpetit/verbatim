@@ -13,53 +13,70 @@ def configure_writers(
 ) -> MultiFileFormatter:
     # pylint: disable=import-outside-toplevel
     formatters: List[FileFormatter] = []
+    use_stdout = "stdout" in output_formats
+    if use_stdout:
+        selected_formats = [fmt for fmt in output_formats if fmt != "stdout"]
+        if len(selected_formats) != 1:
+            raise ValueError("stdout output requires exactly one selected output format")
+        stdout_output = sys.stdout.buffer
+
     if "txt" in output_formats:
         from .txt import TextTranscriptWriter
 
-        formatters.append(FileFormatter(writer=TextTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.txt"))
+        if use_stdout:
+            formatters.append(FileFormatter(writer=TextTranscriptWriter(config=write_config), output=stdout_output, close_output=False))
+        else:
+            formatters.append(FileFormatter(writer=TextTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.txt"))
 
     if "ass" in output_formats:
         from .ass import AssTranscriptWriter
 
-        formatters.append(
-            FileFormatter(
-                writer=AssTranscriptWriter(config=write_config, original_audio_file=original_audio_file),
-                output_path=f"{output_prefix_no_ext}.ass",
+        if use_stdout:
+            formatters.append(
+                FileFormatter(
+                    writer=AssTranscriptWriter(config=write_config, original_audio_file=original_audio_file),
+                    output=stdout_output,
+                    close_output=False,
+                )
             )
-        )
+        else:
+            formatters.append(
+                FileFormatter(
+                    writer=AssTranscriptWriter(config=write_config, original_audio_file=original_audio_file),
+                    output_path=f"{output_prefix_no_ext}.ass",
+                )
+            )
 
     if "docx" in output_formats:
         from .docx import DocxTranscriptWriter
 
-        formatters.append(FileFormatter(writer=DocxTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.docx"))
+        if use_stdout:
+            formatters.append(FileFormatter(writer=DocxTranscriptWriter(config=write_config), output=stdout_output, close_output=False))
+        else:
+            formatters.append(FileFormatter(writer=DocxTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.docx"))
 
     if "md" in output_formats:
         from .md import MarkdownTranscriptWriter
 
-        formatters.append(FileFormatter(writer=MarkdownTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.md"))
+        if use_stdout:
+            formatters.append(FileFormatter(writer=MarkdownTranscriptWriter(config=write_config), output=stdout_output, close_output=False))
+        else:
+            formatters.append(FileFormatter(writer=MarkdownTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.md"))
 
     if "json" in output_formats:
         from .json import JsonTranscriptWriter
 
-        formatters.append(FileFormatter(writer=JsonTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.json"))
+        if use_stdout:
+            formatters.append(FileFormatter(writer=JsonTranscriptWriter(config=write_config), output=stdout_output, close_output=False))
+        else:
+            formatters.append(FileFormatter(writer=JsonTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.json"))
 
     if "jsonl" in output_formats:
         from .json import JsonlTranscriptWriter
 
-        formatters.append(FileFormatter(writer=JsonlTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.jsonl"))
-
-    if "stdout" in output_formats and "stdout-nocolor" not in output_formats:
-        from .stdout import StdoutTranscriptWriter
-
-        formatters.append(
-            FileFormatter(writer=StdoutTranscriptWriter(config=write_config, with_colours=True), output=sys.stdout.buffer, close_output=False)
-        )
-
-    if "stdout-nocolor" in output_formats:
-        from .stdout import StdoutTranscriptWriter
-
-        formatters.append(
-            FileFormatter(writer=StdoutTranscriptWriter(config=write_config, with_colours=False), output=sys.stdout.buffer, close_output=False)
-        )
+        if use_stdout:
+            formatters.append(FileFormatter(writer=JsonlTranscriptWriter(config=write_config), output=stdout_output, close_output=False))
+        else:
+            formatters.append(FileFormatter(writer=JsonlTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.jsonl"))
 
     return MultiFileFormatter(formatters=formatters)

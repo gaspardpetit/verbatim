@@ -87,7 +87,8 @@ def main():
     )
 
     source_config = make_source_config(args, speakers)
-    preflight_config(config, source_config)
+    if not preflight_config(config=config, source_config=source_config, args=args, user_args=user_args, base_defaults=base_defaults):
+        return
 
     audio_sources: List = build_audio_sources(
         args=args,
