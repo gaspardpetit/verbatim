@@ -70,7 +70,7 @@ class TestPipeline(unittest.TestCase):
 
         # Initialize and run transcription (use cpu)
         config = Config(device="cpu").configure_languages(languages)
-        sources = create_audio_sources(input_source=audio_path, device=config.device)
+        sources = create_audio_sources(input_source=audio_path, device=config.device, cache=config.cache)
         source = sources[0]
         verbatim = Verbatim(config=config)
 

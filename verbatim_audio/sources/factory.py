@@ -1,4 +1,3 @@
-import errno
 import io
 import logging
 import os
@@ -7,13 +6,13 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 
-from verbatim.cache import get_default_cache, get_required_cache
+from verbatim.cache import ArtifactCache
 from verbatim_diarization import create_diarizer  # Add this import
 from verbatim_diarization.policy import assign_channels, parse_params, parse_policy
 from verbatim_diarization.utils import sanitize_uri_component
 from verbatim_files.rttm import Annotation as RTTMAnnotation
 from verbatim_files.rttm import Segment, dumps_rttm, rttm_to_vttm
-from verbatim_files.vttm import AudioRef, dumps_vttm, load_vttm, normalize_channel_spec
+from verbatim_files.vttm import AudioRef, dumps_vttm, loads_vttm, normalize_channel_spec
 
 from ..audio import samples_to_seconds, timestr_to_samples
 from ..convert import convert_to_wav
@@ -23,6 +22,10 @@ from .sourceconfig import SourceConfig
 LOG = logging.getLogger(__name__)
 
 Annotation = RTTMAnnotation  # pylint: disable=invalid-name
+
+
+def read_text_from_cache(cache: ArtifactCache, path: str) -> Optional[str]:
+    return cache.read_text(path)
 
 
 def parse_channel_indices(channels_spec: Union[str, int, None]) -> List[int]:
@@ -57,6 +60,7 @@ def compute_diarization(
     file_path: str,
     device: str,
     *,
+    cache: ArtifactCache,
     rttm_file: Optional[str] = None,
     vttm_file: Optional[str] = None,
     strategy: str = "pyannote",
@@ -89,6 +93,7 @@ def compute_diarization(
             file_path=file_path,
             device=device,
             policy=strategy,
+            cache=cache,
             rttm_file=rttm_file,
             vttm_file=vttm_file,
             nb_speakers=nb_speakers,
@@ -109,7 +114,13 @@ def compute_diarization(
             strategy_kwargs["normalize"] = norm_lower in ("1", "true", "yes", "y")
         else:
             strategy_kwargs["normalize"] = bool(norm_val)
-    diarizer = create_diarizer(strategy=strategy, device=device, huggingface_token=os.getenv("HUGGINGFACE_TOKEN"), **strategy_kwargs)
+    diarizer = create_diarizer(
+        strategy=strategy,
+        device=device,
+        huggingface_token=os.getenv("HUGGINGFACE_TOKEN"),
+        cache=cache,
+        **strategy_kwargs,
+    )
 
     return diarizer.compute_diarization(
         file_path=file_path,
@@ -120,18 +131,12 @@ def compute_diarization(
     )
 
 
-def _extract_channels(file_path: str, channels: List[int], working_dir: Optional[str]) -> str:
+def _extract_channels(file_path: str, channels: List[int], working_dir: Optional[str], cache: ArtifactCache) -> str:
     # pylint: disable=import-outside-toplevel
     import soundfile as sf  # lazy import
 
-    if os.path.exists(file_path):
-        audio, sample_rate = sf.read(file_path)
-    else:
-        cache = get_default_cache()
-        cached = cache.get_bytes(file_path) if cache else None
-        if cached is None:
-            raise FileNotFoundError(f"Audio file not found: {file_path}")
-        audio, sample_rate = sf.read(io.BytesIO(cached))
+    buffer = cache.bytes_io(file_path)
+    audio, sample_rate = sf.read(buffer)
     if isinstance(audio, np.ndarray) and audio.ndim > 1 and len(channels) > 0:
         subset = audio[:, channels]
     else:
@@ -141,15 +146,9 @@ def _extract_channels(file_path: str, channels: List[int], working_dir: Optional
     temp_name = f"{base_name}-channels-{channel_tag}.wav"
     temp_path = os.path.join(working_dir, temp_name) if working_dir else temp_name
 
-    cache = get_default_cache()
-    if cache:
-        buffer = io.BytesIO()
-        sf.write(buffer, subset, sample_rate, format="WAV")
-        cache.set_bytes(temp_path, buffer.getvalue())
-        return temp_path
-
-    os.makedirs(os.path.dirname(temp_path) or ".", exist_ok=True)
-    sf.write(temp_path, subset, sample_rate)
+    buffer = io.BytesIO()
+    sf.write(buffer, subset, sample_rate, format="WAV")
+    cache.set_bytes(temp_path, buffer.getvalue())
     return temp_path
 
 
@@ -242,6 +241,7 @@ def compute_diarization_policy(
     file_path: str,
     device: str,
     policy: str,
+    cache: ArtifactCache,
     rttm_file: Optional[str],
     vttm_file: Optional[str],
     nb_speakers: Union[int, None],
@@ -254,7 +254,8 @@ def compute_diarization_policy(
     if len(clauses) == 0:
         return Annotation()
 
-    info = sf.info(file_path)
+    buffer = cache.bytes_io(file_path)
+    info = sf.info(buffer)
     nchannels = info.channels
     assignments = assign_channels(clauses, nchannels=nchannels)
 
@@ -283,7 +284,7 @@ def compute_diarization_policy(
             if info.channels < 2 and clause.strategy == "channel":
                 LOG.warning("Channel diarization requested on mono input; skipping channel clause.")
                 continue
-            subset_path = file_path if len(channels) == nchannels else _extract_channels(file_path, channels, working_dir)
+            subset_path = file_path if len(channels) == nchannels else _extract_channels(file_path, channels, working_dir, cache)
             if subset_path != file_path:
                 temp_paths.append(subset_path)
 
@@ -318,6 +319,7 @@ def compute_diarization_policy(
             diarization = compute_diarization(
                 file_path=subset_path,
                 device=device,
+                cache=cache,
                 rttm_file=None,
                 vttm_file=clause_vttm_path,
                 strategy=clause.strategy,
@@ -328,17 +330,12 @@ def compute_diarization_policy(
 
             if clause_vttm_path:
                 try:
-                    clause_audio_refs, diarization_from_vttm = load_vttm(clause_vttm_path)
+                    vttm_text = read_text_from_cache(cache, clause_vttm_path)
+                    clause_audio_refs, diarization_from_vttm = loads_vttm(vttm_text)
                     if len(diarization_from_vttm) > 0:
                         diarization = diarization_from_vttm
                 except (FileNotFoundError, ValueError) as exc:  # pragma: no cover
                     LOG.warning("Failed to load intermediate VTTM %s: %s", clause_vttm_path, exc)
-                finally:
-                    if os.path.exists(clause_vttm_path):
-                        try:
-                            os.unlink(clause_vttm_path)
-                        except OSError:
-                            pass
 
             # Normalize diarizer output to a list of RTTM Segments
             if hasattr(diarization, "segments"):
@@ -364,6 +361,8 @@ def compute_diarization_policy(
                 audio_refs.append(AudioRef(id=file_id, path=file_path, channels=channel_spec))
     finally:
         for temp in temp_paths:
+            if not os.path.exists(temp):
+                continue
             # pylint: disable=broad-exception-caught
             try:
                 os.unlink(temp)
@@ -373,9 +372,9 @@ def compute_diarization_policy(
     merged = Annotation(segments=combined_segments, file_id=None)
 
     if rttm_file:
-        get_required_cache().set_text(rttm_file, dumps_rttm(merged))
+        cache.set_text(rttm_file, dumps_rttm(merged))
     if vttm_file:
-        get_required_cache().set_text(vttm_file, dumps_vttm(audio=audio_refs, annotation=merged))
+        cache.set_text(vttm_file, dumps_vttm(audio=audio_refs, annotation=merged))
 
     # If all clauses were skipped/produced nothing, fall back to default strategy
     if len(merged) == 0:
@@ -383,6 +382,7 @@ def compute_diarization_policy(
         return compute_diarization(
             file_path=file_path,
             device=device,
+            cache=cache,
             rttm_file=rttm_file,
             vttm_file=vttm_file,
             strategy="pyannote",
@@ -397,6 +397,7 @@ def create_audio_source(
     *,
     input_source: str,
     device: str,
+    cache: ArtifactCache,
     source_config: SourceConfig = SourceConfig(),
     start_time: Optional[str] = None,
     stop_time: Optional[str] = None,
@@ -407,6 +408,7 @@ def create_audio_source(
     sources = create_audio_sources(
         input_source=input_source,
         device=device,
+        cache=cache,
         source_config=source_config,
         start_time=start_time,
         stop_time=stop_time,
@@ -423,6 +425,7 @@ def create_audio_sources(
     *,
     input_source: str,
     device: str,
+    cache: ArtifactCache,
     source_config: SourceConfig = SourceConfig(),
     start_time: Optional[str] = None,
     stop_time: Optional[str] = None,
@@ -453,9 +456,6 @@ def create_audio_sources(
     start_sample: int = timestr_to_samples(start_time) if start_time else 0
     stop_sample: Optional[int] = timestr_to_samples(stop_time) if stop_time else None
 
-    if os.path.exists(input_source) is False:
-        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), input_source)
-
     if source_config.diarization_file == "" or (source_config.diarize_strategy is not None and source_config.diarization_file is None):
         source_config.diarization_file = output_prefix_no_ext + ".rttm"
     if source_config.vttm_file is None:
@@ -484,11 +484,13 @@ def create_audio_sources(
             input_path=input_source,
             working_prefix_no_ext=working_prefix_no_ext,
             preserve_channels=preserve_for_diarization,
+            cache=cache,
         )
 
         return create_audio_sources(
             source_config=source_config,
             device=device,
+            cache=cache,
             input_source=input_source,
             start_time=start_time,
             stop_time=stop_time,
@@ -503,17 +505,18 @@ def create_audio_sources(
             if working_dir is None:
                 raise RuntimeError("Voice isolation requires a working_dir. Provide --workdir or disable --isolate.")
             input_source, _noise_path = FileAudioSource.isolate_voices(file_path=input_source, out_path_prefix=working_prefix_no_ext)
-        if source_config.vttm_file and not os.path.exists(source_config.vttm_file):
+        if source_config.vttm_file and read_text_from_cache(cache, source_config.vttm_file) is None:
             LOG.info("No VTTM provided; creating minimal VTTM placeholder at %s", source_config.vttm_file)
             audio_id = sanitize_uri_component(os.path.splitext(os.path.basename(input_source))[0])
             audio_ref = AudioRef(id=audio_id, path=input_source, channels=None)
-            get_required_cache().set_text(
+            cache.set_text(
                 source_config.vttm_file,
                 dumps_vttm(audio=[audio_ref], annotation=RTTMAnnotation()),
             )
         if source_config.vttm_file:
             try:
-                audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
+                vttm_text = read_text_from_cache(cache, source_config.vttm_file)
+                audio_refs, source_config.diarization = loads_vttm(vttm_text)
                 if len(source_config.diarization) == 0:
                     # Treat empty annotations as missing so diarization can be computed
                     source_config.diarization = None
@@ -526,6 +529,7 @@ def create_audio_sources(
             source_config.diarization = compute_diarization(
                 file_path=input_source,
                 device=device,
+                cache=cache,
                 rttm_file=source_config.diarization_file,
                 vttm_file=source_config.vttm_file,
                 strategy=source_config.diarize_strategy or "pyannote",
@@ -534,7 +538,8 @@ def create_audio_sources(
             )
             if source_config.vttm_file:
                 try:
-                    audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
+                    vttm_text = read_text_from_cache(cache, source_config.vttm_file)
+                    audio_refs, source_config.diarization = loads_vttm(vttm_text)
                     if len(source_config.diarization) == 0:
                         source_config.diarization = None
                 except (FileNotFoundError, ValueError):
@@ -546,20 +551,22 @@ def create_audio_sources(
             from verbatim_diarization import Diarization
 
             try:
-                source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
+                rttm_text = read_text_from_cache(cache, source_config.diarization_file)
+                source_config.diarization = Diarization.load_diarization_from_text(rttm_text)
                 if source_config.vttm_file and source_config.diarization is not None:
                     audio_id = sanitize_uri_component(os.path.splitext(os.path.basename(input_source))[0])
                     _audio_refs, _annotation, vttm_text = rttm_to_vttm(
                         source_config.diarization_file,
                         audio_refs=[AudioRef(id=audio_id, path=input_source, channels=None)],
                     )
-                    get_required_cache().set_text(source_config.vttm_file, vttm_text)
+                    cache.set_text(source_config.vttm_file, vttm_text)
             except (StopIteration, FileNotFoundError):
                 # If the file doesn't exist or is empty, compute new diarization
                 nb_speakers = source_config.speakers if source_config.speakers not in (0, "") else None
                 source_config.diarization = compute_diarization(
                     file_path=input_source,
                     device=device,
+                    cache=cache,
                     rttm_file=source_config.diarization_file,
                     vttm_file=source_config.vttm_file,
                     strategy=source_config.diarize_strategy or "pyannote",
@@ -568,7 +575,8 @@ def create_audio_sources(
                 )
                 if source_config.vttm_file:
                     try:
-                        audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
+                        vttm_text = read_text_from_cache(cache, source_config.vttm_file)
+                        audio_refs, source_config.diarization = loads_vttm(vttm_text)
                         if len(source_config.diarization) == 0:
                             source_config.diarization = None
                     except (FileNotFoundError, ValueError):
@@ -576,7 +584,8 @@ def create_audio_sources(
 
     if source_config.vttm_file and source_config.diarization is None:
         try:
-            audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
+            vttm_text = read_text_from_cache(cache, source_config.vttm_file)
+            audio_refs, source_config.diarization = loads_vttm(vttm_text)
             if len(source_config.diarization) == 0:
                 source_config.diarization = None
         except (FileNotFoundError, ValueError):
@@ -590,21 +599,21 @@ def create_audio_sources(
             file_path = audio_ref.path or input_source
             if not os.path.isabs(file_path):
                 file_path = os.path.join(os.getcwd(), file_path)
-            if not os.path.exists(file_path):
-                LOG.warning("Audio path %s from VTTM not found; falling back to %s", file_path, input_source)
-                file_path = input_source
+            cache.get_bytes(file_path)
             if os.path.splitext(file_path)[-1] != ".wav":
                 # Ensure channel selection is preserved by converting to wav
                 file_path = convert_to_wav(
                     input_path=file_path,
                     working_prefix_no_ext=f"{working_prefix_no_ext}-{audio_ref.id}",
                     preserve_channels=True,
+                    cache=cache,
                 )
             diarization_obj = source_config.diarization if isinstance(source_config.diarization, RTTMAnnotation) else None
             scoped_diarization = filter_annotation_by_file_id(diarization_obj, audio_ref.id)
             sources.append(
                 FileAudioSource(
                     file=file_path,
+                    cache=cache,
                     start_sample=start_sample,
                     end_sample=stop_sample,
                     diarization=scoped_diarization,
@@ -618,6 +627,7 @@ def create_audio_sources(
     return [
         FileAudioSource(
             file=input_source,
+            cache=cache,
             start_sample=start_sample,
             end_sample=stop_sample,
             diarization=source_config.diarization,
@@ -631,6 +641,7 @@ def create_joint_speaker_sources(
     strategy: str = "pyannote",
     input_source: str,
     device: str,
+    cache: ArtifactCache,
     source_config: SourceConfig = SourceConfig(),
     start_time: Optional[str] = None,
     stop_time: Optional[str] = None,
@@ -640,11 +651,17 @@ def create_joint_speaker_sources(
     # pylint: disable=import-outside-toplevel
 
     if os.path.splitext(input_source)[-1] != ".wav":
-        converted_input_source = convert_to_wav(input_path=input_source, working_prefix_no_ext=working_prefix_no_ext, preserve_channels=True)
+        converted_input_source = convert_to_wav(
+            input_path=input_source,
+            working_prefix_no_ext=working_prefix_no_ext,
+            preserve_channels=True,
+            cache=cache,
+        )
         return create_joint_speaker_sources(
             input_source=converted_input_source,
             strategy=strategy,
             device=device,
+            cache=cache,
             source_config=source_config,
             start_time=start_time,
             stop_time=stop_time,
@@ -662,6 +679,7 @@ def create_joint_speaker_sources(
     annotation: Annotation = compute_diarization(
         file_path=input_source,
         device=device,
+        cache=cache,
         rttm_file=source_config.diarization_file,
         vttm_file=source_config.vttm_file,
         strategy=strategy,
@@ -670,4 +688,12 @@ def create_joint_speaker_sources(
 
     from ..sources.fileaudiosource import FileAudioSource
 
-    return [FileAudioSource(file=input_source, diarization=annotation, start_sample=start_sample, end_sample=stop_sample)]
+    return [
+        FileAudioSource(
+            file=input_source,
+            cache=cache,
+            diarization=annotation,
+            start_sample=start_sample,
+            end_sample=stop_sample,
+        )
+    ]

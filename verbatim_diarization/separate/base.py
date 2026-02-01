@@ -2,6 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
+from verbatim.cache import ArtifactCache
 from verbatim_audio.sources.audiosource import AudioSource
 
 # Configure logger
@@ -9,8 +10,8 @@ LOG = logging.getLogger(__name__)
 
 
 class SeparationStrategy(ABC):
-    def __init__(self):
-        pass
+    def __init__(self, *, cache: ArtifactCache):
+        self.cache = cache
 
     def __enter__(self) -> "SeparationStrategy":
         return self

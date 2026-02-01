@@ -5,14 +5,13 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 
 # pylint: disable=import-outside-toplevel,broad-exception-caught
 import numpy as np
-import scipy.io.wavfile
 import torch
 from pyannote.audio import Pipeline
 from pyannote.audio.core.task import Problem, Resolution, Specifications
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 from torch.serialization import add_safe_globals
 
-from verbatim.cache import get_default_cache, get_required_cache
+from verbatim.cache import ArtifactCache
 from verbatim_audio.audio import wav_to_int16
 from verbatim_audio.sources.audiosource import AudioSource
 from verbatim_audio.sources.fileaudiosource import FileAudioSource
@@ -42,13 +41,15 @@ def _build_rttm_annotation(diarization, label_to_ref: Dict[str, AudioRef], defau
 class PyannoteSpeakerSeparation(SeparationStrategy):
     def __init__(
         self,
+        *,
+        cache: ArtifactCache,
         device: str,
         huggingface_token: str,
         separation_model=PYANNOTE_SEPARATION_MODEL_ID,
         diarization_strategy: str = "pyannote",
         **kwargs,
     ):
-        super().__init__()
+        super().__init__(cache=cache)
         del kwargs  # unused
         LOG.info("Initializing Separation Pipeline.")
         self.diarization_strategy = diarization_strategy
@@ -94,14 +95,8 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         try:
             import soundfile as sf  # lazy import
 
-            if os.path.exists(file_path):
-                audio, sample_rate = sf.read(file_path)
-            else:
-                cache = get_default_cache()
-                cached = cache.get_bytes(file_path) if cache else None
-                if cached is None:
-                    raise FileNotFoundError(f"Audio file not found: {file_path}")
-                audio, sample_rate = sf.read(io.BytesIO(cached))
+            buffer = self.cache.bytes_io(file_path)
+            audio, sample_rate = sf.read(buffer)
 
             if isinstance(audio, np.ndarray) and audio.ndim > 1 and audio.shape[1] > 1:
                 mono = np.mean(audio, axis=1)
@@ -143,10 +138,6 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         sources_data = np.asarray(sources.data)
         shape = cast(tuple[int, int], tuple(sources_data.shape[:2]))
 
-        prefix_dir = os.path.dirname(out_speaker_wav_prefix)
-        if prefix_dir:
-            os.makedirs(prefix_dir, exist_ok=True)
-
         audio_refs_meta: List[Tuple[str, AudioRef]] = []
         for s, speaker in enumerate(diarization.labels()):
             if s >= shape[1]:
@@ -158,16 +149,11 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
                 speaker_data = wav_to_int16(speaker_data)
 
             file_name = f"{out_speaker_wav_prefix}-{speaker}.wav" if out_speaker_wav_prefix else f"{speaker}.wav"
-            cache = get_default_cache()
-            if cache:
-                import soundfile as sf  # lazy import
+            import soundfile as sf  # lazy import
 
-                buffer = io.BytesIO()
-                sf.write(buffer, speaker_data, 16000, format="WAV")
-                cache.set_bytes(file_name, buffer.getvalue())
-            else:
-                os.makedirs(os.path.dirname(file_name) or ".", exist_ok=True)
-                scipy.io.wavfile.write(file_name, 16000, speaker_data)
+            buffer = io.BytesIO()
+            sf.write(buffer, speaker_data, 16000, format="WAV")
+            self.cache.set_bytes(file_name, buffer.getvalue())
 
             sanitized_id = sanitize_uri_component(os.path.splitext(os.path.basename(file_name))[0])
             audio_ref = AudioRef(id=sanitized_id, path=file_name, channels=None)
@@ -220,6 +206,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             separated_sources.append(
                 FileAudioSource(
                     file=audio_ref.path,
+                    cache=self.cache,
                     start_sample=start_sample,
                     end_sample=end_sample,
                     diarization=diarization_annotation,
@@ -228,10 +215,10 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             )
 
         if out_rttm_file:
-            get_required_cache().set_text(out_rttm_file, dumps_rttm(diarization_annotation))
+            self.cache.set_text(out_rttm_file, dumps_rttm(diarization_annotation))
 
         if out_vttm_file:
             audio_refs = [ref for _label, ref in audio_refs_meta]
-            get_required_cache().set_text(out_vttm_file, dumps_vttm(audio=audio_refs, annotation=diarization_annotation))
+            self.cache.set_text(out_vttm_file, dumps_vttm(audio=audio_refs, annotation=diarization_annotation))
 
         return separated_sources

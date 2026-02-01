@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from verbatim.cache import get_required_cache
+from verbatim.cache import ArtifactCache
 from verbatim_files.rttm import Annotation, dumps_rttm
 
 LOG = logging.getLogger(__name__)
@@ -10,6 +10,9 @@ LOG = logging.getLogger(__name__)
 
 class DiarizationStrategy(ABC):
     """Base class for all diarization strategies"""
+
+    def __init__(self, *, cache: ArtifactCache):
+        self.cache = cache
 
     @abstractmethod
     def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, out_vttm_file: Optional[str] = None, **kwargs) -> Annotation:
@@ -28,4 +31,4 @@ class DiarizationStrategy(ABC):
 
     def save_rttm(self, annotation: Annotation, out_rttm_file: str):
         """Save annotation to RTTM file"""
-        get_required_cache().set_text(out_rttm_file, dumps_rttm(annotation))
+        self.cache.set_text(out_rttm_file, dumps_rttm(annotation))

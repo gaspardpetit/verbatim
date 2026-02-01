@@ -60,6 +60,8 @@ def make_source_config(args, speakers: Optional[int]) -> SourceConfig:
 
 
 def preflight_config(config: Config, source_config: SourceConfig) -> None:
+    if config.cache is None:
+        raise ValueError("Artifact cache is not configured. Configure a cache before running.")
     if source_config.isolate is not None and not config.working_dir:
         raise ValueError("Voice isolation requires a working_dir. Provide --workdir or disable --isolate.")
 

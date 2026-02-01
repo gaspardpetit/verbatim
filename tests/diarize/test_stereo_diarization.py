@@ -14,9 +14,10 @@ soundfile_available = importlib.util.find_spec("soundfile") is not None
 class TestEnergyDiarization(unittest.TestCase):
     @unittest.skipUnless(pyannote_available, "pyannote not available")
     def test_determine_speaker_silence(self):
+        from verbatim.cache import FileBackedArtifactCache
         from verbatim_diarization.stereo.diarize import EnergyDiarization
 
-        diarizer = EnergyDiarization()
+        diarizer = EnergyDiarization(cache=FileBackedArtifactCache(base_dir="."))
         # pylint: disable=protected-access
         speaker = diarizer._determine_speaker(0.0, 0.0, 0.0, 0.0)
         self.assertEqual(speaker, "UNKNOWN")
@@ -25,6 +26,7 @@ class TestEnergyDiarization(unittest.TestCase):
     def test_compute_diarization_silence(self):
         import soundfile as sf  # type: ignore
 
+        from verbatim.cache import FileBackedArtifactCache
         from verbatim_diarization.stereo.diarize import EnergyDiarization
 
         sample_rate = 16000
@@ -34,7 +36,7 @@ class TestEnergyDiarization(unittest.TestCase):
             tmp_path = tmp.name
 
         try:
-            diarizer = EnergyDiarization()
+            diarizer = EnergyDiarization(cache=FileBackedArtifactCache(base_dir="."))
             annotation = diarizer.compute_diarization(tmp_path, segment_duration=0.5)
             self.assertEqual(len(annotation), 0)
         finally:

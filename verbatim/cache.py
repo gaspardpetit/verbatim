@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import os
 from dataclasses import dataclass, field
 from threading import Lock
@@ -17,9 +18,26 @@ class ArtifactCache(Protocol):
 
     def set_bytes(self, key: str, value: bytes) -> None: ...
 
+    def read_text(self, key: str) -> Optional[str]: ...
+
+    def read_bytes(self, key: str) -> bytes: ...
+
+    def bytes_io(self, key: str) -> io.BytesIO: ...
+
+
+class BaseArtifactCache(ArtifactCache):
+    def read_text(self, key: str) -> Optional[str]:
+        return self.get_text(key)
+
+    def read_bytes(self, key: str) -> bytes:
+        return self.get_bytes(key)
+
+    def bytes_io(self, key: str) -> io.BytesIO:
+        return io.BytesIO(self.read_bytes(key))
+
 
 @dataclass
-class InMemoryArtifactCache(ArtifactCache):
+class InMemoryArtifactCache(BaseArtifactCache):
     _text: Dict[str, str] = field(default_factory=dict)
     _bytes: Dict[str, bytes] = field(default_factory=dict)
     _lock: Lock = field(default_factory=Lock)
@@ -98,22 +116,3 @@ class FileBackedArtifactCache(InMemoryArtifactCache):
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
         with open(path, "wb") as fh:
             fh.write(value)
-
-
-_DEFAULT_CACHE: Optional[ArtifactCache] = None
-
-
-def set_default_cache(cache: Optional[ArtifactCache]) -> None:
-    global _DEFAULT_CACHE
-    _DEFAULT_CACHE = cache
-
-
-def get_default_cache() -> Optional[ArtifactCache]:
-    return _DEFAULT_CACHE
-
-
-def get_required_cache() -> ArtifactCache:
-    cache = get_default_cache()
-    if cache is None:
-        raise RuntimeError("No default artifact cache configured.")
-    return cache

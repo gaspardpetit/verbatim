@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import List, Mapping, Optional, Tuple
 
-from verbatim.cache import ArtifactCache, set_default_cache
+from verbatim.cache import ArtifactCache
 from verbatim_audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
@@ -271,7 +271,6 @@ class Config:
                 from verbatim.cache import FileBackedArtifactCache
 
                 self.cache = FileBackedArtifactCache(base_dir=self.working_dir)
-        set_default_cache(self.cache)
 
     def configure_cache(self, model_cache_dir: Optional[str], offline: bool) -> "Config":
         """Configure deterministic cache directories and offline mode.

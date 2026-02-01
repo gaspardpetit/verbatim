@@ -5,7 +5,7 @@ from typing import Optional
 import numpy as np
 import soundfile as sf
 
-from verbatim.cache import get_required_cache
+from verbatim.cache import ArtifactCache
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.utils import sanitize_uri_component
 from verbatim_files.rttm import Annotation, Segment, dumps_rttm
@@ -15,7 +15,8 @@ LOG = logging.getLogger(__name__)
 
 
 class EnergyDiarization(DiarizationStrategy):
-    def __init__(self, energy_ratio_threshold: float = 1.18, normalize: bool = False):
+    def __init__(self, *, cache: ArtifactCache, energy_ratio_threshold: float = 1.18, normalize: bool = False):
+        super().__init__(cache=cache)
         self.energy_ratio_threshold = energy_ratio_threshold
         self.normalize = normalize
 
@@ -80,8 +81,10 @@ class EnergyDiarization(DiarizationStrategy):
         Additional kwargs:
             segment_duration: Duration of analysis segments in seconds (default: 0.5)
         """
-        audio, sample_rate = sf.read(file_path)
-        audio_info = sf.info(file_path)
+        buffer = self.cache.bytes_io(file_path)
+        audio, sample_rate = sf.read(buffer)
+        buffer.seek(0)
+        audio_info = sf.info(buffer)
         LOG.info(f"Input file channels: {audio_info.channels}, sample rate: {audio_info.samplerate}")
 
         if audio.ndim != 2 or audio.shape[1] != 2:
@@ -131,14 +134,12 @@ class EnergyDiarization(DiarizationStrategy):
         annotation = Annotation(segments=segments, file_id=uri)
 
         if out_rttm_file:
-            os.makedirs(os.path.dirname(out_rttm_file) or ".", exist_ok=True)
-            get_required_cache().set_text(out_rttm_file, dumps_rttm(annotation))
+            self.cache.set_text(out_rttm_file, dumps_rttm(annotation))
             LOG.info("Wrote diarization to RTTM file: %s", out_rttm_file)
 
         if out_vttm_file:
-            os.makedirs(os.path.dirname(out_vttm_file) or ".", exist_ok=True)
             audio_refs = [AudioRef(id=uri, path=file_path, channels=None)]
-            get_required_cache().set_text(out_vttm_file, dumps_vttm(audio=audio_refs, annotation=annotation))
+            self.cache.set_text(out_vttm_file, dumps_vttm(audio=audio_refs, annotation=annotation))
             LOG.info("Wrote diarization to VTTM file: %s", out_vttm_file)
 
         return annotation

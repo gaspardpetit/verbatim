@@ -1,4 +1,3 @@
-import io
 import logging
 import os
 import time
@@ -13,7 +12,7 @@ from pyannote.audio.pipelines.utils.hook import ProgressHook
 from pyannote.core.annotation import Annotation
 from torch.serialization import add_safe_globals
 
-from verbatim.cache import get_default_cache, get_required_cache
+from verbatim.cache import ArtifactCache
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.pyannote.separate import PyannoteSpeakerSeparation, _build_rttm_annotation
 from verbatim_diarization.utils import sanitize_uri_component
@@ -28,7 +27,8 @@ LOG = logging.getLogger(__name__)
 
 
 class PyAnnoteDiarization(DiarizationStrategy):
-    def __init__(self, device: str, huggingface_token: str):
+    def __init__(self, *, cache: ArtifactCache, device: str, huggingface_token: str):
+        super().__init__(cache=cache)
         self.device = device
         self.huggingface_token = huggingface_token
         self.pipeline = None
@@ -73,14 +73,8 @@ class PyAnnoteDiarization(DiarizationStrategy):
             try:
                 import soundfile as sf  # lazy import
 
-                if os.path.exists(file_path):
-                    audio, sample_rate = sf.read(file_path)
-                else:
-                    cache = get_default_cache()
-                    cached = cache.get_bytes(file_path) if cache else None
-                    if cached is None:
-                        raise FileNotFoundError(f"Audio file not found: {file_path}")
-                    audio, sample_rate = sf.read(io.BytesIO(cached))
+                buffer = self.cache.bytes_io(file_path)
+                audio, sample_rate = sf.read(buffer)
 
                 if isinstance(audio, np.ndarray) and audio.ndim > 1 and audio.shape[1] > 1:
                     mono = np.mean(audio, axis=1)
@@ -133,25 +127,22 @@ class PyAnnoteDiarization(DiarizationStrategy):
             self.save_rttm(diarization_annotation, out_rttm_file)
 
         if out_vttm_file:
-            os.makedirs(os.path.dirname(out_vttm_file) or ".", exist_ok=True)
             segments = [
                 Segment(start=segment.start, end=segment.end, speaker=str(label), file_id=uri)
                 for segment, _track, label in diarization_annotation.itertracks(yield_label=True)
             ]
             rttm_ann = RTTMAnnotation(segments=segments, file_id=uri)
-            get_required_cache().set_text(
-                out_vttm_file,
-                dumps_vttm(audio=[AudioRef(id=uri, path=file_path, channels=None)], annotation=rttm_ann),
-            )
+            self.cache.set_text(out_vttm_file, dumps_vttm(audio=[AudioRef(id=uri, path=file_path, channels=None)], annotation=rttm_ann))
 
         return diarization_annotation
 
 
 class PyAnnoteSeparationDiarization(DiarizationStrategy):
-    def __init__(self, device: str, huggingface_token: str):
+    def __init__(self, *, cache: ArtifactCache, device: str, huggingface_token: str):
+        super().__init__(cache=cache)
         self.device = device
         self.huggingface_token = huggingface_token
-        self._separator = PyannoteSpeakerSeparation(device=device, huggingface_token=huggingface_token)
+        self._separator = PyannoteSpeakerSeparation(cache=cache, device=device, huggingface_token=huggingface_token)
 
     # pylint: disable=too-many-positional-arguments
     def compute_diarization(
@@ -183,8 +174,7 @@ class PyAnnoteSeparationDiarization(DiarizationStrategy):
             self.save_rttm(annotation, out_rttm_file)
 
         if out_vttm_file:
-            os.makedirs(os.path.dirname(out_vttm_file) or ".", exist_ok=True)
             audio_refs = [ref for _label, ref in audio_refs_meta]
-            get_required_cache().set_text(out_vttm_file, dumps_vttm(audio=audio_refs, annotation=annotation))
+            self.cache.set_text(out_vttm_file, dumps_vttm(audio=audio_refs, annotation=annotation))
 
         return annotation
