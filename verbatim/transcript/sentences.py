@@ -54,13 +54,13 @@ class FastSentenceTokenizer(SentenceTokenizer):
 
 class SaTSentenceTokenizer(SentenceTokenizer):
     def __init__(self, device: str, model="sat-3l-sm"):
-        LOG.info("Lazy-loading SaT Sentence Tokenizer (model=%s)", model)
+        LOG.debug("Lazy-loading SaT Sentence Tokenizer (model=%s)", model)
         start = perf_counter()
         from wtpsplit import SaT  # pylint: disable=import-outside-toplevel
 
         self.sat_sm = SaT(model)
         self.sat_sm.half().to(device)
-        LOG.info("SaT Sentence Tokenizer ready in %.2fs", perf_counter() - start)
+        LOG.debug("SaT Sentence Tokenizer ready in %.2fs", perf_counter() - start)
 
     def split(self, words: List[Word]) -> List[str]:
         text = "".join(w.word for w in words)

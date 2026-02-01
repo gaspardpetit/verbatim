@@ -3,7 +3,10 @@ import os
 
 from dotenv import load_dotenv
 
+from verbatim.logging_utils import get_status_logger
+
 LOG = logging.getLogger(__name__)
+STATUS_LOG = get_status_logger()
 
 
 def load_env_file(env_path: str = ".env") -> bool:
@@ -17,13 +20,13 @@ def load_env_file(env_path: str = ".env") -> bool:
     - bool: True if the file was successfully loaded, False otherwise.
     """
     if not os.path.isfile(env_path):
-        LOG.info("No '%s' file provided.", env_path)
+        LOG.debug("No '%s' file provided.", env_path)
         return False
 
     try:
         # load_dotenv returns True if the file was found and loaded, else False.
         if load_dotenv(dotenv_path=env_path, override=True):
-            LOG.info("Environment variables from '%s' loaded successfully.", env_path)
+            STATUS_LOG.info("Environment variables from '%s' loaded successfully.", env_path)
             return True
         LOG.error("Failed to load environment variables from '%s'.", env_path)
         return False

@@ -5,6 +5,7 @@ from typing import List, Optional, Tuple
 from faster_whisper import WhisperModel
 from numpy.typing import NDArray
 
+from verbatim.logging_utils import status_enabled
 from verbatim_audio.audio import samples_to_seconds
 
 from ...transcript.words import Word
@@ -74,7 +75,7 @@ class FasterWhisperTranscriber(Transcriber):
     def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]:
         language, language_probability, all_language_probs = self.whisper_model.detect_language(audio=audio)
         if language in lang:
-            LOG.info(f"detected '{language}' with probability {language_probability}")
+            LOG.debug("detected '%s' with probability %s", language, language_probability)
             return language, language_probability
 
         guess_lang = lang[0]
@@ -85,7 +86,7 @@ class FasterWhisperTranscriber(Transcriber):
                     if t[1] > guess_prob:
                         guess_lang = t[0]
                         guess_prob = t[1]
-                        LOG.info(f"detected '{lang_iter}' with probability {guess_prob}")
+                        LOG.debug("detected '%s' with probability %s", lang_iter, guess_prob)
         return guess_lang, guess_prob
 
     def transcribe(
@@ -102,11 +103,11 @@ class FasterWhisperTranscriber(Transcriber):
         whisper_patience: float = 1.0,
         whisper_temperatures: Optional[List[float]] = None,
     ) -> List[Word]:
-        LOG.info(f"Transcription Prefix: {prefix}")
+        LOG.debug("Transcription Prefix: %s", prefix)
         if whisper_temperatures is None:
             whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
 
-        show_progress = LOG.getEffectiveLevel() <= logging.INFO
+        show_progress = status_enabled()
         whisper_config: WhisperConfig = WhisperConfig()
         segment_iter, info = self.whisper_model.transcribe(
             audio=audio,

@@ -12,6 +12,7 @@ import numpy as np
 from colorama import Fore
 from numpy.typing import NDArray
 
+from verbatim.logging_utils import get_status_logger
 from verbatim_audio.audio import samples_to_seconds
 from verbatim_audio.sources.audiosource import AudioSource, AudioStream
 from verbatim_files.format.factory import configure_writers
@@ -52,6 +53,7 @@ Annotation = Any  # pylint: disable=invalid-name
 
 # Configure logger
 LOG = logging.getLogger(__name__)
+STATUS_LOG = get_status_logger()
 
 
 @dataclass
@@ -198,7 +200,7 @@ class State:
         self.rolling_window.array[-offset:] = 0
         self.window_ts += offset
 
-        LOG.info(f"Window now has {samples_to_seconds(self.audio_ts - self.window_ts)} seconds of audio.")
+        LOG.debug("Window now has %s seconds of audio.", samples_to_seconds(self.audio_ts - self.window_ts))
 
     def append_audio_to_window(self, audio_chunk: NDArray):
         if audio_chunk.size == 0:
@@ -262,7 +264,7 @@ class Verbatim:
 
     def skip_leading_silence(self, max_skip: int, min_speech_duration_ms: int = 500) -> int:
         if self.vad_callback is None:
-            LOG.info("VAD callback not configured; skipping silence detection and keeping current window.")
+            LOG.debug("VAD callback not configured; skipping silence detection and keeping current window.")
             return self.state.window_ts
 
         min_speech_duration_ms = 750
@@ -278,7 +280,7 @@ class Verbatim:
             # pylint: disable=consider-using-min-builtin
             if max_skip < advance_to:
                 advance_to = max_skip
-            LOG.info(
+            LOG.debug(
                 f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f}"
                 f" and {samples_to_seconds(self.state.window_ts + advance_to):.2f}"
             )
@@ -296,7 +298,7 @@ class Verbatim:
             advance_to = voice_start
             if max_skip < advance_to:
                 advance_to = max_skip
-            LOG.info(
+            LOG.debug(
                 f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f}"
                 f" and {samples_to_seconds(self.state.window_ts + advance_to):.2f}"
             )
@@ -413,11 +415,11 @@ class Verbatim:
         return (result.language, result.probability, result.samples_used)
 
     def transcribe_window(self) -> Tuple[List[Word], List[Word]]:
-        LOG.info("Starting transcription of audio chunk.")
-        LOG.info(f"Window Start Time: {samples_to_seconds(self.state.window_ts)}")
-        LOG.info(f"Confirmed Time: {samples_to_seconds(self.state.confirmed_ts)}")
-        LOG.info(f"Acknowledged Time: {samples_to_seconds(self.state.acknowledged_ts)}")
-        LOG.info(f"Valid audio range: 0.0 - {samples_to_seconds(self.state.audio_ts - self.state.window_ts)}")
+        LOG.debug("Starting transcription of audio chunk.")
+        LOG.debug("Window Start Time: %s", samples_to_seconds(self.state.window_ts))
+        LOG.debug("Confirmed Time: %s", samples_to_seconds(self.state.confirmed_ts))
+        LOG.debug("Acknowledged Time: %s", samples_to_seconds(self.state.acknowledged_ts))
+        LOG.debug("Valid audio range: 0.0 - %s", samples_to_seconds(self.state.audio_ts - self.state.window_ts))
 
         acknowledged_words_in_window = WhisperHistory.advance_transcript(timestamp=self.state.window_ts, transcript=self.state.acknowledged_words)
         lang, _prob, used_samples_for_language = self.guess_language(timestamp=max(0, self.state.acknowledged_ts))
@@ -775,7 +777,7 @@ class Verbatim:
                 unconfirmed_words=unconfirmed_words,
                 file=outstr,
             )
-            LOG.info(outstr.getvalue())
+            LOG.debug(outstr.getvalue())
 
             self.state.acknowledged_words = WhisperHistory.advance_transcript(
                 timestamp=self.state.window_ts, transcript=self.state.acknowledged_words
@@ -877,7 +879,7 @@ class Verbatim:
                 self.state.window_ts = audio_stream.start_offset
                 self.state.audio_ts = audio_stream.start_offset
 
-            LOG.info("Starting main loop for audio transcription.")
+            STATUS_LOG.info("Starting main loop for audio transcription.")
             while True:
                 has_more_audio = self.capture_audio(audio_source=audio_stream)
                 had_utterances = False
@@ -894,7 +896,7 @@ class Verbatim:
                     break
 
         except KeyboardInterrupt:
-            LOG.info("KeyboardInterrupt detected, stopping transcription.")
+            LOG.warning("KeyboardInterrupt detected, stopping transcription.")
             LOG.debug("Stopping...")
         # pylint: disable=broad-exception-caught
         except Exception as e:
@@ -927,7 +929,7 @@ def execute(
     all_utterances: List[Utterance] = []
     transcriber = Verbatim(config)
     for idx, audio_source in enumerate(audio_sources):
-        LOG.info(f"Transcribing from audio source: {audio_source.source_name}")
+        STATUS_LOG.info("Transcribing from audio source: %s", audio_source.source_name)
         # When multiple sources are present (e.g., per-channel VTTM), isolate per-source outputs to avoid clobbering.
         per_source_prefix = output_prefix_no_ext
         if len(audio_sources) > 1:
@@ -951,7 +953,7 @@ def execute(
                 )
                 all_utterances.append(utterance)
         writer.close()
-        LOG.info(f"Done transcribing from audio source: {audio_source.source_name}")
+        STATUS_LOG.info("Done transcribing from audio source: %s", audio_source.source_name)
 
     if len(audio_sources) > 1:
         sorted_utterances: List[Utterance] = sorted(all_utterances, key=lambda x: x.start_ts)

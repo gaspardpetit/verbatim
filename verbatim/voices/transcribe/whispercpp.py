@@ -60,7 +60,7 @@ class WhisperCppTranscriber(Transcriber):
         whisper_patience: float = 1.0,
         whisper_temperatures: Union[None, List[float]] = None,
     ) -> List[Word]:
-        LOG.info(f"Transcription Prefix: {prefix}")
+        LOG.debug("Transcription Prefix: %s", prefix)
 
         transcript_words: List[Word] = []
 
