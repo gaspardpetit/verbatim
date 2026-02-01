@@ -317,7 +317,6 @@ numpy==2.2.6 ; python_full_version < '3.11'
     #   pystoi
     #   pytorch-lightning
     #   pytorch-metric-learning
-    #   pywhispercpp
     #   resampy
     #   samplerate
     #   scikit-learn
@@ -360,7 +359,6 @@ numpy==2.3.5 ; python_full_version >= '3.11'
     #   pystoi
     #   pytorch-lightning
     #   pytorch-metric-learning
-    #   pywhispercpp
     #   resampy
     #   samplerate
     #   scikit-learn
@@ -517,7 +515,6 @@ platformdirs==4.5.1
     # via
     #   pooch
     #   pylint
-    #   pywhispercpp
 pluggy==1.6.0
     # via pytest
 pooch==1.9.0
@@ -606,8 +603,6 @@ pytorch-ranger==0.1.1
     # via torch-optimizer
 pytz==2025.2 ; python_full_version < '3.11'
     # via pandas
-pywhispercpp==1.4.1
-    # via verbatim
 pyyaml==6.0.3
     # via
     #   asteroid
@@ -637,14 +632,13 @@ requests==2.32.5
     #   opentelemetry-exporter-otlp-proto-http
     #   pooch
     #   pyannoteai-sdk
-    #   pywhispercpp
     #   tiktoken
     #   transformers
 resampy==0.4.3
     # via audio-separator
 retrying==1.4.2
     # via dora-search
-rich==14.3.1
+rich==14.3.2
     # via pyannote-audio
 rotary-embedding-torch==0.6.5
     # via audio-separator
@@ -826,7 +820,6 @@ tqdm==4.67.2
     #   pyannote-pipeline
     #   pytorch-lightning
     #   pytorch-metric-learning
-    #   pywhispercpp
     #   transformers
     #   wtpsplit
 transformers==4.51.3

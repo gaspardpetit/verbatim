@@ -74,11 +74,7 @@ class Models:
 
                 return WhisperMlxTranscriber(model_size_or_path=self._whisper_model_size)
 
-            # Use WhisperCPP on Mac by default
-            STATUS_LOG.info("Using WhisperCPP transcriber on Mac OS X")
-            from .voices.transcribe.whispercpp import WhisperCppTranscriber  # pylint: disable=import-outside-toplevel
-
-            return WhisperCppTranscriber(model_size_or_path=self._whisper_model_size, device=self._device)
+            raise RuntimeError("Intel macOS is no longer supported; Apple Silicon is required on macOS.")
 
         STATUS_LOG.info("Using 'faster-whisper' transcriber.")
         from .voices.transcribe.faster_whisper import FasterWhisperTranscriber  # pylint: disable=import-outside-toplevel
