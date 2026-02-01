@@ -1,3 +1,4 @@
+import io
 from dataclasses import dataclass
 from typing import List, Optional, TextIO
 
@@ -208,7 +209,8 @@ class TranscriptFormatter:
             out.write(word)
             out.write(colours.color_reset)
 
-    def format_utterance(self, utterance: Utterance, out: TextIO, colours: ColorScheme):
+    def format_utterance(self, utterance: Utterance, colours: ColorScheme) -> bytes:
+        out = io.StringIO()
         self._format_timestamp(out=out, start_ts=utterance.start_ts, end_ts=utterance.end_ts, colours=colours)
         self._format_speaker(out=out, speaker=utterance.speaker or UNKNOWN_SPEAKER, colours=colours)
 
@@ -219,11 +221,10 @@ class TranscriptFormatter:
             self._format_language(out=out, language=w.lang, first_word=(i == 0), colours=colours)
             self._format_word_with_probability(out=out, word=w.word, probability=w.probability, utterance_probability=percentile_25, colours=colours)
         out.write("\n")
+        return out.getvalue().encode("utf-8")
 
 
 class TextIOTranscriptWriter(TranscriptWriter):
-    out: TextIO
-
     def __init__(
         self,
         *,
@@ -245,33 +246,25 @@ class TextIOTranscriptWriter(TranscriptWriter):
         self.unconfirmed_colors = unconfirmed_colors
         self.print_unacknowledged = print_unacknowledged
 
-    def _set_textio(self, out: TextIO):
-        self.out = out
-
-    def open(self, path_no_ext: str):
-        pass
-
-    def close(self):
-        pass
-
-    def write(
+    def format_utterance(
         self,
         utterance: Utterance,
         unacknowledged_utterance: Optional[List[Utterance]] = None,
         unconfirmed_words: Optional[List[Word]] = None,
     ):
-        self.formatter.format_utterance(utterance=utterance, out=self.out, colours=self.acknowledged_colours)
+        chunks: List[bytes] = [self.formatter.format_utterance(utterance=utterance, colours=self.acknowledged_colours)]
         if self.print_unacknowledged:
             if unacknowledged_utterance:
                 for unack in unacknowledged_utterance:
-                    self.formatter.format_utterance(utterance=unack, out=self.out, colours=self.unconfirmed_colors)
+                    chunks.append(self.formatter.format_utterance(utterance=unack, colours=self.unconfirmed_colors))
             if unconfirmed_words and len(unconfirmed_words) > 0:
-                self.formatter.format_utterance(
-                    utterance=Utterance.from_words(utterance_id="", words=unconfirmed_words),
-                    out=self.out,
-                    colours=self.unconfirmed_colors,
+                chunks.append(
+                    self.formatter.format_utterance(
+                        utterance=Utterance.from_words(utterance_id="", words=unconfirmed_words),
+                        colours=self.unconfirmed_colors,
+                    )
                 )
-        self.out.flush()
+        return b"".join(chunks)
 
 
 class TextTranscriptWriter(TextIOTranscriptWriter):
@@ -282,10 +275,3 @@ class TextTranscriptWriter(TextIOTranscriptWriter):
             unacknowledged_colours=COLORSCHEME_NONE,
             unconfirmed_colors=COLORSCHEME_NONE,
         )
-
-    def open(self, path_no_ext: str):
-        # pylint: disable=consider-using-with
-        self._set_textio(open(f"{path_no_ext}.txt", "w", encoding="utf-8"))
-
-    def close(self):
-        self.out.close()

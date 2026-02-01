@@ -24,11 +24,11 @@ class TestTranscriptFormatter(unittest.TestCase):
         transcript in a proper JSON object (i.e. with "utterances" array).
         """
         formatter = TranscriptFormatter()
-        output = io.StringIO()
-        formatter.open(output)
-        output.write("TEST_CONTENT")  # Simulate content inserted between open and close
-        formatter.close(output)
-        content = output.getvalue()
+        output = io.BytesIO()
+        output.write(formatter.start())
+        output.write(b"TEST_CONTENT")  # Simulate content inserted between open and close
+        output.write(formatter.finish())
+        content = output.getvalue().decode("utf-8")
         self.assertTrue(content.startswith('{\n  "utterances": [\n'))
         self.assertTrue(content.endswith("\n  ]\n}\n"))
 
@@ -44,14 +44,14 @@ class TestTranscriptFormatter(unittest.TestCase):
         utt = Utterance("utt1", "speaker1", 0, 32000, "hello", [word])  # 0 sec to 2.0 sec
 
         formatter = TranscriptFormatter()
-        output = io.StringIO()
-        formatter.open(output)
-        formatter.format_utterance(utt, output, with_words=True)
-        formatter.close(output)
+        output = io.BytesIO()
+        output.write(formatter.start())
+        output.write(formatter.format_utterance(utt, with_words=True))
+        output.write(formatter.finish())
         output.seek(0)
 
         # Parse the written JSON and check the fields.
-        data = json.load(output)
+        data = json.load(io.TextIOWrapper(output, encoding="utf-8"))
         self.assertIn("utterances", data)
         self.assertEqual(len(data["utterances"]), 1)
         utt_data = data["utterances"][0]
@@ -78,12 +78,12 @@ class TestTranscriptFormatter(unittest.TestCase):
         word = Word(word="hello", lang="en", probability=0.9876, start_ts=0, end_ts=16000)  # 0 sec to 1.0 sec
         utt = Utterance("utt1", "speaker1", 0, 32000, "hello", [word])
         formatter = TranscriptFormatter()
-        output = io.StringIO()
-        formatter.open(output)
-        formatter.format_utterance(utt, output, with_words=False)
-        formatter.close(output)
+        output = io.BytesIO()
+        output.write(formatter.start())
+        output.write(formatter.format_utterance(utt, with_words=False))
+        output.write(formatter.finish())
         output.seek(0)
-        data = json.load(output)
+        data = json.load(io.TextIOWrapper(output, encoding="utf-8"))
         utt_data = data["utterances"][0]
         self.assertNotIn("words", utt_data)
 
@@ -97,13 +97,13 @@ class TestTranscriptFormatter(unittest.TestCase):
         word2 = Word(word="world", lang="en", probability=0.95, start_ts=16000, end_ts=32000)
         utt2 = Utterance("utt2", "speaker1", 32000, 64000, "world", [word2])
         formatter = TranscriptFormatter()
-        output = io.StringIO()
-        formatter.open(output)
-        formatter.format_utterance(utt1, output)
-        formatter.format_utterance(utt2, output)
-        formatter.close(output)
+        output = io.BytesIO()
+        output.write(formatter.start())
+        output.write(formatter.format_utterance(utt1))
+        output.write(formatter.format_utterance(utt2))
+        output.write(formatter.finish())
         output.seek(0)
-        data = json.load(output)
+        data = json.load(io.TextIOWrapper(output, encoding="utf-8"))
         self.assertEqual(len(data["utterances"]), 2)
 
 

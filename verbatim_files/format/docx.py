@@ -1,3 +1,4 @@
+import io
 import logging
 from enum import Enum
 from typing import List, Optional, Union
@@ -193,30 +194,31 @@ def write_docx(
 
 
 class DocxTranscriptWriter(TranscriptWriter):
-    output_file: str
     utterances: List[Utterance]
 
     def __init__(self, config: TranscriptWriterConfig):
         super().__init__(config)
         self.utterances = []
 
-    def open(self, path_no_ext: str):
-        self.output_file = f"{path_no_ext}.docx"
-
-    def write(
+    def format_utterance(
         self,
         utterance: Utterance,
         unacknowledged_utterance: Optional[List[Utterance]] = None,
         unconfirmed_words: Optional[List[Word]] = None,
-    ):
+    ) -> bytes:
         self.utterances.append(utterance)
+        return b""
 
-    def close(self):
-        write_docx(
-            utterances=self.utterances,
-            timestamp_style=self.config.timestamp_style,
+    def flush(self) -> bytes:
+        doc = docx.Document()
+        formatter: DocxFormatter = DocxFormatter(
             speaker_style=self.config.speaker_style,
+            timestamp_style=self.config.timestamp_style,
             probability_style=self.config.probability_style,
             language_style=self.config.language_style,
-            output_file=self.output_file,
         )
+        for utterance in self.utterances:
+            formatter.format_utterance(utterance=utterance, out=doc)
+        buffer = io.BytesIO()
+        doc.save(buffer)
+        return buffer.getvalue()

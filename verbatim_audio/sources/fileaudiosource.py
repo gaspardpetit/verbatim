@@ -32,7 +32,7 @@ class FileAudioStream(AudioStream):
         channel_indices: Optional[list[int]],
         file_id: Optional[str],
         cache: ArtifactCache,
-    ):
+    ):  # pylint: disable=too-many-positional-arguments
         super().__init__(start_offset=source.start_sample, diarization=diarization)
         self.source = source
         self.channel_indices = channel_indices

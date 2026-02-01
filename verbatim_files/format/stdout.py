@@ -1,5 +1,3 @@
-import sys
-
 from .txt import (
     COLORSCHEME_ACKNOWLEDGED,
     COLORSCHEME_NONE,
@@ -19,6 +17,3 @@ class StdoutTranscriptWriter(TextIOTranscriptWriter):
             unconfirmed_colors=COLORSCHEME_UNCONFIRMED if with_colours else COLORSCHEME_NONE,
             print_unacknowledged=config.verbose,
         )
-
-    def open(self, path_no_ext: str):
-        self._set_textio(sys.stdout)

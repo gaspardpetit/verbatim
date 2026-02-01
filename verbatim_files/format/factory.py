@@ -1,55 +1,65 @@
+import sys
 from typing import List
 
-from .writer import TranscriptWriter, TranscriptWriterConfig
+from .file import FileFormatter, MultiFileFormatter
+from .writer import TranscriptWriterConfig
 
 
 def configure_writers(
     write_config: TranscriptWriterConfig,
     output_formats: List[str],
     original_audio_file: str,
-) -> TranscriptWriter:
+    output_prefix_no_ext: str,
+) -> MultiFileFormatter:
     # pylint: disable=import-outside-toplevel
-    from .multi import MultiTranscriptWriter
-
-    multi_writer: MultiTranscriptWriter = MultiTranscriptWriter()
+    formatters: List[FileFormatter] = []
     if "txt" in output_formats:
         from .txt import TextTranscriptWriter
 
-        multi_writer.add_writer(TextTranscriptWriter(config=write_config))
+        formatters.append(FileFormatter(writer=TextTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.txt"))
 
     if "ass" in output_formats:
         from .ass import AssTranscriptWriter
 
-        multi_writer.add_writer(AssTranscriptWriter(config=write_config, original_audio_file=original_audio_file))
+        formatters.append(
+            FileFormatter(
+                writer=AssTranscriptWriter(config=write_config, original_audio_file=original_audio_file),
+                output_path=f"{output_prefix_no_ext}.ass",
+            )
+        )
 
     if "docx" in output_formats:
         from .docx import DocxTranscriptWriter
 
-        multi_writer.add_writer(DocxTranscriptWriter(config=write_config))
+        formatters.append(FileFormatter(writer=DocxTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.docx"))
 
     if "md" in output_formats:
         from .md import MarkdownTranscriptWriter
 
-        multi_writer.add_writer(MarkdownTranscriptWriter(config=write_config))
+        formatters.append(FileFormatter(writer=MarkdownTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.md"))
 
     if "json" in output_formats:
         from .json import JsonTranscriptWriter
 
-        multi_writer.add_writer(JsonTranscriptWriter(config=write_config))
+        formatters.append(FileFormatter(writer=JsonTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.json"))
 
     if "jsonl" in output_formats:
         from .json import JsonlTranscriptWriter
 
-        multi_writer.add_writer(JsonlTranscriptWriter(config=write_config))
+        formatters.append(FileFormatter(writer=JsonlTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.jsonl"))
 
     if "stdout" in output_formats and "stdout-nocolor" not in output_formats:
         from .stdout import StdoutTranscriptWriter
 
-        multi_writer.add_writer(StdoutTranscriptWriter(config=write_config, with_colours=True))
+        formatters.append(
+            FileFormatter(writer=StdoutTranscriptWriter(config=write_config, with_colours=True), output=sys.stdout.buffer, close_output=False)
+        )
 
     if "stdout-nocolor" in output_formats:
         from .stdout import StdoutTranscriptWriter
 
-        multi_writer.add_writer(StdoutTranscriptWriter(config=write_config, with_colours=False))
+        formatters.append(
+            FileFormatter(writer=StdoutTranscriptWriter(config=write_config, with_colours=False), output=sys.stdout.buffer, close_output=False)
+        )
 
-    return multi_writer
+    return MultiFileFormatter(formatters=formatters)
