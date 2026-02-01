@@ -14,7 +14,7 @@ class ArtifactCache(Protocol):
 
     def set_text(self, key: str, value: str) -> None: ...
 
-    def get_bytes(self, key: str) -> Optional[bytes]: ...
+    def get_bytes(self, key: str) -> bytes: ...
 
     def set_bytes(self, key: str, value: bytes) -> None: ...
 
@@ -32,10 +32,7 @@ class BaseArtifactCache(ArtifactCache):
         return self.get_text(key)
 
     def read_bytes(self, key: str) -> bytes:
-        data = self.get_bytes(key)
-        if data is None:
-            raise KeyError(f"Missing bytes for key: {key}")
-        return data
+        return self.get_bytes(key)
 
     def bytes_io(self, key: str) -> io.BytesIO:
         return io.BytesIO(self.read_bytes(key))
@@ -58,9 +55,9 @@ class InMemoryArtifactCache(BaseArtifactCache):
         with self._lock:
             self._text[key] = value
 
-    def get_bytes(self, key: str) -> Optional[bytes]:
+    def get_bytes(self, key: str) -> bytes:
         with self._lock:
-            return self._bytes.get(key)
+            return self._bytes.get(key, b"")
 
     def set_bytes(self, key: str, value: bytes) -> None:
         with self._lock:
@@ -111,13 +108,13 @@ class FileBackedArtifactCache(InMemoryArtifactCache):
         with open(path, "w", encoding="utf-8") as fh:
             fh.write(value)
 
-    def get_bytes(self, key: str) -> Optional[bytes]:
+    def get_bytes(self, key: str) -> bytes:
         cached = super().get_bytes(key)
-        if cached is not None:
+        if cached:
             return cached
         path = self._resolve_path(key)
         if not path or not os.path.exists(path):
-            return None
+            return b""
         with open(path, "rb") as fh:
             data = fh.read()
         super().set_bytes(key, data)
