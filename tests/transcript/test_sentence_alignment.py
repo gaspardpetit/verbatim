@@ -27,6 +27,5 @@ class TestSentenceAlignment(unittest.TestCase):
         self.assertEqual("".join(utterance.text for utterance in utterances), "".join(word.word for word in words))
 
 
-
 if __name__ == "__main__":
     unittest.main()
