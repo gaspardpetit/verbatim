@@ -2,7 +2,7 @@ import logging
 import os
 from typing import Optional
 
-from verbatim_files.rttm import Annotation, load_rttm, loads_rttm
+from verbatim_files.rttm import Annotation, load_rttm, loads_rttm, write_rttm
 
 from .diarize.factory import create_diarizer
 
@@ -55,8 +55,7 @@ class Diarization:
         Compute diarization using the specified strategy.
 
         # dump the diarization output to disk using RTTM format
-        with open(out_rttm_file, "w", encoding="utf-8") as rttm:
-            diarization.write_rttm(rttm)
+        write_rttm(diarization, out_rttm_file)
         Args:
             file_path: Path to audio file
             out_rttm_file: Output RTTM file path

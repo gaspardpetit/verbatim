@@ -1,6 +1,9 @@
+import io
 import wave
 
 import numpy as np
+
+from verbatim.cache import get_default_cache
 
 from .audiosource import AudioSource
 
@@ -13,7 +16,11 @@ class WavSink:
             num_channels = audio_stream.get_nchannels() if preserve_channels else 1
             sample_width = 2  # 16-bit PCM
 
-            with wave.open(output_path, "w") as wav_file:
+            cache = get_default_cache()
+            buffer: io.BytesIO | None = io.BytesIO() if cache else None
+            sink = buffer if buffer is not None else output_path
+
+            with wave.open(sink, "w") as wav_file:
                 # pylint: disable=no-member
                 wav_file.setnchannels(num_channels)
                 wav_file.setsampwidth(sample_width)
@@ -37,3 +44,6 @@ class WavSink:
                     # Convert to 16-bit PCM
                     int_samples = (audio_chunk * 32767).clip(-32768, 32767).astype(np.int16)
                     wav_file.writeframes(int_samples.tobytes())
+
+            if buffer is not None and cache is not None:
+                cache.set_bytes(output_path, buffer.getvalue())

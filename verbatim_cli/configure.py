@@ -59,6 +59,11 @@ def make_source_config(args, speakers: Optional[int]) -> SourceConfig:
     )
 
 
+def preflight_config(config: Config, source_config: SourceConfig) -> None:
+    if source_config.isolate is not None and not config.working_dir:
+        raise ValueError("Voice isolation requires a working_dir. Provide --workdir or disable --isolate.")
+
+
 def build_output_formats(args) -> List[str]:
     output_formats: List[str] = []
     if args.ass:
@@ -71,9 +76,9 @@ def build_output_formats(args) -> List[str]:
         output_formats.append("md")
     if args.json:
         output_formats.append("json")
-    if args.stdout:
+    if not args.quiet and args.stdout:
         output_formats.append("stdout")
-    if args.stdout_nocolor:
+    if not args.quiet and args.stdout_nocolor:
         output_formats.append("stdout-nocolor")
     return output_formats
 

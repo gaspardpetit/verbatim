@@ -1,6 +1,6 @@
+import io
 import logging
 import os
-import tempfile
 import time
 from typing import Any, Optional
 
@@ -13,6 +13,7 @@ from pyannote.audio.pipelines.utils.hook import ProgressHook
 from pyannote.core.annotation import Annotation
 from torch.serialization import add_safe_globals
 
+from verbatim.cache import get_default_cache
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.pyannote.separate import PyannoteSpeakerSeparation, _build_rttm_annotation
 from verbatim_diarization.utils import sanitize_uri_component
@@ -67,24 +68,29 @@ class PyAnnoteDiarization(DiarizationStrategy):
         """
         # pyannote.audio 4.x requires torchcodec; ensure it is ready before pipeline work.
         ensure_torchcodec_audio_decoder("pyannote diarization")
-        # Downmix multi-channel audio to mono for pyannote
-        temp_path: Optional[str] = None
         diarization = None
         try:
             try:
                 import soundfile as sf  # lazy import
 
-                audio, sample_rate = sf.read(file_path)
+                if os.path.exists(file_path):
+                    audio, sample_rate = sf.read(file_path)
+                else:
+                    cache = get_default_cache()
+                    cached = cache.get_bytes(file_path) if cache else None
+                    if cached is None:
+                        raise FileNotFoundError(f"Audio file not found: {file_path}")
+                    audio, sample_rate = sf.read(io.BytesIO(cached))
+
                 if isinstance(audio, np.ndarray) and audio.ndim > 1 and audio.shape[1] > 1:
                     mono = np.mean(audio, axis=1)
-                    tmp_dir = working_dir or tempfile.gettempdir()
-                    fd, temp_path = tempfile.mkstemp(suffix=".wav", dir=tmp_dir)
-                    os.close(fd)
-                    sf.write(temp_path, mono, sample_rate)
-                    LOG.info("Downmixed %s to mono for pyannote diarization at %s", file_path, temp_path)
-                    file_for_pipeline = temp_path
                 else:
-                    file_for_pipeline = file_path
+                    mono = audio
+
+                waveform = torch.from_numpy(np.asarray(mono, dtype=np.float32))
+                if waveform.ndim == 1:
+                    waveform = waveform.unsqueeze(0)
+                file_for_pipeline = {"waveform": waveform, "sample_rate": int(sample_rate)}
             except Exception:
                 # Fallback: let pyannote handle; may fail if multi-channel unsupported
                 file_for_pipeline = file_path
@@ -105,11 +111,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
                 nb_speakers if nb_speakers is not None else "auto",
             )
         finally:
-            if temp_path and os.path.exists(temp_path):
-                try:
-                    os.unlink(temp_path)
-                except Exception as exc:  # pragma: no cover - best effort cleanup
-                    LOG.debug("Failed to remove temporary diarization file %s: %s", temp_path, exc)
+            pass
 
         if diarization is None:
             raise RuntimeError("PyAnnote diarization failed without producing output")

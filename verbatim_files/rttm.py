@@ -3,6 +3,8 @@ import os
 from io import StringIO
 from typing import IO, TYPE_CHECKING, Iterable, Iterator, List, Optional, Tuple
 
+from verbatim.cache import get_default_cache
+
 if TYPE_CHECKING:
     from .vttm import AudioRef
 
@@ -84,8 +86,14 @@ def _parse_segment(parts: List[str]) -> Segment:
 
 def load_rttm(path: str) -> Annotation:
     """Parse RTTM file into an Annotation (NIST RTTM format)."""
-    with open(path, "r", encoding="utf-8") as fh:
-        return _load_rttm_lines(fh)
+    cache = get_default_cache()
+    cached = cache.get_text(path) if cache else None
+    if cached is None:
+        with open(path, "r", encoding="utf-8") as fh:
+            cached = fh.read()
+        if cache:
+            cache.set_text(path, cached)
+    return _load_rttm_lines(StringIO(cached))
 
 
 def loads_rttm(text: str) -> Annotation:
@@ -120,9 +128,13 @@ def _serialize_segments(segments: Iterable[Segment]) -> Iterator[str]:
 def write_rttm(annotation: Annotation, dest: str | IO[str]) -> None:
     """Write an Annotation to an RTTM file or file-like object."""
     if isinstance(dest, str):
+        rendered = "".join(_serialize_segments(annotation.segments))
+        cache = get_default_cache()
+        if cache:
+            cache.set_text(dest, rendered)
+            return
         with open(dest, "w", encoding="utf-8") as fh:
-            for line in _serialize_segments(annotation.segments):
-                fh.write(line)
+            fh.write(rendered)
     else:
         for line in _serialize_segments(annotation.segments):
             dest.write(line)

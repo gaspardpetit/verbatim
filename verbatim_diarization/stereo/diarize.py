@@ -7,7 +7,7 @@ import soundfile as sf
 
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.utils import sanitize_uri_component
-from verbatim_files.rttm import Annotation, Segment
+from verbatim_files.rttm import Annotation, Segment, write_rttm
 from verbatim_files.vttm import AudioRef, write_vttm
 
 LOG = logging.getLogger(__name__)
@@ -131,9 +131,7 @@ class EnergyDiarization(DiarizationStrategy):
 
         if out_rttm_file:
             os.makedirs(os.path.dirname(out_rttm_file) or ".", exist_ok=True)
-            with open(out_rttm_file, "w", encoding="utf-8") as f:
-                for segment, _track, label in annotation.itertracks(yield_label=True):  # pyright: ignore[reportAssignmentType]
-                    f.write(f"SPEAKER {uri} 1 {segment.start:.3f} {segment.duration:.3f} <NA> <NA> {label} <NA> <NA>\n")
+            write_rttm(annotation, out_rttm_file)
             LOG.info("Wrote diarization to RTTM file: %s", out_rttm_file)
 
         if out_vttm_file:

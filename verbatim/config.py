@@ -6,6 +6,7 @@ from types import MappingProxyType
 from typing import List, Mapping, Optional, Tuple
 
 from verbatim_audio.sources.audiosource import AudioSource
+from verbatim.cache import ArtifactCache, FileBackedArtifactCache, set_default_cache
 
 LOG = logging.getLogger(__name__)
 
@@ -173,6 +174,7 @@ class Config:
     working_dir: str = field(default_factory=get_default_working_directory)
 
     output_dir: str = "."
+    cache: Optional[ArtifactCache] = None
 
     # INPUT
     source_stream: Optional[AudioSource] = None
@@ -183,6 +185,7 @@ class Config:
         self.configure_latency(stream=self.stream)
 
         self.configure_output_directory(output_dir=self.output_dir, working_dir=self.working_dir)
+        self.configure_artifact_cache()
 
         # Configure model cache and offline mode last so env vars are ready
         self.configure_cache(model_cache_dir=self.model_cache_dir, offline=self.offline)
@@ -253,6 +256,11 @@ class Config:
         if not os.path.isdir(self.working_dir):
             os.makedirs(self.working_dir)
         LOG.info(f"Working directory set to {self.working_dir}")
+
+    def configure_artifact_cache(self) -> None:
+        if self.cache is None:
+            self.cache = FileBackedArtifactCache(base_dir=self.working_dir)
+        set_default_cache(self.cache)
 
     def configure_cache(self, model_cache_dir: Optional[str], offline: bool) -> "Config":
         """Configure deterministic cache directories and offline mode.

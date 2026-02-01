@@ -1,4 +1,5 @@
 import errno
+import io
 import logging
 import os
 import sys
@@ -7,11 +8,12 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 
+from verbatim.cache import get_default_cache
 from verbatim_diarization import create_diarizer  # Add this import
 from verbatim_diarization.policy import assign_channels, parse_params, parse_policy
 from verbatim_diarization.utils import sanitize_uri_component
 from verbatim_files.rttm import Annotation as RTTMAnnotation
-from verbatim_files.rttm import Segment, rttm_to_vttm
+from verbatim_files.rttm import Segment, rttm_to_vttm, write_rttm
 from verbatim_files.vttm import AudioRef, load_vttm, normalize_channel_spec, write_vttm
 
 from ..audio import samples_to_seconds, timestr_to_samples
@@ -123,14 +125,31 @@ def _extract_channels(file_path: str, channels: List[int], working_dir: Optional
     # pylint: disable=import-outside-toplevel
     import soundfile as sf  # lazy import
 
-    audio, sample_rate = sf.read(file_path)
+    if os.path.exists(file_path):
+        audio, sample_rate = sf.read(file_path)
+    else:
+        cache = get_default_cache()
+        cached = cache.get_bytes(file_path) if cache else None
+        if cached is None:
+            raise FileNotFoundError(f"Audio file not found: {file_path}")
+        audio, sample_rate = sf.read(io.BytesIO(cached))
     if isinstance(audio, np.ndarray) and audio.ndim > 1 and len(channels) > 0:
         subset = audio[:, channels]
     else:
         subset = audio
-    tmp_dir = working_dir or tempfile.gettempdir()
-    fd, temp_path = tempfile.mkstemp(suffix=".wav", dir=tmp_dir)
-    os.close(fd)
+    base_name = os.path.splitext(os.path.basename(file_path))[0]
+    channel_tag = "all" if not channels else "_".join(str(ch) for ch in channels)
+    temp_name = f"{base_name}-channels-{channel_tag}.wav"
+    temp_path = os.path.join(working_dir, temp_name) if working_dir else temp_name
+
+    cache = get_default_cache()
+    if cache:
+        buffer = io.BytesIO()
+        sf.write(buffer, subset, sample_rate, format="WAV")
+        cache.set_bytes(temp_path, buffer.getvalue())
+        return temp_path
+
+    os.makedirs(os.path.dirname(temp_path) or ".", exist_ok=True)
     sf.write(temp_path, subset, sample_rate)
     return temp_path
 
@@ -257,7 +276,7 @@ def compute_diarization_policy(
     audio_refs: List[AudioRef] = []
 
     try:
-        for group in grouped.values():
+        for policy_idx, group in enumerate(grouped.values()):
             clause = group["clause"]
             channels = sorted(group["channels"])
             if info.channels < 2 and clause.strategy == "channel":
@@ -293,9 +312,7 @@ def compute_diarization_policy(
             clause_vttm_path: Optional[str] = None
             clause_audio_refs: List[AudioRef] = []
             if clause.strategy == "separate":
-                tmp_dir = working_dir or tempfile.gettempdir()
-                fd, clause_vttm_path = tempfile.mkstemp(suffix=".vttm", dir=tmp_dir)
-                os.close(fd)
+                clause_vttm_path = f"{working_prefix_no_ext}-policy-{policy_idx}.vttm"
 
             diarization = compute_diarization(
                 file_path=subset_path,
@@ -316,10 +333,11 @@ def compute_diarization_policy(
                 except (FileNotFoundError, ValueError) as exc:  # pragma: no cover
                     LOG.warning("Failed to load intermediate VTTM %s: %s", clause_vttm_path, exc)
                 finally:
-                    try:
-                        os.unlink(clause_vttm_path)
-                    except OSError:
-                        pass
+                    if os.path.exists(clause_vttm_path):
+                        try:
+                            os.unlink(clause_vttm_path)
+                        except OSError:
+                            pass
 
             # Normalize diarizer output to a list of RTTM Segments
             if hasattr(diarization, "segments"):
@@ -354,8 +372,7 @@ def compute_diarization_policy(
     merged = Annotation(segments=combined_segments, file_id=None)
 
     if rttm_file:
-        with open(rttm_file, "w", encoding="utf-8") as f:
-            merged.write_rttm(f)
+        write_rttm(merged, rttm_file)
     if vttm_file:
         write_vttm(vttm_file, audio=audio_refs, annotation=merged)
 
@@ -482,6 +499,8 @@ def create_audio_sources(
 
     if not stream:
         if source_config.isolate is not None:
+            if working_dir is None:
+                raise RuntimeError("Voice isolation requires a working_dir. Provide --workdir or disable --isolate.")
             input_source, _noise_path = FileAudioSource.isolate_voices(file_path=input_source, out_path_prefix=working_prefix_no_ext)
         if source_config.vttm_file and not os.path.exists(source_config.vttm_file):
             LOG.info("No VTTM provided; creating minimal VTTM placeholder at %s", source_config.vttm_file)

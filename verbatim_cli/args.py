@@ -88,6 +88,7 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
     parser.add_argument("--json", action="store_true", help="Enable json file output")
     parser.add_argument("--md", action="store_true", help="Enable Markdown (MD) output")
     parser.add_argument("--stdout", action="store_true", default=True, help="Enable stdout output (enabled by default)")
+    parser.add_argument("--quiet", action="store_true", help="Disable stdout transcript output")
     parser.add_argument("--stdout-nocolor", action="store_true", help="Enable stdout output without colors")
     parser.add_argument(
         "--format-timestamp",

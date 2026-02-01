@@ -1,3 +1,4 @@
+import io
 import logging
 import os
 import wave
@@ -6,6 +7,7 @@ from typing import Optional, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
+from verbatim.cache import get_default_cache
 from verbatim.voices.isolation import VoiceIsolation
 
 from ..audio import format_audio, sample_to_timestr
@@ -28,7 +30,16 @@ class FileAudioStream(AudioStream):
         self.source = source
         self.channel_indices = channel_indices
         self.file_id = file_id
-        self.stream = wave.open(self.source.file_path, "rb")
+        self._buffer: Optional[io.BytesIO] = None
+        if os.path.exists(self.source.file_path):
+            self.stream = wave.open(self.source.file_path, "rb")
+        else:
+            cache = get_default_cache()
+            cached = cache.get_bytes(self.source.file_path) if cache else None
+            if cached is None:
+                raise FileNotFoundError(f"Audio file not found: {self.source.file_path}")
+            self._buffer = io.BytesIO(cached)
+            self.stream = wave.open(self._buffer, "rb")
         if self.source.start_sample != 0:
             self.setpos(self.source.start_sample)
 
@@ -87,6 +98,8 @@ class FileAudioStream(AudioStream):
 
     def close(self):
         self.stream.close()
+        if self._buffer is not None:
+            self._buffer.close()
 
     def get_nchannels(self) -> int:
         return self.stream.getnchannels()

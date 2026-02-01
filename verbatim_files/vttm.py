@@ -8,6 +8,7 @@ import sys
 from dataclasses import dataclass
 from typing import Iterable, List, Tuple, Union
 
+from verbatim.cache import get_default_cache
 from .rttm import Annotation, loads_rttm, write_rttm
 
 ChannelSpec = Union[str, int, None]
@@ -77,8 +78,14 @@ def load_vttm(path: str) -> Tuple[List[AudioRef], Annotation]:
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise ImportError("PyYAML is required to load VTTM files. Install pyyaml.") from exc
 
-    with open(path, "r", encoding="utf-8") as fh:
-        doc = yaml.safe_load(fh) or {}
+    cache = get_default_cache()
+    cached = cache.get_text(path) if cache else None
+    if cached is None:
+        with open(path, "r", encoding="utf-8") as fh:
+            cached = fh.read()
+        if cache:
+            cache.set_text(path, cached)
+    doc = yaml.safe_load(cached) or {}
 
     audio_entries = _parse_audio(doc.get("audio"))
     rttm_raw = doc.get("rttm", "")
@@ -108,8 +115,13 @@ def write_vttm(path: str, *, audio: Iterable[AudioRef], annotation: Annotation) 
         "rttm": LiteralScalarString("\n".join(rttm_lines) + ("\n" if rttm_lines else "")),
     }
 
+    rendered = yaml.safe_dump(payload, sort_keys=False, width=sys.maxsize)
+    cache = get_default_cache()
+    if cache:
+        cache.set_text(path, rendered)
+        return
     with open(path, "w", encoding="utf-8") as fh:
-        yaml.safe_dump(payload, fh, sort_keys=False, width=sys.maxsize)
+        fh.write(rendered)
 
 
 def _parse_audio(raw_audio) -> List[AudioRef]:
