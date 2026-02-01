@@ -76,6 +76,8 @@ def build_output_formats(args) -> List[str]:
         output_formats.append("txt")
     if args.md:
         output_formats.append("md")
+    if args.jsonl:
+        output_formats.append("jsonl")
     if args.json:
         output_formats.append("json")
     if not args.quiet and args.stdout:

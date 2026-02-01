@@ -136,6 +136,48 @@ class JsonTranscriptWriter(TranscriptWriter):
         self.out.flush()
 
 
+class JsonlTranscriptWriter(TranscriptWriter):
+    out: TextIO
+
+    def __init__(self, config: TranscriptWriterConfig):
+        super().__init__(config)
+
+    def open(self, path_no_ext: str):
+        # pylint: disable=consider-using-with
+        self.out = open(f"{path_no_ext}.jsonl", "w", encoding="utf-8")
+
+    def close(self):
+        self.out.close()
+
+    def write(
+        self,
+        utterance: Utterance,
+        unacknowledged_utterance: Optional[List[Utterance]] = None,
+        unconfirmed_words: Optional[List[Word]] = None,
+    ):
+        utterance_dict = {
+            "id": utterance.utterance_id,
+            "start": round(utterance.start_ts / 16000, 5),
+            "end": round(utterance.end_ts / 16000, 5),
+            "speaker": utterance.speaker,
+            "language": utterance.words[0].lang,
+            "text": utterance.text,
+            "words": [
+                {
+                    "text": word.word,
+                    "lang": word.lang,
+                    "prob": round(word.probability, 4),
+                    "start": round(word.start_ts / 16000, 5),
+                    "end": round(word.end_ts / 16000, 5),
+                }
+                for word in utterance.words
+            ],
+        }
+        self.out.write(json.dumps(utterance_dict, ensure_ascii=False))
+        self.out.write("\n")
+        self.out.flush()
+
+
 def save_utterances(path: str, utterance: List[Utterance], config: Optional[TranscriptWriterConfig]):
     if config is None:
         config = TranscriptWriterConfig()
