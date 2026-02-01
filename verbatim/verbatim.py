@@ -559,14 +559,15 @@ class Verbatim:
             f"{samples_to_seconds(self.state.audio_ts - self.state.confirmed_ts)}]" + Fore.LIGHTGREEN_EX
         )
         for u in acknowledged_utterances:
-            formatter.format_utterance(utterance=u, out=file, colours=COLORSCHEME_ACKNOWLEDGED)
+            file.write(formatter.format_utterance(utterance=u, colours=COLORSCHEME_ACKNOWLEDGED).decode("utf-8"))
         for u in unacknowledged_utterances:
-            formatter.format_utterance(utterance=u, out=file, colours=COLORSCHEME_UNACKNOWLEDGED)
+            file.write(formatter.format_utterance(utterance=u, colours=COLORSCHEME_UNACKNOWLEDGED).decode("utf-8"))
         if len(unconfirmed_words) > 0:
-            formatter.format_utterance(
-                utterance=Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=unconfirmed_words),
-                out=file,
-                colours=COLORSCHEME_UNCONFIRMED,
+            file.write(
+                formatter.format_utterance(
+                    utterance=Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=unconfirmed_words),
+                    colours=COLORSCHEME_UNCONFIRMED,
+                ).decode("utf-8")
             )
         file.write(os.linesep)
         file.flush()

@@ -58,7 +58,6 @@ class TranscriptWriter(ABC):
     def __init__(self, config: TranscriptWriterConfig):
         self.config = config
 
-    @abstractmethod
     def format_start(self) -> bytes:
         return b""
 
