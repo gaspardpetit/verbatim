@@ -5,10 +5,11 @@ from typing import Optional
 import numpy as np
 import soundfile as sf
 
+from verbatim.cache import get_required_cache
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.utils import sanitize_uri_component
-from verbatim_files.rttm import Annotation, Segment, write_rttm
-from verbatim_files.vttm import AudioRef, write_vttm
+from verbatim_files.rttm import Annotation, Segment, dumps_rttm
+from verbatim_files.vttm import AudioRef, dumps_vttm
 
 LOG = logging.getLogger(__name__)
 
@@ -131,13 +132,13 @@ class EnergyDiarization(DiarizationStrategy):
 
         if out_rttm_file:
             os.makedirs(os.path.dirname(out_rttm_file) or ".", exist_ok=True)
-            write_rttm(annotation, out_rttm_file)
+            get_required_cache().set_text(out_rttm_file, dumps_rttm(annotation))
             LOG.info("Wrote diarization to RTTM file: %s", out_rttm_file)
 
         if out_vttm_file:
             os.makedirs(os.path.dirname(out_vttm_file) or ".", exist_ok=True)
             audio_refs = [AudioRef(id=uri, path=file_path, channels=None)]
-            write_vttm(out_vttm_file, audio=audio_refs, annotation=annotation)
+            get_required_cache().set_text(out_vttm_file, dumps_vttm(audio=audio_refs, annotation=annotation))
             LOG.info("Wrote diarization to VTTM file: %s", out_vttm_file)
 
         return annotation

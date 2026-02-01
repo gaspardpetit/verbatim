@@ -13,13 +13,13 @@ from pyannote.audio.pipelines.utils.hook import ProgressHook
 from pyannote.core.annotation import Annotation
 from torch.serialization import add_safe_globals
 
-from verbatim.cache import get_default_cache
+from verbatim.cache import get_default_cache, get_required_cache
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.pyannote.separate import PyannoteSpeakerSeparation, _build_rttm_annotation
 from verbatim_diarization.utils import sanitize_uri_component
 from verbatim_files.rttm import Annotation as RTTMAnnotation
 from verbatim_files.rttm import Segment
-from verbatim_files.vttm import AudioRef, write_vttm
+from verbatim_files.vttm import AudioRef, dumps_vttm
 
 from .constants import PYANNOTE_DIARIZATION_MODEL_ID
 from .ffmpeg_loader import ensure_torchcodec_audio_decoder
@@ -139,7 +139,10 @@ class PyAnnoteDiarization(DiarizationStrategy):
                 for segment, _track, label in diarization_annotation.itertracks(yield_label=True)
             ]
             rttm_ann = RTTMAnnotation(segments=segments, file_id=uri)
-            write_vttm(out_vttm_file, audio=[AudioRef(id=uri, path=file_path, channels=None)], annotation=rttm_ann)
+            get_required_cache().set_text(
+                out_vttm_file,
+                dumps_vttm(audio=[AudioRef(id=uri, path=file_path, channels=None)], annotation=rttm_ann),
+            )
 
         return diarization_annotation
 
@@ -182,6 +185,6 @@ class PyAnnoteSeparationDiarization(DiarizationStrategy):
         if out_vttm_file:
             os.makedirs(os.path.dirname(out_vttm_file) or ".", exist_ok=True)
             audio_refs = [ref for _label, ref in audio_refs_meta]
-            write_vttm(out_vttm_file, audio=audio_refs, annotation=annotation)
+            get_required_cache().set_text(out_vttm_file, dumps_vttm(audio=audio_refs, annotation=annotation))
 
         return annotation

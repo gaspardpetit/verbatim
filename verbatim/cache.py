@@ -110,3 +110,10 @@ def set_default_cache(cache: Optional[ArtifactCache]) -> None:
 
 def get_default_cache() -> Optional[ArtifactCache]:
     return _DEFAULT_CACHE
+
+
+def get_required_cache() -> ArtifactCache:
+    cache = get_default_cache()
+    if cache is None:
+        raise RuntimeError("No default artifact cache configured.")
+    return cache

@@ -55,7 +55,7 @@ class Diarization:
         Compute diarization using the specified strategy.
 
         # dump the diarization output to disk using RTTM format
-        write_rttm(diarization, out_rttm_file)
+        get_required_cache().set_text(out_rttm_file, dumps_rttm(diarization))
         Args:
             file_path: Path to audio file
             out_rttm_file: Output RTTM file path

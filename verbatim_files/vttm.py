@@ -8,9 +8,7 @@ import sys
 from dataclasses import dataclass
 from typing import Iterable, List, Tuple, Union
 
-from verbatim.cache import get_default_cache
-
-from .rttm import Annotation, loads_rttm, write_rttm
+from .rttm import Annotation, dumps_rttm, loads_rttm
 
 ChannelSpec = Union[str, int, None]
 
@@ -74,20 +72,18 @@ class AudioRef:
 
 def load_vttm(path: str) -> Tuple[List[AudioRef], Annotation]:
     """Load a VTTM (YAML with embedded RTTM) file."""
+    with open(path, "r", encoding="utf-8") as fh:
+        return loads_vttm(fh.read())
+
+
+def loads_vttm(text: str) -> Tuple[List[AudioRef], Annotation]:
+    """Parse VTTM content provided as a string."""
     try:
         import yaml  # type: ignore
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise ImportError("PyYAML is required to load VTTM files. Install pyyaml.") from exc
 
-    cache = get_default_cache()
-    cached = cache.get_text(path) if cache else None
-    if cached is None:
-        with open(path, "r", encoding="utf-8") as fh:
-            cached = fh.read()
-        if cache:
-            cache.set_text(path, cached)
-    doc = yaml.safe_load(cached) or {}
-
+    doc = yaml.safe_load(text) or {}
     audio_entries = _parse_audio(doc.get("audio"))
     rttm_raw = doc.get("rttm", "")
     rttm_text = "\n".join(rttm_raw) if isinstance(rttm_raw, list) else str(rttm_raw)
@@ -95,8 +91,15 @@ def load_vttm(path: str) -> Tuple[List[AudioRef], Annotation]:
     return audio_entries, annotation
 
 
-def write_vttm(path: str, *, audio: Iterable[AudioRef], annotation: Annotation) -> None:
+def write_vttm_file(path: str, *, audio: Iterable[AudioRef], annotation: Annotation) -> None:
     """Write a VTTM file with audio references and embedded RTTM."""
+    rendered = dumps_vttm(audio=audio, annotation=annotation)
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(rendered)
+
+
+def dumps_vttm(*, audio: Iterable[AudioRef], annotation: Annotation) -> str:
+    """Serialize audio references and RTTM annotation into VTTM text."""
     try:
         import yaml  # type: ignore
     except ImportError as exc:  # pragma: no cover - optional dependency
@@ -116,13 +119,7 @@ def write_vttm(path: str, *, audio: Iterable[AudioRef], annotation: Annotation) 
         "rttm": LiteralScalarString("\n".join(rttm_lines) + ("\n" if rttm_lines else "")),
     }
 
-    rendered = yaml.safe_dump(payload, sort_keys=False, width=sys.maxsize)
-    cache = get_default_cache()
-    if cache:
-        cache.set_text(path, rendered)
-        return
-    with open(path, "w", encoding="utf-8") as fh:
-        fh.write(rendered)
+    return yaml.safe_dump(payload, sort_keys=False, width=sys.maxsize)
 
 
 def _parse_audio(raw_audio) -> List[AudioRef]:
@@ -145,8 +142,6 @@ def _parse_audio(raw_audio) -> List[AudioRef]:
 
 def _serialize_annotation(annotation: Annotation):
     """Yield RTTM lines from an Annotation."""
-    # Reuse write_rttm logic via an in-memory buffer
-    buffer = io.StringIO()
-    write_rttm(annotation, buffer)  # type: ignore[arg-type]
-    buffer.seek(0)
+    # Reuse RTTM serialization via an in-memory buffer
+    buffer = io.StringIO(dumps_rttm(annotation))
     yield from buffer

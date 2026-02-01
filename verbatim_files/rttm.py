@@ -3,8 +3,6 @@ import os
 from io import StringIO
 from typing import IO, TYPE_CHECKING, Iterable, Iterator, List, Optional, Tuple
 
-from verbatim.cache import get_default_cache
-
 if TYPE_CHECKING:
     from .vttm import AudioRef
 
@@ -86,19 +84,18 @@ def _parse_segment(parts: List[str]) -> Segment:
 
 def load_rttm(path: str) -> Annotation:
     """Parse RTTM file into an Annotation (NIST RTTM format)."""
-    cache = get_default_cache()
-    cached = cache.get_text(path) if cache else None
-    if cached is None:
-        with open(path, "r", encoding="utf-8") as fh:
-            cached = fh.read()
-        if cache:
-            cache.set_text(path, cached)
-    return _load_rttm_lines(StringIO(cached))
+    with open(path, "r", encoding="utf-8") as fh:
+        return _load_rttm_lines(fh)
 
 
 def loads_rttm(text: str) -> Annotation:
     """Parse RTTM content provided as a string (NIST RTTM format)."""
     return _load_rttm_lines(StringIO(text))
+
+
+def dumps_rttm(annotation: Annotation) -> str:
+    """Serialize an Annotation to RTTM text."""
+    return "".join(_serialize_segments(annotation.segments))
 
 
 def _load_rttm_lines(lines: Iterable[str]) -> Annotation:
@@ -125,19 +122,14 @@ def _serialize_segments(segments: Iterable[Segment]) -> Iterator[str]:
         )
 
 
-def write_rttm(annotation: Annotation, dest: str | IO[str]) -> None:
+def write_rttm_file(annotation: Annotation, dest: str | IO[str]) -> None:
     """Write an Annotation to an RTTM file or file-like object."""
+    rendered = dumps_rttm(annotation)
     if isinstance(dest, str):
-        rendered = "".join(_serialize_segments(annotation.segments))
-        cache = get_default_cache()
-        if cache:
-            cache.set_text(dest, rendered)
-            return
         with open(dest, "w", encoding="utf-8") as fh:
             fh.write(rendered)
-    else:
-        for line in _serialize_segments(annotation.segments):
-            dest.write(line)
+        return
+    dest.write(rendered)
 
 
 def _resolve_audio_refs(
@@ -166,23 +158,23 @@ def _resolve_audio_refs(
 
 def rttm_to_vttm(
     rttm_path: str,
-    vttm_path: str,
     *,
     audio_refs: Iterable["AudioRef"] | None = None,
     audio_path: str | None = None,
     channels: str | int | None = None,
-) -> Tuple[List["AudioRef"], Annotation]:
-    from .vttm import write_vttm  # pylint: disable=import-outside-toplevel
+) -> Tuple[List["AudioRef"], Annotation, str]:
+    """Load RTTM from disk and return audio refs, annotation, and VTTM text."""
+    from .vttm import dumps_vttm  # pylint: disable=import-outside-toplevel
 
     annotation = load_rttm(rttm_path)
     resolved = _resolve_audio_refs(annotation, audio_refs, audio_path, channels)
-    write_vttm(vttm_path, audio=resolved, annotation=annotation)
-    return resolved, annotation
+    vttm_text = dumps_vttm(audio=resolved, annotation=annotation)
+    return resolved, annotation, vttm_text
 
 
-def vttm_to_rttm(vttm_path: str, rttm_path: str) -> Annotation:
+def vttm_to_rttm(vttm_path: str) -> Tuple[Annotation, str]:
+    """Load VTTM from disk and return the annotation plus RTTM text."""
     from .vttm import load_vttm  # pylint: disable=import-outside-toplevel
 
     _audio_refs, annotation = load_vttm(vttm_path)
-    write_rttm(annotation, rttm_path)
-    return annotation
+    return annotation, dumps_rttm(annotation)

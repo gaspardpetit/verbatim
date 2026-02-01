@@ -2,7 +2,8 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from verbatim_files.rttm import Annotation, write_rttm
+from verbatim.cache import get_required_cache
+from verbatim_files.rttm import Annotation, dumps_rttm
 
 LOG = logging.getLogger(__name__)
 
@@ -27,4 +28,4 @@ class DiarizationStrategy(ABC):
 
     def save_rttm(self, annotation: Annotation, out_rttm_file: str):
         """Save annotation to RTTM file"""
-        write_rttm(annotation, out_rttm_file)
+        get_required_cache().set_text(out_rttm_file, dumps_rttm(annotation))

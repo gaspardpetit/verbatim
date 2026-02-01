@@ -12,15 +12,15 @@ from pyannote.audio.core.task import Problem, Resolution, Specifications
 from pyannote.audio.pipelines.utils.hook import ProgressHook
 from torch.serialization import add_safe_globals
 
-from verbatim.cache import get_default_cache
+from verbatim.cache import get_default_cache, get_required_cache
 from verbatim_audio.audio import wav_to_int16
 from verbatim_audio.sources.audiosource import AudioSource
 from verbatim_audio.sources.fileaudiosource import FileAudioSource
 from verbatim_diarization.separate.base import SeparationStrategy
 from verbatim_diarization.utils import sanitize_uri_component
 from verbatim_files.rttm import Annotation as RTTMAnnotation
-from verbatim_files.rttm import Segment, write_rttm
-from verbatim_files.vttm import AudioRef, write_vttm
+from verbatim_files.rttm import Segment, dumps_rttm
+from verbatim_files.vttm import AudioRef, dumps_vttm
 
 from .constants import PYANNOTE_SEPARATION_MODEL_ID
 from .ffmpeg_loader import ensure_torchcodec_audio_decoder
@@ -228,10 +228,10 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             )
 
         if out_rttm_file:
-            write_rttm(diarization_annotation, out_rttm_file)
+            get_required_cache().set_text(out_rttm_file, dumps_rttm(diarization_annotation))
 
         if out_vttm_file:
             audio_refs = [ref for _label, ref in audio_refs_meta]
-            write_vttm(out_vttm_file, audio=audio_refs, annotation=diarization_annotation)
+            get_required_cache().set_text(out_vttm_file, dumps_vttm(audio=audio_refs, annotation=diarization_annotation))
 
         return separated_sources

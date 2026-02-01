@@ -7,13 +7,13 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 
-from verbatim.cache import get_default_cache
+from verbatim.cache import get_default_cache, get_required_cache
 from verbatim_diarization import create_diarizer  # Add this import
 from verbatim_diarization.policy import assign_channels, parse_params, parse_policy
 from verbatim_diarization.utils import sanitize_uri_component
 from verbatim_files.rttm import Annotation as RTTMAnnotation
-from verbatim_files.rttm import Segment, rttm_to_vttm, write_rttm
-from verbatim_files.vttm import AudioRef, load_vttm, normalize_channel_spec, write_vttm
+from verbatim_files.rttm import Segment, dumps_rttm, rttm_to_vttm
+from verbatim_files.vttm import AudioRef, dumps_vttm, load_vttm, normalize_channel_spec
 
 from ..audio import samples_to_seconds, timestr_to_samples
 from ..convert import convert_to_wav
@@ -373,9 +373,9 @@ def compute_diarization_policy(
     merged = Annotation(segments=combined_segments, file_id=None)
 
     if rttm_file:
-        write_rttm(merged, rttm_file)
+        get_required_cache().set_text(rttm_file, dumps_rttm(merged))
     if vttm_file:
-        write_vttm(vttm_file, audio=audio_refs, annotation=merged)
+        get_required_cache().set_text(vttm_file, dumps_vttm(audio=audio_refs, annotation=merged))
 
     # If all clauses were skipped/produced nothing, fall back to default strategy
     if len(merged) == 0:
@@ -507,7 +507,10 @@ def create_audio_sources(
             LOG.info("No VTTM provided; creating minimal VTTM placeholder at %s", source_config.vttm_file)
             audio_id = sanitize_uri_component(os.path.splitext(os.path.basename(input_source))[0])
             audio_ref = AudioRef(id=audio_id, path=input_source, channels=None)
-            write_vttm(source_config.vttm_file, audio=[audio_ref], annotation=RTTMAnnotation())
+            get_required_cache().set_text(
+                source_config.vttm_file,
+                dumps_vttm(audio=[audio_ref], annotation=RTTMAnnotation()),
+            )
         if source_config.vttm_file:
             try:
                 audio_refs, source_config.diarization = load_vttm(source_config.vttm_file)
@@ -546,11 +549,11 @@ def create_audio_sources(
                 source_config.diarization = Diarization.load_diarization(rttm_file=source_config.diarization_file)
                 if source_config.vttm_file and source_config.diarization is not None:
                     audio_id = sanitize_uri_component(os.path.splitext(os.path.basename(input_source))[0])
-                    rttm_to_vttm(
+                    _audio_refs, _annotation, vttm_text = rttm_to_vttm(
                         source_config.diarization_file,
-                        source_config.vttm_file,
                         audio_refs=[AudioRef(id=audio_id, path=input_source, channels=None)],
                     )
+                    get_required_cache().set_text(source_config.vttm_file, vttm_text)
             except (StopIteration, FileNotFoundError):
                 # If the file doesn't exist or is empty, compute new diarization
                 nb_speakers = source_config.speakers if source_config.speakers not in (0, "") else None
