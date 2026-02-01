@@ -9,6 +9,7 @@ def main():
     # pylint: disable=import-outside-toplevel
     from argparse import Namespace
 
+    from verbatim.logging_utils import configure_status_logger
     from verbatim_cli.args import build_parser
     from verbatim_cli.config_file import load_config_file, merge_args, select_profile
     from verbatim_cli.configure import (
@@ -39,12 +40,14 @@ def main():
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
 
+    log_format = "%(asctime)s [%(levelname)s][%(filename)s:%(lineno)d][%(funcName)s] %(message)s"
     logging.basicConfig(
         stream=sys.stderr,
         level=log_level,
-        format="%(asctime)s [%(levelname)s][%(filename)s:%(lineno)d][%(funcName)s] %(message)s",
+        format=log_format,
         datefmt="%Y-%m-%dT%H:%M:%SZ",
     )
+    configure_status_logger(verbose=args.verbose, fmt=log_format, datefmt="%Y-%m-%dT%H:%M:%SZ")
 
     # load the values from the .env file, if present
     load_env_file()
@@ -87,7 +90,8 @@ def main():
     )
 
     source_config = make_source_config(args, speakers)
-    preflight_config(config, source_config)
+    if not preflight_config(config=config, source_config=source_config, args=args, user_args=user_args, base_defaults=base_defaults):
+        return
 
     audio_sources: List = build_audio_sources(
         args=args,

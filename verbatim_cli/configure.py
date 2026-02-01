@@ -8,6 +8,8 @@ from verbatim.config import Config
 from verbatim_audio.sources.sourceconfig import SourceConfig
 from verbatim_files.format.writer import TranscriptWriterConfig
 
+LOG = logging.getLogger(__name__)
+
 
 def compute_log_level(verbose: int) -> int:
     log_levels = [logging.WARNING, logging.INFO, logging.DEBUG]
@@ -59,11 +61,26 @@ def make_source_config(args, speakers: Optional[int]) -> SourceConfig:
     )
 
 
-def preflight_config(config: Config, source_config: SourceConfig) -> None:
+def preflight_config(*, config: Config, source_config: SourceConfig, args, user_args, base_defaults) -> bool:
+    output_formats = build_output_formats(args)
+    requested_formats = [fmt for fmt in output_formats if fmt != "stdout"]
+    stdout_requested = "stdout" in output_formats
+
+    if stdout_requested:
+        if len(requested_formats) != 1:
+            LOG.error("When using -o -, exactly one output format must be selected (e.g. --txt or --jsonl).")
+            return False
+        if args.quiet:
+            LOG.error("Cannot combine -o - with --quiet.")
+            return False
+
     if config.cache is None:
-        raise ValueError("Artifact cache is not configured. Configure a cache before running.")
+        LOG.error("Artifact cache is not configured. Configure a cache before running.")
+        return False
     if source_config.isolate is not None and not config.working_dir:
-        raise ValueError("Voice isolation requires a working_dir. Provide --workdir or disable --isolate.")
+        LOG.error("Voice isolation requires a working_dir. Provide --workdir or disable --isolate.")
+        return False
+    return True
 
 
 def build_output_formats(args) -> List[str]:
@@ -80,10 +97,8 @@ def build_output_formats(args) -> List[str]:
         output_formats.append("jsonl")
     if args.json:
         output_formats.append("json")
-    if not args.quiet and args.stdout:
+    if args.outdir == "-":
         output_formats.append("stdout")
-    if not args.quiet and args.stdout_nocolor:
-        output_formats.append("stdout-nocolor")
     return output_formats
 
 

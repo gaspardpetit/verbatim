@@ -40,8 +40,8 @@ def create_diarizer(
         token = (huggingface_token or os.getenv("HUGGINGFACE_TOKEN") or "").strip()
 
         if not token and not offline_env and sys.stdin.isatty() and sys.stdout.isatty():
-            print("Pyannote models require a Hugging Face access token.")
-            print("Create one at https://huggingface.co/settings/tokens and ensure gated model access.")
+            print("Pyannote models require a Hugging Face access token.", file=sys.stderr)
+            print("Create one at https://huggingface.co/settings/tokens and ensure gated model access.", file=sys.stderr)
             try:
                 entered = getpass("Enter HUGGINGFACE_TOKEN (starts with hf_): ")
             except Exception:
@@ -49,7 +49,7 @@ def create_diarizer(
             if entered:
                 token = entered.strip()
                 os.environ["HUGGINGFACE_TOKEN"] = token
-                print("Token received. Tip: export HUGGINGFACE_TOKEN to avoid prompts next time.")
+                print("Token received. Tip: export HUGGINGFACE_TOKEN to avoid prompts next time.", file=sys.stderr)
 
         if not token and not offline_env:
             raise ValueError("huggingface_token is required for PyAnnote diarization. Set HUGGINGFACE_TOKEN or run interactively to be prompted.")
