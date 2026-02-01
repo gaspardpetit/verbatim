@@ -9,15 +9,14 @@ import torch
 from pyannote.audio import Pipeline
 from pyannote.audio.core.task import Problem, Resolution, Specifications
 from pyannote.audio.pipelines.utils.hook import ProgressHook
-from pyannote.core.annotation import Annotation
 from torch.serialization import add_safe_globals
 
 from verbatim.cache import ArtifactCache
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.pyannote.separate import PyannoteSpeakerSeparation, _build_rttm_annotation
+from verbatim_diarization.pyannote_annotations import to_rttm_annotation
 from verbatim_diarization.utils import sanitize_uri_component
 from verbatim_files.rttm import Annotation as RTTMAnnotation
-from verbatim_files.rttm import Segment
 from verbatim_files.vttm import AudioRef, dumps_vttm
 
 from .constants import PYANNOTE_DIARIZATION_MODEL_ID
@@ -58,7 +57,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
         out_vttm_file: Optional[str] = None,
         nb_speakers: Optional[int] = None,
         **kwargs,
-    ) -> Annotation:
+    ) -> RTTMAnnotation:
         """
         Compute diarization using PyAnnote.
 
@@ -122,18 +121,18 @@ class PyAnnoteDiarization(DiarizationStrategy):
         except Exception:  # pragma: no cover - defensive: Annotation may freeze attributes
             LOG.debug("Unable to set sanitized URI on diarization annotation", exc_info=True)
 
+        rttm_annotation = to_rttm_annotation(diarization_annotation)
+
         if out_rttm_file:
-            self.save_rttm(diarization_annotation, out_rttm_file)
+            self.save_rttm(rttm_annotation, out_rttm_file)
 
         if out_vttm_file:
-            segments = [
-                Segment(start=segment.start, end=segment.end, speaker=str(label), file_id=uri)
-                for segment, _track, label in diarization_annotation.itertracks(yield_label=True)
-            ]
-            rttm_ann = RTTMAnnotation(segments=segments, file_id=uri)
-            self.cache.set_text(out_vttm_file, dumps_vttm(audio=[AudioRef(id=uri, path=file_path, channels=None)], annotation=rttm_ann))
+            self.cache.set_text(
+                out_vttm_file,
+                dumps_vttm(audio=[AudioRef(id=uri, path=file_path, channels=None)], annotation=rttm_annotation),
+            )
 
-        return diarization_annotation
+        return rttm_annotation
 
 
 class PyAnnoteSeparationDiarization(DiarizationStrategy):
