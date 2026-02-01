@@ -262,11 +262,14 @@ class Config:
 
     def configure_artifact_cache(self) -> None:
         if self.cache is None:
+            # pylint: disable=import-outside-toplevel
             if self.working_dir is None:
                 from verbatim.cache import InMemoryArtifactCache
 
                 self.cache = InMemoryArtifactCache()
             else:
+                from verbatim.cache import FileBackedArtifactCache
+
                 self.cache = FileBackedArtifactCache(base_dir=self.working_dir)
         set_default_cache(self.cache)
 
