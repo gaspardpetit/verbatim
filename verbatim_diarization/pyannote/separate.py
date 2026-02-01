@@ -1,6 +1,8 @@
+import contextlib
 import io
 import logging
 import os
+import sys
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 # pylint: disable=import-outside-toplevel,broad-exception-caught
@@ -12,6 +14,7 @@ from pyannote.audio.pipelines.utils.hook import ProgressHook
 from torch.serialization import add_safe_globals
 
 from verbatim.cache import ArtifactCache
+from verbatim.logging_utils import get_status_logger, status_enabled
 from verbatim_audio.audio import wav_to_int16
 from verbatim_audio.sources.audiosource import AudioSource
 from verbatim_audio.sources.fileaudiosource import FileAudioSource
@@ -24,8 +27,8 @@ from verbatim_files.vttm import AudioRef, dumps_vttm
 from .constants import PYANNOTE_SEPARATION_MODEL_ID
 from .ffmpeg_loader import ensure_torchcodec_audio_decoder
 
-# Configure logger
 LOG = logging.getLogger(__name__)
+STATUS_LOG = get_status_logger()
 
 
 def _build_rttm_annotation(diarization, label_to_ref: Dict[str, AudioRef], default_uri: str) -> RTTMAnnotation:
@@ -51,7 +54,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
     ):
         super().__init__(cache=cache)
         del kwargs  # unused
-        LOG.info("Initializing Separation Pipeline.")
+        STATUS_LOG.info("Initializing Separation Pipeline.")
         self.diarization_strategy = diarization_strategy
         self.device = device
         self.huggingface_token = huggingface_token
@@ -120,10 +123,15 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         ensure_torchcodec_audio_decoder("pyannote separation")
         file_for_pipeline, temp_path = self._prepare_pipeline_input(file_path)
         try:
-            with ProgressHook() as hook:
-                if self.pipeline is None:
-                    raise RuntimeError("Pyannote separation pipeline is not initialized")
-                diarization_output, sources = self.pipeline(file_for_pipeline, hook=hook, num_speakers=nb_speakers)
+            if self.pipeline is None:
+                raise RuntimeError("Pyannote separation pipeline is not initialized")
+            show_progress = status_enabled()
+            if show_progress:
+                with contextlib.redirect_stdout(sys.stderr):
+                    with ProgressHook() as hook:
+                        diarization_output, sources = self.pipeline(file_for_pipeline, hook=hook, num_speakers=nb_speakers)
+            else:
+                diarization_output, sources = self.pipeline(file_for_pipeline, num_speakers=nb_speakers)
         finally:
             if temp_path and temp_path != file_path and os.path.exists(temp_path):
                 try:

@@ -53,8 +53,11 @@ class FileAudioStream(AudioStream):
 
     def next_chunk(self, chunk_length=1) -> NDArray:
         current_frame = self.stream.tell()
-        LOG.info(
-            f"Reading {chunk_length} seconds of audio at {sample_to_timestr(current_frame, self.stream.getframerate())} from {self.source.file_path}."
+        LOG.debug(
+            "Reading %s seconds of audio at %s from %s.",
+            chunk_length,
+            sample_to_timestr(current_frame, self.stream.getframerate()),
+            self.source.file_path,
         )
         frames = self.stream.readframes(int(self.stream.getframerate() * chunk_length))
         sample_width = self.stream.getsampwidth()

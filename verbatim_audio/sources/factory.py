@@ -7,6 +7,7 @@ from typing import Dict, List, Optional, Set, Tuple, Union
 import numpy as np
 
 from verbatim.cache import ArtifactCache
+from verbatim.logging_utils import get_status_logger
 from verbatim_diarization import create_diarizer  # Add this import
 from verbatim_diarization.policy import assign_channels, parse_params, parse_policy
 from verbatim_diarization.utils import sanitize_uri_component
@@ -20,6 +21,7 @@ from .audiosource import AudioSource
 from .sourceconfig import SourceConfig
 
 LOG = logging.getLogger(__name__)
+STATUS_LOG = get_status_logger()
 
 Annotation = RTTMAnnotation  # pylint: disable=invalid-name
 
@@ -98,7 +100,7 @@ def compute_diarization(
             nb_speakers=nb_speakers,
         )
 
-    LOG.info(
+    STATUS_LOG.info(
         "Running diarization: strategy=%s nb_speakers=%s rttm_file=%s vttm_file=%s",
         strategy,
         nb_speakers,
@@ -496,7 +498,7 @@ def create_audio_sources(
                 raise RuntimeError("Voice isolation requires a working_dir. Provide --workdir or disable --isolate.")
             input_source, _noise_path = FileAudioSource.isolate_voices(file_path=input_source, out_path_prefix=working_prefix_no_ext)
         if source_config.vttm_file and read_text_from_cache(cache, source_config.vttm_file) == "":
-            LOG.info("No VTTM provided; creating minimal VTTM placeholder at %s", source_config.vttm_file)
+            LOG.debug("No VTTM provided; creating minimal VTTM placeholder at %s", source_config.vttm_file)
             audio_id = sanitize_uri_component(os.path.splitext(os.path.basename(input_source))[0])
             audio_ref = AudioRef(id=audio_id, path=input_source, channels=None)
             cache.set_text(
@@ -534,7 +536,7 @@ def create_audio_sources(
                 except (FileNotFoundError, ValueError):
                     pass
         elif source_config.diarization is None:
-            LOG.info("Diarization not requested; proceeding without diarization.")
+            LOG.debug("Diarization not requested; proceeding without diarization.")
         elif source_config.diarization_file and source_config.diarization is None:
             # Load existing diarization from file
             from verbatim_diarization import Diarization

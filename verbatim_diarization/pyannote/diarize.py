@@ -1,5 +1,7 @@
+import contextlib
 import logging
 import os
+import sys
 import time
 from typing import Any, Optional
 
@@ -12,6 +14,7 @@ from pyannote.audio.pipelines.utils.hook import ProgressHook
 from torch.serialization import add_safe_globals
 
 from verbatim.cache import ArtifactCache
+from verbatim.logging_utils import get_status_logger, status_enabled
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.pyannote.separate import PyannoteSpeakerSeparation, _build_rttm_annotation
 from verbatim_diarization.pyannote_annotations import to_rttm_annotation
@@ -23,6 +26,7 @@ from .constants import PYANNOTE_DIARIZATION_MODEL_ID
 from .ffmpeg_loader import ensure_torchcodec_audio_decoder
 
 LOG = logging.getLogger(__name__)
+STATUS_LOG = get_status_logger()
 
 
 class PyAnnoteDiarization(DiarizationStrategy):
@@ -92,10 +96,15 @@ class PyAnnoteDiarization(DiarizationStrategy):
             if pipeline is None:
                 raise RuntimeError("PyAnnote pipeline failed to initialize")
             start = time.perf_counter()
-            with ProgressHook() as hook:
-                diarization = pipeline(file_for_pipeline, hook=hook, num_speakers=nb_speakers)
+            show_progress = status_enabled()
+            if show_progress:
+                with contextlib.redirect_stdout(sys.stderr):
+                    with ProgressHook() as hook:
+                        diarization = pipeline(file_for_pipeline, hook=hook, num_speakers=nb_speakers)
+            else:
+                diarization = pipeline(file_for_pipeline, num_speakers=nb_speakers)
             elapsed = time.perf_counter() - start
-            LOG.info(
+            STATUS_LOG.info(
                 "PyAnnote diarization completed in %.2fs (model=%s, file=%s, speakers=%s)",
                 elapsed,
                 self.model_id,

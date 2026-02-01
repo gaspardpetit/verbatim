@@ -6,9 +6,11 @@ from types import MappingProxyType
 from typing import List, Mapping, Optional, Tuple
 
 from verbatim.cache import ArtifactCache
+from verbatim.logging_utils import get_status_logger
 from verbatim_audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
+STATUS_LOG = get_status_logger()
 
 DEFAULT_MULTILANG_PROMPTS: Mapping[str, str] = MappingProxyType(
     {
@@ -217,14 +219,14 @@ class Config:
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Set CUDA_VISIBLE_DEVICES to -1 to force CPU
 
         if self.device == "cuda":
-            LOG.info("Using GPU (CUDA)")
+            STATUS_LOG.info("Using GPU (CUDA)")
         elif self.device == "mps":
-            LOG.info("Using MPS (Apple Silicon)")
+            STATUS_LOG.info("Using MPS (Apple Silicon)")
         else:
             if device == "auto":
-                LOG.info("No hardware acceleration detected, defaulting to CPU hardware")
+                STATUS_LOG.info("No hardware acceleration detected, defaulting to CPU hardware")
             else:
-                LOG.info("Using CPU")
+                STATUS_LOG.info("Using CPU")
 
         return self
 
@@ -246,17 +248,17 @@ class Config:
         self.output_dir = output_dir
         if not os.path.isdir(self.output_dir):
             os.makedirs(self.output_dir)
-        LOG.info(f"Output directory set to {self.output_dir}")
+        STATUS_LOG.info("Output directory set to %s", self.output_dir)
 
         # Set the working directory
         self.working_dir = working_dir
         if self.working_dir is None:
-            LOG.info("Working directory disabled; intermediate artifacts will use in-memory cache.")
+            STATUS_LOG.info("Working directory disabled; intermediate artifacts will use in-memory cache.")
             return
 
         if not os.path.isdir(self.working_dir):
             os.makedirs(self.working_dir)
-        LOG.info(f"Working directory set to {self.working_dir}")
+        STATUS_LOG.info("Working directory set to %s", self.working_dir)
 
     def configure_artifact_cache(self) -> None:
         # pylint: disable=import-outside-toplevel

@@ -12,8 +12,11 @@ LOG = logging.getLogger(__name__)
 
 
 def compute_log_level(verbose: int) -> int:
-    log_levels = [logging.WARNING, logging.INFO, logging.DEBUG]
-    return log_levels[min(verbose, len(log_levels) - 1)]
+    if verbose <= 1:
+        return logging.WARNING
+    if verbose == 2:
+        return logging.INFO
+    return logging.DEBUG
 
 
 def make_config(args) -> Config:
@@ -61,7 +64,7 @@ def make_source_config(args, speakers: Optional[int]) -> SourceConfig:
     )
 
 
-def preflight_config(*, config: Config, source_config: SourceConfig, args, user_args, base_defaults) -> bool:
+def preflight_config(*, config: Config, source_config: SourceConfig, args) -> bool:
     output_formats = build_output_formats(args)
     requested_formats = [fmt for fmt in output_formats if fmt != "stdout"]
     stdout_requested = "stdout" in output_formats

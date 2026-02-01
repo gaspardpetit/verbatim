@@ -32,7 +32,7 @@ def format_audio(audio: NDArray, from_sampling_rate: int) -> NDArray:
     if float_audio.ndim == 1:
         mono_audio = float_audio
     else:
-        LOG.info(f"Mixing {float_audio.ndim} channels down to mono.")
+        LOG.debug("Mixing %s channels down to mono.", float_audio.ndim)
         mono_audio = np.mean(float_audio, axis=1)
 
     # Resample if the audio sample rate is not 16 kHz
@@ -40,7 +40,7 @@ def format_audio(audio: NDArray, from_sampling_rate: int) -> NDArray:
     if from_sampling_rate == to_sampling_rate:
         resampled_audio = mono_audio
     else:
-        LOG.info(f"Resampling from {from_sampling_rate} Hz to {to_sampling_rate} Hz.")
+        LOG.debug("Resampling from %s Hz to %s Hz.", from_sampling_rate, to_sampling_rate)
         # Lazy import to avoid pulling scipy.signal during CLI startup
         from scipy.signal import resample  # type: ignore  # pylint: disable=import-outside-toplevel
 

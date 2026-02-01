@@ -32,7 +32,7 @@ class PyAVAudioStream(AudioStream):
         self._closed = False
         self._done_decoding = False
 
-        LOG.info(f"Opening file with PyAV: {self.source.file_path}")
+        LOG.debug("Opening file with PyAV: %s", self.source.file_path)
         self._container = av.open(self.source.file_path)
 
         # Find the first audio stream (or choose a specific one if needed)
@@ -41,8 +41,8 @@ class PyAVAudioStream(AudioStream):
             raise ValueError("No audio streams found in file.")
 
         self._stream = audio_streams[0]
-        LOG.info(f"Audio stream channels: {self._stream.channels}")
-        LOG.info(f"Preserve channels: {self.source.preserve_channels}")
+        LOG.debug("Audio stream channels: %s", self._stream.channels)
+        LOG.debug("Preserve channels: %s", self.source.preserve_channels)
         self._stream.thread_type = "AUTO"  # allow FFmpeg to use threading if beneficial
 
         # If you want to force a certain sample format, channel layout, etc.,
@@ -58,7 +58,7 @@ class PyAVAudioStream(AudioStream):
                 any_frame=False,
                 stream=self._stream,
             )
-            LOG.info(f"Seeking to {self.source.start_time} seconds.")
+            LOG.debug("Seeking to %s seconds.", self.source.start_time)
 
         # We create a generator that decodes frames from the audio stream
         # This is the raw frames from the container
@@ -106,7 +106,7 @@ class PyAVAudioStream(AudioStream):
             try:
                 frame = next(self._frame_iter)
             except StopIteration:
-                LOG.info("Reached end of stream")
+                LOG.debug("Reached end of stream")
                 self._done_decoding = True
                 break
 
@@ -114,7 +114,7 @@ class PyAVAudioStream(AudioStream):
             if self.source.end_time is not None and frame.pts is not None:
                 timestamp_sec = float(frame.pts * self._stream.time_base)
                 if timestamp_sec > self.source.end_time:
-                    LOG.info(f"End time {self.source.end_time}s reached (current={timestamp_sec:.2f}s)")
+                    LOG.debug("End time %ss reached (current=%.2fs)", self.source.end_time, timestamp_sec)
                     self._done_decoding = True
                     break
 
@@ -186,7 +186,7 @@ class PyAVAudioStream(AudioStream):
     def close(self):
         """Close the container and release resources."""
         if self._container and not self._closed:
-            LOG.info("Closing PyAV container.")
+            LOG.debug("Closing PyAV container.")
             self._container.close()
         self._closed = True
         self._done_decoding = True
