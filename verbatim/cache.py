@@ -30,7 +30,10 @@ class BaseArtifactCache(ArtifactCache):
         return self.get_text(key)
 
     def read_bytes(self, key: str) -> bytes:
-        return self.get_bytes(key)
+        data = self.get_bytes(key)
+        if data is None:
+            raise KeyError(f"Missing bytes for key: {key}")
+        return data
 
     def bytes_io(self, key: str) -> io.BytesIO:
         return io.BytesIO(self.read_bytes(key))
@@ -69,6 +72,8 @@ class FileBackedArtifactCache(InMemoryArtifactCache):
         if not self.base_dir:
             return None
         normalized = os.path.normpath(key)
+        if os.path.exists(normalized):
+            return normalized
         base_norm = os.path.normpath(self.base_dir)
         if not os.path.isabs(base_norm):
             if normalized == base_norm or normalized.startswith(base_norm + os.sep):
