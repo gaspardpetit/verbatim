@@ -24,6 +24,8 @@ class ArtifactCache(Protocol):
 
     def bytes_io(self, key: str) -> io.BytesIO: ...
 
+    def delete(self, key: str) -> None: ...
+
 
 class BaseArtifactCache(ArtifactCache):
     def read_text(self, key: str) -> Optional[str]:
@@ -37,6 +39,9 @@ class BaseArtifactCache(ArtifactCache):
 
     def bytes_io(self, key: str) -> io.BytesIO:
         return io.BytesIO(self.read_bytes(key))
+
+    def delete(self, key: str) -> None:
+        raise NotImplementedError
 
 
 @dataclass
@@ -60,6 +65,11 @@ class InMemoryArtifactCache(BaseArtifactCache):
     def set_bytes(self, key: str, value: bytes) -> None:
         with self._lock:
             self._bytes[key] = value
+
+    def delete(self, key: str) -> None:
+        with self._lock:
+            self._text.pop(key, None)
+            self._bytes.pop(key, None)
 
 
 @dataclass
@@ -121,3 +131,13 @@ class FileBackedArtifactCache(InMemoryArtifactCache):
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
         with open(path, "wb") as fh:
             fh.write(value)
+
+    def delete(self, key: str) -> None:
+        super().delete(key)
+        path = self._resolve_path(key)
+        if not path or not os.path.exists(path):
+            return
+        try:
+            os.remove(path)
+        except OSError:
+            pass

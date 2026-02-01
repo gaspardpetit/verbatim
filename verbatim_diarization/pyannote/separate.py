@@ -89,8 +89,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         del self.pipeline
         return False
 
-    def _prepare_pipeline_input(self, file_path: str, working_dir: Optional[str]) -> Tuple[Any, Optional[str]]:
-        del working_dir
+    def _prepare_pipeline_input(self, file_path: str) -> Tuple[Any, Optional[str]]:
         temp_path: Optional[str] = None
         try:
             import soundfile as sf  # lazy import
@@ -117,10 +116,9 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         file_path: str,
         out_speaker_wav_prefix: str,
         nb_speakers: Optional[int],
-        working_dir: Optional[str],
     ) -> Tuple[Any, List[Tuple[str, AudioRef]]]:
         ensure_torchcodec_audio_decoder("pyannote separation")
-        file_for_pipeline, temp_path = self._prepare_pipeline_input(file_path, working_dir)
+        file_for_pipeline, temp_path = self._prepare_pipeline_input(file_path)
         try:
             with ProgressHook() as hook:
                 if self.pipeline is None:
@@ -176,7 +174,6 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         nb_speakers: Optional[int] = None,
         start_sample: int = 0,
         end_sample: Optional[int] = None,
-        working_dir: Optional[str] = None,
     ) -> List[AudioSource]:
         """
         Separate speakers in an audio file.
@@ -194,7 +191,6 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             file_path=file_path,
             out_speaker_wav_prefix=out_speaker_wav_prefix,
             nb_speakers=nb_speakers,
-            working_dir=working_dir,
         )
 
         uri = sanitize_uri_component(os.path.splitext(os.path.basename(file_path))[0])

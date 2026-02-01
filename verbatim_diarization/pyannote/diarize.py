@@ -57,7 +57,6 @@ class PyAnnoteDiarization(DiarizationStrategy):
         out_rttm_file: Optional[str] = None,
         out_vttm_file: Optional[str] = None,
         nb_speakers: Optional[int] = None,
-        working_dir: Optional[str] = None,
         **kwargs,
     ) -> Annotation:
         """
@@ -151,13 +150,12 @@ class PyAnnoteSeparationDiarization(DiarizationStrategy):
         out_rttm_file: Optional[str] = None,
         out_vttm_file: Optional[str] = None,
         nb_speakers: Optional[int] = None,
-        working_dir: Optional[str] = None,
         stem_prefix: Optional[str] = None,
         **kwargs,
     ) -> RTTMAnnotation:
         del kwargs
         uri = sanitize_uri_component(os.path.splitext(os.path.basename(file_path))[0])
-        base_dir = working_dir or os.path.dirname(stem_prefix or "")
+        base_dir = os.path.dirname(stem_prefix or "")
         if not stem_prefix:
             stem_prefix = os.path.join(base_dir or ".", f"{uri}-speaker")
 
@@ -165,7 +163,6 @@ class PyAnnoteSeparationDiarization(DiarizationStrategy):
             file_path=file_path,
             out_speaker_wav_prefix=stem_prefix,
             nb_speakers=nb_speakers,
-            working_dir=working_dir,
         )
         label_to_ref = dict(audio_refs_meta)
         annotation = _build_rttm_annotation(diarization, label_to_ref, uri)

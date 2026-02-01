@@ -253,8 +253,6 @@ class Config:
         if self.working_dir is None:
             LOG.info("Working directory disabled; intermediate artifacts will use in-memory cache.")
             return
-        if self.working_dir == "":
-            self.working_dir = self.output_dir
 
         if not os.path.isdir(self.working_dir):
             os.makedirs(self.working_dir)
