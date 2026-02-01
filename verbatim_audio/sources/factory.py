@@ -440,8 +440,6 @@ def create_audio_sources(
 
     if source_config.diarization_file == "" or (source_config.diarize_strategy is not None and source_config.diarization_file is None):
         source_config.diarization_file = output_prefix_no_ext + ".rttm"
-    if source_config.vttm_file is None:
-        source_config.vttm_file = output_prefix_no_ext + ".vttm"
     if source_config.vttm_file == "":
         source_config.vttm_file = None
     working_dir = os.path.dirname(working_prefix_no_ext) or None
