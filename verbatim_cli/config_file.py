@@ -12,7 +12,7 @@ import yaml
 
 from verbatim_files.format.writer import LanguageStyle, ProbabilityStyle, SpeakerStyle, TimestampStyle
 
-OUTPUT_FLAGS = ("ass", "docx", "txt", "json", "md", "stdout", "stdout_nocolor")
+OUTPUT_FLAGS = ("ass", "docx", "txt", "json", "jsonl", "md", "stdout", "stdout_nocolor")
 DEFAULT_MATCH = ["*.wav", "*.mp3", "*.m4a", "*.mp4"]
 
 

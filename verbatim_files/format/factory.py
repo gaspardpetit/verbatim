@@ -37,6 +37,11 @@ def configure_writers(
 
         multi_writer.add_writer(JsonTranscriptWriter(config=write_config))
 
+    if "jsonl" in output_formats:
+        from .json import JsonlTranscriptWriter
+
+        multi_writer.add_writer(JsonlTranscriptWriter(config=write_config))
+
     if "stdout" in output_formats and "stdout-nocolor" not in output_formats:
         from .stdout import StdoutTranscriptWriter
 
