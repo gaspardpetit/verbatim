@@ -8,15 +8,16 @@ from .audiosource import AudioSource, AudioStream
 
 Annotation = object  # pylint: disable=invalid-name
 
+
 def _to_float32(audio: NDArray) -> NDArray:
     if audio.dtype == np.float32:
         return audio
     if audio.dtype == np.int8:
-        return (audio.astype(np.float32) / 128.0)
+        return audio.astype(np.float32) / 128.0
     if audio.dtype == np.int16:
-        return (audio.astype(np.float32) / 32768.0)
+        return audio.astype(np.float32) / 32768.0
     if audio.dtype == np.int32:
-        return (audio.astype(np.float32) / 2147483648.0)
+        return audio.astype(np.float32) / 2147483648.0
     return audio.astype(np.float32)
 
 
@@ -34,7 +35,7 @@ class MemoryAudioStream(AudioStream):
 
         chunk_samples = int(chunk_length * self.source.sample_rate)
         end_sample = min(self._cursor + chunk_samples, self.source.end_sample or self.source.total_samples)
-        raw = self.source.samples[self._cursor:end_sample]
+        raw = self.source.samples[self._cursor : end_sample]
         self._cursor = end_sample
 
         if raw.size == 0:

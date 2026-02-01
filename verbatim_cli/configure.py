@@ -18,7 +18,7 @@ def make_config(args) -> Config:
     config: Config = Config(
         device="cpu" if args.cpu else "auto",
         output_dir=args.outdir,
-        working_dir=args.workdir if args.workdir is not None else "",
+        working_dir=args.workdir,
         stream=args.stream,
         offline=args.offline,
         model_cache_dir=args.model_cache,
@@ -86,5 +86,8 @@ def build_output_formats(args) -> List[str]:
 def build_prefixes(config: Config, source_path: str):
     input_name_no_ext = os.path.splitext(os.path.split(source_path)[-1])[0]
     output_prefix_no_ext = os.path.join(config.output_dir, input_name_no_ext)
-    working_prefix_no_ext = os.path.join(config.working_dir, input_name_no_ext)
+    if config.working_dir is None:
+        working_prefix_no_ext = input_name_no_ext
+    else:
+        working_prefix_no_ext = os.path.join(config.working_dir, input_name_no_ext)
     return output_prefix_no_ext, working_prefix_no_ext

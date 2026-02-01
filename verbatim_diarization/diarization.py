@@ -2,7 +2,7 @@ import logging
 import os
 from typing import Optional
 
-from verbatim_files.rttm import Annotation, load_rttm, loads_rttm, write_rttm
+from verbatim_files.rttm import Annotation, load_rttm, loads_rttm
 
 from .diarize.factory import create_diarizer
 

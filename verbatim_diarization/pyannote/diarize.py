@@ -163,7 +163,7 @@ class PyAnnoteSeparationDiarization(DiarizationStrategy):
     ) -> RTTMAnnotation:
         del kwargs
         uri = sanitize_uri_component(os.path.splitext(os.path.basename(file_path))[0])
-        base_dir = working_dir or os.path.dirname(stem_prefix or "") or tempfile.gettempdir()
+        base_dir = working_dir or os.path.dirname(stem_prefix or "")
         if not stem_prefix:
             stem_prefix = os.path.join(base_dir or ".", f"{uri}-speaker")
 

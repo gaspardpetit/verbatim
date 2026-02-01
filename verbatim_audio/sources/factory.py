@@ -3,7 +3,6 @@ import io
 import logging
 import os
 import sys
-import tempfile
 from typing import Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
@@ -276,6 +275,8 @@ def compute_diarization_policy(
     audio_refs: List[AudioRef] = []
 
     try:
+        base_name = os.path.splitext(os.path.basename(file_path))[0]
+        base_prefix = os.path.join(working_dir, base_name) if working_dir else base_name
         for policy_idx, group in enumerate(grouped.values()):
             clause = group["clause"]
             channels = sorted(group["channels"])
@@ -312,7 +313,7 @@ def compute_diarization_policy(
             clause_vttm_path: Optional[str] = None
             clause_audio_refs: List[AudioRef] = []
             if clause.strategy == "separate":
-                clause_vttm_path = f"{working_prefix_no_ext}-policy-{policy_idx}.vttm"
+                clause_vttm_path = f"{base_prefix}-policy-{policy_idx}.vttm"
 
             diarization = compute_diarization(
                 file_path=subset_path,

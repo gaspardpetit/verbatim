@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from typing import Iterable, List, Tuple, Union
 
 from verbatim.cache import get_default_cache
+
 from .rttm import Annotation, loads_rttm, write_rttm
 
 ChannelSpec = Union[str, int, None]

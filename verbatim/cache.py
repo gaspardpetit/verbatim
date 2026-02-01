@@ -5,21 +5,17 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from threading import Lock
-from typing import Dict, Optional, Protocol, Union
+from typing import Dict, Optional, Protocol
 
 
 class ArtifactCache(Protocol):
-    def get_text(self, key: str) -> Optional[str]:
-        ...
+    def get_text(self, key: str) -> Optional[str]: ...
 
-    def set_text(self, key: str, value: str) -> None:
-        ...
+    def set_text(self, key: str, value: str) -> None: ...
 
-    def get_bytes(self, key: str) -> Optional[bytes]:
-        ...
+    def get_bytes(self, key: str) -> Optional[bytes]: ...
 
-    def set_bytes(self, key: str, value: bytes) -> None:
-        ...
+    def set_bytes(self, key: str, value: bytes) -> None: ...
 
 
 @dataclass
