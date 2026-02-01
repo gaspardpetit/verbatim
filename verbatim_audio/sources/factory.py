@@ -24,7 +24,7 @@ LOG = logging.getLogger(__name__)
 Annotation = RTTMAnnotation  # pylint: disable=invalid-name
 
 
-def read_text_from_cache(cache: ArtifactCache, path: str) -> Optional[str]:
+def read_text_from_cache(cache: ArtifactCache, path: str) -> str:
     return cache.read_text(path)
 
 
@@ -495,7 +495,7 @@ def create_audio_sources(
             if working_dir is None:
                 raise RuntimeError("Voice isolation requires a working_dir. Provide --workdir or disable --isolate.")
             input_source, _noise_path = FileAudioSource.isolate_voices(file_path=input_source, out_path_prefix=working_prefix_no_ext)
-        if source_config.vttm_file and read_text_from_cache(cache, source_config.vttm_file) is None:
+        if source_config.vttm_file and read_text_from_cache(cache, source_config.vttm_file) == "":
             LOG.info("No VTTM provided; creating minimal VTTM placeholder at %s", source_config.vttm_file)
             audio_id = sanitize_uri_component(os.path.splitext(os.path.basename(input_source))[0])
             audio_ref = AudioRef(id=audio_id, path=input_source, channels=None)

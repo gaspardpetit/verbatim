@@ -174,7 +174,7 @@ class Config:
     working_dir: Optional[str] = field(default_factory=get_default_working_directory)
 
     output_dir: str = "."
-    cache: Optional[ArtifactCache] = None
+    cache: ArtifactCache = field(init=False)
 
     # INPUT
     source_stream: Optional[AudioSource] = None
@@ -259,8 +259,8 @@ class Config:
         LOG.info(f"Working directory set to {self.working_dir}")
 
     def configure_artifact_cache(self) -> None:
-        if self.cache is None:
-            # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel
+        if getattr(self, "cache", None) is None:
             if self.working_dir is None:
                 from verbatim.cache import InMemoryArtifactCache
 

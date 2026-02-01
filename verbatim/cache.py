@@ -10,7 +10,7 @@ from typing import Dict, Optional, Protocol
 
 
 class ArtifactCache(Protocol):
-    def get_text(self, key: str) -> Optional[str]: ...
+    def get_text(self, key: str) -> str: ...
 
     def set_text(self, key: str, value: str) -> None: ...
 
@@ -18,7 +18,7 @@ class ArtifactCache(Protocol):
 
     def set_bytes(self, key: str, value: bytes) -> None: ...
 
-    def read_text(self, key: str) -> Optional[str]: ...
+    def read_text(self, key: str) -> str: ...
 
     def read_bytes(self, key: str) -> bytes: ...
 
@@ -28,7 +28,7 @@ class ArtifactCache(Protocol):
 
 
 class BaseArtifactCache(ArtifactCache):
-    def read_text(self, key: str) -> Optional[str]:
+    def read_text(self, key: str) -> str:
         return self.get_text(key)
 
     def read_bytes(self, key: str) -> bytes:
@@ -47,9 +47,9 @@ class InMemoryArtifactCache(BaseArtifactCache):
     _bytes: Dict[str, bytes] = field(default_factory=dict)
     _lock: Lock = field(default_factory=Lock)
 
-    def get_text(self, key: str) -> Optional[str]:
+    def get_text(self, key: str) -> str:
         with self._lock:
-            return self._text.get(key)
+            return self._text.get(key, "")
 
     def set_text(self, key: str, value: str) -> None:
         with self._lock:
@@ -87,13 +87,13 @@ class FileBackedArtifactCache(InMemoryArtifactCache):
                 return normalized
         return os.path.join(self.base_dir, normalized)
 
-    def get_text(self, key: str) -> Optional[str]:
+    def get_text(self, key: str) -> str:
         cached = super().get_text(key)
-        if cached is not None:
+        if cached:
             return cached
         path = self._resolve_path(key)
         if not path or not os.path.exists(path):
-            return None
+            return ""
         with open(path, "r", encoding="utf-8") as fh:
             data = fh.read()
         super().set_text(key, data)
