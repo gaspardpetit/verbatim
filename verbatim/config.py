@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import List, Mapping, Optional, Tuple
 
-from verbatim.cache import ArtifactCache, FileBackedArtifactCache, set_default_cache
+from verbatim.cache import ArtifactCache, set_default_cache
 from verbatim_audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
