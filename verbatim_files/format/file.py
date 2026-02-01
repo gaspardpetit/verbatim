@@ -17,7 +17,7 @@ class FileFormatter:
         if self.output is None:
             if self.output_path is None:
                 raise ValueError("output_path or output must be provided")
-            self.output = open(self.output_path, "wb")
+            self.output = open(self.output_path, "wb")  # pylint: disable=consider-using-with
             self.close_output = True
         self._write(self.writer.format_start())
 
@@ -40,7 +40,7 @@ class FileFormatter:
         self._write(self.writer.format_end())
         if self.output is not None and self.close_output:
             self.output.close()
-        if self.output_path and hasattr(self.writer, "post_close"):
+        if self.output_path:
             self.writer.post_close(self.output_path)
 
     def _write(self, data: bytes) -> None:

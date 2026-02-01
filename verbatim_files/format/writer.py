@@ -75,3 +75,6 @@ class TranscriptWriter(ABC):
 
     def flush(self) -> bytes:
         return b""
+
+    def post_close(self, _output_path: str) -> None:
+        return None

@@ -134,9 +134,6 @@ class JsonTranscriptWriter(TranscriptWriter):
 
 
 class JsonlTranscriptWriter(TranscriptWriter):
-    def __init__(self, config: TranscriptWriterConfig):
-        super().__init__(config)
-
     def format_utterance(
         self,
         utterance: Utterance,

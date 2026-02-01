@@ -11,6 +11,7 @@ def configure_writers(
     original_audio_file: str,
     output_prefix_no_ext: str,
 ) -> MultiFileFormatter:
+    # pylint: disable=import-outside-toplevel
     formatters: List[FileFormatter] = []
     if "txt" in output_formats:
         from .txt import TextTranscriptWriter
