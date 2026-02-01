@@ -806,8 +806,6 @@ class Verbatim:
         # all utterances and words; When they fall behind, the best we can do
         # is return them as acknowledge.
 
-        flushed_utterances = []
-
         # First, try to acknowledge "full" utterances that may not have been acknowledged
         while len(self.state.unacknowledged_utterances) > 0:
             # Stop when we reached the window_ts
@@ -816,6 +814,7 @@ class Verbatim:
                 break
             utterance = self.state.unacknowledged_utterances.pop(0)
             utterance.speaker = self.assign_speaker(utterance, diarization)
+            self.state.acknowledged_words += utterance.words
             result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                 utterance=utterance,
                 unacknowledged=self.state.unacknowledged_utterances,
@@ -834,12 +833,17 @@ class Verbatim:
                     break
                 flushed_word = partial_utterance.words.pop(0)
                 flushed_utterances_words.append(flushed_word)
-                partial_utterance.start_ts = partial_utterance.words[-1].start_ts
-                partial_utterance.text = "".join([w.word for w in partial_utterance.words])
+                if len(partial_utterance.words) > 0:
+                    partial_utterance.start_ts = partial_utterance.words[0].start_ts
+                    partial_utterance.text = "".join([w.word for w in partial_utterance.words])
+                else:
+                    self.state.unacknowledged_utterances.pop(0)
+                    break
 
             if len(flushed_utterances_words) > 0:
                 utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
                 utterance.speaker = self.assign_speaker(utterance, diarization)
+                self.state.acknowledged_words += flushed_utterances_words
                 result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                     utterance=utterance,
                     unacknowledged=self.state.unacknowledged_utterances,
@@ -860,15 +864,13 @@ class Verbatim:
         if len(flushed_utterances_words) > 0:
             utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
             utterance.speaker = self.assign_speaker(utterance, diarization)
+            self.state.acknowledged_words += flushed_utterances_words
             result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                 utterance=utterance,
                 unacknowledged=self.state.unacknowledged_utterances,
                 unconfirmed_words=self.state.unconfirmed_words,
             )
             yield result.as_tuple()
-
-        if len(flushed_utterances_words) > 0:
-            flushed_utterances.append(Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words))
 
     def transcribe(
         self, audio_stream: AudioStream, working_prefix_no_ext: str = "out"
