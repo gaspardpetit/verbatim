@@ -93,6 +93,11 @@ def loads_rttm(text: str) -> Annotation:
     return _load_rttm_lines(StringIO(text))
 
 
+def dumps_rttm(annotation: Annotation) -> str:
+    """Serialize an Annotation to RTTM text."""
+    return "".join(_serialize_segments(annotation.segments))
+
+
 def _load_rttm_lines(lines: Iterable[str]) -> Annotation:
     segments: List[Segment] = []
     for raw in lines:
@@ -117,15 +122,14 @@ def _serialize_segments(segments: Iterable[Segment]) -> Iterator[str]:
         )
 
 
-def write_rttm(annotation: Annotation, dest: str | IO[str]) -> None:
+def write_rttm_file(annotation: Annotation, dest: str | IO[str]) -> None:
     """Write an Annotation to an RTTM file or file-like object."""
+    rendered = dumps_rttm(annotation)
     if isinstance(dest, str):
         with open(dest, "w", encoding="utf-8") as fh:
-            for line in _serialize_segments(annotation.segments):
-                fh.write(line)
-    else:
-        for line in _serialize_segments(annotation.segments):
-            dest.write(line)
+            fh.write(rendered)
+        return
+    dest.write(rendered)
 
 
 def _resolve_audio_refs(
@@ -154,23 +158,23 @@ def _resolve_audio_refs(
 
 def rttm_to_vttm(
     rttm_path: str,
-    vttm_path: str,
     *,
     audio_refs: Iterable["AudioRef"] | None = None,
     audio_path: str | None = None,
     channels: str | int | None = None,
-) -> Tuple[List["AudioRef"], Annotation]:
-    from .vttm import write_vttm  # pylint: disable=import-outside-toplevel
+) -> Tuple[List["AudioRef"], Annotation, str]:
+    """Load RTTM from disk and return audio refs, annotation, and VTTM text."""
+    from .vttm import dumps_vttm  # pylint: disable=import-outside-toplevel
 
     annotation = load_rttm(rttm_path)
     resolved = _resolve_audio_refs(annotation, audio_refs, audio_path, channels)
-    write_vttm(vttm_path, audio=resolved, annotation=annotation)
-    return resolved, annotation
+    vttm_text = dumps_vttm(audio=resolved, annotation=annotation)
+    return resolved, annotation, vttm_text
 
 
-def vttm_to_rttm(vttm_path: str, rttm_path: str) -> Annotation:
+def vttm_to_rttm(vttm_path: str) -> Tuple[Annotation, str]:
+    """Load VTTM from disk and return the annotation plus RTTM text."""
     from .vttm import load_vttm  # pylint: disable=import-outside-toplevel
 
     _audio_refs, annotation = load_vttm(vttm_path)
-    write_rttm(annotation, rttm_path)
-    return annotation
+    return annotation, dumps_rttm(annotation)

@@ -11,10 +11,18 @@ from getpass import getpass
 from typing import Optional
 
 # pylint: disable=import-outside-toplevel,broad-exception-caught
+from verbatim.cache import ArtifactCache
 from verbatim_diarization.diarize.base import DiarizationStrategy
 
 
-def create_diarizer(strategy: str = "pyannote", device: str = "cpu", huggingface_token: Optional[str] = None, **kwargs) -> DiarizationStrategy:
+def create_diarizer(
+    *,
+    strategy: str = "pyannote",
+    device: str = "cpu",
+    huggingface_token: Optional[str] = None,
+    cache: ArtifactCache,
+    **kwargs,
+) -> DiarizationStrategy:
     """
     Factory function to create diarization strategy instances.
 
@@ -50,20 +58,20 @@ def create_diarizer(strategy: str = "pyannote", device: str = "cpu", huggingface
         if strategy == "pyannote":
             from verbatim_diarization.pyannote import PyAnnoteDiarization
 
-            return PyAnnoteDiarization(device=device, huggingface_token=token)
+            return PyAnnoteDiarization(cache=cache, device=device, huggingface_token=token)
 
         from verbatim_diarization.pyannote import PyAnnoteSeparationDiarization
 
-        return PyAnnoteSeparationDiarization(device=device, huggingface_token=token)
+        return PyAnnoteSeparationDiarization(cache=cache, device=device, huggingface_token=token)
 
     if strategy == "energy":
         from verbatim_diarization.stereo import EnergyDiarization
 
-        return EnergyDiarization(**kwargs)
+        return EnergyDiarization(cache=cache, **kwargs)
 
     if strategy == "channel":
         from verbatim_diarization.channel import ChannelDiarization
 
-        return ChannelDiarization(**kwargs)
+        return ChannelDiarization(cache=cache, **kwargs)
 
     raise ValueError(f"Unknown diarization strategy: {strategy}")

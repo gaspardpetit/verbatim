@@ -2,8 +2,8 @@ import os
 import tempfile
 import unittest
 
-from verbatim_files.rttm import Annotation, Segment, load_rttm, loads_rttm, rttm_to_vttm, vttm_to_rttm, write_rttm
-from verbatim_files.vttm import AudioRef, load_vttm, write_vttm
+from verbatim_files.rttm import Annotation, Segment, load_rttm, loads_rttm, rttm_to_vttm, vttm_to_rttm, write_rttm_file
+from verbatim_files.vttm import AudioRef, load_vttm, write_vttm_file
 
 
 class TestRTTM(unittest.TestCase):
@@ -16,7 +16,7 @@ class TestRTTM(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "sample.rttm")
-            write_rttm(annotation, path)
+            write_rttm_file(annotation, path)
             parsed = load_rttm(path)
 
         self.assertEqual(len(parsed.segments), 2)
@@ -50,7 +50,7 @@ class TestVTTM(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "sample.vttm")
-            write_vttm(path, audio=audio_refs, annotation=annotation)
+            write_vttm_file(path, audio=audio_refs, annotation=annotation)
             loaded_audio, loaded_annotation = load_vttm(path)
 
         self.assertEqual(len(loaded_audio), 1)
@@ -66,8 +66,10 @@ class TestVTTM(unittest.TestCase):
             audio_refs = [AudioRef(id="clip", path=audio_path, channels=None)]
             rttm_path = os.path.join(tmpdir, "input.rttm")
             vttm_path = os.path.join(tmpdir, "converted.vttm")
-            write_rttm(annotation, rttm_path)
-            rttm_to_vttm(rttm_path, vttm_path, audio_refs=audio_refs)
+            write_rttm_file(annotation, rttm_path)
+            _audio_refs, _annotation, vttm_text = rttm_to_vttm(rttm_path, audio_refs=audio_refs)
+            with open(vttm_path, "w", encoding="utf-8") as fh:
+                fh.write(vttm_text)
             loaded_audio, loaded_annotation = load_vttm(vttm_path)
         self.assertEqual(loaded_audio[0].path, audio_path)
         self.assertEqual(len(loaded_annotation.segments), 1)
@@ -79,8 +81,10 @@ class TestVTTM(unittest.TestCase):
             audio_refs = [AudioRef(id="clip", path=audio_path, channels=None)]
             vttm_path = os.path.join(tmpdir, "input.vttm")
             rttm_path = os.path.join(tmpdir, "converted.rttm")
-            write_vttm(vttm_path, audio=audio_refs, annotation=annotation)
-            vttm_to_rttm(vttm_path, rttm_path)
+            write_vttm_file(vttm_path, audio=audio_refs, annotation=annotation)
+            _annotation, rttm_text = vttm_to_rttm(vttm_path)
+            with open(rttm_path, "w", encoding="utf-8") as fh:
+                fh.write(rttm_text)
             parsed = load_rttm(rttm_path)
         self.assertEqual(len(parsed.segments), 1)
 

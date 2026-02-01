@@ -18,6 +18,7 @@ def main():
         make_config,
         make_source_config,
         make_write_config,
+        preflight_config,
         resolve_speakers,
     )
     from verbatim_cli.env import load_env_file
@@ -86,6 +87,7 @@ def main():
     )
 
     source_config = make_source_config(args, speakers)
+    preflight_config(config, source_config)
 
     audio_sources: List = build_audio_sources(
         args=args,

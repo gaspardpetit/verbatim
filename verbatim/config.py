@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import List, Mapping, Optional, Tuple
 
+from verbatim.cache import ArtifactCache
 from verbatim_audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
@@ -140,8 +141,8 @@ DEFAULT_LOWLATENCY_CHUNKTABLE: List[Tuple[float, float]] = [(0, 0.025)]
 DEFAULT_LANGUAGES = ["en"]
 
 
-def get_default_working_directory():
-    return os.getenv("TMPDIR", os.getenv("TEMP", os.getenv("TMP", ".")))
+def get_default_working_directory() -> Optional[str]:
+    return os.getenv("TMPDIR", os.getenv("TEMP", os.getenv("TMP")))
 
 
 @dataclass
@@ -170,9 +171,10 @@ class Config:
     whisper_model_size: str = "large-v3"
 
     # OUTPUT
-    working_dir: str = field(default_factory=get_default_working_directory)
+    working_dir: Optional[str] = field(default_factory=get_default_working_directory)
 
     output_dir: str = "."
+    cache: ArtifactCache = field(init=False)
 
     # INPUT
     source_stream: Optional[AudioSource] = None
@@ -183,6 +185,7 @@ class Config:
         self.configure_latency(stream=self.stream)
 
         self.configure_output_directory(output_dir=self.output_dir, working_dir=self.working_dir)
+        self.configure_artifact_cache()
 
         # Configure model cache and offline mode last so env vars are ready
         self.configure_cache(model_cache_dir=self.model_cache_dir, offline=self.offline)
@@ -239,7 +242,7 @@ class Config:
             self.whisper_patience = 1.0 if stream else 2.0
         return self
 
-    def configure_output_directory(self, output_dir: str, working_dir: str = ""):
+    def configure_output_directory(self, output_dir: str, working_dir: Optional[str] = ""):
         self.output_dir = output_dir
         if not os.path.isdir(self.output_dir):
             os.makedirs(self.output_dir)
@@ -247,12 +250,25 @@ class Config:
 
         # Set the working directory
         self.working_dir = working_dir
-        if self.working_dir == "":
-            self.working_dir = self.output_dir
+        if self.working_dir is None:
+            LOG.info("Working directory disabled; intermediate artifacts will use in-memory cache.")
+            return
 
         if not os.path.isdir(self.working_dir):
             os.makedirs(self.working_dir)
         LOG.info(f"Working directory set to {self.working_dir}")
+
+    def configure_artifact_cache(self) -> None:
+        # pylint: disable=import-outside-toplevel
+        if getattr(self, "cache", None) is None:
+            if self.working_dir is None:
+                from verbatim.cache import InMemoryArtifactCache
+
+                self.cache = InMemoryArtifactCache()
+            else:
+                from verbatim.cache import FileBackedArtifactCache
+
+                self.cache = FileBackedArtifactCache(base_dir=self.working_dir)
 
     def configure_cache(self, model_cache_dir: Optional[str], offline: bool) -> "Config":
         """Configure deterministic cache directories and offline mode.

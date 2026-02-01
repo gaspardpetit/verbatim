@@ -1,0 +1,29 @@
+batch_dir: "C:\\Users\\gpetit\\iCloudDrive\\Downloads"
+batch_dir2: "C:/Users/gpetit/OneDrive - Lavery, de Billy/Documents/Sound Recordings"
+include:
+  filename: ["*.wav", "*.mp3", "*.m4a"]
+ignore: []
+recursive: false
+skip_existing: true
+outdir: "C:\\Users\\gpetit\\iCloudDrive\\Downloads"
+outdir2: "C:/Users/gpetit/OneDrive - Lavery, de Billy/Documents/Sound Recordings"
+output:
+  files: [txt]
+  format:
+    timestamp: minute
+    speaker: change
+    probability: line
+    language: change
+languages: [fr]
+diarize: "pyannote"
+
+profiles:
+  # Stereo wav/mp3: split channels (host on one side), no diarization beyond per-channel labeling
+  - include:
+      filename: ["*.wav", "*.mp3"]
+    # HOST on left channel, diarize on right
+    diarize: "0=channel?speaker=HOST;pyannote"
+  - include:
+      filename: ["*.m4a"]
+    # HOST on left channel, diarize on right
+    diarize: "pyannote"

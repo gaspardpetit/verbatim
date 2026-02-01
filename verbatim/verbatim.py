@@ -710,7 +710,7 @@ class Verbatim:
             if self.state.audio_ts - self.state.window_ts < min_audio_duration_samples:
                 return
 
-            if self.config.debug:
+            if self.config.debug and self.config.working_dir:
                 self.dump_window_to_file(filename=f"{self.state.working_prefix_no_ext}-debug_window.wav")  # Dump current window for debugging
 
             confirmed_words, unconfirmed_words = self.transcribe_window()

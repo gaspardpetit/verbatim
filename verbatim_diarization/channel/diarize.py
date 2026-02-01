@@ -4,10 +4,11 @@ from typing import Optional
 
 import soundfile as sf
 
+from verbatim.cache import ArtifactCache
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.utils import sanitize_uri_component
-from verbatim_files.rttm import Annotation, Segment
-from verbatim_files.vttm import AudioRef, write_vttm
+from verbatim_files.rttm import Annotation, Segment, dumps_rttm
+from verbatim_files.vttm import AudioRef, dumps_vttm
 
 LOG = logging.getLogger(__name__)
 
@@ -15,14 +16,17 @@ LOG = logging.getLogger(__name__)
 class ChannelDiarization(DiarizationStrategy):
     """Treat each channel as a separate speaker without further diarization."""
 
-    def __init__(self, speaker_labels: Optional[dict[int, str]] = None, speaker: str = "SPEAKER_{idx}", offset: int = 0):
+    def __init__(self, *, cache: ArtifactCache, speaker_labels: Optional[dict[int, str]] = None, speaker: str = "SPEAKER_{idx}", offset: int = 0):
+        super().__init__(cache=cache)
         self.speaker_labels = speaker_labels or {}
         self.speaker_pattern = speaker
         self.speaker_offset = offset
 
     def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, out_vttm_file: Optional[str] = None, **kwargs) -> Annotation:
-        audio, sample_rate = sf.read(file_path)
-        audio_info = sf.info(file_path)
+        buffer = self.cache.bytes_io(file_path)
+        audio, sample_rate = sf.read(buffer)
+        buffer.seek(0)
+        audio_info = sf.info(buffer)
         LOG.info("Input file channels: %s, sample rate: %s", audio_info.channels, audio_info.samplerate)
 
         if audio.ndim == 1:
@@ -46,15 +50,11 @@ class ChannelDiarization(DiarizationStrategy):
         annotation = Annotation(segments=segments, file_id=uri)
 
         if out_rttm_file:
-            os.makedirs(os.path.dirname(out_rttm_file) or ".", exist_ok=True)
-            with open(out_rttm_file, "w", encoding="utf-8") as f:
-                for segment, _track, label in annotation.itertracks(yield_label=True):  # pyright: ignore[reportAssignmentType]
-                    f.write(f"SPEAKER {uri} 1 {segment.start:.3f} {segment.duration:.3f} <NA> <NA> {label} <NA> <NA>\n")
+            self.cache.set_text(out_rttm_file, dumps_rttm(annotation))
             LOG.info("Wrote channel diarization to RTTM file: %s", out_rttm_file)
 
         if out_vttm_file:
-            os.makedirs(os.path.dirname(out_vttm_file) or ".", exist_ok=True)
-            write_vttm(out_vttm_file, audio=audio_refs, annotation=annotation)
+            self.cache.set_text(out_vttm_file, dumps_vttm(audio=audio_refs, annotation=annotation))
             LOG.info("Wrote channel diarization to VTTM file: %s", out_vttm_file)
 
         return annotation

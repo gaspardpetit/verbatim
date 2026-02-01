@@ -1,3 +1,4 @@
+import io
 import logging
 import os
 import wave
@@ -6,6 +7,7 @@ from typing import Optional, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
+from verbatim.cache import ArtifactCache
 from verbatim.voices.isolation import VoiceIsolation
 
 from ..audio import format_audio, sample_to_timestr
@@ -23,12 +25,21 @@ class FileAudioStream(AudioStream):
     source: "FileAudioSource"
     stream: wave.Wave_read
 
-    def __init__(self, source: "FileAudioSource", diarization: Optional[Annotation], channel_indices: Optional[list[int]], file_id: Optional[str]):
+    def __init__(
+        self,
+        source: "FileAudioSource",
+        diarization: Optional[Annotation],
+        channel_indices: Optional[list[int]],
+        file_id: Optional[str],
+        cache: ArtifactCache,
+    ):
         super().__init__(start_offset=source.start_sample, diarization=diarization)
         self.source = source
         self.channel_indices = channel_indices
         self.file_id = file_id
-        self.stream = wave.open(self.source.file_path, "rb")
+        self._buffer: Optional[io.BytesIO] = None
+        self._buffer = cache.bytes_io(self.source.file_path)
+        self.stream = wave.open(self._buffer, "rb")
         if self.source.start_sample != 0:
             self.setpos(self.source.start_sample)
 
@@ -87,6 +98,8 @@ class FileAudioStream(AudioStream):
 
     def close(self):
         self.stream.close()
+        if self._buffer is not None:
+            self._buffer.close()
 
     def get_nchannels(self) -> int:
         return self.stream.getnchannels()
@@ -102,6 +115,7 @@ class FileAudioSource(AudioSource):
         self,
         *,
         file: str,
+        cache: ArtifactCache,
         diarization: Optional[Annotation],
         start_sample: int = 0,
         end_sample: Optional[int] = None,
@@ -110,6 +124,7 @@ class FileAudioSource(AudioSource):
         file_id: Optional[str] = None,
     ):
         super().__init__(source_name=file)
+        self.cache = cache
         self.file_path = file
         self.diarization = diarization
         self.channel_indices = channel_indices
@@ -118,7 +133,12 @@ class FileAudioSource(AudioSource):
         file_path_no_ext, file_path_ext = os.path.splitext(self.file_path)
         if file_path_ext in COMPATIBLE_FORMATS:
             # Convert encoded audio to wav
-            wav_file_path = convert_to_wav(input_path=self.file_path, working_prefix_no_ext=file_path_no_ext, preserve_channels=preserve_channels)
+            wav_file_path = convert_to_wav(
+                input_path=self.file_path,
+                working_prefix_no_ext=file_path_no_ext,
+                preserve_channels=preserve_channels,
+                cache=self.cache,
+            )
             self.file_path = wav_file_path
         self.end_sample = end_sample
         self.start_sample = start_sample
@@ -144,4 +164,10 @@ class FileAudioSource(AudioSource):
         return file_path, noise_path
 
     def open(self):
-        return FileAudioStream(source=self, diarization=self.diarization, channel_indices=self.channel_indices, file_id=self.file_id)
+        return FileAudioStream(
+            source=self,
+            diarization=self.diarization,
+            channel_indices=self.channel_indices,
+            file_id=self.file_id,
+            cache=self.cache,
+        )

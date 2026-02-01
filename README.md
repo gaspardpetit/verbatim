@@ -140,11 +140,18 @@ The project is organized to be modular, such that individual components can be u
 ```python
 from verbatim_audio.sources.sourceconfig import SourceConfig
 from verbatim_audio.sources.factory import create_audio_source
-source = create_audio_source(input_source="ext/samples/audio/1ch_2spk_en-fr_AirFrance_00h03m54s.wav", device="cuda", source_config=SourceConfig(diarize=2))
-
 from verbatim.config import Config
+
+config = Config(lang=["en", "fr"], output_dir="out")
+source = create_audio_source(
+    input_source="ext/samples/audio/1ch_2spk_en-fr_AirFrance_00h03m54s.wav",
+    device="cuda",
+    cache=config.cache,
+    source_config=SourceConfig(diarize=2),
+)
+
 from verbatim.verbatim import Verbatim
-verbatim = Verbatim(config=Config(lang=["en", "fr"], output_dir="out"))
+verbatim = Verbatim(config=config)
 
 with source.open() as stream:
     for utterance, _unack_utterance, _unconfirmed_word in verbatim.transcribe(audio_stream=stream):

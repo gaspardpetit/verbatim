@@ -21,6 +21,7 @@ def build_audio_sources(
     return create_audio_sources(
         source_config=source_config,
         device=config.device,
+        cache=config.cache,
         input_source=source_path,
         start_time=args.start_time,
         stop_time=args.stop_time,

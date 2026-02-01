@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from verbatim_files.rttm import load_rttm, write_rttm
+from verbatim_files.rttm import load_rttm, write_rttm_file
 
 
 class TestPyannoteRTTMInterop(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestPyannoteRTTMInterop(unittest.TestCase):
                 fh.write("\n".join(rttm_lines) + "\n")
 
             annotation = load_rttm(src)
-            write_rttm(annotation, dst)
+            write_rttm_file(annotation, dst)
 
             # Load again to confirm it stays parseable
             parsed = load_rttm(dst)

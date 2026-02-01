@@ -2,6 +2,7 @@ import logging
 import os
 from typing import Optional
 
+from verbatim.cache import ArtifactCache
 from verbatim_files.rttm import Annotation, load_rttm, loads_rttm
 
 from .diarize.factory import create_diarizer
@@ -13,9 +14,10 @@ UNKNOWN_SPEAKER = "SPEAKER"
 
 
 class Diarization:
-    def __init__(self, device: str, huggingface_token: str):
+    def __init__(self, *, device: str, huggingface_token: str, cache: ArtifactCache):
         self.device = device
         self.huggingface_token = huggingface_token
+        self.cache = cache
         self.diarizer = None
 
     def __enter__(self) -> "Diarization":
@@ -54,15 +56,12 @@ class Diarization:
         """
         Compute diarization using the specified strategy.
 
-        # dump the diarization output to disk using RTTM format
-        with open(out_rttm_file, "w", encoding="utf-8") as rttm:
-            diarization.write_rttm(rttm)
         Args:
             file_path: Path to audio file
             out_rttm_file: Output RTTM file path
             strategy: Diarization strategy to use ('pyannote', 'energy', or 'channel')
             **kwargs: Strategy-specific parameters
         """
-        self.diarizer = create_diarizer(strategy=strategy, device=self.device, huggingface_token=self.huggingface_token)
+        self.diarizer = create_diarizer(strategy=strategy, device=self.device, huggingface_token=self.huggingface_token, cache=self.cache)
 
         return self.diarizer.compute_diarization(file_path=file_path, out_rttm_file=out_rttm_file, **kwargs)
