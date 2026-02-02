@@ -1,6 +1,5 @@
 import logging
 import sys
-from typing import List
 
 LOG = logging.getLogger(__name__)
 
@@ -13,17 +12,12 @@ def main():
     from verbatim_cli.args import build_parser
     from verbatim_cli.config_file import load_config_file, merge_args, select_profile
     from verbatim_cli.configure import (
-        build_output_formats,
-        build_prefixes,
         compute_log_level,
         make_config,
-        make_source_config,
-        make_write_config,
-        preflight_config,
         resolve_speakers,
     )
     from verbatim_cli.env import load_env_file
-    from verbatim_cli.run_single import build_audio_sources, run_execute
+    from verbatim_cli.run_single import run_single_input
 
     parser = build_parser(prog="verbatim")
     base_defaults: Namespace = parser.parse_args([])
@@ -73,19 +67,7 @@ def main():
         status_log.info("Model prefetch complete.")
         return
 
-    config.read_to_cache(
-        input_path=args.input,
-        vttm_path=args.vttm,
-        rttm_path=args.diarization,
-    )
-
     source_path = args.input
-    output_prefix_no_ext, working_prefix_no_ext = build_prefixes(config, source_path)
-
-    write_config = make_write_config(args, log_level)
-
-    output_formats = build_output_formats(args)
-
     speakers = resolve_speakers(args)
 
     status_log.info(
@@ -96,28 +78,12 @@ def main():
         args.diarization,
     )
 
-    source_config = make_source_config(args, speakers)
-    if not preflight_config(config=config, source_config=source_config, args=args, output_formats=output_formats):
-        return
-
-    audio_sources: List = build_audio_sources(
+    run_single_input(
         args=args,
-        config=config,
-        source_config=source_config,
-        source_path=source_path,
-        working_prefix_no_ext=working_prefix_no_ext,
-        output_prefix_no_ext=output_prefix_no_ext,
-    )
-
-    run_execute(
+        log_level=log_level,
         source_path=source_path,
         config=config,
-        write_config=write_config,
-        audio_sources=audio_sources,
-        output_formats=output_formats,
-        output_prefix_no_ext=output_prefix_no_ext,
-        working_prefix_no_ext=working_prefix_no_ext,
-        eval_file=args.eval,
+        default_stdout=True,
     )
 
 
