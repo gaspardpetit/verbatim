@@ -73,6 +73,12 @@ def main():
         status_log.info("Model prefetch complete.")
         return
 
+    config.read_to_cache(
+        input_path=args.input,
+        vttm_path=args.vttm,
+        rttm_path=args.diarization,
+    )
+
     source_path = args.input
     output_prefix_no_ext, working_prefix_no_ext = build_prefixes(config, source_path)
 
@@ -91,7 +97,7 @@ def main():
     )
 
     source_config = make_source_config(args, speakers)
-    if not preflight_config(config=config, source_config=source_config, args=args):
+    if not preflight_config(config=config, source_config=source_config, args=args, output_formats=output_formats):
         return
 
     audio_sources: List = build_audio_sources(

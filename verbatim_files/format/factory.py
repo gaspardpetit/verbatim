@@ -13,18 +13,24 @@ def configure_writers(
 ) -> MultiFileFormatter:
     # pylint: disable=import-outside-toplevel
     formatters: List[FileFormatter] = []
-    use_stdout = "stdout" in output_formats
+    use_stdout = "stdout" in output_formats or "stdout-nocolor" in output_formats
+    stdout_nocolor = "stdout-nocolor" in output_formats
     if use_stdout:
-        selected_formats = [fmt for fmt in output_formats if fmt != "stdout"]
+        selected_formats = [fmt for fmt in output_formats if fmt not in ("stdout", "stdout-nocolor")]
         if len(selected_formats) != 1:
             raise ValueError("stdout output requires exactly one selected output format")
         stdout_output = sys.stdout.buffer
 
     if "txt" in output_formats:
+        from .stdout import StdoutTranscriptWriter
         from .txt import TextTranscriptWriter
 
         if use_stdout:
-            formatters.append(FileFormatter(writer=TextTranscriptWriter(config=write_config), output=stdout_output, close_output=False))
+            if stdout_nocolor:
+                writer = StdoutTranscriptWriter(config=write_config, with_colours=False)
+            else:
+                writer = StdoutTranscriptWriter(config=write_config, with_colours=True)
+            formatters.append(FileFormatter(writer=writer, output=stdout_output, close_output=False))
         else:
             formatters.append(FileFormatter(writer=TextTranscriptWriter(config=write_config), output_path=f"{output_prefix_no_ext}.txt"))
 

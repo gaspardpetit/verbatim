@@ -64,5 +64,8 @@
 ## Security & Configuration Tips
 - Diarization models require `HUGGINGFACE_TOKEN`. Provide via env or `.env` (e.g., `HUGGINGFACE_TOKEN=hf_***`). Do not commit secrets.
 - Ensure all intermediate transcription artifacts (RTTM/VTTM, temp audio, partial transcripts, etc.) are written through the artifact cache (not directly to disk) so server deployments do not leak confidential files. Model downloads/caches are excluded.
+- Cache policy (pipeline vs. setup):
+  - Out-of-pipeline (setup/preload): reading from the filesystem is allowed to populate the artifact cache.
+  - In-pipeline (processing/transforms/diarization/transcription): consume inputs via the cache interface; avoid direct filesystem reads unless explicitly allowed by the runtime mode or cache backend.
 - For live mic on macOS/Linux, install PortAudio.
 - Offline runs: prefer Docker with `--network none`. GPU users may need CUDA-specific PyTorch wheels (see `BUILD.md`).

@@ -16,7 +16,7 @@ from verbatim_files.rttm import Segment, dumps_rttm, rttm_to_vttm
 from verbatim_files.vttm import AudioRef, dumps_vttm, loads_vttm, normalize_channel_spec
 
 from ..audio import samples_to_seconds, timestr_to_samples
-from ..convert import convert_to_wav
+from ..convert import convert_bytes_to_wav
 from .audiosource import AudioSource
 from .sourceconfig import SourceConfig
 
@@ -463,17 +463,25 @@ def create_audio_sources(
 
     if os.path.splitext(input_source)[-1] != ".wav":
         if not (not stream and (source_config.isolate is not None or preserve_for_diarization)):
+            input_bytes = cache.get_bytes(input_source)
+            if not input_bytes:
+                raise RuntimeError(f"Cached bytes missing for input '{input_source}'. Populate the artifact cache before invoking the CLI.")
             return [
                 PyAVAudioSource(
                     file_path=input_source,
+                    file_obj=io.BytesIO(input_bytes),
                     start_time=samples_to_seconds(start_sample),
                     end_time=samples_to_seconds(stop_sample) if stop_sample else None,
                     preserve_channels=preserve_for_diarization,
                 )
             ]
 
-        input_source = convert_to_wav(
-            input_path=input_source,
+        input_bytes = cache.get_bytes(input_source)
+        if not input_bytes:
+            raise RuntimeError(f"Cached bytes missing for input '{input_source}'. Populate the artifact cache before invoking the CLI.")
+        input_source = convert_bytes_to_wav(
+            input_bytes=input_bytes,
+            input_label=input_source,
             working_prefix_no_ext=working_prefix_no_ext,
             preserve_channels=preserve_for_diarization,
             cache=cache,
@@ -590,8 +598,12 @@ def create_audio_sources(
             cache.get_bytes(file_path)
             if os.path.splitext(file_path)[-1] != ".wav":
                 # Ensure channel selection is preserved by converting to wav
-                file_path = convert_to_wav(
-                    input_path=file_path,
+                input_bytes = cache.get_bytes(file_path)
+                if not input_bytes:
+                    raise RuntimeError(f"Cached bytes missing for input '{file_path}'. Populate the artifact cache before invoking the CLI.")
+                file_path = convert_bytes_to_wav(
+                    input_bytes=input_bytes,
+                    input_label=file_path,
                     working_prefix_no_ext=f"{working_prefix_no_ext}-{audio_ref.id}",
                     preserve_channels=True,
                     cache=cache,
@@ -639,8 +651,12 @@ def create_joint_speaker_sources(
     # pylint: disable=import-outside-toplevel
 
     if os.path.splitext(input_source)[-1] != ".wav":
-        converted_input_source = convert_to_wav(
-            input_path=input_source,
+        input_bytes = cache.get_bytes(input_source)
+        if not input_bytes:
+            raise RuntimeError(f"Cached bytes missing for input '{input_source}'. Populate the artifact cache before invoking the CLI.")
+        converted_input_source = convert_bytes_to_wav(
+            input_bytes=input_bytes,
+            input_label=input_source,
             working_prefix_no_ext=working_prefix_no_ext,
             preserve_channels=True,
             cache=cache,

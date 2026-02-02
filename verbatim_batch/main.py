@@ -141,7 +141,7 @@ def main():
         write_config = make_write_config(file_args, log_level)
         speakers = resolve_speakers(file_args)
         source_config = make_source_config(file_args, speakers)
-        output_formats = build_output_formats(file_args)
+        output_formats = build_output_formats(file_args, default_stdout=False)
 
         output_prefix_no_ext, working_prefix_no_ext = build_prefixes(config, source_path)
 

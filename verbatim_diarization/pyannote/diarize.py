@@ -68,6 +68,13 @@ class PyAnnoteDiarization(DiarizationStrategy):
         Additional kwargs:
             nb_speakers: Optional number of speakers
         """
+        cache_bytes = self.cache.get_bytes(file_path)
+        cache_len = len(cache_bytes)
+        LOG.debug(
+            "pyannote input probe: path=%s cache_bytes=%s",
+            file_path,
+            cache_len,
+        )
         # pyannote.audio 4.x requires torchcodec; ensure it is ready before pipeline work.
         ensure_torchcodec_audio_decoder("pyannote diarization")
         diarization = None
@@ -77,6 +84,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
 
                 buffer = self.cache.bytes_io(file_path)
                 audio, sample_rate = sf.read(buffer)
+                LOG.debug("pyannote cache decode ok: path=%s sr=%s shape=%s", file_path, sample_rate, getattr(audio, "shape", None))
 
                 if isinstance(audio, np.ndarray) and audio.ndim > 1 and audio.shape[1] > 1:
                     mono = np.mean(audio, axis=1)
@@ -87,9 +95,8 @@ class PyAnnoteDiarization(DiarizationStrategy):
                 if waveform.ndim == 1:
                     waveform = waveform.unsqueeze(0)
                 file_for_pipeline = {"waveform": waveform, "sample_rate": int(sample_rate)}
-            except Exception:
-                # Fallback: let pyannote handle; may fail if multi-channel unsupported
-                file_for_pipeline = file_path
+            except Exception as exc:
+                raise RuntimeError(f"PyAnnote diarization requires cached audio bytes; failed to decode cache for '{file_path}': {exc}") from exc
 
             self.initialize_pipeline()
             pipeline = self.pipeline
