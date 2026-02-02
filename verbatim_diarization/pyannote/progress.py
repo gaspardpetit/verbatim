@@ -21,7 +21,8 @@ class StatusProgressHook:
 
     def __exit__(self, ex_type, ex_value, ex_traceback) -> bool:
         if self._inner is not None:
-            return self._inner.__exit__(ex_type, ex_value, ex_traceback)
+            handled = self._inner.__exit__(ex_type, ex_value, ex_traceback)
+            return bool(handled)
         return False
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
