@@ -68,6 +68,11 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
     parser.add_argument("-s", "--stream", action="store_true", help="Set mode to low latency streaming")
     parser.add_argument("--offline", action="store_true", help="Disallow any network/model downloads; use cache only")
     parser.add_argument("--model-cache", default=None, help="Deterministic cache directory for models and downloads")
+    parser.add_argument(
+        "--whisper-model",
+        default=None,
+        help="Whisper model size or path (e.g., 'large-v3' or 'nyrahealth/faster_CrisperWhisper')",
+    )
     parser.add_argument("--config", help="Path to YAML or JSON config file for defaults")
     parser.add_argument(
         "--install",

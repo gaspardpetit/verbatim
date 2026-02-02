@@ -28,6 +28,8 @@ def make_config(args) -> Config:
         offline=args.offline,
         model_cache_dir=args.model_cache,
     )
+    if getattr(args, "whisper_model", None):
+        config.whisper_model_size = args.whisper_model
     config.lang = args.languages if args.languages else ["en"]
     return config
 
