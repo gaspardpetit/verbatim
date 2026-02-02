@@ -74,6 +74,28 @@ def _hf_models_dir(repo_id: str) -> str:
     return f"models--{parts[0]}--{parts[1]}"
 
 
+def _classify_whisper_model(value: str) -> str:
+    """Classify whisper model as size token, HF repo id, or local path."""
+    model_kind = "size"
+    if not value:
+        model_kind = "unknown"
+    elif os.path.isabs(value):
+        model_kind = "path"
+    elif os.path.exists(value):
+        model_kind = "path"
+    elif value.startswith((".", "~")):
+        model_kind = "path"
+    elif ":" in value:
+        model_kind = "path"
+    elif os.path.altsep and os.path.altsep in value:
+        model_kind = "path"
+    elif "\\" in value:
+        model_kind = "path"
+    elif "/" in value:
+        model_kind = "hf_repo" if value.count("/") == 1 else "path"
+    return model_kind
+
+
 def _resolve_hf_revision(repo_id: str, *, local_dir: Optional[str] = None) -> str:
     """Best-effort resolution of a pinned revision for a HF repo.
 
@@ -132,6 +154,21 @@ def prefetch(
     if include_mlx_whisper is None:
         include_mlx_whisper = sys.platform == "darwin" and platform.machine().lower() in ("arm64", "aarch64")
 
+    model_kind = _classify_whisper_model(whisper_size)
+    if model_kind == "path":
+        LOG.info(
+            "Skipping whisper model prefetch for local/custom path: %s",
+            whisper_size,
+        )
+        include_mlx_whisper = False
+        include_faster_whisper = False
+    elif model_kind == "hf_repo":
+        LOG.info(
+            "Prefetching custom HF whisper repo: %s",
+            whisper_size,
+        )
+        include_mlx_whisper = False
+
     apply_cache_env(model_cache_dir, offline=False)
 
     # Lazy-import huggingface_hub after env is configured so it uses our cache dirs
@@ -186,7 +223,7 @@ def prefetch(
         try:
             cache_root = os.getenv("VERBATIM_MODEL_CACHE")
             download_root = os.path.join(cache_root, "faster-whisper") if cache_root else None
-            fw_repo = f"Systran/faster-whisper-{whisper_size}"
+            fw_repo = f"Systran/faster-whisper-{whisper_size}" if model_kind != "hf_repo" else whisper_size
             fw_rev = _resolve_hf_revision(fw_repo, local_dir=download_root)
 
             if download_root:
