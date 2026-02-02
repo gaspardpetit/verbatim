@@ -76,23 +76,24 @@ def _hf_models_dir(repo_id: str) -> str:
 
 def _classify_whisper_model(value: str) -> str:
     """Classify whisper model as size token, HF repo id, or local path."""
+    model_kind = "size"
     if not value:
-        return "unknown"
-    if os.path.isabs(value):
-        return "path"
-    if os.path.exists(value):
-        return "path"
-    if value.startswith((".", "~")):
-        return "path"
-    if ":" in value:
-        return "path"
-    if os.path.altsep and os.path.altsep in value:
-        return "path"
-    if "\\" in value:
-        return "path"
-    if "/" in value:
-        return "hf_repo" if value.count("/") == 1 else "path"
-    return "size"
+        model_kind = "unknown"
+    elif os.path.isabs(value):
+        model_kind = "path"
+    elif os.path.exists(value):
+        model_kind = "path"
+    elif value.startswith((".", "~")):
+        model_kind = "path"
+    elif ":" in value:
+        model_kind = "path"
+    elif os.path.altsep and os.path.altsep in value:
+        model_kind = "path"
+    elif "\\" in value:
+        model_kind = "path"
+    elif "/" in value:
+        model_kind = "hf_repo" if value.count("/") == 1 else "path"
+    return model_kind
 
 
 def _resolve_hf_revision(repo_id: str, *, local_dir: Optional[str] = None) -> str:
