@@ -41,6 +41,8 @@ class TestPipeline(unittest.TestCase):
             raise FileNotFoundError(f"No audio file found with name '{name}'")
         audio_path = f"{samples_dir}/{filename}"
         print(audio_path)
+        with open(audio_path, "rb") as audio_file:
+            audio_bytes = audio_file.read()
 
         # Find reference file
         base_name = filename.split(".")[0][:-10]  # also exclude the duration timestamp at the end
@@ -70,6 +72,7 @@ class TestPipeline(unittest.TestCase):
 
         # Initialize and run transcription (use cpu)
         config = Config(device="cpu").configure_languages(languages)
+        config.cache.set_bytes(audio_path, audio_bytes)
         sources = create_audio_sources(input_source=audio_path, device=config.device, cache=config.cache)
         source = sources[0]
         verbatim = Verbatim(config=config)

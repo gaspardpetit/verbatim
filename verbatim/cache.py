@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import logging
 import os
 from dataclasses import dataclass, field
 from threading import Lock
@@ -41,6 +42,9 @@ class BaseArtifactCache(ArtifactCache):
         raise NotImplementedError
 
 
+LOG = logging.getLogger(__name__)
+
+
 @dataclass
 class InMemoryArtifactCache(BaseArtifactCache):
     _text: Dict[str, str] = field(default_factory=dict)
@@ -49,24 +53,40 @@ class InMemoryArtifactCache(BaseArtifactCache):
 
     def get_text(self, key: str) -> str:
         with self._lock:
-            return self._text.get(key, "")
+            value = self._text.get(key, "")
+            if LOG.isEnabledFor(logging.DEBUG):
+                LOG.debug("cache.get_text key=%s hit=%s size=%s", key, bool(value), len(value))
+                if not value:
+                    LOG.debug("cache.get_text_miss keys=%s", list(self._text.keys()))
+            return value
 
     def set_text(self, key: str, value: str) -> None:
         with self._lock:
             self._text[key] = value
+            if LOG.isEnabledFor(logging.DEBUG):
+                LOG.debug("cache.set_text key=%s size=%s", key, len(value))
 
     def get_bytes(self, key: str) -> bytes:
         with self._lock:
-            return self._bytes.get(key, b"")
+            value = self._bytes.get(key, b"")
+            if LOG.isEnabledFor(logging.DEBUG):
+                LOG.debug("cache.get_bytes key=%s hit=%s size=%s", key, bool(value), len(value))
+                if not value:
+                    LOG.debug("cache.get_bytes_miss keys=%s", list(self._bytes.keys()))
+            return value
 
     def set_bytes(self, key: str, value: bytes) -> None:
         with self._lock:
             self._bytes[key] = value
+            if LOG.isEnabledFor(logging.DEBUG):
+                LOG.debug("cache.set_bytes key=%s size=%s", key, len(value))
 
     def delete(self, key: str) -> None:
         with self._lock:
             self._text.pop(key, None)
             self._bytes.pop(key, None)
+            if LOG.isEnabledFor(logging.DEBUG):
+                LOG.debug("cache.delete key=%s", key)
 
 
 @dataclass
@@ -93,20 +113,28 @@ class FileBackedArtifactCache(InMemoryArtifactCache):
             return cached
         path = self._resolve_path(key)
         if not path or not os.path.exists(path):
+            if LOG.isEnabledFor(logging.DEBUG):
+                LOG.debug("cache.get_text_miss_disk key=%s resolved=%s exists=%s", key, path, bool(path and os.path.exists(path)))
             return ""
         with open(path, "r", encoding="utf-8") as fh:
             data = fh.read()
         super().set_text(key, data)
+        if LOG.isEnabledFor(logging.DEBUG):
+            LOG.debug("cache.get_text_disk key=%s path=%s size=%s", key, path, len(data))
         return data
 
     def set_text(self, key: str, value: str) -> None:
         super().set_text(key, value)
         path = self._resolve_path(key)
         if not path:
+            if LOG.isEnabledFor(logging.DEBUG):
+                LOG.debug("cache.set_text_skip key=%s reason=no_path", key)
             return
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
         with open(path, "w", encoding="utf-8") as fh:
             fh.write(value)
+        if LOG.isEnabledFor(logging.DEBUG):
+            LOG.debug("cache.set_text_disk key=%s path=%s size=%s", key, path, len(value))
 
     def get_bytes(self, key: str) -> bytes:
         cached = super().get_bytes(key)
@@ -114,27 +142,39 @@ class FileBackedArtifactCache(InMemoryArtifactCache):
             return cached
         path = self._resolve_path(key)
         if not path or not os.path.exists(path):
+            if LOG.isEnabledFor(logging.DEBUG):
+                LOG.debug("cache.get_bytes_miss_disk key=%s resolved=%s exists=%s", key, path, bool(path and os.path.exists(path)))
             return b""
         with open(path, "rb") as fh:
             data = fh.read()
         super().set_bytes(key, data)
+        if LOG.isEnabledFor(logging.DEBUG):
+            LOG.debug("cache.get_bytes_disk key=%s path=%s size=%s", key, path, len(data))
         return data
 
     def set_bytes(self, key: str, value: bytes) -> None:
         super().set_bytes(key, value)
         path = self._resolve_path(key)
         if not path:
+            if LOG.isEnabledFor(logging.DEBUG):
+                LOG.debug("cache.set_bytes_skip key=%s reason=no_path", key)
             return
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
         with open(path, "wb") as fh:
             fh.write(value)
+        if LOG.isEnabledFor(logging.DEBUG):
+            LOG.debug("cache.set_bytes_disk key=%s path=%s size=%s", key, path, len(value))
 
     def delete(self, key: str) -> None:
         super().delete(key)
         path = self._resolve_path(key)
         if not path or not os.path.exists(path):
+            if LOG.isEnabledFor(logging.DEBUG):
+                LOG.debug("cache.delete_skip key=%s resolved=%s exists=%s", key, path, bool(path and os.path.exists(path)))
             return
         try:
             os.remove(path)
+            if LOG.isEnabledFor(logging.DEBUG):
+                LOG.debug("cache.delete_disk key=%s path=%s", key, path)
         except OSError:
             pass

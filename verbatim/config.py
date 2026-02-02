@@ -333,3 +333,45 @@ class Config:
                 LOG.warning(f"Could not prepare Hugging Face cache under {model_cache_dir}")
 
         return self
+
+    def read_to_cache(
+        self,
+        *,
+        input_path: Optional[str],
+        vttm_path: Optional[str] = None,
+        rttm_path: Optional[str] = None,
+    ) -> None:
+        """Populate the artifact cache from disk paths provided by the CLI."""
+        if self.cache is None:
+            return
+
+        def _read_bytes(path: str) -> None:
+            if not os.path.isfile(path):
+                LOG.warning("Cache preload skipped; file not found: %s", path)
+                return
+            try:
+                with open(path, "rb") as fh:
+                    self.cache.set_bytes(path, fh.read())
+                STATUS_LOG.info("Cache preloaded bytes: %s", path)
+            except OSError as exc:
+                LOG.warning("Cache preload failed for %s: %s", path, exc)
+
+        def _read_text(path: str) -> None:
+            if not os.path.isfile(path):
+                LOG.warning("Cache preload skipped; file not found: %s", path)
+                return
+            try:
+                with open(path, "r", encoding="utf-8") as fh:
+                    self.cache.set_text(path, fh.read())
+                STATUS_LOG.info("Cache preloaded text: %s", path)
+            except OSError as exc:
+                LOG.warning("Cache preload failed for %s: %s", path, exc)
+
+        if input_path not in (None, "", "-", ">"):
+            _read_bytes(input_path)
+
+        if vttm_path not in (None, ""):
+            _read_text(vttm_path)
+
+        if rttm_path not in (None, ""):
+            _read_text(rttm_path)

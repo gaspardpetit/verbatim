@@ -13,12 +13,9 @@ from verbatim_cli.configure import (
     build_prefixes,
     compute_log_level,
     make_config,
-    make_source_config,
-    make_write_config,
-    resolve_speakers,
 )
 from verbatim_cli.env import load_env_file
-from verbatim_cli.run_single import build_audio_sources, run_execute
+from verbatim_cli.run_single import run_single_input
 
 LOG = logging.getLogger(__name__)
 
@@ -138,10 +135,7 @@ def main():
         file_args = merge_args(base_defaults, {**global_profile, **profile}, user_args)
 
         config = make_config(file_args)
-        write_config = make_write_config(file_args, log_level)
-        speakers = resolve_speakers(file_args)
-        source_config = make_source_config(file_args, speakers)
-        output_formats = build_output_formats(file_args)
+        output_formats = build_output_formats(file_args, default_stdout=False)
 
         output_prefix_no_ext, working_prefix_no_ext = build_prefixes(config, source_path)
 
@@ -151,23 +145,15 @@ def main():
 
         LOG.info("Processing %s", source_path)
         try:
-            audio_sources = build_audio_sources(
+            run_single_input(
                 args=file_args,
-                config=config,
-                source_config=source_config,
+                log_level=log_level,
                 source_path=source_path,
-                working_prefix_no_ext=working_prefix_no_ext,
+                config=config,
                 output_prefix_no_ext=output_prefix_no_ext,
-            )
-            run_execute(
-                source_path=source_path,
-                config=config,
-                write_config=write_config,
-                audio_sources=audio_sources,
+                working_prefix_no_ext=working_prefix_no_ext,
                 output_formats=output_formats,
-                output_prefix_no_ext=output_prefix_no_ext,
-                working_prefix_no_ext=working_prefix_no_ext,
-                eval_file=file_args.eval,
+                default_stdout=False,
             )
         except Exception:  # pylint: disable=broad-exception-caught
             LOG.exception("Failed to process %s", source_path)

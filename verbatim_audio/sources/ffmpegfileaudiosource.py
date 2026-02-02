@@ -1,6 +1,7 @@
 import logging
 import math
-from typing import Optional
+import os
+from typing import BinaryIO, Optional
 
 # pylint: disable=c-extension-no-member
 import av
@@ -32,8 +33,12 @@ class PyAVAudioStream(AudioStream):
         self._closed = False
         self._done_decoding = False
 
-        LOG.debug("Opening file with PyAV: %s", self.source.file_path)
-        self._container = av.open(self.source.file_path)
+        if self.source.file_obj is not None:
+            LOG.debug("Opening cached bytes with PyAV: %s", self.source.file_path)
+            self._container = av.open(self.source.file_obj, format=self.source.format_hint)
+        else:
+            LOG.debug("Opening file with PyAV: %s", self.source.file_path)
+            self._container = av.open(self.source.file_path)
 
         # Find the first audio stream (or choose a specific one if needed)
         audio_streams = [s for s in self._container.streams if s.type == "audio"]
@@ -213,6 +218,7 @@ class PyAVAudioSource(AudioSource):
         self,
         *,
         file_path: str,
+        file_obj: Optional[BinaryIO] = None,
         target_sample_rate: int = 16000,
         start_time: float = 0.0,
         end_time: Optional[float] = None,
@@ -220,6 +226,7 @@ class PyAVAudioSource(AudioSource):
     ):
         """
         :param file_path: Path/URL to audio file
+        :param file_obj: File-like object containing encoded audio bytes
         :param target_sample_rate: Desired sample rate for output (e.g. 16k)
         :param start_time: Seek to this time (seconds) before reading
         :param end_time: Stop reading after this time (seconds) from start
@@ -227,10 +234,22 @@ class PyAVAudioSource(AudioSource):
         """
         super().__init__(source_name=file_path)
         self.file_path = file_path
+        self.file_obj = file_obj
         self.target_sample_rate = target_sample_rate
         self.start_time = start_time
         self.end_time = end_time
         self.preserve_channels = preserve_channels
+        self.format_hint = None
+        if self.file_obj is not None:
+            ext = os.path.splitext(self.file_path)[-1].lstrip(".").lower()
+            if ext:
+                format_map = {
+                    "m4a": "mp4",
+                    "m4b": "mp4",
+                    "m4p": "mp4",
+                    "m4v": "mp4",
+                }
+                self.format_hint = format_map.get(ext, ext)
 
     def open(self):
         return PyAVAudioStream(source=self)

@@ -64,10 +64,10 @@ def make_source_config(args, speakers: Optional[int]) -> SourceConfig:
     )
 
 
-def preflight_config(*, config: Config, source_config: SourceConfig, args) -> bool:
-    output_formats = build_output_formats(args)
+def preflight_config(*, config: Config, source_config: SourceConfig, args, output_formats: Optional[List[str]] = None) -> bool:
+    output_formats = output_formats or build_output_formats(args)
     requested_formats = [fmt for fmt in output_formats if fmt != "stdout"]
-    stdout_requested = "stdout" in output_formats
+    stdout_requested = "stdout" in output_formats or "stdout-nocolor" in output_formats
 
     if stdout_requested:
         if len(requested_formats) != 1:
@@ -86,7 +86,7 @@ def preflight_config(*, config: Config, source_config: SourceConfig, args) -> bo
     return True
 
 
-def build_output_formats(args) -> List[str]:
+def build_output_formats(args, *, default_stdout: bool = True) -> List[str]:
     output_formats: List[str] = []
     if args.ass:
         output_formats.append("ass")
@@ -101,7 +101,10 @@ def build_output_formats(args) -> List[str]:
     if args.json:
         output_formats.append("json")
     if args.outdir == "-":
-        output_formats.append("stdout")
+        output_formats.append("stdout-nocolor" if args.stdout_nocolor else "stdout")
+    if default_stdout and not output_formats and args.outdir != "-" and not args.quiet:
+        output_formats.append("txt")
+        output_formats.append("stdout-nocolor" if args.stdout_nocolor else "stdout")
     return output_formats
 
 

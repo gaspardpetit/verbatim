@@ -90,6 +90,11 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
     parser.add_argument("--md", action="store_true", help="Enable Markdown (MD) output")
     parser.add_argument("--quiet", action="store_true", help="Disable stdout transcript output (deprecated)")
     parser.add_argument(
+        "--stdout-nocolor",
+        action="store_true",
+        help="Disable ANSI colors in default stdout output",
+    )
+    parser.add_argument(
         "--format-timestamp",
         type=lambda s: TimestampStyle[s],
         choices=list(TimestampStyle),
