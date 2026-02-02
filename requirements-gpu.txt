@@ -15,14 +15,8 @@ aiosignal==1.4.0
     # via aiohttp
 alembic==1.18.3
     # via optuna
-annotated-types==0.7.0
-    # via pydantic
 antlr4-python3-runtime==4.9.3
     # via omegaconf
-anyio==4.12.1
-    # via
-    #   httpx
-    #   openai
 asteroid==0.5.2
     # via pyannote-audio
 asteroid-filterbanks==0.4.0
@@ -50,10 +44,7 @@ cached-property==2.0.1
     #   pb-bss-eval
     #   wtpsplit
 certifi==2026.1.4
-    # via
-    #   httpcore
-    #   httpx
-    #   requests
+    # via requests
 cffi==2.0.0
     # via
     #   samplerate
@@ -90,8 +81,6 @@ cython==3.2.4
     #   diffq-fixed
 dataclasses-json==0.6.7
     # via verbatim
-datasets==4.5.0
-    # via verbatim
 decorator==5.2.1
     # via
     #   librosa
@@ -102,13 +91,8 @@ diffq==0.2.4 ; sys_platform != 'win32'
     # via audio-separator
 diffq-fixed==0.2.4 ; sys_platform == 'win32'
     # via audio-separator
-dill==0.4.0
-    # via
-    #   datasets
-    #   multiprocess
-    #   pylint
-distro==1.9.0
-    # via openai
+dill==0.4.1
+    # via pylint
 docopt==0.6.2
     # via mosestokenizer
 dora-search==0.1.12
@@ -121,14 +105,11 @@ einops==0.8.2
     #   pyannote-audio
     #   rotary-embedding-torch
 exceptiongroup==1.3.1 ; python_full_version < '3.11'
-    # via
-    #   anyio
-    #   pytest
+    # via pytest
 faster-whisper==1.2.1
     # via verbatim
 filelock==3.20.3
     # via
-    #   datasets
     #   huggingface-hub
     #   pyannote-pipeline
     #   torch
@@ -143,9 +124,8 @@ frozenlist==1.8.0
     # via
     #   aiohttp
     #   aiosignal
-fsspec==2025.10.0
+fsspec==2026.1.0
     # via
-    #   datasets
     #   huggingface-hub
     #   lightning
     #   pytorch-lightning
@@ -162,20 +142,11 @@ grpcio==1.76.0
     # via
     #   opentelemetry-exporter-otlp-proto-grpc
     #   tensorboard
-h11==0.16.0
-    # via httpcore
 hf-xet==1.2.0 ; platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'
     # via huggingface-hub
-httpcore==1.0.9
-    # via httpx
-httpx==0.28.1
-    # via
-    #   datasets
-    #   openai
 huggingface-hub==0.36.0
     # via
     #   asteroid
-    #   datasets
     #   faster-whisper
     #   mlx-whisper
     #   pyannote-audio
@@ -186,8 +157,6 @@ humanfriendly==10.0
     # via coloredlogs
 idna==3.11
     # via
-    #   anyio
-    #   httpx
     #   requests
     #   yarl
 importlib-metadata==8.7.1
@@ -198,8 +167,6 @@ isort==7.0.0
     # via pylint
 jinja2==3.1.6
     # via torch
-jiter==0.12.0
-    # via openai
 joblib==1.5.3
     # via
     #   librosa
@@ -275,8 +242,6 @@ multidict==6.7.1
     # via
     #   aiohttp
     #   yarl
-multiprocess==0.70.18
-    # via datasets
 mypy-extensions==1.1.0
     # via typing-inspect
 networkx==3.4.2 ; python_full_version < '3.11'
@@ -296,7 +261,6 @@ numpy==2.2.6 ; python_full_version < '3.11'
     #   audio-separator
     #   contourpy
     #   ctranslate2
-    #   datasets
     #   diffq
     #   diffq-fixed
     #   librosa
@@ -339,7 +303,6 @@ numpy==2.3.5 ; python_full_version >= '3.11'
     #   audio-separator
     #   contourpy
     #   ctranslate2
-    #   datasets
     #   diffq
     #   diffq-fixed
     #   librosa
@@ -427,8 +390,6 @@ onnxruntime==1.19.2
     #   verbatim
 onnxruntime-gpu==1.19.2
     # via verbatim
-openai==2.16.0
-    # via verbatim
 openfile==0.0.7
     # via mosestokenizer
 opentelemetry-api==1.39.1
@@ -467,7 +428,6 @@ optuna==4.7.0
 packaging==26.0
     # via
     #   adapters
-    #   datasets
     #   huggingface-hub
     #   lazy-loader
     #   lightning
@@ -490,7 +450,6 @@ packaging==26.0
 pandas==2.3.3 ; python_full_version < '3.11'
     # via
     #   asteroid
-    #   datasets
     #   pyannote-core
     #   pyannote-database
     #   pyannote-metrics
@@ -498,7 +457,6 @@ pandas==2.3.3 ; python_full_version < '3.11'
 pandas==3.0.0 ; python_full_version >= '3.11'
     # via
     #   asteroid
-    #   datasets
     #   pyannote-core
     #   pyannote-database
     #   pyannote-metrics
@@ -558,16 +516,10 @@ pyannote-pipeline==4.0.0
     # via pyannote-audio
 pyannoteai-sdk==0.4.0
     # via pyannote-audio
-pyarrow==23.0.0
-    # via datasets
 pyaudio==0.2.14
     # via verbatim
 pycparser==3.0 ; implementation_name != 'PyPy'
     # via cffi
-pydantic==2.12.5
-    # via openai
-pydantic-core==2.41.5
-    # via pydantic
 pydeprecate==0.3.1
     # via pytorch-lightning
 pydub==0.25.1
@@ -613,7 +565,6 @@ pyyaml==6.0.3
     #   asteroid
     #   audio-separator
     #   ctranslate2
-    #   datasets
     #   demucs
     #   huggingface-hub
     #   lightning
@@ -632,7 +583,6 @@ regex==2026.1.15
 requests==2.32.5
     # via
     #   audio-separator
-    #   datasets
     #   huggingface-hub
     #   opentelemetry-exporter-otlp-proto-http
     #   pooch
@@ -644,7 +594,7 @@ resampy==0.4.3
     # via audio-separator
 retrying==1.4.2
     # via dora-search
-rich==14.3.1
+rich==14.3.2
     # via pyannote-audio
 rotary-embedding-torch==0.6.5
     # via audio-separator
@@ -706,8 +656,6 @@ six==1.17.0
     #   python-dateutil
 skops==0.13.0
     # via wtpsplit
-sniffio==1.3.1
-    # via openai
 sortedcontainers==2.4.0
     # via pyannote-core
 sounddevice==0.5.5
@@ -736,8 +684,6 @@ tensorboard==2.20.0
     # via pytorch-lightning
 tensorboard-data-server==0.7.2
     # via tensorboard
-termcolor==3.3.0
-    # via verbatim
 threadpoolctl==3.6.0
     # via scikit-learn
 tiktoken==0.12.0 ; sys_platform == 'darwin'
@@ -814,13 +760,11 @@ torchvision==0.23.0
 tqdm==4.67.2
     # via
     #   audio-separator
-    #   datasets
     #   demucs
     #   faster-whisper
     #   huggingface-hub
     #   lightning
     #   mlx-whisper
-    #   openai
     #   openunmix
     #   optuna
     #   pyannote-pipeline
@@ -842,7 +786,6 @@ typing-extensions==4.15.0
     # via
     #   aiosignal
     #   alembic
-    #   anyio
     #   asteroid-filterbanks
     #   astroid
     #   exceptiongroup
@@ -853,25 +796,19 @@ typing-extensions==4.15.0
     #   lightning-utilities
     #   multidict
     #   onnx-weekly
-    #   openai
     #   opentelemetry-api
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-    #   pydantic
-    #   pydantic-core
     #   python-docx
     #   pytorch-lightning
     #   sqlalchemy
     #   submitit
     #   torch
     #   typing-inspect
-    #   typing-inspection
 typing-inspect==0.9.0
     # via dataclasses-json
-typing-inspection==0.4.2
-    # via pydantic
 tzdata==2025.3 ; python_full_version < '3.11' or sys_platform == 'emscripten' or sys_platform == 'win32'
     # via pandas
 uctools==1.3.0
@@ -888,8 +825,6 @@ word-levenshtein==0.0.3
     # via verbatim
 wtpsplit==2.1.7
     # via verbatim
-xxhash==3.6.0
-    # via datasets
 yarl==1.22.0
     # via aiohttp
 zipp==3.23.0

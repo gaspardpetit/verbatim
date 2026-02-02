@@ -2,7 +2,7 @@ import argparse
 import json
 import logging
 
-from verbatim.eval.diarizationlm.metrics import calculate_metrics, format_metrics
+from verbatim.eval.diarization_metrics import calculate_metrics, format_metrics
 
 LOG = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ def main():
     with open(args.hyp_json, "r", encoding="utf-8") as f:
         hyp_data = json.load(f)
 
-    # Calculate metrics before DiarizationLM
+    # Calculate metrics
     print("Calculating metrics...")
     metrics = calculate_metrics(hyp_data.copy(), ref_data)
     print(format_metrics(metrics))

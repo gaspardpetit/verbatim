@@ -11,7 +11,7 @@ import tqdm
 import word_levenshtein as levenshtein
 from scipy import optimize
 
-from . import utils
+from . import diarization_utils as utils
 
 LOG = logging.getLogger(__name__)
 
