@@ -1,0 +1,22 @@
+{
+  "utterances": [
+    {
+      "utterance_id": "en_0638",
+      "hyp_text": "hello good morning how are you",
+      "hyp_spk": "1 1 1 2 2 2",
+      "hyp_spk_oracle": "1 1 1 2 2 2",
+      "ref_text": "Hello. Good morning, how are you?",
+      "ref_spk": "2 2 2 2 1 1",
+      "ref_spk_degraded": "2 2 2 2 1 1"
+    },
+    {
+      "utterance_id": "en_4157",
+      "hyp_text": "a b c d e f g h",
+      "hyp_spk": "1 1 1 2 2 2 3 2",
+      "hyp_spk_oracle": "1 1 1 2 2 2 3 2",
+      "ref_text": "a bb c e f gg g h ii",
+      "ref_spk": "2 2 2 2 3 3 4 3 2",
+      "ref_spk_degraded": "2 2 2 2 3 3 4 3 2"
+    }
+  ]
+}

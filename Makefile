@@ -2,6 +2,14 @@
 
 PYTHON ?= 3.11
 
+ifeq ($(OS),Windows_NT)
+PYTEST_CMD = cmd /C "set CUDA_VISIBLE_DEVICES=-1&& pytest -q"
+PYTEST_CMD_CI = cmd /C "set CUDA_VISIBLE_DEVICES=-1&& pytest -q -k \"not test_diarization_metrics_long and not SaTSentenceTokenizer\""
+else
+PYTEST_CMD = CUDA_VISIBLE_DEVICES=-1 pytest -q
+PYTEST_CMD_CI = CUDA_VISIBLE_DEVICES=-1 pytest -q -k "not test_diarization_metrics_long and not SaTSentenceTokenizer"
+endif
+
 # Run local static checks. Ensure tools are installed: pip install ruff pylint flake8 bandit pyright
 check: lint type sec
 
@@ -31,12 +39,12 @@ fix:
 # Run test suite (quick)
 .PHONY: test
 test:
-	CUDA_VISIBLE_DEVICES=-1 pytest -q
+	$(PYTEST_CMD)
 
 # Mirror CI fast matrix locally: checks + fast tests
 .PHONY: ci
 ci: check
-	CUDA_VISIBLE_DEVICES=-1 pytest -q -k "not test_diarization_metrics_long and not SaTSentenceTokenizer"
+	$(PYTEST_CMD_CI)
 
 # Build and verify distribution locally (mirrors CI publish steps)
 .PHONY: release
@@ -62,8 +70,15 @@ install-cuda:
 
 .PHONY: docker docker-cpu docker-gpu
 
-VERSION_PY := $(shell git describe --tags --always --dirty \
-  | sed -E 's/^v//; s/-([0-9]+)-g[0-9a-f]+(-dirty)?$$/.post\1\2/; s/-dirty$$/.dev0/')
+VERSION_PY = $(shell python -c "import re, subprocess, sys; \
+try: \
+  d=subprocess.check_output(['git','describe','--tags','--always','--dirty'], stderr=subprocess.DEVNULL).decode().strip(); \
+except Exception: \
+  print('0.0.0'); sys.exit(0); \
+d=re.sub(r'^v','',d); \
+d=re.sub(r'-([0-9]+)-g[0-9a-f]+(-dirty)?$$', r'.post\\1\\2', d); \
+d=re.sub(r'-dirty$$', r'.dev0', d); \
+print(d)") 
 
 docker-cpu:
 	docker build -t verbatim -f deploy/Dockerfile.cpu \

@@ -6,7 +6,7 @@ from typing import Any, List
 import tqdm
 
 from ..transcript.words import Utterance
-from .diarizationlm.metrics import UtteranceMetrics, compute_utterance_metrics
+from .diarization_metrics import UtteranceMetrics, compute_utterance_metrics
 
 
 @dataclass
