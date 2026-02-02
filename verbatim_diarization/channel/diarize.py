@@ -22,7 +22,15 @@ class ChannelDiarization(DiarizationStrategy):
         self.speaker_pattern = speaker
         self.speaker_offset = offset
 
-    def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, out_vttm_file: Optional[str] = None, **kwargs) -> Annotation:
+    def compute_diarization(
+        self,
+        file_path: str,
+        out_rttm_file: Optional[str] = None,
+        out_vttm_file: Optional[str] = None,
+        status_hook=None,
+        **kwargs,
+    ) -> Annotation:
+        _ = status_hook, kwargs
         buffer = self.cache.bytes_io(file_path)
         audio, sample_rate = sf.read(buffer)
         buffer.seek(0)

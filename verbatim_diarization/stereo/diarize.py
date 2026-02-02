@@ -73,7 +73,14 @@ class EnergyDiarization(DiarizationStrategy):
 
         return "UNKNOWN"
 
-    def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, out_vttm_file: Optional[str] = None, **kwargs) -> Annotation:
+    def compute_diarization(
+        self,
+        file_path: str,
+        out_rttm_file: Optional[str] = None,
+        out_vttm_file: Optional[str] = None,
+        status_hook=None,
+        **kwargs,
+    ) -> Annotation:
         """
         Compute diarization based on stereo channel energy differences.
         When total energy difference is small, uses peak energy as a tiebreaker.
@@ -81,6 +88,7 @@ class EnergyDiarization(DiarizationStrategy):
         Additional kwargs:
             segment_duration: Duration of analysis segments in seconds (default: 0.5)
         """
+        _ = status_hook
         buffer = self.cache.bytes_io(file_path)
         audio, sample_rate = sf.read(buffer)
         buffer.seek(0)

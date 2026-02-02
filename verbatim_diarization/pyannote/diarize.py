@@ -16,6 +16,7 @@ from torch.serialization import add_safe_globals
 from verbatim.cache import ArtifactCache
 from verbatim.logging_utils import get_status_logger, status_enabled
 from verbatim_diarization.diarize.base import DiarizationStrategy
+from verbatim_diarization.pyannote.progress import StatusProgressHook
 from verbatim_diarization.pyannote.separate import PyannoteSpeakerSeparation, _build_rttm_annotation
 from verbatim_diarization.pyannote_annotations import to_rttm_annotation
 from verbatim_diarization.utils import sanitize_uri_component
@@ -59,6 +60,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
         file_path: str,
         out_rttm_file: Optional[str] = None,
         out_vttm_file: Optional[str] = None,
+        status_hook=None,
         nb_speakers: Optional[int] = None,
         **kwargs,
     ) -> RTTMAnnotation:
@@ -104,7 +106,16 @@ class PyAnnoteDiarization(DiarizationStrategy):
                 raise RuntimeError("PyAnnote pipeline failed to initialize")
             start = time.perf_counter()
             show_progress = status_enabled()
-            if show_progress:
+            if status_hook is not None:
+                hook = StatusProgressHook(status_hook=status_hook, state_prefix="diarizing", enable_progress=show_progress)
+                if show_progress:
+                    with contextlib.redirect_stdout(sys.stderr):
+                        with hook as hook_ctx:
+                            diarization = pipeline(file_for_pipeline, hook=hook_ctx, num_speakers=nb_speakers)
+                else:
+                    with hook as hook_ctx:
+                        diarization = pipeline(file_for_pipeline, hook=hook_ctx, num_speakers=nb_speakers)
+            elif show_progress:
                 with contextlib.redirect_stdout(sys.stderr):
                     with ProgressHook() as hook:
                         diarization = pipeline(file_for_pipeline, hook=hook, num_speakers=nb_speakers)
@@ -164,6 +175,7 @@ class PyAnnoteSeparationDiarization(DiarizationStrategy):
         file_path: str,
         out_rttm_file: Optional[str] = None,
         out_vttm_file: Optional[str] = None,
+        status_hook=None,
         nb_speakers: Optional[int] = None,
         stem_prefix: Optional[str] = None,
         **kwargs,
@@ -178,6 +190,7 @@ class PyAnnoteSeparationDiarization(DiarizationStrategy):
             file_path=file_path,
             out_speaker_wav_prefix=stem_prefix,
             nb_speakers=nb_speakers,
+            status_hook=status_hook,
         )
         label_to_ref = dict(audio_refs_meta)
         annotation = _build_rttm_annotation(diarization, label_to_ref, uri)

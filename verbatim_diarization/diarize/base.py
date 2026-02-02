@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from verbatim.cache import ArtifactCache
+from verbatim.status_types import StatusHook
 from verbatim_files.rttm import Annotation, dumps_rttm
 
 LOG = logging.getLogger(__name__)
@@ -15,7 +16,14 @@ class DiarizationStrategy(ABC):
         self.cache = cache
 
     @abstractmethod
-    def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, out_vttm_file: Optional[str] = None, **kwargs) -> Annotation:
+    def compute_diarization(
+        self,
+        file_path: str,
+        out_rttm_file: Optional[str] = None,
+        out_vttm_file: Optional[str] = None,
+        status_hook: Optional[StatusHook] = None,
+        **kwargs,
+    ) -> Annotation:
         """
         Compute speaker diarization for the given audio file.
 

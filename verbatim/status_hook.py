@@ -1,33 +1,10 @@
 import sys
-from dataclasses import dataclass
-from typing import BinaryIO, List, Literal, Optional, Protocol
+from typing import BinaryIO, Optional
 
-from verbatim.transcript.words import Utterance, Word
+from verbatim.logging_utils import get_status_logger
+from verbatim.status_types import StatusUpdate
 from verbatim_files.format.stdout import StdoutTranscriptWriter
 from verbatim_files.format.writer import TranscriptWriterConfig
-
-StatusProgressUnit = Literal["percent", "count", "seconds"]
-
-
-@dataclass(frozen=True)
-class StatusProgress:
-    current: float
-    units: StatusProgressUnit
-    start: float = 0.0
-    finish: Optional[float] = None
-
-
-@dataclass(frozen=True)
-class StatusUpdate:
-    state: str
-    progress: Optional[StatusProgress] = None
-    utterance: Optional[Utterance] = None
-    unacknowledged_utterances: Optional[List[Utterance]] = None
-    unconfirmed_words: Optional[List[Word]] = None
-
-
-class StatusHook(Protocol):
-    def __call__(self, update: StatusUpdate) -> None: ...
 
 
 class SimpleProgressHook:
@@ -40,8 +17,30 @@ class SimpleProgressHook:
     ):
         self._writer = StdoutTranscriptWriter(config=config, with_colours=with_colours)
         self._output = output or sys.stdout.buffer
+        self._last_progress_log: Optional[float] = None
+        self._last_state: Optional[str] = None
+        self._status_log = get_status_logger()
 
     def __call__(self, update: StatusUpdate) -> None:
+        if update.state and update.state != "utterance" and update.state != self._last_state:
+            self._status_log.info("State: %s", update.state)
+            self._last_state = update.state
+        if update.progress and update.progress.units == "seconds" and update.state == "transcribing":
+            current = update.progress.current
+            if self._last_progress_log is None or current - self._last_progress_log >= 10:
+                finish = update.progress.finish
+                if finish:
+                    self._status_log.info("Transcribing progress: %.1fs / %.1fs", current, finish)
+                else:
+                    self._status_log.info("Transcribing progress: %.1fs", current)
+                self._last_progress_log = current
+        elif update.progress:
+            label = update.state or "progress"
+            finish = update.progress.finish
+            if finish is not None:
+                self._status_log.info("%s progress: %.1f / %.1f %s", label, update.progress.current, finish, update.progress.units)
+            else:
+                self._status_log.info("%s progress: %.1f %s", label, update.progress.current, update.progress.units)
         if update.utterance is None:
             return
         payload = self._writer.format_utterance(

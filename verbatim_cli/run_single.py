@@ -5,7 +5,8 @@ import logging
 import os
 from typing import List, Optional
 
-from verbatim.status_hook import SimpleProgressHook, StatusHook
+from verbatim.status_hook import SimpleProgressHook
+from verbatim.status_types import StatusHook
 from verbatim.verbatim import execute
 from verbatim_audio.sources.audiosource import AudioSource
 
@@ -20,6 +21,7 @@ def build_audio_sources(
     source_path: str,
     working_prefix_no_ext: str,
     output_prefix_no_ext: str,
+    status_hook: Optional[StatusHook] = None,
 ) -> List[AudioSource]:
     from verbatim_audio.sources.factory import create_audio_sources
 
@@ -33,6 +35,7 @@ def build_audio_sources(
         working_prefix_no_ext=working_prefix_no_ext,
         output_prefix_no_ext=output_prefix_no_ext,
         stream=config.stream,
+        status_hook=status_hook,
     )
 
 
@@ -113,6 +116,7 @@ def run_single_input(
         source_path=source_path,
         working_prefix_no_ext=working_prefix_no_ext,
         output_prefix_no_ext=output_prefix_no_ext,
+        status_hook=status_hook,
     )
 
     run_execute(

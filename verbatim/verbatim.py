@@ -42,7 +42,7 @@ from verbatim_transcript import (
 
 from .config import Config
 from .models import Models
-from .status_hook import StatusHook, StatusUpdate
+from .status_types import StatusHook, StatusProgress, StatusUpdate
 from .transcript.idprovider import CounterIdProvider, IdProvider
 from .transcript.sentences import SentenceTokenizer, SilenceSentenceTokenizer
 from .transcript.words import Utterance, Word
@@ -285,10 +285,38 @@ class Verbatim:
     ) -> None:
         self._emit_status(
             StatusUpdate(
-                state="utterance",
+                state="transcribing",
                 utterance=utterance,
                 unacknowledged_utterances=unacknowledged,
                 unconfirmed_words=unconfirmed,
+            )
+        )
+
+    @staticmethod
+    def _get_total_samples(audio_stream: AudioStream) -> Optional[int]:
+        total_samples = getattr(audio_stream, "total_samples", None)
+        if total_samples is None:
+            return None
+        start_offset = getattr(audio_stream, "start_offset", 0) or 0
+        end_sample = getattr(audio_stream, "end_sample", None)
+        if end_sample is not None:
+            total_samples = min(total_samples, end_sample)
+        return max(0, total_samples - start_offset)
+
+    def _emit_transcribing_progress(self, audio_stream: AudioStream) -> None:
+        total_samples = self._get_total_samples(audio_stream)
+        if total_samples is None or total_samples <= 0:
+            return
+        start_offset = getattr(audio_stream, "start_offset", 0) or 0
+        current_samples = max(0, self.state.window_ts - start_offset)
+        self._emit_status(
+            StatusUpdate(
+                state="transcribing",
+                progress=StatusProgress(
+                    current=samples_to_seconds(current_samples),
+                    finish=samples_to_seconds(total_samples),
+                    units="seconds",
+                ),
             )
         )
 
@@ -935,6 +963,8 @@ class Verbatim:
                         unconfirmed=unconfirmed,
                     )
                     yield utterance, unacknowmedged, unconfirmed
+
+                self._emit_transcribing_progress(audio_stream)
 
                 if not had_utterances and not has_more_audio:
                     break
