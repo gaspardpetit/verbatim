@@ -8,6 +8,7 @@ import numpy as np
 
 from verbatim.cache import ArtifactCache
 from verbatim.logging_utils import get_status_logger
+from verbatim.status_types import StatusHook, StatusUpdate
 from verbatim_diarization import create_diarizer  # Add this import
 from verbatim_diarization.policy import assign_channels, parse_params, parse_policy
 from verbatim_diarization.utils import sanitize_uri_component
@@ -67,6 +68,7 @@ def compute_diarization(
     vttm_file: Optional[str] = None,
     strategy: str = "pyannote",
     nb_speakers: Union[int, None] = None,
+    status_hook: Optional[StatusHook] = None,
     **strategy_kwargs,
 ) -> Annotation:
     """
@@ -98,6 +100,7 @@ def compute_diarization(
             rttm_file=rttm_file,
             vttm_file=vttm_file,
             nb_speakers=nb_speakers,
+            status_hook=status_hook,
         )
 
     STATUS_LOG.info(
@@ -127,6 +130,7 @@ def compute_diarization(
         out_rttm_file=rttm_file,
         out_vttm_file=vttm_file,
         nb_speakers=nb_speakers,
+        status_hook=status_hook,
     )
 
 
@@ -244,6 +248,7 @@ def compute_diarization_policy(
     rttm_file: Optional[str],
     vttm_file: Optional[str],
     nb_speakers: Union[int, None],
+    status_hook: Optional[StatusHook] = None,
 ) -> Annotation:
     # pylint: disable=import-outside-toplevel
     import soundfile as sf  # lazy import
@@ -321,6 +326,7 @@ def compute_diarization_policy(
                 vttm_file=clause_vttm_path,
                 strategy=clause.strategy,
                 nb_speakers=clause_nb_speakers,
+                status_hook=status_hook,
                 **strategy_kwargs,
             )
 
@@ -379,6 +385,7 @@ def compute_diarization_policy(
             vttm_file=vttm_file,
             strategy="pyannote",
             nb_speakers=nb_speakers,
+            status_hook=status_hook,
         )
 
     return merged
@@ -423,6 +430,7 @@ def create_audio_sources(
     output_prefix_no_ext: str = "out",
     working_prefix_no_ext: str = "out",
     stream: bool = False,
+    status_hook: Optional[StatusHook] = None,
 ) -> List[AudioSource]:
     # pylint: disable=import-outside-toplevel
 
@@ -466,6 +474,8 @@ def create_audio_sources(
             input_bytes = cache.get_bytes(input_source)
             if not input_bytes:
                 raise RuntimeError(f"Cached bytes missing for input '{input_source}'. Populate the artifact cache before invoking the CLI.")
+            if status_hook is not None:
+                status_hook(StatusUpdate(state="converting"))
             return [
                 PyAVAudioSource(
                     file_path=input_source,
@@ -479,6 +489,8 @@ def create_audio_sources(
         input_bytes = cache.get_bytes(input_source)
         if not input_bytes:
             raise RuntimeError(f"Cached bytes missing for input '{input_source}'. Populate the artifact cache before invoking the CLI.")
+        if status_hook is not None:
+            status_hook(StatusUpdate(state="converting"))
         input_source = convert_bytes_to_wav(
             input_bytes=input_bytes,
             input_label=input_source,
@@ -496,6 +508,7 @@ def create_audio_sources(
             stop_time=stop_time,
             working_prefix_no_ext=working_prefix_no_ext,
             output_prefix_no_ext=output_prefix_no_ext,
+            status_hook=status_hook,
         )
 
     audio_refs: List[AudioRef] = []
@@ -526,6 +539,8 @@ def create_audio_sources(
         if source_config.diarize_strategy is not None and source_config.diarization is None:
             # Compute new diarization
             nb_speakers = source_config.speakers if source_config.speakers not in (0, "") else None
+            if status_hook is not None:
+                status_hook(StatusUpdate(state="diarizing"))
             source_config.diarization = compute_diarization(
                 file_path=input_source,
                 device=device,
@@ -534,6 +549,7 @@ def create_audio_sources(
                 vttm_file=source_config.vttm_file,
                 strategy=source_config.diarize_strategy or "pyannote",
                 nb_speakers=nb_speakers,
+                status_hook=status_hook,
             )
             if source_config.vttm_file:
                 try:
@@ -562,6 +578,8 @@ def create_audio_sources(
             except (StopIteration, FileNotFoundError):
                 # If the file doesn't exist or is empty, compute new diarization
                 nb_speakers = source_config.speakers if source_config.speakers not in (0, "") else None
+                if status_hook is not None:
+                    status_hook(StatusUpdate(state="diarizing"))
                 source_config.diarization = compute_diarization(
                     file_path=input_source,
                     device=device,
@@ -570,6 +588,7 @@ def create_audio_sources(
                     vttm_file=source_config.vttm_file,
                     strategy=source_config.diarize_strategy or "pyannote",
                     nb_speakers=nb_speakers,
+                    status_hook=status_hook,
                 )
                 if source_config.vttm_file:
                     try:
@@ -647,6 +666,7 @@ def create_joint_speaker_sources(
     stop_time: Optional[str] = None,
     output_prefix_no_ext: str = "out",
     working_prefix_no_ext: str = "out",
+    status_hook: Optional[StatusHook] = None,
 ) -> List[AudioSource]:
     # pylint: disable=import-outside-toplevel
 
@@ -654,6 +674,8 @@ def create_joint_speaker_sources(
         input_bytes = cache.get_bytes(input_source)
         if not input_bytes:
             raise RuntimeError(f"Cached bytes missing for input '{input_source}'. Populate the artifact cache before invoking the CLI.")
+        if status_hook is not None:
+            status_hook(StatusUpdate(state="converting"))
         converted_input_source = convert_bytes_to_wav(
             input_bytes=input_bytes,
             input_label=input_source,
@@ -671,6 +693,7 @@ def create_joint_speaker_sources(
             stop_time=stop_time,
             output_prefix_no_ext=output_prefix_no_ext,
             working_prefix_no_ext=working_prefix_no_ext,
+            status_hook=status_hook,
         )
 
     input_stem = os.path.splitext(os.path.basename(input_source))[0] if input_source else "verbatim"

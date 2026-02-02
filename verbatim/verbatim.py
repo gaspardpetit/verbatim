@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import logging
 import math
 import os
@@ -41,6 +42,7 @@ from verbatim_transcript import (
 
 from .config import Config
 from .models import Models
+from .status_types import StatusHook, StatusProgress, StatusUpdate
 from .transcript.idprovider import CounterIdProvider, IdProvider
 from .transcript.sentences import SentenceTokenizer, SilenceSentenceTokenizer
 from .transcript.words import Utterance, Word
@@ -236,16 +238,20 @@ class Verbatim:
     state: State
     config: Config
     vad_callback: Optional[VadFn]
+    status_hook: Optional[StatusHook]
 
     def __init__(
         self,
         config: Config,
+        *,
         models=None,
         vad_callback: Optional[VadFn] = None,
         transcriber: Optional[TranscriberProtocol] = None,
+        status_hook: Optional[StatusHook] = None,
     ):
         self.config = config
         self.state = State(config)
+        self.status_hook = status_hook
         if models is None:
             models = Models(
                 device=config.device,
@@ -261,6 +267,58 @@ class Verbatim:
             self.vad_callback = self.models.vad.find_activity  # type: ignore[attr-defined]
         else:
             self.vad_callback = None
+
+    def _emit_status(self, update: StatusUpdate) -> None:
+        if self.status_hook is None:
+            return
+        try:
+            self.status_hook(update)
+        except Exception:  # pylint: disable=broad-exception-caught
+            LOG.exception("Status hook failed")
+
+    def _emit_utterance_status(
+        self,
+        *,
+        utterance: Utterance,
+        unacknowledged: List[Utterance],
+        unconfirmed: List[Word],
+    ) -> None:
+        self._emit_status(
+            StatusUpdate(
+                state="transcribing",
+                utterance=utterance,
+                unacknowledged_utterances=unacknowledged,
+                unconfirmed_words=unconfirmed,
+            )
+        )
+
+    @staticmethod
+    def _get_total_samples(audio_stream: AudioStream) -> Optional[int]:
+        total_samples = getattr(audio_stream, "total_samples", None)
+        if total_samples is None:
+            return None
+        start_offset = getattr(audio_stream, "start_offset", 0) or 0
+        end_sample = getattr(audio_stream, "end_sample", None)
+        if end_sample is not None:
+            total_samples = min(total_samples, end_sample)
+        return max(0, total_samples - start_offset)
+
+    def _emit_transcribing_progress(self, audio_stream: AudioStream) -> None:
+        total_samples = self._get_total_samples(audio_stream)
+        if total_samples is None or total_samples <= 0:
+            return
+        start_offset = getattr(audio_stream, "start_offset", 0) or 0
+        current_samples = max(0, self.state.window_ts - start_offset)
+        self._emit_status(
+            StatusUpdate(
+                state="transcribing",
+                progress=StatusProgress(
+                    current=samples_to_seconds(current_samples),
+                    finish=samples_to_seconds(total_samples),
+                    units="seconds",
+                ),
+            )
+        )
 
     def skip_leading_silence(self, max_skip: int, min_speech_duration_ms: int = 500) -> int:
         if self.vad_callback is None:
@@ -882,17 +940,31 @@ class Verbatim:
                 self.state.audio_ts = audio_stream.start_offset
 
             STATUS_LOG.info("Starting main loop for audio transcription.")
+            self._emit_status(StatusUpdate(state="transcribing"))
             while True:
                 has_more_audio = self.capture_audio(audio_source=audio_stream)
                 had_utterances = False
 
                 # capture any utterance that slipped out of the current window
-                yield from self.flush_overflowing_utterances(diarization=audio_stream.diarization)
+                for utterance, unacknowledged, unconfirmed in self.flush_overflowing_utterances(diarization=audio_stream.diarization):
+                    self._emit_utterance_status(
+                        utterance=utterance,
+                        unacknowledged=unacknowledged,
+                        unconfirmed=unconfirmed,
+                    )
+                    yield utterance, unacknowledged, unconfirmed
 
                 # attempt to acknowledge new utterances from current window
                 for utterance, unacknowmedged, unconfirmed in self.process_audio_window(audio_stream=audio_stream):
                     had_utterances = True
+                    self._emit_utterance_status(
+                        utterance=utterance,
+                        unacknowledged=unacknowmedged,
+                        unconfirmed=unconfirmed,
+                    )
                     yield utterance, unacknowmedged, unconfirmed
+
+                self._emit_transcribing_progress(audio_stream)
 
                 if not had_utterances and not has_more_audio:
                     break
@@ -907,6 +979,11 @@ class Verbatim:
         finally:
             for i, utterance in enumerate(self.state.unacknowledged_utterances):
                 utterance.speaker = self.assign_speaker(utterance, audio_stream.diarization)
+                self._emit_utterance_status(
+                    utterance=utterance,
+                    unacknowledged=self.state.unacknowledged_utterances[i + 1 :],
+                    unconfirmed=self.state.unconfirmed_words,
+                )
                 yield utterance, self.state.unacknowledged_utterances[i + 1 :], self.state.unconfirmed_words
 
             if len(self.state.unconfirmed_words) > 0:
@@ -914,6 +991,11 @@ class Verbatim:
                     utterance_id=self.state.utterance_id.next(), words=self.state.unconfirmed_words
                 )
                 unconfirmed_utterance.speaker = self.assign_speaker(unconfirmed_utterance, audio_stream.diarization)
+                self._emit_utterance_status(
+                    utterance=unconfirmed_utterance,
+                    unacknowledged=[],
+                    unconfirmed=[],
+                )
                 yield unconfirmed_utterance, [], []
 
 
@@ -927,9 +1009,11 @@ def execute(
     output_prefix_no_ext: str,
     working_prefix_no_ext: str,
     eval_file: Optional[str],
+    status_hook: Optional[StatusHook] = None,
 ):
     all_utterances: List[Utterance] = []
-    transcriber = Verbatim(config)
+    transcriber = Verbatim(config, status_hook=status_hook)
+    stdout_enabled = True
     for idx, audio_source in enumerate(audio_sources):
         STATUS_LOG.info("Transcribing from audio source: %s", audio_source.source_name)
         # When multiple sources are present (e.g., per-channel VTTM), isolate per-source outputs to avoid clobbering.
@@ -942,6 +1026,7 @@ def execute(
             output_formats=output_formats,
             original_audio_file=audio_source.source_name,
             output_prefix_no_ext=per_source_prefix,
+            stdout_enabled=stdout_enabled,
         )
         writer.open()
         with audio_source.open() as audio_stream:
@@ -964,6 +1049,7 @@ def execute(
             output_formats=output_formats,
             original_audio_file=source_path,
             output_prefix_no_ext=output_prefix_no_ext,
+            stdout_enabled=stdout_enabled,
         )
         writer.open()
         for sorted_utterance in sorted_utterances:

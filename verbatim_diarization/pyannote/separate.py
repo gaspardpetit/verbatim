@@ -26,6 +26,7 @@ from verbatim_files.vttm import AudioRef, dumps_vttm
 
 from .constants import PYANNOTE_SEPARATION_MODEL_ID
 from .ffmpeg_loader import ensure_torchcodec_audio_decoder
+from .progress import StatusProgressHook
 
 LOG = logging.getLogger(__name__)
 STATUS_LOG = get_status_logger()
@@ -119,6 +120,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         file_path: str,
         out_speaker_wav_prefix: str,
         nb_speakers: Optional[int],
+        status_hook=None,
     ) -> Tuple[Any, List[Tuple[str, AudioRef]]]:
         ensure_torchcodec_audio_decoder("pyannote separation")
         file_for_pipeline, temp_path = self._prepare_pipeline_input(file_path)
@@ -126,7 +128,16 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             if self.pipeline is None:
                 raise RuntimeError("Pyannote separation pipeline is not initialized")
             show_progress = status_enabled()
-            if show_progress:
+            if status_hook is not None:
+                hook = StatusProgressHook(status_hook=status_hook, state_prefix="separating", enable_progress=show_progress)
+                if show_progress:
+                    with contextlib.redirect_stdout(sys.stderr):
+                        with hook as hook_ctx:
+                            diarization_output, sources = self.pipeline(file_for_pipeline, hook=hook_ctx, num_speakers=nb_speakers)
+                else:
+                    with hook as hook_ctx:
+                        diarization_output, sources = self.pipeline(file_for_pipeline, hook=hook_ctx, num_speakers=nb_speakers)
+            elif show_progress:
                 with contextlib.redirect_stdout(sys.stderr):
                     with ProgressHook() as hook:
                         diarization_output, sources = self.pipeline(file_for_pipeline, hook=hook, num_speakers=nb_speakers)
@@ -182,6 +193,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         nb_speakers: Optional[int] = None,
         start_sample: int = 0,
         end_sample: Optional[int] = None,
+        status_hook=None,
     ) -> List[AudioSource]:
         """
         Separate speakers in an audio file.
@@ -199,6 +211,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             file_path=file_path,
             out_speaker_wav_prefix=out_speaker_wav_prefix,
             nb_speakers=nb_speakers,
+            status_hook=status_hook,
         )
 
         uri = sanitize_uri_component(os.path.splitext(os.path.basename(file_path))[0])

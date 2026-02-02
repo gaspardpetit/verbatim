@@ -1,10 +1,16 @@
 """Single-file execution helpers for the CLI."""
 # pylint: disable=import-outside-toplevel
 
+import logging
+import os
 from typing import List, Optional
 
+from verbatim.status_hook import SimpleProgressHook
+from verbatim.status_types import StatusHook
 from verbatim.verbatim import execute
 from verbatim_audio.sources.audiosource import AudioSource
+
+LOG = logging.getLogger(__name__)
 
 
 def build_audio_sources(
@@ -15,6 +21,7 @@ def build_audio_sources(
     source_path: str,
     working_prefix_no_ext: str,
     output_prefix_no_ext: str,
+    status_hook: Optional[StatusHook] = None,
 ) -> List[AudioSource]:
     from verbatim_audio.sources.factory import create_audio_sources
 
@@ -28,6 +35,7 @@ def build_audio_sources(
         working_prefix_no_ext=working_prefix_no_ext,
         output_prefix_no_ext=output_prefix_no_ext,
         stream=config.stream,
+        status_hook=status_hook,
     )
 
 
@@ -41,6 +49,7 @@ def run_execute(
     output_prefix_no_ext: str,
     working_prefix_no_ext: str,
     eval_file,
+    status_hook: Optional[StatusHook] = None,
 ):
     execute(
         source_path=source_path,
@@ -51,6 +60,7 @@ def run_execute(
         output_prefix_no_ext=output_prefix_no_ext,
         working_prefix_no_ext=working_prefix_no_ext,
         eval_file=eval_file,
+        status_hook=status_hook,
     )
 
 
@@ -74,6 +84,9 @@ def run_single_input(
         resolve_speakers,
     )
 
+    if source_path not in ("-", ">") and not os.path.isfile(source_path):
+        LOG.critical("Input audio file not found: %s", source_path)
+        return False
     config.read_to_cache(
         input_path=source_path,
         vttm_path=args.vttm,
@@ -87,6 +100,10 @@ def run_single_input(
     if output_formats is None:
         output_formats = build_output_formats(args, default_stdout=default_stdout)
 
+    status_hook: Optional[StatusHook] = None
+    if default_stdout and not args.quiet and args.outdir != "-":
+        status_hook = SimpleProgressHook(config=write_config, with_colours=not args.stdout_nocolor)
+
     speakers = resolve_speakers(args)
     source_config = make_source_config(args, speakers)
     if not preflight_config(config=config, source_config=source_config, args=args, output_formats=output_formats):
@@ -99,6 +116,7 @@ def run_single_input(
         source_path=source_path,
         working_prefix_no_ext=working_prefix_no_ext,
         output_prefix_no_ext=output_prefix_no_ext,
+        status_hook=status_hook,
     )
 
     run_execute(
@@ -110,5 +128,6 @@ def run_single_input(
         output_prefix_no_ext=output_prefix_no_ext,
         working_prefix_no_ext=working_prefix_no_ext,
         eval_file=args.eval,
+        status_hook=status_hook,
     )
     return True

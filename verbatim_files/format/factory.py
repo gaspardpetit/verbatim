@@ -10,11 +10,13 @@ def configure_writers(
     output_formats: List[str],
     original_audio_file: str,
     output_prefix_no_ext: str,
+    stdout_enabled: bool = True,
 ) -> MultiFileFormatter:
     # pylint: disable=import-outside-toplevel
     formatters: List[FileFormatter] = []
     use_stdout = "stdout" in output_formats or "stdout-nocolor" in output_formats
     stdout_nocolor = "stdout-nocolor" in output_formats
+    use_stdout = use_stdout and stdout_enabled
     if use_stdout:
         selected_formats = [fmt for fmt in output_formats if fmt not in ("stdout", "stdout-nocolor")]
         if len(selected_formats) != 1:

@@ -106,7 +106,6 @@ def build_output_formats(args, *, default_stdout: bool = True) -> List[str]:
         output_formats.append("stdout-nocolor" if args.stdout_nocolor else "stdout")
     if default_stdout and not output_formats and args.outdir != "-" and not args.quiet:
         output_formats.append("txt")
-        output_formats.append("stdout-nocolor" if args.stdout_nocolor else "stdout")
     return output_formats
 
 

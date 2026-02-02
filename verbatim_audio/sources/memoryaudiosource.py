@@ -28,6 +28,8 @@ class MemoryAudioStream(AudioStream):
         super().__init__(start_offset=source.start_sample, diarization=diarization)
         self.source = source
         self._cursor = source.start_sample
+        self.total_samples = source.total_samples
+        self.end_sample = source.end_sample
 
     def next_chunk(self, chunk_length=1) -> NDArray:
         if not self.has_more():

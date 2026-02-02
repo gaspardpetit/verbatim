@@ -52,7 +52,14 @@ class Diarization:
 
         return load_vttm(vttm_path)
 
-    def compute_diarization(self, file_path: str, out_rttm_file: Optional[str] = None, strategy: str = "pyannote", **kwargs) -> Annotation:
+    def compute_diarization(
+        self,
+        file_path: str,
+        out_rttm_file: Optional[str] = None,
+        strategy: str = "pyannote",
+        status_hook=None,
+        **kwargs,
+    ) -> Annotation:
         """
         Compute diarization using the specified strategy.
 
@@ -64,4 +71,4 @@ class Diarization:
         """
         self.diarizer = create_diarizer(strategy=strategy, device=self.device, huggingface_token=self.huggingface_token, cache=self.cache)
 
-        return self.diarizer.compute_diarization(file_path=file_path, out_rttm_file=out_rttm_file, **kwargs)
+        return self.diarizer.compute_diarization(file_path=file_path, out_rttm_file=out_rttm_file, status_hook=status_hook, **kwargs)

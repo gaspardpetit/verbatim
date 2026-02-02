@@ -40,6 +40,11 @@ class FileAudioStream(AudioStream):
         self._buffer: Optional[io.BytesIO] = None
         self._buffer = cache.bytes_io(self.source.file_path)
         self.stream = wave.open(self._buffer, "rb")
+        total_frames = self.stream.getnframes()
+        file_rate = self.stream.getframerate()
+        total_seconds = total_frames / file_rate if file_rate else 0.0
+        self.total_samples = int(round(total_seconds * 16000))
+        self.end_sample = source.end_sample
         if self.source.start_sample != 0:
             self.setpos(self.source.start_sample)
 
