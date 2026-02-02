@@ -3,11 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, List, Optional
 
-from verbatim_audio.audio import samples_to_seconds, seconds_to_samples
+from verbatim_audio.audio import samples_to_seconds
 
 if TYPE_CHECKING:
     from faster_whisper.transcribe import Word as WhisperWord
-    from pywhispercpp.model import Segment
 
 
 @dataclass
@@ -31,21 +30,6 @@ class Word:
             end_ts=end_ts,
             word=word.word,
             probability=word.probability,
-        )
-
-    @classmethod
-    def from_whisper_cpp_1w_segment(cls, segment: "Segment", lang: str, ts_offset: int = 0) -> "Word":
-        """Creates a Word instance from a WhisperCPP 1-word segment with a timestamp offset."""
-        # Lazy import to avoid pulling pywhispercpp during CLI startup.
-
-        start_ts = seconds_to_samples(segment.t0 / 100) + ts_offset
-        end_ts = seconds_to_samples(segment.t1 / 100) + ts_offset
-        return cls(
-            start_ts=start_ts,
-            lang=lang,
-            end_ts=end_ts,
-            word=f" {segment.text}",
-            probability=1.0,
         )
 
 
