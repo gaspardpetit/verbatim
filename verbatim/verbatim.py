@@ -167,6 +167,7 @@ class State:
     speaker_embeddings: Optional[List] = None
     working_prefix_no_ext: str = "out"
     timing_totals_ms: dict[str, float] = field(init=False)
+    last_transcribe_metrics_ms: dict[str, float] = field(init=False)
 
     def __init__(self, config: Config, working_prefix_no_ext: str = "out"):
         self.config = config
@@ -194,6 +195,11 @@ class State:
             "output": 0.0,
             "advance": 0.0,
             "total": 0.0,
+        }
+        self.last_transcribe_metrics_ms = {
+            "detect_ms": 0.0,
+            "transcribe_ms": 0.0,
+            "confirm_ms": 0.0,
         }
 
         window_size = self.config.sampling_rate * self.config.window_duration  # Total samples in 30 seconds
@@ -498,7 +504,7 @@ class Verbatim:
         result: LanguageDetectionResult = detect_language(request=request, guess_fn=self.language_identifier.guess_language)
         return (result.language, result.probability, result.samples_used)
 
-    def transcribe_window(self) -> Tuple[List[Word], List[Word], dict[str, float]]:
+    def transcribe_window(self) -> Tuple[List[Word], List[Word]]:
         LOG.debug("Starting transcription of audio chunk.")
         LOG.debug("Window Start Time: %s", samples_to_seconds(self.state.window_ts))
         LOG.debug("Confirmed Time: %s", samples_to_seconds(self.state.confirmed_ts))
@@ -533,7 +539,12 @@ class Verbatim:
             transcribe_ms = (perf_counter() - transcribe_start) * 1000.0
         except RuntimeError as e:
             LOG.warning(f"Transcription failed with RuntimeError: {str(e)}. Skipping this chunk.")
-            return [], [], {"detect_ms": detect_ms, "transcribe_ms": 0.0, "confirm_ms": 0.0}
+            self.state.last_transcribe_metrics_ms = {
+                "detect_ms": detect_ms,
+                "transcribe_ms": 0.0,
+                "confirm_ms": 0.0,
+            }
+            return [], []
 
         if len(transcript_words) > 0 and len(self.config.lang) > 1:
             # make sure that the first word detected is within the audio samples used
@@ -618,15 +629,12 @@ class Verbatim:
         confirm_ms = (perf_counter() - confirm_start) * 1000.0
 
         unconfirmed_words = [transcript_words[i] for i in range(len(confirmed_words), len(transcript_words))]
-        return (
-            confirmed_words,
-            unconfirmed_words,
-            {
-                "detect_ms": detect_ms,
-                "transcribe_ms": transcribe_ms,
-                "confirm_ms": confirm_ms,
-            },
-        )
+        self.state.last_transcribe_metrics_ms = {
+            "detect_ms": detect_ms,
+            "transcribe_ms": transcribe_ms,
+            "confirm_ms": confirm_ms,
+        }
+        return confirmed_words, unconfirmed_words
 
     def get_next_number_of_chunks(self) -> int:
         available_chunks = self.config.window_duration - float(self.state.audio_ts - self.state.window_ts) / self.config.sampling_rate
@@ -833,8 +841,8 @@ class Verbatim:
             if self.config.debug and self.config.working_dir:
                 self.dump_window_to_file(filename=f"{self.state.working_prefix_no_ext}-debug_window.wav")  # Dump current window for debugging
 
-            confirmed_words, unconfirmed_words, transcribe_metrics = self.transcribe_window()
-            pass_metrics.update(transcribe_metrics)
+            confirmed_words, unconfirmed_words = self.transcribe_window()
+            pass_metrics.update(self.state.last_transcribe_metrics_ms)
             self.state.unconfirmed_words = unconfirmed_words
             if len(confirmed_words) > 0:
                 sentence_start = perf_counter()
