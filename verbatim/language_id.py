@@ -32,9 +32,7 @@ class MmsLanguageIdentifier:
         try:
             from transformers import AutoFeatureExtractor, Wav2Vec2ForSequenceClassification
         except ImportError as exc:
-            raise RuntimeError(
-                "MMS language identification requires `transformers`. Install the optional dependency set that includes it."
-            ) from exc
+            raise RuntimeError("MMS language identification requires `transformers`. Install the optional dependency set that includes it.") from exc
 
         if device == "cuda":
             torch_device = "cuda:0"

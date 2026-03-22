@@ -4,8 +4,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from numpy.typing import NDArray
 
-from ...transcript.words import Word
 from verbatim_audio.audio import samples_to_seconds
+
+from ...transcript.words import Word
 from .transcribe import Transcriber
 
 LOG = logging.getLogger(__name__)
@@ -290,9 +291,7 @@ class QwenAsrTranscriber(Transcriber):
         transcript_text = self._get_field(result, "text") or ""
         time_stamps = self._get_field(result, "time_stamps")
         if not time_stamps:
-            raise RuntimeError(
-                f"Qwen3-ASR did not return timestamps for language '{lang}'. The current pipeline requires aligned timestamps."
-            )
+            raise RuntimeError(f"Qwen3-ASR did not return timestamps for language '{lang}'. The current pipeline requires aligned timestamps.")
 
         aligned_units: List[Tuple[int, int, str, float]] = []
         min_word_duration_samples = 800

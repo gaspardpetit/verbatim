@@ -187,3 +187,4 @@ tmp
 .pkg-venv
 .verbatim/**
 verbatim/_version.py
+config.yaml

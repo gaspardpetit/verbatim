@@ -6,7 +6,6 @@ from unittest.mock import patch
 import numpy as np
 
 from verbatim.voices.transcribe.qwen_asr import QwenAsrTranscriber
-from verbatim.transcript.words import Word
 
 
 class FakeTimestamp:

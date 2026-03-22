@@ -618,11 +618,15 @@ class Verbatim:
         confirm_ms = (perf_counter() - confirm_start) * 1000.0
 
         unconfirmed_words = [transcript_words[i] for i in range(len(confirmed_words), len(transcript_words))]
-        return confirmed_words, unconfirmed_words, {
-            "detect_ms": detect_ms,
-            "transcribe_ms": transcribe_ms,
-            "confirm_ms": confirm_ms,
-        }
+        return (
+            confirmed_words,
+            unconfirmed_words,
+            {
+                "detect_ms": detect_ms,
+                "transcribe_ms": transcribe_ms,
+                "confirm_ms": confirm_ms,
+            },
+        )
 
     def get_next_number_of_chunks(self) -> int:
         available_chunks = self.config.window_duration - float(self.state.audio_ts - self.state.window_ts) / self.config.sampling_rate
