@@ -102,7 +102,10 @@ def run_single_input(
 
     status_hook: Optional[StatusHook] = None
     if default_stdout and not args.quiet and args.outdir != "-":
-        status_hook = SimpleProgressHook(config=write_config, with_colours=not args.stdout_nocolor)
+        status_hook = SimpleProgressHook(
+            config=write_config,
+            with_colours=not (args.stdout_nocolor or bool(getattr(args, "log_file", None))),
+        )
 
     speakers = resolve_speakers(args)
     source_config = make_source_config(args, speakers)

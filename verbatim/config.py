@@ -156,12 +156,17 @@ class Config:
     device: str = "auto"
     stream: bool = False
     debug: bool = False
+    log_file: Optional[str] = None
+    log_colours: bool = True
     # Caching and connectivity
     model_cache_dir: Optional[str] = None
     offline: bool = False
 
     # TRANSCRIPTION
     lang: List[str] = field(default_factory=lambda: DEFAULT_LANGUAGES)
+    transcriber_backend: str = "auto"
+    language_identifier_backend: str = "transcriber"
+    mms_lid_model_size: str = "facebook/mms-lid-126"
     whisper_prompts: Mapping[str, str] = field(default_factory=lambda: DEFAULT_MULTILANG_PROMPTS)
     chunk_table: List[Tuple[float, float]] = field(default_factory=list)
 
@@ -171,6 +176,11 @@ class Config:
     whisper_temperatures: List[float] = field(default_factory=list)
     # Whisper model size/path used by transcribers; default matches production
     whisper_model_size: str = "large-v3"
+    qwen_asr_model_size: str = "Qwen/Qwen3-ASR-1.7B"
+    qwen_aligner_model_size: str = "Qwen/Qwen3-ForcedAligner-0.6B"
+    qwen_dtype: str = "auto"
+    qwen_max_inference_batch_size: int = 1
+    qwen_max_new_tokens: int = 256
 
     # OUTPUT
     working_dir: Optional[str] = field(default_factory=get_default_working_directory)

@@ -7,6 +7,7 @@ import traceback
 import wave
 from dataclasses import dataclass, field
 from io import StringIO
+from time import perf_counter
 from typing import Any, Generator, List, Optional, TextIO, Tuple
 
 import numpy as np
@@ -20,6 +21,7 @@ from verbatim_files.format.factory import configure_writers
 from verbatim_files.format.json import read_utterances
 from verbatim_files.format.txt import (
     COLORSCHEME_ACKNOWLEDGED,
+    COLORSCHEME_NONE,
     COLORSCHEME_UNACKNOWLEDGED,
     COLORSCHEME_UNCONFIRMED,
     TranscriptFormatter,
@@ -41,6 +43,7 @@ from verbatim_transcript import (
 )
 
 from .config import Config
+from .language_id import create_language_identifier
 from .models import Models
 from .status_types import StatusHook, StatusProgress, StatusUpdate
 from .transcript.idprovider import CounterIdProvider, IdProvider
@@ -152,6 +155,8 @@ class State:
     acknowledged_ts: int
     window_ts: int
     audio_ts: int
+    processing_started_at: float
+    processing_started_window_ts: int
     transcript_candidate_history: WhisperHistory
     rolling_window: RollingWindow
     acknowledged_words: List[Word]
@@ -161,6 +166,8 @@ class State:
     skip_silences: bool = True
     speaker_embeddings: Optional[List] = None
     working_prefix_no_ext: str = "out"
+    timing_totals_ms: dict[str, float] = field(init=False)
+    last_transcribe_metrics_ms: dict[str, float] = field(init=False)
 
     def __init__(self, config: Config, working_prefix_no_ext: str = "out"):
         self.config = config
@@ -168,6 +175,8 @@ class State:
         self.acknowledged_ts = -1
         self.window_ts = 0  # Window timestamp in samples
         self.audio_ts = 0  # Global timestamp in samples
+        self.processing_started_at = perf_counter()
+        self.processing_started_window_ts = 0
         self.transcript_candidate_history = WhisperHistory()
         self.acknowledged_words = []
         self.unconfirmed_words = []
@@ -176,6 +185,22 @@ class State:
         self.speaker_embeddings = []
         self.working_prefix_no_ext = working_prefix_no_ext
         self.utterance_id: IdProvider = CounterIdProvider(prefix="utt")
+        self.timing_totals_ms = {
+            "detect": 0.0,
+            "transcribe": 0.0,
+            "confirm": 0.0,
+            "sentence": 0.0,
+            "acknowledge": 0.0,
+            "speaker": 0.0,
+            "output": 0.0,
+            "advance": 0.0,
+            "total": 0.0,
+        }
+        self.last_transcribe_metrics_ms = {
+            "detect_ms": 0.0,
+            "transcribe_ms": 0.0,
+            "confirm_ms": 0.0,
+        }
 
         window_size = self.config.sampling_rate * self.config.window_duration  # Total samples in 30 seconds
         self.rolling_window = RollingWindow(window_size=window_size, dtype=np.float32)  # Initialize empty rolling window
@@ -258,8 +283,15 @@ class Verbatim:
                 whisper_model_size=config.whisper_model_size,
                 stream=config.stream,
                 transcriber=transcriber,
+                transcriber_backend=config.transcriber_backend,
+                qwen_asr_model_size=config.qwen_asr_model_size,
+                qwen_aligner_model_size=config.qwen_aligner_model_size,
+                qwen_dtype=config.qwen_dtype,
+                qwen_max_inference_batch_size=config.qwen_max_inference_batch_size,
+                qwen_max_new_tokens=config.qwen_max_new_tokens,
             )
         self.models = models
+        self.language_identifier = create_language_identifier(config=config, models=self.models)
         if vad_callback is not None:
             self.vad_callback = vad_callback
         elif hasattr(self.models, "vad"):
@@ -469,7 +501,7 @@ class Verbatim:
             window_ts=self.state.window_ts,
             audio_ts=self.state.audio_ts,
         )
-        result: LanguageDetectionResult = detect_language(request=request, guess_fn=self.models.transcriber.guess_language)
+        result: LanguageDetectionResult = detect_language(request=request, guess_fn=self.language_identifier.guess_language)
         return (result.language, result.probability, result.samples_used)
 
     def transcribe_window(self) -> Tuple[List[Word], List[Word]]:
@@ -480,7 +512,9 @@ class Verbatim:
         LOG.debug("Valid audio range: 0.0 - %s", samples_to_seconds(self.state.audio_ts - self.state.window_ts))
 
         acknowledged_words_in_window = WhisperHistory.advance_transcript(timestamp=self.state.window_ts, transcript=self.state.acknowledged_words)
+        detect_start = perf_counter()
         lang, _prob, used_samples_for_language = self.guess_language(timestamp=max(0, self.state.acknowledged_ts))
+        detect_ms = (perf_counter() - detect_start) * 1000.0
         prefix_text = ""
         for word in [w for u in self.state.unacknowledged_utterances for w in u.words]:
             if word.lang != lang:
@@ -489,6 +523,7 @@ class Verbatim:
         whisper_prompt = self.config.whisper_prompts[lang] if lang in self.config.whisper_prompts else self.config.whisper_prompts["en"]
 
         try:
+            transcribe_start = perf_counter()
             transcript_words = self.models.transcriber.transcribe(
                 audio=self.state.rolling_window.array[0 : self.state.audio_ts - self.state.window_ts],
                 lang=lang,
@@ -501,8 +536,14 @@ class Verbatim:
                 whisper_patience=self.config.whisper_patience,
                 whisper_temperatures=self.config.whisper_temperatures,
             )
+            transcribe_ms = (perf_counter() - transcribe_start) * 1000.0
         except RuntimeError as e:
             LOG.warning(f"Transcription failed with RuntimeError: {str(e)}. Skipping this chunk.")
+            self.state.last_transcribe_metrics_ms = {
+                "detect_ms": detect_ms,
+                "transcribe_ms": 0.0,
+                "confirm_ms": 0.0,
+            }
             return [], []
 
         if len(transcript_words) > 0 and len(self.config.lang) > 1:
@@ -541,6 +582,7 @@ class Verbatim:
                         alt_whisper_prompt = (
                             self.config.whisper_prompts[test_lang] if test_lang in self.config.whisper_prompts else self.config.whisper_prompts["en"]
                         )
+                        alt_transcribe_start = perf_counter()
                         alt_transcript_words = self.models.transcriber.transcribe(
                             audio=self.state.rolling_window.array[0 : self.state.audio_ts - self.state.window_ts],
                             lang=test_lang,
@@ -553,6 +595,7 @@ class Verbatim:
                             whisper_patience=self.config.whisper_patience,
                             whisper_temperatures=self.config.whisper_temperatures,
                         )
+                        transcribe_ms += (perf_counter() - alt_transcribe_start) * 1000.0
                         if len(alt_transcript_words) > 0:
                             first_word_ts = alt_transcript_words[0].start_ts
                             confirmed_lang, _prob, _used_samples_for_language = self.guess_language(timestamp=max(0, first_word_ts))
@@ -564,6 +607,7 @@ class Verbatim:
                 lang = best_lang
                 transcript_words = best_transcript
 
+        confirm_start = perf_counter()
         self.state.transcript_candidate_history.advance(self.state.window_ts)
         confirmed_words = self.state.transcript_candidate_history.confirm(
             current_words=transcript_words,
@@ -582,8 +626,14 @@ class Verbatim:
                 f"Transcript:\n{newline.join([''.join([w.word for w in history]) for history in transcript_history])}\n"
                 f"{''.join(w.word for w in transcript_words)}\n{''.join(w.word for w in confirmed_words)}"
             )
+        confirm_ms = (perf_counter() - confirm_start) * 1000.0
 
         unconfirmed_words = [transcript_words[i] for i in range(len(confirmed_words), len(transcript_words))]
+        self.state.last_transcribe_metrics_ms = {
+            "detect_ms": detect_ms,
+            "transcribe_ms": transcribe_ms,
+            "confirm_ms": confirm_ms,
+        }
         return confirmed_words, unconfirmed_words
 
     def get_next_number_of_chunks(self) -> int:
@@ -607,26 +657,30 @@ class Verbatim:
         unconfirmed_words: List[Word],
         file: TextIO = sys.stdout,
     ):
+        colour_scheme_ack = COLORSCHEME_ACKNOWLEDGED if self.config.log_colours else COLORSCHEME_NONE
+        colour_scheme_unack = COLORSCHEME_UNACKNOWLEDGED if self.config.log_colours else COLORSCHEME_NONE
+        colour_scheme_unconfirmed = COLORSCHEME_UNCONFIRMED if self.config.log_colours else COLORSCHEME_NONE
         formatter: TranscriptFormatter = TranscriptFormatter(
             speaker_style=SpeakerStyle.always,
             timestamp_style=TimestampStyle.range,
             probability_style=ProbabilityStyle.word,
             language_style=LanguageStyle.always,
         )
-        file.write(
+        prefix = (
             f"[{samples_to_seconds(self.state.window_ts)}/"
             f"{samples_to_seconds(self.state.audio_ts - self.state.acknowledged_ts)}/"
-            f"{samples_to_seconds(self.state.audio_ts - self.state.confirmed_ts)}]" + Fore.LIGHTGREEN_EX
+            f"{samples_to_seconds(self.state.audio_ts - self.state.confirmed_ts)}]"
         )
+        file.write(prefix + (Fore.LIGHTGREEN_EX if self.config.log_colours else ""))
         for u in acknowledged_utterances:
-            file.write(formatter.format_utterance(utterance=u, colours=COLORSCHEME_ACKNOWLEDGED).decode("utf-8"))
+            file.write(formatter.format_utterance(utterance=u, colours=colour_scheme_ack).decode("utf-8"))
         for u in unacknowledged_utterances:
-            file.write(formatter.format_utterance(utterance=u, colours=COLORSCHEME_UNACKNOWLEDGED).decode("utf-8"))
+            file.write(formatter.format_utterance(utterance=u, colours=colour_scheme_unack).decode("utf-8"))
         if len(unconfirmed_words) > 0:
             file.write(
                 formatter.format_utterance(
                     utterance=Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=unconfirmed_words),
-                    colours=COLORSCHEME_UNCONFIRMED,
+                    colours=colour_scheme_unconfirmed,
                 ).decode("utf-8")
             )
         file.write(os.linesep)
@@ -750,10 +804,24 @@ class Verbatim:
 
     def process_audio_window(self, audio_stream: AudioStream) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
         while True:
+            iteration_start = perf_counter()
+            initial_window_ts = self.state.window_ts
+            initial_confirmed_ts = self.state.confirmed_ts
+            initial_acknowledged_ts = self.state.acknowledged_ts
             # minimum number of samples to attempt transcription
             min_audio_duration_samples = 16000
             min_speech_duration_ms = 500
             utterances = []
+            pass_metrics = {
+                "detect_ms": 0.0,
+                "transcribe_ms": 0.0,
+                "confirm_ms": 0.0,
+                "sentence_ms": 0.0,
+                "acknowledge_ms": 0.0,
+                "speaker_ms": 0.0,
+                "output_ms": 0.0,
+                "advance_ms": 0.0,
+            }
             enable_vad = True
             if enable_vad and self.state.skip_silences:
                 self.state.skip_silences = False
@@ -774,8 +842,10 @@ class Verbatim:
                 self.dump_window_to_file(filename=f"{self.state.working_prefix_no_ext}-debug_window.wav")  # Dump current window for debugging
 
             confirmed_words, unconfirmed_words = self.transcribe_window()
+            pass_metrics.update(self.state.last_transcribe_metrics_ms)
             self.state.unconfirmed_words = unconfirmed_words
             if len(confirmed_words) > 0:
+                sentence_start = perf_counter()
                 utterances = self.words_to_sentences(
                     word_tokenizer=self.models.sentence_tokenizer,
                     window_words=confirmed_words,
@@ -787,12 +857,17 @@ class Verbatim:
                     utterances = self.words_to_sentences(
                         word_tokenizer=SilenceSentenceTokenizer(), window_words=confirmed_words, id_provider=self.state.utterance_id
                     )
+                pass_metrics["sentence_ms"] += (perf_counter() - sentence_start) * 1000.0
 
+                acknowledge_start = perf_counter()
                 acknowledged_utterances, confirmed_utterances = self.acknowledge_utterances(utterances=utterances)
+                pass_metrics["acknowledge_ms"] += (perf_counter() - acknowledge_start) * 1000.0
 
                 if audio_stream.diarization:
+                    speaker_start = perf_counter()
                     for acknowledged_utterance in acknowledged_utterances:
                         acknowledged_utterance.speaker = self.assign_speaker(acknowledged_utterance, audio_stream.diarization)
+                    pass_metrics["speaker_ms"] += (perf_counter() - speaker_start) * 1000.0
 
                 self.state.acknowledged_utterances += acknowledged_utterances
                 self.state.unacknowledged_utterances = confirmed_utterances
@@ -828,6 +903,7 @@ class Verbatim:
                 acknowledged_utterances = []
                 confirmed_utterances = []
 
+            output_start = perf_counter()
             outstr = StringIO()
             self.pretty_print_transcript(
                 acknowledged_utterances=[],
@@ -836,15 +912,79 @@ class Verbatim:
                 file=outstr,
             )
             LOG.debug(outstr.getvalue())
+            pass_metrics["output_ms"] += (perf_counter() - output_start) * 1000.0
 
             self.state.acknowledged_words = WhisperHistory.advance_transcript(
                 timestamp=self.state.window_ts, transcript=self.state.acknowledged_words
             )
 
             if self.state.acknowledged_ts > self.state.window_ts:
+                advance_start = perf_counter()
                 shift_amount = self.state.acknowledged_ts - self.state.window_ts
                 self.state.advance_audio_window(shift_amount)
                 self.state.skip_silences = True
+                pass_metrics["advance_ms"] += (perf_counter() - advance_start) * 1000.0
+
+            progressed_samples = max(0, self.state.window_ts - initial_window_ts)
+            confirmed_delta_s = samples_to_seconds(max(0, self.state.confirmed_ts - initial_confirmed_ts))
+            acknowledged_delta_s = samples_to_seconds(max(0, self.state.acknowledged_ts - initial_acknowledged_ts))
+            total_pass_ms = (perf_counter() - iteration_start) * 1000.0
+            pass_metrics["total_ms"] = total_pass_ms
+            self.state.timing_totals_ms["detect"] += pass_metrics["detect_ms"]
+            self.state.timing_totals_ms["transcribe"] += pass_metrics["transcribe_ms"]
+            self.state.timing_totals_ms["confirm"] += pass_metrics["confirm_ms"]
+            self.state.timing_totals_ms["sentence"] += pass_metrics["sentence_ms"]
+            self.state.timing_totals_ms["acknowledge"] += pass_metrics["acknowledge_ms"]
+            self.state.timing_totals_ms["speaker"] += pass_metrics["speaker_ms"]
+            self.state.timing_totals_ms["output"] += pass_metrics["output_ms"]
+            self.state.timing_totals_ms["advance"] += pass_metrics["advance_ms"]
+            self.state.timing_totals_ms["total"] += pass_metrics["total_ms"]
+            LOG.info(
+                (
+                    "Pass timing: total=%.1fms detect=%.1fms transcribe=%.1fms confirm=%.1fms "
+                    "sentence=%.1fms acknowledge=%.1fms speaker=%.1fms output=%.1fms advance=%.1fms "
+                    "confirmed_delta=%.3fs ack_delta=%.3fs"
+                ),
+                pass_metrics["total_ms"],
+                pass_metrics["detect_ms"],
+                pass_metrics["transcribe_ms"],
+                pass_metrics["confirm_ms"],
+                pass_metrics["sentence_ms"],
+                pass_metrics["acknowledge_ms"],
+                pass_metrics["speaker_ms"],
+                pass_metrics["output_ms"],
+                pass_metrics["advance_ms"],
+                confirmed_delta_s,
+                acknowledged_delta_s,
+            )
+            if progressed_samples > 0:
+                iteration_elapsed_seconds = max(perf_counter() - iteration_start, 1e-9)
+                iteration_progress_seconds = samples_to_seconds(progressed_samples)
+                iteration_speed_multiplier = iteration_progress_seconds / iteration_elapsed_seconds
+                total_elapsed_seconds = max(perf_counter() - self.state.processing_started_at, 1e-9)
+                total_progressed_samples = max(0, self.state.window_ts - self.state.processing_started_window_ts)
+                total_progress_seconds = samples_to_seconds(total_progressed_samples)
+                average_speed_multiplier = total_progress_seconds / total_elapsed_seconds
+                total_samples = self._get_total_samples(audio_stream)
+                current_seconds = samples_to_seconds(self.state.window_ts)
+                if total_samples is not None and total_samples > 0:
+                    total_seconds = samples_to_seconds(total_samples)
+                    progress_percent = 100.0 * self.state.window_ts / total_samples
+                    LOG.info(
+                        "Clip progress %.3fs/%.3fs (%.1f%%) speed=%.2fx avg=%.2fx",
+                        current_seconds,
+                        total_seconds,
+                        progress_percent,
+                        iteration_speed_multiplier,
+                        average_speed_multiplier,
+                    )
+                else:
+                    LOG.info(
+                        "Clip progress %.3fs speed=%.2fx avg=%.2fx",
+                        current_seconds,
+                        iteration_speed_multiplier,
+                        average_speed_multiplier,
+                    )
 
             if len(acknowledged_utterances) <= 1:
                 break
@@ -977,6 +1117,21 @@ class Verbatim:
             LOG.error(f"An unexpected error occurred: {e}\n{traceback.format_exc()}")
             LOG.debug("Stopping...")
         finally:
+            LOG.info(
+                (
+                    "Pipeline totals: detect=%.1fms transcribe=%.1fms confirm=%.1fms sentence=%.1fms "
+                    "acknowledge=%.1fms speaker=%.1fms output=%.1fms advance=%.1fms total=%.1fms"
+                ),
+                self.state.timing_totals_ms["detect"],
+                self.state.timing_totals_ms["transcribe"],
+                self.state.timing_totals_ms["confirm"],
+                self.state.timing_totals_ms["sentence"],
+                self.state.timing_totals_ms["acknowledge"],
+                self.state.timing_totals_ms["speaker"],
+                self.state.timing_totals_ms["output"],
+                self.state.timing_totals_ms["advance"],
+                self.state.timing_totals_ms["total"],
+            )
             for i, utterance in enumerate(self.state.unacknowledged_utterances):
                 utterance.speaker = self.assign_speaker(utterance, audio_stream.diarization)
                 self._emit_utterance_status(

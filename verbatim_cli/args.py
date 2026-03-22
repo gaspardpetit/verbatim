@@ -73,6 +73,23 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
         default=None,
         help="Whisper model size or path (e.g., 'large-v3' or 'nyrahealth/faster_CrisperWhisper')",
     )
+    parser.add_argument(
+        "--transcriber-backend",
+        choices=["auto", "qwen", "qwen-asr"],
+        default=None,
+        help="Transcription backend to use. Defaults to the standard Whisper backend when unset.",
+    )
+    parser.add_argument(
+        "--language-identifier-backend",
+        choices=["transcriber", "mms"],
+        default=None,
+        help="Language identification backend to use. 'transcriber' uses the active ASR backend; 'mms' uses facebook/mms-lid-126.",
+    )
+    parser.add_argument(
+        "--mms-lid-model-size",
+        default=None,
+        help="Model id or path for the MMS language identification backend.",
+    )
     parser.add_argument("--config", help="Path to YAML or JSON config file for defaults")
     parser.add_argument(
         "--install",
@@ -98,6 +115,10 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
         "--stdout-nocolor",
         action="store_true",
         help="Disable ANSI colors in default stdout output",
+    )
+    parser.add_argument(
+        "--log-file",
+        help="Write application logs to a UTF-8 log file",
     )
     parser.add_argument(
         "--format-timestamp",
