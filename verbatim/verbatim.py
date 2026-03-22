@@ -258,6 +258,12 @@ class Verbatim:
                 whisper_model_size=config.whisper_model_size,
                 stream=config.stream,
                 transcriber=transcriber,
+                transcriber_backend=config.transcriber_backend,
+                qwen_asr_model_size=config.qwen_asr_model_size,
+                qwen_aligner_model_size=config.qwen_aligner_model_size,
+                qwen_dtype=config.qwen_dtype,
+                qwen_max_inference_batch_size=config.qwen_max_inference_batch_size,
+                qwen_max_new_tokens=config.qwen_max_new_tokens,
             )
         self.models = models
         if vad_callback is not None:

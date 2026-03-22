@@ -26,15 +26,32 @@ class Models:
         whisper_model_size: str = "large-v3",
         stream: bool = False,
         transcriber: Optional[TranscriberProtocol] = None,
+        transcriber_backend: str = "auto",
+        qwen_asr_model_size: str = "Qwen/Qwen3-ASR-1.7B",
+        qwen_aligner_model_size: str = "Qwen/Qwen3-ForcedAligner-0.6B",
+        qwen_dtype: str = "auto",
+        qwen_max_inference_batch_size: int = 1,
+        qwen_max_new_tokens: int = 256,
     ):
         self._transcriber: Optional[TranscriberProtocol] = transcriber
         self._device = device
         self._whisper_model_size = whisper_model_size
+        self._config_transcriber_backend = transcriber_backend
+        self._qwen_asr_model_size = qwen_asr_model_size
+        self._qwen_aligner_model_size = qwen_aligner_model_size
+        self._qwen_dtype = qwen_dtype
+        self._qwen_max_inference_batch_size = qwen_max_inference_batch_size
+        self._qwen_max_new_tokens = qwen_max_new_tokens
 
         if transcriber is not None:
             STATUS_LOG.info("Using injected transcriber implementation.")
         else:
-            STATUS_LOG.info("Transcriber will be lazy-loaded on first use (device=%s, size=%s).", device, whisper_model_size)
+            STATUS_LOG.info(
+                "Transcriber will be lazy-loaded on first use (backend=%s, device=%s, size=%s).",
+                transcriber_backend,
+                device,
+                whisper_model_size,
+            )
 
         STATUS_LOG.info("Lazy-loading Silero VAD model.")
         vad_start = perf_counter()
@@ -66,6 +83,20 @@ class Models:
 
     def _build_transcriber(self) -> TranscriberProtocol:
         # pylint: disable=import-outside-toplevel
+        backend = (getattr(self, "_config_transcriber_backend", "auto") or "auto").lower()
+        if backend in ("qwen", "qwen-asr"):
+            STATUS_LOG.info("Using Qwen3-ASR transcriber.")
+            from .voices.transcribe.qwen_asr import QwenAsrTranscriber  # pylint: disable=import-outside-toplevel
+
+            return QwenAsrTranscriber(
+                model_size_or_path=self._qwen_asr_model_size,
+                aligner_model_size_or_path=self._qwen_aligner_model_size,
+                device=self._device,
+                dtype=self._qwen_dtype,
+                max_inference_batch_size=self._qwen_max_inference_batch_size,
+                max_new_tokens=self._qwen_max_new_tokens,
+            )
+
         if sys.platform == "darwin":
             # If this is an Apple Silicon device, use the MLX Whisper transcriber
             if platform.processor() == "arm":
