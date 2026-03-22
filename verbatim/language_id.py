@@ -41,8 +41,8 @@ class MmsLanguageIdentifier:
         else:
             torch_device = "cpu"
 
-        self._feature_extractor = AutoFeatureExtractor.from_pretrained(model_size_or_path)
-        self._model = Wav2Vec2ForSequenceClassification.from_pretrained(model_size_or_path)
+        self._feature_extractor = AutoFeatureExtractor.from_pretrained(model_size_or_path)  # nosec B615
+        self._model = Wav2Vec2ForSequenceClassification.from_pretrained(model_size_or_path)  # nosec B615
         self._model.to(torch_device)
         self._model.eval()
         self._device = torch_device

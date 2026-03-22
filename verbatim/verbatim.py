@@ -193,7 +193,7 @@ class State:
             "speaker": 0.0,
             "output": 0.0,
             "advance": 0.0,
-            "total_pass": 0.0,
+            "total": 0.0,
         }
 
         window_size = self.config.sampling_rate * self.config.window_duration  # Total samples in 30 seconds
@@ -921,7 +921,7 @@ class Verbatim:
             confirmed_delta_s = samples_to_seconds(max(0, self.state.confirmed_ts - initial_confirmed_ts))
             acknowledged_delta_s = samples_to_seconds(max(0, self.state.acknowledged_ts - initial_acknowledged_ts))
             total_pass_ms = (perf_counter() - iteration_start) * 1000.0
-            pass_metrics["total_pass_ms"] = total_pass_ms
+            pass_metrics["total_ms"] = total_pass_ms
             self.state.timing_totals_ms["detect"] += pass_metrics["detect_ms"]
             self.state.timing_totals_ms["transcribe"] += pass_metrics["transcribe_ms"]
             self.state.timing_totals_ms["confirm"] += pass_metrics["confirm_ms"]
@@ -930,14 +930,14 @@ class Verbatim:
             self.state.timing_totals_ms["speaker"] += pass_metrics["speaker_ms"]
             self.state.timing_totals_ms["output"] += pass_metrics["output_ms"]
             self.state.timing_totals_ms["advance"] += pass_metrics["advance_ms"]
-            self.state.timing_totals_ms["total_pass"] += pass_metrics["total_pass_ms"]
+            self.state.timing_totals_ms["total"] += pass_metrics["total_ms"]
             LOG.info(
                 (
                     "Pass timing: total=%.1fms detect=%.1fms transcribe=%.1fms confirm=%.1fms "
                     "sentence=%.1fms acknowledge=%.1fms speaker=%.1fms output=%.1fms advance=%.1fms "
                     "confirmed_delta=%.3fs ack_delta=%.3fs"
                 ),
-                pass_metrics["total_pass_ms"],
+                pass_metrics["total_ms"],
                 pass_metrics["detect_ms"],
                 pass_metrics["transcribe_ms"],
                 pass_metrics["confirm_ms"],
@@ -1122,7 +1122,7 @@ class Verbatim:
                 self.state.timing_totals_ms["speaker"],
                 self.state.timing_totals_ms["output"],
                 self.state.timing_totals_ms["advance"],
-                self.state.timing_totals_ms["total_pass"],
+                self.state.timing_totals_ms["total"],
             )
             for i, utterance in enumerate(self.state.unacknowledged_utterances):
                 utterance.speaker = self.assign_speaker(utterance, audio_stream.diarization)

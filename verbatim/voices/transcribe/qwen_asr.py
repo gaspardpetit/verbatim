@@ -203,7 +203,7 @@ class QwenAsrTranscriber(Transcriber):
                 probability = min(probability, unit_probability)
 
                 accumulated_norm += cls._normalize_for_alignment(unit_text)
-                if token_norm == "" or len(accumulated_norm) >= len(token_norm):
+                if not token_norm or len(accumulated_norm) >= len(token_norm):
                     break
 
             if start_ts is None or end_ts is None:
