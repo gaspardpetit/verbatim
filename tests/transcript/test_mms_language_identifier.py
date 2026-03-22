@@ -90,7 +90,7 @@ class TestMmsLanguageIdentifier(unittest.TestCase):
         fake_transformers.Wav2Vec2ForSequenceClassification = FakeModel
 
         fake_torch = types.ModuleType("torch")
-        fake_torch.no_grad = lambda: FakeNoGrad()
+        fake_torch.no_grad = FakeNoGrad
         fake_torch.nn = types.SimpleNamespace(
             functional=types.SimpleNamespace(
                 softmax=lambda logits, dim=-1: logits,
