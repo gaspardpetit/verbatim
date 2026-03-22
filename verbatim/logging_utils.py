@@ -16,7 +16,7 @@ def status_enabled() -> bool:
     return logger.isEnabledFor(logging.DEBUG)
 
 
-def configure_status_logger(*, verbose: int, fmt: str, datefmt: Optional[str]) -> None:
+def configure_status_logger(*, verbose: int, fmt: str, datefmt: Optional[str], file_handler: Optional[logging.Handler] = None) -> None:
     logger = get_status_logger()
     logger.handlers.clear()
     logger.propagate = False
@@ -30,3 +30,5 @@ def configure_status_logger(*, verbose: int, fmt: str, datefmt: Optional[str]) -
     handler.setLevel(logging.DEBUG if verbose >= 2 else logging.INFO)
     handler.setFormatter(logging.Formatter(fmt=fmt, datefmt=datefmt))
     logger.addHandler(handler)
+    if file_handler is not None:
+        logger.addHandler(file_handler)

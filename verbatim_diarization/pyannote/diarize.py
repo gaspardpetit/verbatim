@@ -25,6 +25,7 @@ from verbatim_files.vttm import AudioRef, dumps_vttm
 
 from .constants import PYANNOTE_DIARIZATION_MODEL_ID
 from .ffmpeg_loader import ensure_torchcodec_audio_decoder
+from .output import select_speaker_diarization
 
 LOG = logging.getLogger(__name__)
 STATUS_LOG = get_status_logger()
@@ -135,11 +136,8 @@ class PyAnnoteDiarization(DiarizationStrategy):
         if diarization is None:
             raise RuntimeError("PyAnnote diarization failed without producing output")
 
-        # pyannote.audio 4.x returns a DiarizeOutput with a speaker_diarization field
-        if hasattr(diarization, "speaker_diarization"):
-            diarization_annotation = diarization.speaker_diarization  # type: ignore[attr-defined]
-        else:
-            diarization_annotation = diarization
+        # pyannote.audio 4.x may expose both regular and exclusive diarization outputs.
+        diarization_annotation = select_speaker_diarization(diarization)
 
         raw_uri = getattr(diarization_annotation, "uri", None) or os.path.splitext(os.path.basename(file_path))[0]
         uri = sanitize_uri_component(str(raw_uri))

@@ -40,6 +40,23 @@ Install the latest from git:
 pip install git+https://github.com/gaspardpetit/verbatim.git
 ```
 
+Optional backend extras:
+```bash
+# Qwen ASR backend
+pip install "verbatim[qwen]"
+
+# MMS language identification backend
+pip install "verbatim[mms_lid]"
+
+# Qwen ASR + MMS language identification
+pip install "verbatim[qwen,mms_lid]"
+```
+
+With `uv` against the local project environment:
+```bash
+uv pip install -e ".[qwen,mms_lid]"
+```
+
 ### Torch with Cuda Support
 If the tool falls back to CPU instead of GPU, you may need to reinstall the torch dependency with Cuda support. Refer to the following instructions: [https://pytorch.org/get-started/locally/](https://pytorch.org/get-started/locally/)
 

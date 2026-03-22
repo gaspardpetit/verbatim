@@ -26,6 +26,7 @@ from verbatim_files.vttm import AudioRef, dumps_vttm
 
 from .constants import PYANNOTE_SEPARATION_MODEL_ID
 from .ffmpeg_loader import ensure_torchcodec_audio_decoder
+from .output import select_speaker_diarization
 from .progress import StatusProgressHook
 
 LOG = logging.getLogger(__name__)
@@ -150,7 +151,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
                 except Exception:  # pragma: no cover
                     LOG.debug("Failed to clean up temporary separation file %s", temp_path)
 
-        diarization = diarization_output.speaker_diarization if hasattr(diarization_output, "speaker_diarization") else diarization_output
+        diarization = select_speaker_diarization(diarization_output)
 
         sources_data = np.asarray(sources.data)
         shape = cast(tuple[int, int], tuple(sources_data.shape[:2]))

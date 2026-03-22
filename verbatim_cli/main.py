@@ -35,13 +35,24 @@ def main():
         logging.root.removeHandler(handler)
 
     log_format = "%(asctime)s [%(levelname)s][%(filename)s:%(lineno)d][%(funcName)s] %(message)s"
-    logging.basicConfig(
-        stream=sys.stderr,
-        level=log_level,
-        format=log_format,
-        datefmt="%Y-%m-%dT%H:%M:%SZ",
-    )
-    configure_status_logger(verbose=args.verbose, fmt=log_format, datefmt="%Y-%m-%dT%H:%M:%SZ")
+    formatter = logging.Formatter(fmt=log_format, datefmt="%Y-%m-%dT%H:%M:%SZ")
+    stderr_handler = logging.StreamHandler(sys.stderr)
+    stderr_handler.setLevel(log_level)
+    stderr_handler.setFormatter(formatter)
+    handlers = [stderr_handler]
+    status_file_handler = None
+    if getattr(args, "log_file", None):
+        file_handler = logging.FileHandler(args.log_file, mode="w", encoding="utf-8")
+        file_handler.setLevel(log_level)
+        file_handler.setFormatter(formatter)
+        handlers.append(file_handler)
+
+        status_file_handler = logging.FileHandler(args.log_file, mode="a", encoding="utf-8")
+        status_file_handler.setLevel(logging.DEBUG if args.verbose >= 2 else logging.INFO)
+        status_file_handler.setFormatter(formatter)
+
+    logging.basicConfig(level=log_level, handlers=handlers, force=True)
+    configure_status_logger(verbose=args.verbose, fmt=log_format, datefmt="%Y-%m-%dT%H:%M:%SZ", file_handler=status_file_handler)
     status_log = get_status_logger()
 
     # load the values from the .env file, if present

@@ -27,9 +27,17 @@ def make_config(args) -> Config:
         stream=args.stream,
         offline=args.offline,
         model_cache_dir=args.model_cache,
+        log_file=getattr(args, "log_file", None),
+        log_colours=not bool(getattr(args, "log_file", None)),
     )
     if getattr(args, "whisper_model", None):
         config.whisper_model_size = args.whisper_model
+    if getattr(args, "transcriber_backend", None):
+        config.transcriber_backend = args.transcriber_backend
+    if getattr(args, "language_identifier_backend", None):
+        config.language_identifier_backend = args.language_identifier_backend
+    if getattr(args, "mms_lid_model_size", None):
+        config.mms_lid_model_size = args.mms_lid_model_size
     config.lang = args.languages if args.languages else ["en"]
     return config
 

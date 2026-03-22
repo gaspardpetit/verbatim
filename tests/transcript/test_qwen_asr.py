@@ -6,6 +6,7 @@ from unittest.mock import patch
 import numpy as np
 
 from verbatim.voices.transcribe.qwen_asr import QwenAsrTranscriber
+from verbatim.transcript.words import Word
 
 
 class FakeTimestamp:
@@ -126,6 +127,48 @@ class TestQwenAsrTranscriber(unittest.TestCase):
                 window_ts=0,
                 audio_ts=16000,
             )
+
+    def test_split_transcript_text_preserves_exact_spacing(self):
+        tokens = QwenAsrTranscriber._split_transcript_text("Toto, I have\n a feeling")
+        self.assertEqual(["Toto,", " I", " have", "\n a", " feeling"], tokens)
+
+    def test_project_timestamps_onto_transcript_preserves_original_text(self):
+        words = QwenAsrTranscriber._project_timestamps_onto_transcript(
+            transcript_text="Toto, I have a feeling we're not in Kansas anymore.",
+            aligned_units=[
+                (0, 10, "Toto", 1.0),
+                (10, 20, ", I", 1.0),
+                (20, 30, "have", 1.0),
+                (30, 40, "a", 1.0),
+                (40, 50, "feeling", 1.0),
+                (50, 60, "we're", 1.0),
+                (60, 70, "not", 1.0),
+                (70, 80, "in", 1.0),
+                (80, 90, "Kansas", 1.0),
+                (90, 100, "anymore", 1.0),
+            ],
+            lang="en",
+            window_ts=0,
+            audio_ts=200,
+        )
+        self.assertEqual("Toto, I have a feeling we're not in Kansas anymore.", "".join(word.word for word in words))
+        self.assertEqual("Toto,", words[0].word)
+        self.assertEqual(" I", words[1].word)
+        self.assertEqual(" anymore.", words[-1].word)
+
+    def test_project_timestamps_skips_units_beyond_audio_end(self):
+        words = QwenAsrTranscriber._project_timestamps_onto_transcript(
+            transcript_text=" hello world",
+            aligned_units=[
+                (0, 100, "hello", 1.0),
+                (100, 200, "world", 1.0),
+            ],
+            lang="en",
+            window_ts=0,
+            audio_ts=150,
+        )
+        self.assertEqual(" hello", "".join(word.word for word in words))
+        self.assertEqual(1, len(words))
 
 
 if __name__ == "__main__":

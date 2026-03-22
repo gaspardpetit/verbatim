@@ -85,6 +85,31 @@ class QwenAsrTranscriber(Transcriber):
             max_inference_batch_size=max_inference_batch_size,
             max_new_tokens=max_new_tokens,
         )
+        self._configure_generation_padding()
+
+    def _configure_generation_padding(self) -> None:
+        """Avoid repeated Transformers warnings by ensuring pad_token_id is set."""
+        model = getattr(self._model, "model", None)
+        if model is None:
+            return
+
+        generation_config = getattr(model, "generation_config", None)
+        model_config = getattr(model, "config", None)
+
+        eos_token_id = None
+        if generation_config is not None:
+            eos_token_id = getattr(generation_config, "eos_token_id", None)
+        if eos_token_id is None and model_config is not None:
+            eos_token_id = getattr(model_config, "eos_token_id", None)
+        if isinstance(eos_token_id, list) and eos_token_id:
+            eos_token_id = eos_token_id[0]
+        if eos_token_id is None:
+            return
+
+        if generation_config is not None and getattr(generation_config, "pad_token_id", None) is None:
+            generation_config.pad_token_id = eos_token_id
+        if model_config is not None and getattr(model_config, "pad_token_id", None) is None:
+            model_config.pad_token_id = eos_token_id
 
     @staticmethod
     def _resolve_dtype(*, torch_module: Any, dtype: str, device: str) -> Any:
@@ -119,23 +144,87 @@ class QwenAsrTranscriber(Transcriber):
         return None
 
     @staticmethod
-    def _coerce_timestamp_text(transcript_text: str, cursor: int, unit_text: str) -> Tuple[str, int]:
-        if cursor >= len(transcript_text):
-            return unit_text, cursor
+    def _split_transcript_text(transcript_text: str) -> List[str]:
+        tokens: List[str] = []
+        cursor = 0
+        length = len(transcript_text)
 
-        if transcript_text.startswith(unit_text, cursor):
-            end = cursor + len(unit_text)
-            return transcript_text[cursor:end], end
+        while cursor < length:
+            token_start = cursor
+            if transcript_text[cursor].isspace():
+                while cursor < length and transcript_text[cursor].isspace():
+                    cursor += 1
+            while cursor < length and not transcript_text[cursor].isspace():
+                cursor += 1
+            token = transcript_text[token_start:cursor]
+            if token:
+                tokens.append(token)
 
-        stripped_text = unit_text.strip()
-        if stripped_text:
-            found_at = transcript_text.find(stripped_text, cursor)
-            if found_at != -1:
-                end = found_at + len(stripped_text)
-                return transcript_text[cursor:end], end
+        return tokens
 
-        fallback_end = min(len(transcript_text), cursor + len(unit_text))
-        return transcript_text[cursor:fallback_end], fallback_end
+    @staticmethod
+    def _normalize_for_alignment(text: str) -> str:
+        return "".join(char for char in text if char.isalnum())
+
+    @classmethod
+    def _project_timestamps_onto_transcript(
+        cls,
+        *,
+        transcript_text: str,
+        aligned_units: List[Tuple[int, int, str, float]],
+        lang: str,
+        window_ts: int,
+        audio_ts: int,
+    ) -> List[Word]:
+        transcript_tokens = cls._split_transcript_text(transcript_text)
+        if not transcript_tokens:
+            return []
+
+        words: List[Word] = []
+        unit_index = 0
+        last_end_ts = window_ts
+
+        for token in transcript_tokens:
+            token_norm = cls._normalize_for_alignment(token)
+
+            start_ts: Optional[int] = None
+            end_ts: Optional[int] = None
+            probability = 1.0
+            accumulated_norm = ""
+
+            while unit_index < len(aligned_units):
+                unit_start_ts, unit_end_ts, unit_text, unit_probability = aligned_units[unit_index]
+                unit_index += 1
+
+                if start_ts is None:
+                    start_ts = unit_start_ts
+                end_ts = unit_end_ts
+                probability = min(probability, unit_probability)
+
+                accumulated_norm += cls._normalize_for_alignment(unit_text)
+                if token_norm == "" or len(accumulated_norm) >= len(token_norm):
+                    break
+
+            if start_ts is None or end_ts is None:
+                continue
+            if end_ts > audio_ts:
+                continue
+            if start_ts < last_end_ts:
+                start_ts = last_end_ts
+                end_ts = max(end_ts, start_ts)
+
+            words.append(
+                Word(
+                    start_ts=start_ts,
+                    end_ts=end_ts,
+                    word=token,
+                    probability=probability,
+                    lang=lang,
+                )
+            )
+            last_end_ts = end_ts
+
+        return words
 
     def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]:
         if len(lang) == 0:
@@ -205,8 +294,7 @@ class QwenAsrTranscriber(Transcriber):
                 f"Qwen3-ASR did not return timestamps for language '{lang}'. The current pipeline requires aligned timestamps."
             )
 
-        transcript_words: List[Word] = []
-        cursor = 0
+        aligned_units: List[Tuple[int, int, str, float]] = []
         min_word_duration_samples = 800
         last_valid_end_ts = window_ts
 
@@ -227,21 +315,16 @@ class QwenAsrTranscriber(Transcriber):
             if end_ts > audio_ts:
                 continue
 
-            normalized_text, cursor = self._coerce_timestamp_text(transcript_text=transcript_text, cursor=cursor, unit_text=unit_text)
-            if normalized_text == "":
-                continue
-
-            transcript_words.append(
-                Word(
-                    start_ts=start_ts,
-                    end_ts=end_ts,
-                    word=normalized_text,
-                    probability=1.0,
-                    lang=lang,
-                )
-            )
+            aligned_units.append((start_ts, end_ts, unit_text, 1.0))
             last_valid_end_ts = end_ts
 
+        transcript_words = self._project_timestamps_onto_transcript(
+            transcript_text=transcript_text,
+            aligned_units=aligned_units,
+            lang=lang,
+            window_ts=window_ts,
+            audio_ts=audio_ts,
+        )
         if transcript_words:
             joined_text = "".join(word.word for word in transcript_words)
             if transcript_text and joined_text != transcript_text:

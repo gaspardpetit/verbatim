@@ -156,6 +156,8 @@ class Config:
     device: str = "auto"
     stream: bool = False
     debug: bool = False
+    log_file: Optional[str] = None
+    log_colours: bool = True
     # Caching and connectivity
     model_cache_dir: Optional[str] = None
     offline: bool = False
@@ -163,6 +165,8 @@ class Config:
     # TRANSCRIPTION
     lang: List[str] = field(default_factory=lambda: DEFAULT_LANGUAGES)
     transcriber_backend: str = "auto"
+    language_identifier_backend: str = "transcriber"
+    mms_lid_model_size: str = "facebook/mms-lid-126"
     whisper_prompts: Mapping[str, str] = field(default_factory=lambda: DEFAULT_MULTILANG_PROMPTS)
     chunk_table: List[Tuple[float, float]] = field(default_factory=list)
 

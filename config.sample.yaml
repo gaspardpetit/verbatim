@@ -1,12 +1,15 @@
-batch_dir: "C:\\Users\\gpetit\\iCloudDrive\\Downloads"
-batch_dir2: "C:/Users/gpetit/OneDrive - Lavery, de Billy/Documents/Sound Recordings"
+batch_dir: "./input/"
+
+#transcriber_backend: qwen
+#language_identifier_backend: mms
+#mms_lid_model_size: facebook/mms-lid-126
+
 include:
   filename: ["*.wav", "*.mp3", "*.m4a"]
 ignore: []
 recursive: false
 skip_existing: true
-outdir: "C:\\Users\\gpetit\\iCloudDrive\\Downloads"
-outdir2: "C:/Users/gpetit/OneDrive - Lavery, de Billy/Documents/Sound Recordings"
+outdir: "./output/"
 output:
   files: [txt]
   format:
@@ -14,7 +17,7 @@ output:
     speaker: change
     probability: line
     language: change
-languages: [fr]
+languages: [fr, en]
 diarize: "pyannote"
 
 profiles:
