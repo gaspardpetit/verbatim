@@ -30,7 +30,7 @@ class MmsLanguageIdentifier:
 
     def __init__(self, *, model_size_or_path: str, device: str):
         try:
-            from transformers import AutoFeatureExtractor, Wav2Vec2ForSequenceClassification
+            from transformers import AutoFeatureExtractor, Wav2Vec2ForSequenceClassification  # pylint: disable=import-outside-toplevel
         except ImportError as exc:
             raise RuntimeError("MMS language identification requires `transformers`. Install the optional dependency set that includes it.") from exc
 

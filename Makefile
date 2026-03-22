@@ -5,9 +5,11 @@ PYTHON ?= 3.11
 ifeq ($(OS),Windows_NT)
 PYTEST_CMD = cmd /C "set CUDA_VISIBLE_DEVICES=-1&& pytest -q"
 PYTEST_CMD_CI = cmd /C "set CUDA_VISIBLE_DEVICES=-1&& pytest -q -k \"not test_diarization_metrics_long and not SaTSentenceTokenizer\""
+PYLINT_TEST_FILES := $(shell git ls-files "tests/**/*.py")
 else
 PYTEST_CMD = CUDA_VISIBLE_DEVICES=-1 pytest -q
 PYTEST_CMD_CI = CUDA_VISIBLE_DEVICES=-1 pytest -q -k "not test_diarization_metrics_long and not SaTSentenceTokenizer"
+PYLINT_TEST_FILES := $(shell git ls-files 'tests/**/*.py')
 endif
 
 # Run local static checks. Ensure tools are installed: pip install ruff pylint flake8 bandit pyright
@@ -16,7 +18,7 @@ check: lint type sec
 lint:
 	ruff check verbatim verbatim_audio verbatim_batch verbatim_cli verbatim_diarization verbatim_files verbatim_transcript tests
 	flake8 verbatim verbatim_audio verbatim_batch verbatim_cli verbatim_diarization verbatim_files verbatim_transcript tests
-	pylint --disable=import-error verbatim verbatim_audio verbatim_batch verbatim_cli verbatim_diarization verbatim_files verbatim_transcript $$(git ls-files 'tests/**/*.py')
+	pylint --disable=import-error verbatim verbatim_audio verbatim_batch verbatim_cli verbatim_diarization verbatim_files verbatim_transcript $(PYLINT_TEST_FILES)
 
 type:
 	pyright
