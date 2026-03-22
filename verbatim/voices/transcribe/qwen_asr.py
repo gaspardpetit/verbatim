@@ -1,9 +1,11 @@
 import logging
+from time import perf_counter
 from typing import Any, Dict, List, Optional, Tuple
 
 from numpy.typing import NDArray
 
 from ...transcript.words import Word
+from verbatim_audio.audio import samples_to_seconds
 from .transcribe import Transcriber
 
 LOG = logging.getLogger(__name__)
@@ -61,8 +63,8 @@ class QwenAsrTranscriber(Transcriber):
             raise RuntimeError("Qwen3-ASR backend currently supports only 'cpu' and 'cuda' devices.")
 
         try:
-            import torch
-            from qwen_asr import Qwen3ASRModel
+            import torch  # pylint: disable=import-outside-toplevel
+            from qwen_asr import Qwen3ASRModel  # pylint: disable=import-outside-toplevel
         except ImportError as exc:
             raise RuntimeError(
                 "Qwen3-ASR backend requires optional dependencies. Install `qwen-asr` and `torch` to use transcriber_backend='qwen'."
@@ -173,12 +175,24 @@ class QwenAsrTranscriber(Transcriber):
         if qwen_language is None:
             raise RuntimeError(f"Language '{lang}' is not supported by the Qwen3-ASR adapter mapping.")
 
+        process_start = perf_counter()
+        audio_duration_seconds = max(0.0, len(audio) / 16000.0)
         context = prefix if prefix.strip() else prompt
         results = self._model.transcribe(
             audio=(audio, 16000),
             language=qwen_language,
             context=context,
             return_time_stamps=True,
+        )
+        elapsed_ms = (perf_counter() - process_start) * 1000.0
+        LOG.info(
+            "Processed audio with duration %.3fs at window %.3fs-%.3fs (%d-%d samples) in %.1fms",
+            audio_duration_seconds,
+            samples_to_seconds(window_ts),
+            samples_to_seconds(audio_ts),
+            window_ts,
+            audio_ts,
+            elapsed_ms,
         )
         if not results:
             return []
@@ -232,5 +246,16 @@ class QwenAsrTranscriber(Transcriber):
             joined_text = "".join(word.word for word in transcript_words)
             if transcript_text and joined_text != transcript_text:
                 LOG.debug("Qwen timestamp units did not fully reconstruct transcript text: %r != %r", joined_text, transcript_text)
+
+        words_count = len(transcript_words)
+        elapsed_seconds = max(elapsed_ms / 1000.0, 1e-9)
+        words_per_second = words_count / elapsed_seconds
+        LOG.info(
+            "Window progress at %.3fs: words=%d throughput=%.2f words/s lang=%s",
+            samples_to_seconds(audio_ts),
+            words_count,
+            words_per_second,
+            lang,
+        )
 
         return transcript_words

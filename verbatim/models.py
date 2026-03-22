@@ -22,6 +22,7 @@ class Models:
 
     def __init__(
         self,
+        *,
         device: str,
         whisper_model_size: str = "large-v3",
         stream: bool = False,
