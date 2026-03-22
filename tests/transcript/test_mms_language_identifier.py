@@ -1,6 +1,7 @@
 import sys
 import types
 import unittest
+from typing import Any
 from unittest.mock import patch
 
 import numpy as np
@@ -85,11 +86,11 @@ class TestMmsLanguageIdentifier(unittest.TestCase):
         self.assertEqual(0.75, probability)
 
     def test_mms_identifier_picks_best_allowed_language(self):
-        fake_transformers = types.ModuleType("transformers")
+        fake_transformers: Any = types.ModuleType("transformers")
         fake_transformers.AutoFeatureExtractor = FakeFeatureExtractor
         fake_transformers.Wav2Vec2ForSequenceClassification = FakeModel
 
-        fake_torch = types.ModuleType("torch")
+        fake_torch: Any = types.ModuleType("torch")
         fake_torch.no_grad = FakeNoGrad
         fake_torch.nn = types.SimpleNamespace(
             functional=types.SimpleNamespace(

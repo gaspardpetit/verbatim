@@ -2,6 +2,7 @@
 import sys
 import types
 import unittest
+from typing import Any, ClassVar
 from unittest.mock import patch
 
 import numpy as np
@@ -34,7 +35,7 @@ class FakeLoadedModel:
 
 
 class FakeQwen3ASRModel:
-    loaded_model = None
+    loaded_model: ClassVar[Any] = None
 
     @classmethod
     def from_pretrained(cls, *args, **kwargs):
@@ -45,11 +46,11 @@ class FakeQwen3ASRModel:
 class TestQwenAsrTranscriber(unittest.TestCase):
     def _make_transcriber(self, results):
         fake_model = FakeLoadedModel(results=results)
-        fake_qwen_module = types.ModuleType("qwen_asr")
+        fake_qwen_module: Any = types.ModuleType("qwen_asr")
         fake_qwen_module.Qwen3ASRModel = FakeQwen3ASRModel
         FakeQwen3ASRModel.loaded_model = fake_model
 
-        fake_torch = types.ModuleType("torch")
+        fake_torch: Any = types.ModuleType("torch")
         fake_torch.bfloat16 = "bfloat16"
         fake_torch.float32 = "float32"
 

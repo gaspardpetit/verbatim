@@ -1,12 +1,11 @@
 import logging
-from typing import List, Optional, Protocol, Tuple
+from typing import Any, List, Optional, Protocol, Tuple
 
 import torch
 from langcodes import Language
 from numpy.typing import NDArray
 
 from .config import Config
-from .models import Models
 
 LOG = logging.getLogger(__name__)
 
@@ -15,10 +14,14 @@ class LanguageIdentifierProtocol(Protocol):
     def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]: ...
 
 
+class _TranscriberOwnerProtocol(Protocol):
+    transcriber: Any
+
+
 class TranscriberLanguageIdentifier:
     """Default language identifier that delegates to the selected transcriber backend."""
 
-    def __init__(self, models: Models):
+    def __init__(self, models: _TranscriberOwnerProtocol):
         self._models = models
 
     def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]:
@@ -30,7 +33,8 @@ class MmsLanguageIdentifier:
 
     def __init__(self, *, model_size_or_path: str, device: str):
         try:
-            from transformers import AutoFeatureExtractor, Wav2Vec2ForSequenceClassification  # pylint: disable=import-outside-toplevel
+            from transformers import AutoFeatureExtractor  # pylint: disable=import-outside-toplevel
+            from transformers.models.wav2vec2 import Wav2Vec2ForSequenceClassification  # pylint: disable=import-outside-toplevel
         except ImportError as exc:
             raise RuntimeError("MMS language identification requires `transformers`. Install the optional dependency set that includes it.") from exc
 
@@ -41,8 +45,8 @@ class MmsLanguageIdentifier:
         else:
             torch_device = "cpu"
 
-        self._feature_extractor = AutoFeatureExtractor.from_pretrained(model_size_or_path)  # nosec B615
-        self._model = Wav2Vec2ForSequenceClassification.from_pretrained(model_size_or_path)  # nosec B615
+        self._feature_extractor: Any = AutoFeatureExtractor.from_pretrained(model_size_or_path)  # nosec B615
+        self._model: Any = Wav2Vec2ForSequenceClassification.from_pretrained(model_size_or_path)  # nosec B615
         self._model.to(torch_device)
         self._model.eval()
         self._device = torch_device
@@ -89,7 +93,7 @@ class MmsLanguageIdentifier:
         return best_lang, best_prob
 
 
-def create_language_identifier(config: Config, models: Models) -> LanguageIdentifierProtocol:
+def create_language_identifier(config: Config, models: _TranscriberOwnerProtocol) -> LanguageIdentifierProtocol:
     backend = (config.language_identifier_backend or "transcriber").lower()
     if backend == "transcriber":
         return TranscriberLanguageIdentifier(models=models)
