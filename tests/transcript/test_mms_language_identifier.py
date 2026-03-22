@@ -87,8 +87,10 @@ class TestMmsLanguageIdentifier(unittest.TestCase):
 
     def test_mms_identifier_picks_best_allowed_language(self):
         fake_transformers: Any = types.ModuleType("transformers")
-        fake_transformers.AutoFeatureExtractor = FakeFeatureExtractor
-        fake_transformers.Wav2Vec2ForSequenceClassification = FakeModel
+        fake_transformers_auto: Any = types.ModuleType("transformers.models.auto.feature_extraction_auto")
+        fake_transformers_auto.AutoFeatureExtractor = FakeFeatureExtractor
+        fake_transformers_wav2vec2: Any = types.ModuleType("transformers.models.wav2vec2")
+        fake_transformers_wav2vec2.Wav2Vec2ForSequenceClassification = FakeModel
 
         fake_torch: Any = types.ModuleType("torch")
         fake_torch.no_grad = FakeNoGrad
@@ -98,7 +100,14 @@ class TestMmsLanguageIdentifier(unittest.TestCase):
             )
         )
 
-        with patch.dict(sys.modules, {"transformers": fake_transformers}), patch.object(language_id_module, "torch", fake_torch):
+        with patch.dict(
+            sys.modules,
+            {
+                "transformers": fake_transformers,
+                "transformers.models.auto.feature_extraction_auto": fake_transformers_auto,
+                "transformers.models.wav2vec2": fake_transformers_wav2vec2,
+            },
+        ), patch.object(language_id_module, "torch", fake_torch):
             identifier = MmsLanguageIdentifier(model_size_or_path="facebook/mms-lid-126", device="cpu")
             language, probability = identifier.guess_language(audio=np.zeros(16000, dtype=np.float32), lang=["en", "fr"])
 
