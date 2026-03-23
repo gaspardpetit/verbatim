@@ -83,6 +83,10 @@ class SilenceSentenceTokenizer(SentenceTokenizer):
         if not words:
             return []
 
+        total_duration = samples_to_seconds(words[-1].end_ts - words[0].start_ts)
+        if total_duration <= self.target_duration:
+            return ["".join(word.word for word in words)]
+
         def distance_energy(val: float, min_val: float, max_val: float, ideal_val: float) -> float:
             value: float = max(0, min(1, (val - min_val) / (ideal_val - min_val) if val < ideal_val else (max_val - val) / (max_val - ideal_val)))
             return 1 - value

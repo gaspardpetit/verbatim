@@ -13,6 +13,15 @@ class OptionalValueAction(argparse.Action):
         setattr(namespace, self.dest, values if values is not None else "")
 
 
+def parse_bool(value: str) -> bool:
+    lowered = value.strip().lower()
+    if lowered in ("true", "1", "yes", "y", "on"):
+        return True
+    if lowered in ("false", "0", "no", "n", "off"):
+        return False
+    raise argparse.ArgumentTypeError("Expected true or false")
+
+
 def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool = True, prog: str = "verbatim") -> argparse.ArgumentParser:
     if include_input:
         parser.add_argument(
@@ -89,6 +98,13 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
         "--mms-lid-model-size",
         default=None,
         help="Model id or path for the MMS language identification backend.",
+    )
+    parser.add_argument(
+        "--code-switching",
+        type=parse_bool,
+        default=None,
+        metavar="true|false",
+        help="Enable code-switching aware rolling-window transcription (default: true). Set to false for a single-pass transcription path.",
     )
     parser.add_argument("--config", help="Path to YAML or JSON config file for defaults")
     parser.add_argument(

@@ -164,6 +164,7 @@ class Config:
 
     # TRANSCRIPTION
     lang: List[str] = field(default_factory=lambda: DEFAULT_LANGUAGES)
+    code_switching: bool = True
     transcriber_backend: str = "auto"
     language_identifier_backend: str = "transcriber"
     mms_lid_model_size: str = "facebook/mms-lid-126"

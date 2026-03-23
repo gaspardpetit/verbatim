@@ -101,6 +101,22 @@ WORDS_ULYSSES = [
     " A yellow dressinggown, ungirdled, was sustained gently behind him on the mild morning air.".split()
 ]
 
+WORDS_LIFE_JACKET = [
+    Word(start_ts=2424480, end_ts=2425760, word="Le ", probability=1.0, lang="fr"),
+    Word(start_ts=2425760, end_ts=2428320, word="gilet ", probability=1.0, lang="fr"),
+    Word(start_ts=2428320, end_ts=2429280, word="de ", probability=1.0, lang="fr"),
+    Word(start_ts=2429280, end_ts=2432800, word="sauvetage ", probability=1.0, lang="fr"),
+    Word(start_ts=2432800, end_ts=2434080, word="est ", probability=1.0, lang="fr"),
+    Word(start_ts=2434080, end_ts=2437280, word="situé ", probability=1.0, lang="fr"),
+    Word(start_ts=2437280, end_ts=2438560, word="sous ", probability=1.0, lang="fr"),
+    Word(start_ts=2438560, end_ts=2440480, word="votre ", probability=1.0, lang="fr"),
+    Word(start_ts=2440480, end_ts=2442720, word="siège ", probability=1.0, lang="fr"),
+    Word(start_ts=2442720, end_ts=2443680, word="ou ", probability=1.0, lang="fr"),
+    Word(start_ts=2443680, end_ts=2445280, word="dans ", probability=1.0, lang="fr"),
+    Word(start_ts=2445280, end_ts=2485920, word="l'accoudoir ", probability=1.0, lang="fr"),
+    Word(start_ts=2485920, end_ts=2510240, word="central. ", probability=1.0, lang="fr"),
+]
+
 
 class TestSentences(unittest.TestCase):
     # pylint: disable=invalid-name
@@ -138,6 +154,48 @@ class TestSentences(unittest.TestCase):
             sentences[0], " Stately, plump Buck Mulligan came from the stairhead, bearing a bowl of lather on which a mirror and a razor lay crossed."
         )
         self.assertEqual(sentences[1], " A yellow dressinggown, ungirdled, was sustained gently behind him on the mild morning air.")
+
+    def test_SilenceSentenceTokenizer_does_not_split_short_trailing_word(self):
+        # pylint: disable=import-outside-toplevel
+        from verbatim.transcript.sentences import SilenceSentenceTokenizer
+
+        sentence_tokenizer = SilenceSentenceTokenizer()
+
+        sentences = sentence_tokenizer.split(words=WORDS_LIFE_JACKET)
+
+        self.assertEqual(sentences, ["Le gilet de sauvetage est situé sous votre siège ou dans l'accoudoir central. "])
+
+    def test_BoundedSentenceTokenizer_only_falls_back_for_long_utterance(self):
+        # pylint: disable=import-outside-toplevel
+        from verbatim.transcript.sentences import BoundedSentenceTokenizer, SentenceTokenizer
+
+        class OneSentenceTokenizer(SentenceTokenizer):
+            def split(self, words):
+                return ["".join(word.word for word in words)]
+
+        class MarkerTokenizer(SentenceTokenizer):
+            def split(self, words):
+                return ["fallback-left ", "fallback-right "]
+
+        long_words = [
+            Word(start_ts=0, end_ts=16000 * 12, word="left ", probability=1.0, lang="en"),
+            Word(start_ts=16000 * 12, end_ts=16000 * 30, word="right ", probability=1.0, lang="en"),
+        ]
+
+        tokenizer = BoundedSentenceTokenizer(
+            other_tokenizer=OneSentenceTokenizer(),
+            bounding_tokenizer=MarkerTokenizer(),
+            max_duration=25,
+        )
+
+        self.assertEqual(
+            tokenizer.split(words=WORDS_LIFE_JACKET),
+            ["".join(word.word for word in WORDS_LIFE_JACKET)],
+        )
+        self.assertEqual(
+            tokenizer.split(words=long_words),
+            ["fallback-left ", "fallback-right "],
+        )
 
     @pytest.mark.slow
     @pytest.mark.requires_hf
