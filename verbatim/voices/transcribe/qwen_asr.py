@@ -146,6 +146,46 @@ class QwenAsrTranscriber(Transcriber):
         return None
 
     @staticmethod
+    def _summarize_words(words: List[Word], max_text: int = 120) -> str:
+        if not words:
+            return "[]"
+        text = "".join(word.word for word in words).replace("\n", " ")
+        if len(text) > max_text:
+            text = text[: max_text - 3] + "..."
+        return f"[{words[0].start_ts}-{words[-1].end_ts}] n={len(words)} '{text}'"
+
+    @staticmethod
+    def _summarize_aligned_units(units: List[Tuple[int, int, str, float]], max_items: int = 8) -> str:
+        if not units:
+            return "[]"
+        items = [f"({start_ts}-{end_ts} {text!r})" for start_ts, end_ts, text, _probability in units[:max_items]]
+        if len(units) > max_items:
+            items.append(f"...(+{len(units) - max_items})")
+        return "[" + ", ".join(items) + "]"
+
+    @staticmethod
+    def _summarize_raw_time_stamps(time_stamps: Any, window_ts: int, max_items: int = 8) -> str:
+        if not isinstance(time_stamps, list) or not time_stamps:
+            return "[]"
+
+        items: List[str] = []
+        for time_stamp in time_stamps[:max_items]:
+            unit_text = QwenAsrTranscriber._get_field(time_stamp, "text")
+            start_time = QwenAsrTranscriber._get_field(time_stamp, "start_time")
+            end_time = QwenAsrTranscriber._get_field(time_stamp, "end_time")
+            if not isinstance(unit_text, str) or not isinstance(start_time, (int, float)) or not isinstance(end_time, (int, float)):
+                items.append("(invalid)")
+                continue
+
+            start_ts = int(float(start_time) * 16000) + window_ts
+            end_ts = int(float(end_time) * 16000) + window_ts
+            items.append(f"({start_ts}-{end_ts} rel={float(start_time):.3f}-{float(end_time):.3f} {unit_text!r})")
+
+        if len(time_stamps) > max_items:
+            items.append(f"...(+{len(time_stamps) - max_items})")
+        return "[" + ", ".join(items) + "]"
+
+    @staticmethod
     def _split_transcript_text(transcript_text: str) -> List[str]:
         tokens: List[str] = []
         cursor = 0
@@ -353,6 +393,51 @@ class QwenAsrTranscriber(Transcriber):
         if not time_stamps:
             raise RuntimeError(f"Qwen3-ASR did not return timestamps for language '{lang}'. The current pipeline requires aligned timestamps.")
 
+        LOG.debug(
+            "Qwen raw result: lang=%s window=%d-%d text=%r",
+            lang,
+            window_ts,
+            audio_ts,
+            transcript_text,
+        )
+        LOG.debug(
+            "Qwen raw time_stamps: lang=%s window=%d-%d units=%s",
+            lang,
+            window_ts,
+            audio_ts,
+            self._summarize_raw_time_stamps(time_stamps, window_ts),
+        )
+
+        first_raw_span: Optional[Tuple[int, int, str]] = None
+        last_raw_span: Optional[Tuple[int, int, str]] = None
+        for time_stamp in time_stamps:
+            unit_text = self._get_field(time_stamp, "text")
+            start_time = self._get_field(time_stamp, "start_time")
+            end_time = self._get_field(time_stamp, "end_time")
+            if not isinstance(unit_text, str) or not isinstance(start_time, (int, float)) or not isinstance(end_time, (int, float)):
+                continue
+
+            start_ts = int(float(start_time) * 16000) + window_ts
+            end_ts = int(float(end_time) * 16000) + window_ts
+            raw_span = (start_ts, end_ts, unit_text)
+            if first_raw_span is None:
+                first_raw_span = raw_span
+            last_raw_span = raw_span
+
+        if first_raw_span is not None and last_raw_span is not None:
+            LOG.debug(
+                "Qwen raw span: lang=%s window=%d-%d first=(%d-%d %r) last=(%d-%d %r)",
+                lang,
+                window_ts,
+                audio_ts,
+                first_raw_span[0],
+                first_raw_span[1],
+                first_raw_span[2],
+                last_raw_span[0],
+                last_raw_span[1],
+                last_raw_span[2],
+            )
+
         aligned_units: List[Tuple[int, int, str, float]] = []
         min_word_duration_samples = 800
         last_valid_end_ts = window_ts
@@ -377,12 +462,27 @@ class QwenAsrTranscriber(Transcriber):
             aligned_units.append((start_ts, end_ts, unit_text, 1.0))
             last_valid_end_ts = end_ts
 
+        LOG.debug(
+            "Qwen aligned units: lang=%s window=%d-%d units=%s",
+            lang,
+            window_ts,
+            audio_ts,
+            self._summarize_aligned_units(aligned_units),
+        )
+
         transcript_words = self._project_timestamps_onto_transcript(
             transcript_text=transcript_text,
             aligned_units=aligned_units,
             lang=lang,
             window_ts=window_ts,
             audio_ts=audio_ts,
+        )
+        LOG.debug(
+            "Qwen projected words: lang=%s window=%d-%d words=%s",
+            lang,
+            window_ts,
+            audio_ts,
+            self._summarize_words(transcript_words),
         )
         if transcript_words:
             joined_text = "".join(word.word for word in transcript_words)

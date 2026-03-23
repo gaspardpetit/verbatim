@@ -47,7 +47,7 @@ from .language_id import create_language_identifier
 from .models import Models
 from .status_types import StatusHook, StatusProgress, StatusUpdate
 from .transcript.idprovider import CounterIdProvider, IdProvider
-from .transcript.sentences import SentenceTokenizer, SilenceSentenceTokenizer
+from .transcript.sentences import BoundedSentenceTokenizer, SentenceTokenizer
 from .transcript.words import Utterance, Word
 
 # pylint: disable=unused-import
@@ -66,6 +66,19 @@ class WhisperHistory:
     size: int = 12
     transcript_history: List[List[Word]] = field(default_factory=list)
 
+    @staticmethod
+    def _words_summary(words: List[Word], max_text: int = 60) -> str:
+        if len(words) == 0:
+            return "[]"
+        text = "".join(w.word for w in words).replace(os.linesep, " ")
+        if len(text) > max_text:
+            text = text[: max_text - 3] + "..."
+        return f"[{words[0].start_ts}-{words[-1].end_ts}] n={len(words)} '{text}'"
+
+    @staticmethod
+    def _words_text(words: List[Word]) -> str:
+        return "".join(w.word for w in words).replace(os.linesep, " ")
+
     def add(self, transcription: List[Word]):
         self.transcript_history.append(transcription)
         if len(self.transcript_history) > self.size:
@@ -76,8 +89,16 @@ class WhisperHistory:
         return [w for w in transcript if w.end_ts >= timestamp]
 
     def advance(self, timestamp: int):
-        self.transcript_history = [self.advance_transcript(timestamp, transcript) for transcript in self.transcript_history]
-        self.transcript_history = [h for h in self.transcript_history if len(h) > 0]
+        previous_history = self.transcript_history
+        advanced_history = [self.advance_transcript(timestamp, transcript) for transcript in previous_history]
+        self.transcript_history = [h for h in advanced_history if len(h) > 0]
+        if LOG.isEnabledFor(logging.DEBUG):
+            changes = []
+            for before, after in zip(previous_history, advanced_history):
+                if before != after:
+                    changes.append(f"{self._words_summary(before)} -> {self._words_summary(after)}")
+            if changes:
+                LOG.debug("Advanced transcript history at %d: %s", timestamp, " | ".join(changes))
 
     @staticmethod
     def confirm_transcript(
@@ -104,14 +125,19 @@ class WhisperHistory:
 
         while p_index < len(transcript) and c_index < len(current_words):
             if transcript[p_index].word.strip().lower() == current_words[c_index].word.strip().lower():
-                LOG.debug(f"Confirming word '{transcript[p_index].word}'")
                 confirmed_words += [current_words[c_index]]
                 p_index += 1
                 c_index += 1
             else:
                 break
         if len(confirmed_words) > 0:
-            LOG.debug(f"CONFIRMED CANDIDATE: {''.join([w.word for w in confirmed_words])}")
+            LOG.debug(
+                "Confirmed candidate: matched=%d transcript=%s current=%s confirmed=%s",
+                len(confirmed_words),
+                WhisperHistory._words_summary(transcript),
+                WhisperHistory._words_summary(current_words),
+                WhisperHistory._words_summary(confirmed_words),
+            )
         return confirmed_words
 
     def confirm(
@@ -163,6 +189,7 @@ class State:
     unconfirmed_words: List[Word]
     acknowledged_utterances: List[Utterance]
     unacknowledged_utterances: List[Utterance]
+    last_transcribe_lang: str
     skip_silences: bool = True
     speaker_embeddings: Optional[List] = None
     working_prefix_no_ext: str = "out"
@@ -182,6 +209,7 @@ class State:
         self.unconfirmed_words = []
         self.acknowledged_utterances = []
         self.unacknowledged_utterances = []
+        self.last_transcribe_lang = ""
         self.speaker_embeddings = []
         self.working_prefix_no_ext = working_prefix_no_ext
         self.utterance_id: IdProvider = CounterIdProvider(prefix="utt")
@@ -352,6 +380,61 @@ class Verbatim:
             )
         )
 
+    def _detect_language_for_audio(self, *, audio: NDArray, window_ts: int, audio_ts: int, timestamp: int) -> LanguageDetectionResult:
+        request = LanguageDetectionRequest(
+            audio=audio,
+            lang=self.config.lang,
+            timestamp=timestamp,
+            window_ts=window_ts,
+            audio_ts=audio_ts,
+        )
+        return detect_language(request=request, guess_fn=self.language_identifier.guess_language)
+
+    def _read_full_audio(self, audio_stream: AudioStream) -> NDArray:
+        chunks: List[NDArray] = []
+        chunk_length = max(1, self.config.window_duration)
+        while audio_stream.has_more():
+            chunk = audio_stream.next_chunk(chunk_length=chunk_length)
+            if chunk.size == 0:
+                continue
+            if len(chunk.shape) > 1 and chunk.shape[1] > 1:
+                chunk = np.mean(chunk, axis=1)
+            chunks.append(chunk.astype(np.float32))
+        if len(chunks) == 0:
+            return np.zeros(0, dtype=np.float32)
+        return np.concatenate(chunks, axis=0)
+
+    @staticmethod
+    def _summarize_words(words: List[Word], max_text: int = 80) -> str:
+        if len(words) == 0:
+            return "[]"
+        text = "".join(word.word for word in words).replace(os.linesep, " ")
+        if len(text) > max_text:
+            text = text[: max_text - 3] + "..."
+        langs = sorted({word.lang for word in words if word.lang})
+        langs_summary = f" langs={','.join(langs)}" if langs else ""
+        return f"[{words[0].start_ts}-{words[-1].end_ts}] n={len(words)}{langs_summary} '{text}'"
+
+    @staticmethod
+    def _words_text(words: List[Word]) -> str:
+        return "".join(word.word for word in words).replace(os.linesep, " ")
+
+    @staticmethod
+    def _summarize_utterance(utterance: Utterance, max_text: int = 80) -> str:
+        text = utterance.text.replace(os.linesep, " ")
+        if len(text) > max_text:
+            text = text[: max_text - 3] + "..."
+        return f"{utterance.utterance_id}[{utterance.start_ts}-{utterance.end_ts}] '{text}'"
+
+    @classmethod
+    def _summarize_utterances(cls, utterances: List[Utterance], max_items: int = 4) -> str:
+        if len(utterances) == 0:
+            return "[]"
+        parts = [cls._summarize_utterance(utterance) for utterance in utterances[:max_items]]
+        if len(utterances) > max_items:
+            parts.append(f"...(+{len(utterances) - max_items})")
+        return "[" + ", ".join(parts) + "]"
+
     def skip_leading_silence(self, max_skip: int, min_speech_duration_ms: int = 500) -> int:
         if self.vad_callback is None:
             LOG.debug("VAD callback not configured; skipping silence detection and keeping current window.")
@@ -429,7 +512,8 @@ class Verbatim:
             return string.translate(str.maketrans("", "", " " + PREPEND_PUNCTUATIONS + APPEND_PUNCTUATIONS))
 
         # For each sentence, we want to collect a sublist of VerbatimWord
-        for sentence in sentences:
+        for sentence_index, sentence in enumerate(sentences):
+            raw_sentence = sentence
             # igonre punctuation and spaces
             sentence = remove_spaces_and_punctuation(sentence)
             sentence_length = len(sentence.strip())
@@ -470,13 +554,44 @@ class Verbatim:
                     word_char_offset = 0
                 else:
                     # Only part of the word belongs to this sentence; defer adding the word until it is fully consumed.
+                    LOG.debug(
+                        "Sentence alignment split inside word: sentence_index=%d raw=%r normalized=%r target_end=%d "
+                        "word=%r word_range=%d-%d word_char_offset=%d remaining_word_chars=%d remaining_sentence_chars=%d",
+                        sentence_index,
+                        raw_sentence,
+                        sentence,
+                        target_end,
+                        w.word,
+                        w.start_ts,
+                        w.end_ts,
+                        word_char_offset,
+                        remaining_word_chars,
+                        remaining_sentence_chars,
+                    )
                     current_char_index += remaining_sentence_chars
                     word_char_offset += remaining_sentence_chars
                     break
 
             # Now we have all the words for this sentence
             if len(sentence_words) > 0:
-                result.append(Utterance.from_words(utterance_id=id_provider.next(), words=sentence_words))
+                utterance = Utterance.from_words(utterance_id=id_provider.next(), words=sentence_words)
+                LOG.debug(
+                    "Sentence alignment result: sentence_index=%d raw=%r normalized=%r utterance=%r words=%s",
+                    sentence_index,
+                    raw_sentence,
+                    sentence,
+                    utterance.text,
+                    [word.word for word in sentence_words],
+                )
+                result.append(utterance)
+            else:
+                LOG.debug(
+                    "Sentence alignment produced empty utterance: sentence_index=%d raw=%r normalized=%r target_end=%d",
+                    sentence_index,
+                    raw_sentence,
+                    sentence,
+                    target_end,
+                )
 
         # At the end, `result` should be a List[List[VerbatimWord]]
         return result
@@ -489,6 +604,13 @@ class Verbatim:
 
         for tok in word_tokenizer.split(words=window_words):
             sentences += [tok]
+
+        LOG.debug(
+            "Sentence tokenizer output: tokenizer=%s words=%s sentences=%s",
+            type(word_tokenizer).__name__,
+            [word.word for word in window_words],
+            sentences,
+        )
 
         utterances = Verbatim.align_words_to_sentences(id_provider=id_provider, sentences=sentences, window_words=window_words)
         return utterances
@@ -514,6 +636,7 @@ class Verbatim:
         acknowledged_words_in_window = WhisperHistory.advance_transcript(timestamp=self.state.window_ts, transcript=self.state.acknowledged_words)
         detect_start = perf_counter()
         lang, _prob, used_samples_for_language = self.guess_language(timestamp=max(0, self.state.acknowledged_ts))
+        self.state.last_transcribe_lang = lang
         detect_ms = (perf_counter() - detect_start) * 1000.0
         prefix_text = ""
         for word in [w for u in self.state.unacknowledged_utterances for w in u.words]:
@@ -620,11 +743,25 @@ class Verbatim:
             self.state.confirmed_ts = confirmed_words[-1].start_ts
             LOG.debug(f"Confirmed ts: {self.state.confirmed_ts} ({samples_to_seconds(self.state.confirmed_ts)})")
 
-            newline = os.linesep
             transcript_history = self.state.transcript_candidate_history.transcript_history
+            transcript_lines = [
+                f"H{index}: {self._summarize_words(history)} text={self._words_text(history)!r}"
+                for index, history in enumerate(transcript_history)
+            ]
+            transcript_lines += [
+                f"CUR: {self._summarize_words(transcript_words)} text={self._words_text(transcript_words)!r}",
+                f"CONF: {self._summarize_words(confirmed_words)} text={self._words_text(confirmed_words)!r}",
+            ]
             LOG.debug(
-                f"Transcript:\n{newline.join([''.join([w.word for w in history]) for history in transcript_history])}\n"
-                f"{''.join(w.word for w in transcript_words)}\n{''.join(w.word for w in confirmed_words)}"
+                "Transcript candidates:\n%s",
+                os.linesep.join(transcript_lines),
+            )
+            LOG.debug(
+                "Transcript summary: lang=%s current=%s confirmed=%s history=%s",
+                self.state.last_transcribe_lang,
+                self._summarize_words(transcript_words),
+                self._summarize_words(confirmed_words),
+                " | ".join(self._summarize_words(history) for history in transcript_history),
             )
         confirm_ms = (perf_counter() - confirm_start) * 1000.0
 
@@ -635,6 +772,31 @@ class Verbatim:
             "confirm_ms": confirm_ms,
         }
         return confirmed_words, unconfirmed_words
+
+    def gap_language_mismatch(self, *, start_ts: int, end_ts: int, expected_lang: str, min_gap_samples: int = 4000) -> bool:
+        if not expected_lang or end_ts <= start_ts:
+            return False
+        if end_ts - start_ts < min_gap_samples:
+            return False
+
+        probe_ts = start_ts + (end_ts - start_ts) // 2
+        detected_lang, probability, _used_samples = self.guess_language(timestamp=max(0, probe_ts))
+        probe_start = max(self.state.window_ts, probe_ts - 8000)
+        probe_end = min(self.state.audio_ts, probe_ts + 8000)
+        nearby_unconfirmed = [word for word in self.state.unconfirmed_words if word.end_ts >= probe_start and word.start_ts <= probe_end]
+        mismatch = probability > 0.5 and detected_lang != expected_lang
+        LOG.debug(
+            "Gap probe %d-%d expected=%s detected=%s prob=%.3f mismatch=%s probe_ts=%d nearby_unconfirmed=%s",
+            start_ts,
+            end_ts,
+            expected_lang,
+            detected_lang,
+            probability,
+            mismatch,
+            probe_ts,
+            self._summarize_words(nearby_unconfirmed),
+        )
+        return mismatch
 
     def get_next_number_of_chunks(self) -> int:
         available_chunks = self.config.window_duration - float(self.state.audio_ts - self.state.window_ts) / self.config.sampling_rate
@@ -847,48 +1009,108 @@ class Verbatim:
             if len(confirmed_words) > 0:
                 sentence_start = perf_counter()
                 utterances = self.words_to_sentences(
-                    word_tokenizer=self.models.sentence_tokenizer,
+                    word_tokenizer=BoundedSentenceTokenizer(other_tokenizer=self.models.sentence_tokenizer),
                     window_words=confirmed_words,
                     id_provider=self.state.utterance_id,
                 )
-
-                window_duration = samples_to_seconds(self.state.audio_ts - self.state.window_ts)
-                if window_duration > 25 and len(utterances) == 1:
-                    utterances = self.words_to_sentences(
-                        word_tokenizer=SilenceSentenceTokenizer(), window_words=confirmed_words, id_provider=self.state.utterance_id
-                    )
                 pass_metrics["sentence_ms"] += (perf_counter() - sentence_start) * 1000.0
 
                 acknowledge_start = perf_counter()
                 acknowledged_utterances, confirmed_utterances = self.acknowledge_utterances(utterances=utterances)
                 pass_metrics["acknowledge_ms"] += (perf_counter() - acknowledge_start) * 1000.0
 
+                acknowledged_to_commit = acknowledged_utterances[:1]
+                deferred_acknowledged = acknowledged_utterances[1:]
+                LOG.debug(
+                    "Ack candidates: lang=%s anchor=%d acknowledged=%s commit=%s defer=%s confirmed=%s unconfirmed=%s",
+                    self.state.last_transcribe_lang,
+                    max(self.state.window_ts, self.state.acknowledged_ts),
+                    self._summarize_utterances(acknowledged_utterances),
+                    self._summarize_utterances(acknowledged_to_commit),
+                    self._summarize_utterances(deferred_acknowledged),
+                    self._summarize_utterances(confirmed_utterances),
+                    self._summarize_words(unconfirmed_words),
+                )
+
+                if len(acknowledged_to_commit) > 0:
+                    first_candidate = acknowledged_to_commit[0]
+                    current_anchor_ts = max(self.state.window_ts, self.state.acknowledged_ts)
+                    if self.gap_language_mismatch(
+                        start_ts=current_anchor_ts,
+                        end_ts=first_candidate.start_ts,
+                        expected_lang=self.state.last_transcribe_lang,
+                    ):
+                        conservative_skip_samples = 100 * 16000 // 1000
+                        previous_pending = list(self.state.unacknowledged_utterances)
+                        self.state.unacknowledged_utterances = deferred_acknowledged + confirmed_utterances
+                        if conservative_skip_samples > 0:
+                            self.state.advance_audio_window(conservative_skip_samples)
+                        self.state.skip_silences = True
+                        LOG.debug(
+                            "Blocked first candidate due to gap mismatch: lang=%s anchor=%d candidate=%s prev_pending=%s new_pending=%s",
+                            self.state.last_transcribe_lang,
+                            current_anchor_ts,
+                            self._summarize_utterance(first_candidate),
+                            self._summarize_utterances(previous_pending),
+                            self._summarize_utterances(self.state.unacknowledged_utterances),
+                        )
+                        break
+
                 if audio_stream.diarization:
                     speaker_start = perf_counter()
-                    for acknowledged_utterance in acknowledged_utterances:
+                    for acknowledged_utterance in acknowledged_to_commit:
                         acknowledged_utterance.speaker = self.assign_speaker(acknowledged_utterance, audio_stream.diarization)
                     pass_metrics["speaker_ms"] += (perf_counter() - speaker_start) * 1000.0
 
-                self.state.acknowledged_utterances += acknowledged_utterances
-                self.state.unacknowledged_utterances = confirmed_utterances
+                previous_pending = list(self.state.unacknowledged_utterances)
+                self.state.acknowledged_utterances += acknowledged_to_commit
+                self.state.unacknowledged_utterances = deferred_acknowledged + confirmed_utterances
+                LOG.debug(
+                    "Pending replace: lang=%s prev=%s new=%s",
+                    self.state.last_transcribe_lang,
+                    self._summarize_utterances(previous_pending),
+                    self._summarize_utterances(self.state.unacknowledged_utterances),
+                )
 
-                for i, utterance in enumerate(acknowledged_utterances):
+                for i, utterance in enumerate(acknowledged_to_commit):
                     result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                         utterance=utterance,
-                        unacknowledged=acknowledged_utterances[i + 1 :] + confirmed_utterances,
+                        unacknowledged=acknowledged_to_commit[i + 1 :] + deferred_acknowledged + confirmed_utterances,
                         unconfirmed_words=unconfirmed_words,
                     )
                     yield result.as_tuple()
 
-                if len(acknowledged_utterances) > 0:
-                    for u in acknowledged_utterances:
+                if len(acknowledged_to_commit) > 0:
+                    for u in acknowledged_to_commit:
                         self.state.acknowledged_words += u.words
 
                     # utterances are split at short pauses, advance a bit to avoid repeating the last word
                     # but not too much as to skip the first word of the next utterance
                     utterance_padding_ms = 100
                     utterance_padding_samples = utterance_padding_ms * 16000 // 1000
-                    skip_to = acknowledged_utterances[-1].end_ts + utterance_padding_samples
+                    accepted_end_ts = acknowledged_to_commit[-1].end_ts
+                    skip_to = accepted_end_ts + utterance_padding_samples
+
+                    next_visible_ts = None
+                    if len(self.state.unacknowledged_utterances) > 0:
+                        next_visible_ts = self.state.unacknowledged_utterances[0].start_ts
+                    if len(self.state.unconfirmed_words) > 0:
+                        next_unconfirmed_ts = self.state.unconfirmed_words[0].start_ts
+                        if next_visible_ts is None or next_unconfirmed_ts < next_visible_ts:
+                            next_visible_ts = next_unconfirmed_ts
+
+                    if next_visible_ts is not None and self.gap_language_mismatch(
+                        start_ts=accepted_end_ts,
+                        end_ts=next_visible_ts,
+                        expected_lang=self.state.last_transcribe_lang,
+                    ):
+                        skip_to = accepted_end_ts
+                        LOG.debug(
+                            "Suppressing post-ack padding due to gap mismatch: lang=%s accepted=%s next_visible=%d",
+                            self.state.last_transcribe_lang,
+                            self._summarize_utterance(acknowledged_to_commit[-1]),
+                            next_visible_ts,
+                        )
 
                     # try to skip ahead, but don't skip beyond the next detected word
                     if len(self.state.unacknowledged_utterances) > 0 and skip_to > self.state.unacknowledged_utterances[0].start_ts:
@@ -899,6 +1121,14 @@ class Verbatim:
                     # Never acknowledge beyond audio we've actually ingested
                     self.state.acknowledged_ts = min(skip_to, self.state.audio_ts)
                     self.state.skip_silences = True
+                    LOG.debug(
+                        "Committed utterance: lang=%s utterance=%s next_pending=%s next_unconfirmed=%s acknowledged_ts=%d",
+                        self.state.last_transcribe_lang,
+                        self._summarize_utterance(acknowledged_to_commit[-1]),
+                        self._summarize_utterances(self.state.unacknowledged_utterances),
+                        self._summarize_words(self.state.unconfirmed_words),
+                        self.state.acknowledged_ts,
+                    )
             else:
                 acknowledged_utterances = []
                 confirmed_utterances = []
@@ -1056,11 +1286,90 @@ class Verbatim:
             )
             yield result.as_tuple()
 
+    def transcribe_naive(
+        self, audio_stream: AudioStream, working_prefix_no_ext: str = "out"
+    ) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
+        self.state = State(self.config, working_prefix_no_ext=working_prefix_no_ext)
+        if audio_stream.start_offset != 0:
+            self.state.window_ts = audio_stream.start_offset
+            self.state.audio_ts = audio_stream.start_offset
+
+        self._emit_status(StatusUpdate(state="transcribing"))
+        full_audio = self._read_full_audio(audio_stream)
+        if full_audio.size == 0:
+            return
+
+        self.state.audio_ts = self.state.window_ts + len(full_audio)
+
+        detect_start = perf_counter()
+        lang_result = self._detect_language_for_audio(
+            audio=full_audio,
+            window_ts=self.state.window_ts,
+            audio_ts=self.state.audio_ts,
+            timestamp=max(0, self.state.window_ts),
+        )
+        lang = lang_result.language
+        self.state.last_transcribe_lang = lang
+        detect_ms = (perf_counter() - detect_start) * 1000.0
+
+        whisper_prompt = self.config.whisper_prompts[lang] if lang in self.config.whisper_prompts else self.config.whisper_prompts["en"]
+        transcribe_start = perf_counter()
+        transcript_words = self.models.transcriber.transcribe(
+            audio=full_audio,
+            lang=lang,
+            prompt=whisper_prompt,
+            prefix="",
+            window_ts=self.state.window_ts,
+            audio_ts=self.state.audio_ts,
+            whisper_beam_size=self.config.whisper_beam_size,
+            whisper_best_of=self.config.whisper_best_of,
+            whisper_patience=self.config.whisper_patience,
+            whisper_temperatures=self.config.whisper_temperatures,
+        )
+        transcribe_ms = (perf_counter() - transcribe_start) * 1000.0
+        self.state.timing_totals_ms["detect"] += detect_ms
+        self.state.timing_totals_ms["transcribe"] += transcribe_ms
+
+        if len(transcript_words) == 0:
+            self.state.timing_totals_ms["total"] += detect_ms + transcribe_ms
+            return
+
+        sentence_start = perf_counter()
+        utterances = self.words_to_sentences(
+            word_tokenizer=self.models.sentence_tokenizer,
+            window_words=transcript_words,
+            id_provider=self.state.utterance_id,
+        )
+        sentence_ms = (perf_counter() - sentence_start) * 1000.0
+        self.state.timing_totals_ms["sentence"] += sentence_ms
+
+        speaker_ms = 0.0
+        if audio_stream.diarization:
+            speaker_start = perf_counter()
+            for utterance in utterances:
+                utterance.speaker = self.assign_speaker(utterance, audio_stream.diarization)
+            speaker_ms = (perf_counter() - speaker_start) * 1000.0
+            self.state.timing_totals_ms["speaker"] += speaker_ms
+
+        self.state.timing_totals_ms["total"] += detect_ms + transcribe_ms + sentence_ms + speaker_ms
+        self.state.window_ts = self.state.audio_ts
+        self.state.acknowledged_ts = self.state.audio_ts
+        self._emit_transcribing_progress(audio_stream)
+
+        for i, utterance in enumerate(utterances):
+            remaining = utterances[i + 1 :]
+            self._emit_utterance_status(utterance=utterance, unacknowledged=remaining, unconfirmed=[])
+            yield utterance, remaining, []
+
     def transcribe(
         self, audio_stream: AudioStream, working_prefix_no_ext: str = "out"
     ) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
         self.state = State(self.config, working_prefix_no_ext=working_prefix_no_ext)
         try:
+            if not self.config.code_switching:
+                yield from self.transcribe_naive(audio_stream=audio_stream, working_prefix_no_ext=working_prefix_no_ext)
+                return
+
             if audio_stream.start_offset != 0:
                 self.state.window_ts = audio_stream.start_offset
                 self.state.audio_ts = audio_stream.start_offset
@@ -1120,6 +1429,7 @@ class Verbatim:
             )
             for i, utterance in enumerate(self.state.unacknowledged_utterances):
                 utterance.speaker = self.assign_speaker(utterance, audio_stream.diarization)
+                LOG.debug("Finalizing leftover pending utterance: %s", self._summarize_utterance(utterance))
                 self._emit_utterance_status(
                     utterance=utterance,
                     unacknowledged=self.state.unacknowledged_utterances[i + 1 :],
@@ -1132,6 +1442,7 @@ class Verbatim:
                     utterance_id=self.state.utterance_id.next(), words=self.state.unconfirmed_words
                 )
                 unconfirmed_utterance.speaker = self.assign_speaker(unconfirmed_utterance, audio_stream.diarization)
+                LOG.debug("Finalizing leftover unconfirmed words: %s", self._summarize_utterance(unconfirmed_utterance))
                 self._emit_utterance_status(
                     utterance=unconfirmed_utterance,
                     unacknowledged=[],

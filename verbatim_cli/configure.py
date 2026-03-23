@@ -38,6 +38,8 @@ def make_config(args) -> Config:
         config.language_identifier_backend = args.language_identifier_backend
     if getattr(args, "mms_lid_model_size", None):
         config.mms_lid_model_size = args.mms_lid_model_size
+    if getattr(args, "code_switching", None) is not None:
+        config.code_switching = args.code_switching
     config.lang = args.languages if args.languages else ["en"]
     return config
 

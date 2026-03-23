@@ -100,14 +100,17 @@ class TestMmsLanguageIdentifier(unittest.TestCase):
             )
         )
 
-        with patch.dict(
-            sys.modules,
-            {
-                "transformers": fake_transformers,
-                "transformers.models.auto.feature_extraction_auto": fake_transformers_auto,
-                "transformers.models.wav2vec2": fake_transformers_wav2vec2,
-            },
-        ), patch.object(language_id_module, "torch", fake_torch):
+        with (
+            patch.dict(
+                sys.modules,
+                {
+                    "transformers": fake_transformers,
+                    "transformers.models.auto.feature_extraction_auto": fake_transformers_auto,
+                    "transformers.models.wav2vec2": fake_transformers_wav2vec2,
+                },
+            ),
+            patch.object(language_id_module, "torch", fake_torch),
+        ):
             identifier = MmsLanguageIdentifier(model_size_or_path="facebook/mms-lid-126", device="cpu")
             language, probability = identifier.guess_language(audio=np.zeros(16000, dtype=np.float32), lang=["en", "fr"])
 

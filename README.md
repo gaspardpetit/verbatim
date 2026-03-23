@@ -238,6 +238,8 @@ The output includes
 
 # Sample
 
+For a broader side-by-side benchmark on the Air France bilingual sample, including Whisper, Qwen, and Verbatim variants, see [Air France Comparison](doc/airfrance-comparison.md).
+
 Consider the following audio file obtained from [universal-soundbank](https://universal-soundbank.com/sounds/12374.mp3) including a mixture of French and English:
 
 
