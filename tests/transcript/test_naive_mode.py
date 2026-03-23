@@ -158,7 +158,8 @@ class TestNaiveMode(unittest.TestCase):
         self.assertGreaterEqual(len(progress_updates), 1)
         last_progress = progress_updates[-1].progress
         self.assertIsNotNone(last_progress)
-        assert last_progress is not None
+        if last_progress is None:
+            self.fail("Expected final progress update")
         self.assertEqual(last_progress.finish, last_progress.current)
 
 
