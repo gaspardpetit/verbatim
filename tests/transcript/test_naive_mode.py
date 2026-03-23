@@ -5,6 +5,7 @@ import numpy as np
 from verbatim.config import Config
 from verbatim.transcript.words import Word
 from verbatim.verbatim import Verbatim
+from verbatim_audio.sources.audiosource import AudioStream
 
 
 class DummyTranscriber:
@@ -58,11 +59,10 @@ class DummyModels:
         self.sentence_tokenizer = DummySentenceTokenizer()
 
 
-class DummyAudioStream:
+class DummyAudioStream(AudioStream):
     def __init__(self, chunks, start_offset=0):
+        super().__init__(start_offset=start_offset, diarization=None)
         self._chunks = list(chunks)
-        self.start_offset = start_offset
-        self.diarization = None
         self.total_samples = start_offset + sum(len(chunk) for chunk in chunks)
         self.end_sample = None
 

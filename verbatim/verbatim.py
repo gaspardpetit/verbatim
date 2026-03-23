@@ -416,6 +416,10 @@ class Verbatim:
         return f"[{words[0].start_ts}-{words[-1].end_ts}] n={len(words)}{langs_summary} '{text}'"
 
     @staticmethod
+    def _words_text(words: List[Word]) -> str:
+        return "".join(word.word for word in words).replace(os.linesep, " ")
+
+    @staticmethod
     def _summarize_utterance(utterance: Utterance, max_text: int = 80) -> str:
         text = utterance.text.replace(os.linesep, " ")
         if len(text) > max_text:
@@ -741,12 +745,12 @@ class Verbatim:
 
             transcript_history = self.state.transcript_candidate_history.transcript_history
             transcript_lines = [
-                f"H{index}: {self._summarize_words(history)} text={WhisperHistory._words_text(history)!r}"
+                f"H{index}: {self._summarize_words(history)} text={self._words_text(history)!r}"
                 for index, history in enumerate(transcript_history)
             ]
             transcript_lines += [
-                f"CUR: {self._summarize_words(transcript_words)} text={WhisperHistory._words_text(transcript_words)!r}",
-                f"CONF: {self._summarize_words(confirmed_words)} text={WhisperHistory._words_text(confirmed_words)!r}",
+                f"CUR: {self._summarize_words(transcript_words)} text={self._words_text(transcript_words)!r}",
+                f"CONF: {self._summarize_words(confirmed_words)} text={self._words_text(confirmed_words)!r}",
             ]
             LOG.debug(
                 "Transcript candidates:\n%s",

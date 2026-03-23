@@ -5,10 +5,28 @@ import numpy as np
 from verbatim.config import Config
 from verbatim.transcript.words import Word
 from verbatim.verbatim import Verbatim
+from verbatim_audio.sources.audiosource import AudioStream
 
 
-class DummyAudioStream:
-    diarization = None
+class DummyAudioStream(AudioStream):
+    def __init__(self):
+        super().__init__(start_offset=0, diarization=None)
+
+    def has_more(self) -> bool:
+        return False
+
+    def next_chunk(self, chunk_length=1):
+        _ = chunk_length
+        return np.zeros(0, dtype=np.float32)
+
+    def close(self):
+        return None
+
+    def get_nchannels(self) -> int:
+        return 1
+
+    def get_rate(self) -> int:
+        return 16000
 
 
 class DummySentenceTokenizer:
