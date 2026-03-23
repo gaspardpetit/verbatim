@@ -234,13 +234,15 @@ class QwenAsrTranscriber(Transcriber):
         words: List[Word] = []
         last_end_ts = window_ts
         cursor = 0
+        truncated_at_audio_end = False
 
         for unit_start_ts, unit_end_ts, unit_text, unit_probability in aligned_units:
             normalized_unit = cls._normalize_for_alignment(unit_text)
             if not normalized_unit:
                 continue
             if unit_end_ts > audio_ts:
-                continue
+                truncated_at_audio_end = True
+                break
 
             matching_span = cls._find_matching_span(transcript_text=transcript_text, cursor=cursor, normalized_text=normalized_unit)
             if matching_span is None:
@@ -279,7 +281,7 @@ class QwenAsrTranscriber(Transcriber):
             last_end_ts = end_ts
             cursor = match_end
 
-        if cursor < len(transcript_text) and words:
+        if cursor < len(transcript_text) and words and not truncated_at_audio_end:
             tail = transcript_text[cursor:]
             words[-1].word += tail
 
