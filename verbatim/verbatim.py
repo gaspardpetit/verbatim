@@ -1020,28 +1020,14 @@ class Verbatim:
             )
             yield result.as_tuple()
 
-        # If there is a partial utterance overflowing, acknowledge words from it
+        # If an utterance crosses the boundary, acknowledge the whole utterance so the
+        # next pass can restart from a clean utterance boundary instead of mid-utterance.
         if len(self.state.unacknowledged_utterances) > 0:
-            flushed_utterances_words = []
-            partial_utterance = self.state.unacknowledged_utterances[0]
-            while len(partial_utterance.words) > 0:
-                # Stop when we reached the window_ts
-                # Note that the == case is frequent, whisper can generate several words with timestamp 0 -> 0
-                if partial_utterance.words[0].end_ts >= self.state.window_ts:
-                    break
-                flushed_word = partial_utterance.words.pop(0)
-                flushed_utterances_words.append(flushed_word)
-                if len(partial_utterance.words) > 0:
-                    partial_utterance.start_ts = partial_utterance.words[0].start_ts
-                    partial_utterance.text = "".join([w.word for w in partial_utterance.words])
-                else:
-                    self.state.unacknowledged_utterances.pop(0)
-                    break
-
-            if len(flushed_utterances_words) > 0:
-                utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
+            crossing_utterance = self.state.unacknowledged_utterances[0]
+            if crossing_utterance.start_ts < self.state.window_ts:
+                utterance = self.state.unacknowledged_utterances.pop(0)
                 utterance.speaker = self.assign_speaker(utterance, diarization)
-                self.state.acknowledged_words += flushed_utterances_words
+                self.state.acknowledged_words += utterance.words
                 result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                     utterance=utterance,
                     unacknowledged=self.state.unacknowledged_utterances,
