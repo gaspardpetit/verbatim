@@ -8,6 +8,8 @@ For high quality multilingual speech to text.
 
 Verbatim uses VTTM (YAML with embedded RTTM) as the primary diarization handoff. If you provide an RTTM, it will be wrapped into VTTM internally. Pyannote-based diarization/separation is optional; install with `pip install verbatim[diarization]` when you need those backends.
 
+For a broader side-by-side benchmark on the Air France bilingual sample, including Whisper, Qwen, and Verbatim variants and VibeVoice-ASR, see [Air France Comparison](doc/airfrance-comparison.md).
+
 # Installation
 
 ## Prerequisites
@@ -238,7 +240,6 @@ The output includes
 
 # Sample
 
-For a broader side-by-side benchmark on the Air France bilingual sample, including Whisper, Qwen, and Verbatim variants, see [Air France Comparison](doc/airfrance-comparison.md).
 
 Consider the following audio file obtained from [universal-soundbank](https://universal-soundbank.com/sounds/12374.mp3) including a mixture of French and English:
 
