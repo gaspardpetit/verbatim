@@ -375,7 +375,7 @@ class Verbatim:
                 f" and {samples_to_seconds(self.state.window_ts + advance_to):.2f}"
             )
 
-            self.state.advance_audio_window(remaining_audio)
+            self.state.advance_audio_window(advance_to)
             return self.state.audio_ts
 
         voice_start = voice_segments[0]["start"]
