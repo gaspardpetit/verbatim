@@ -72,6 +72,14 @@ class SingleSentenceModels:
         self.sentence_tokenizer = SingleSentenceTokenizer()
 
 
+class StatusCollector:
+    def __init__(self):
+        self.updates: list[StatusUpdate] = []
+
+    def __call__(self, update: StatusUpdate) -> None:
+        self.updates.append(update)
+
+
 class DummyAudioStream(AudioStream):
     def __init__(self, chunks, start_offset=0):
         super().__init__(start_offset=start_offset, diarization=None)
@@ -139,18 +147,14 @@ class TestNaiveMode(unittest.TestCase):
             Word(start_ts=0, end_ts=8000, word="Hello. ", probability=1.0, lang="en"),
         ]
         transcriber = DummyTranscriber(words=words, guessed_lang="en")
-        updates: list[StatusUpdate] = []
-
-        def capture_status(*, update: StatusUpdate) -> None:
-            updates.append(update)
-
-        verbatim = Verbatim(config=config, models=SingleSentenceModels(transcriber), status_hook=capture_status)
+        collector = StatusCollector()
+        verbatim = Verbatim(config=config, models=SingleSentenceModels(transcriber), status_hook=collector)
         audio_stream = DummyAudioStream(chunks=[np.zeros(16000, dtype=np.float32)])
 
         emitted = list(verbatim.transcribe(audio_stream=audio_stream))
 
         self.assertEqual(1, len(emitted))
-        progress_updates = [update for update in updates if isinstance(update.progress, StatusProgress)]
+        progress_updates = [update for update in collector.updates if isinstance(update.progress, StatusProgress)]
         self.assertGreaterEqual(len(progress_updates), 1)
         last_progress = progress_updates[-1].progress
         self.assertIsNotNone(last_progress)
