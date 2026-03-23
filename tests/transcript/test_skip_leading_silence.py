@@ -13,7 +13,11 @@ class DummyModels:
 class TestSkipLeadingSilence(unittest.TestCase):
     def test_no_voice_segments_respects_max_skip(self):
         config = Config(device="cpu")
-        verbatim = Verbatim(config=config, models=DummyModels(), vad_callback=lambda audio, min_ms, pad_ms: [])
+        verbatim = Verbatim(
+            config=config,
+            models=DummyModels(),
+            vad_callback=lambda audio, min_speech_duration_ms, min_silence_duration_ms: [],
+        )
         verbatim.state.window_ts = 0
         verbatim.state.audio_ts = 32000
         verbatim.state.rolling_window.array = np.zeros(len(verbatim.state.rolling_window.array), dtype=np.float32)
