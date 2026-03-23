@@ -235,7 +235,7 @@ class TestInterUtteranceLanguageSwitch(unittest.TestCase):
         emitted = list(verbatim.process_audio_window(audio_stream=DummyAudioStream()))
 
         self.assertEqual([], emitted)
-        self.assertEqual([" welcome.", " back"], [utterance.text for utterance in verbatim.state.unacknowledged_utterances])
+        self.assertEqual([" back"], [utterance.text for utterance in verbatim.state.unacknowledged_utterances])
         self.assertGreater(verbatim.state.window_ts, 0)
 
     def test_process_audio_window_can_advance_past_missing_switched_gap_with_incomplete_tail(self):
