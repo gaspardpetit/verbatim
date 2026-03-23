@@ -1041,14 +1041,18 @@ class Verbatim:
                         expected_lang=self.state.last_transcribe_lang,
                     ):
                         conservative_skip_samples = 100 * 16000 // 1000
+                        previous_pending = list(self.state.unacknowledged_utterances)
+                        self.state.unacknowledged_utterances = deferred_acknowledged + confirmed_utterances
                         if conservative_skip_samples > 0:
                             self.state.advance_audio_window(conservative_skip_samples)
                         self.state.skip_silences = True
                         LOG.debug(
-                            "Blocked first candidate due to gap mismatch: lang=%s anchor=%d candidate=%s",
+                            "Blocked first candidate due to gap mismatch: lang=%s anchor=%d candidate=%s prev_pending=%s new_pending=%s",
                             self.state.last_transcribe_lang,
                             current_anchor_ts,
                             self._summarize_utterance(first_candidate),
+                            self._summarize_utterances(previous_pending),
+                            self._summarize_utterances(self.state.unacknowledged_utterances),
                         )
                         break
 
@@ -1348,6 +1352,8 @@ class Verbatim:
             self.state.timing_totals_ms["speaker"] += speaker_ms
 
         self.state.timing_totals_ms["total"] += detect_ms + transcribe_ms + sentence_ms + speaker_ms
+        self.state.window_ts = self.state.audio_ts
+        self.state.acknowledged_ts = self.state.audio_ts
         self._emit_transcribing_progress(audio_stream)
 
         for i, utterance in enumerate(utterances):
@@ -1358,12 +1364,12 @@ class Verbatim:
     def transcribe(
         self, audio_stream: AudioStream, working_prefix_no_ext: str = "out"
     ) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
-        if not self.config.code_switching:
-            yield from self.transcribe_naive(audio_stream=audio_stream, working_prefix_no_ext=working_prefix_no_ext)
-            return
-
         self.state = State(self.config, working_prefix_no_ext=working_prefix_no_ext)
         try:
+            if not self.config.code_switching:
+                yield from self.transcribe_naive(audio_stream=audio_stream, working_prefix_no_ext=working_prefix_no_ext)
+                return
+
             if audio_stream.start_offset != 0:
                 self.state.window_ts = audio_stream.start_offset
                 self.state.audio_ts = audio_stream.start_offset

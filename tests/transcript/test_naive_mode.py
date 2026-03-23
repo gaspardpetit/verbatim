@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 
 from verbatim.config import Config
+from verbatim.status_types import StatusProgress, StatusUpdate
 from verbatim.transcript.words import Word
 from verbatim.verbatim import Verbatim
 from verbatim_audio.sources.audiosource import AudioStream
@@ -53,10 +54,22 @@ class DummySentenceTokenizer:
         return ["Hello. ", "Bye. "]
 
 
+class SingleSentenceTokenizer:
+    def split(self, words):
+        _ = words
+        return ["Hello. "]
+
+
 class DummyModels:
     def __init__(self, transcriber):
         self.transcriber = transcriber
         self.sentence_tokenizer = DummySentenceTokenizer()
+
+
+class SingleSentenceModels:
+    def __init__(self, transcriber):
+        self.transcriber = transcriber
+        self.sentence_tokenizer = SingleSentenceTokenizer()
 
 
 class DummyAudioStream(AudioStream):
@@ -116,6 +129,33 @@ class TestNaiveMode(unittest.TestCase):
         self.assertEqual([], emitted[1][1])
         self.assertEqual([], emitted[0][2])
         self.assertEqual([], emitted[1][2])
+
+    def test_transcribe_naive_updates_progress_to_completion(self):
+        config = Config(device="cpu")
+        config.code_switching = False
+        config.lang = ["en", "fr"]
+
+        words = [
+            Word(start_ts=0, end_ts=8000, word="Hello. ", probability=1.0, lang="en"),
+        ]
+        transcriber = DummyTranscriber(words=words, guessed_lang="en")
+        updates: list[StatusUpdate] = []
+
+        def capture_status(*, update: StatusUpdate) -> None:
+            updates.append(update)
+
+        verbatim = Verbatim(config=config, models=SingleSentenceModels(transcriber), status_hook=capture_status)
+        audio_stream = DummyAudioStream(chunks=[np.zeros(16000, dtype=np.float32)])
+
+        emitted = list(verbatim.transcribe(audio_stream=audio_stream))
+
+        self.assertEqual(1, len(emitted))
+        progress_updates = [update for update in updates if isinstance(update.progress, StatusProgress)]
+        self.assertGreaterEqual(len(progress_updates), 1)
+        last_progress = progress_updates[-1].progress
+        self.assertIsNotNone(last_progress)
+        assert last_progress is not None
+        self.assertEqual(last_progress.finish, last_progress.current)
 
 
 if __name__ == "__main__":

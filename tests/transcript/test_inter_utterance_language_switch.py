@@ -206,6 +206,38 @@ class TestInterUtteranceLanguageSwitch(unittest.TestCase):
         self.assertEqual([], [utterance.text for utterance, _, _ in emitted])
         self.assertLessEqual(verbatim.state.window_ts, missing_en.start_ts)
 
+    def test_gap_block_preserves_pending_candidates_for_next_iteration(self):
+        first_en = make_word(22000, 30000, " welcome.", lang="en")
+        trailing_en = make_word(31000, 36000, " back", lang="en")
+        transcriber = DummyTranscriber(outputs_by_lang={"en": [first_en, trailing_en], "fr": []})
+
+        def guess_language_fn(timestamp):
+            if timestamp == 0:
+                return ("en", 1.0, 16000)
+            return ("fr", 1.0, 16000)
+
+        config = Config(device="cpu")
+        config.lang = ["fr", "en"]
+        verbatim = LanguageAwareVerbatim(
+            config=config,
+            models=DummyModels(
+                transcriber=transcriber,
+                sentence_tokenizer=DummySentenceTokenizer(),
+            ),
+            guess_language_fn=guess_language_fn,
+        )
+        verbatim.state.window_ts = 0
+        verbatim.state.audio_ts = 50000
+        verbatim.state.skip_silences = False
+        verbatim.state.rolling_window.array = np.zeros(len(verbatim.state.rolling_window.array), dtype=np.float32)
+        verbatim.state.transcript_candidate_history.add([first_en, trailing_en])
+
+        emitted = list(verbatim.process_audio_window(audio_stream=DummyAudioStream()))
+
+        self.assertEqual([], emitted)
+        self.assertEqual([" welcome.", " back"], [utterance.text for utterance in verbatim.state.unacknowledged_utterances])
+        self.assertGreater(verbatim.state.window_ts, 0)
+
     def test_process_audio_window_can_advance_past_missing_switched_gap_with_incomplete_tail(self):
         first_fr = make_word(0, 8000, " bonjour.", lang="fr")
         missing_en = make_word(9000, 15000, " hello.", lang="en")
