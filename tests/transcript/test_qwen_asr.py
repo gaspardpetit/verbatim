@@ -153,9 +153,27 @@ class TestQwenAsrTranscriber(unittest.TestCase):
             audio_ts=200,
         )
         self.assertEqual("Toto, I have a feeling we're not in Kansas anymore.", "".join(word.word for word in words))
-        self.assertEqual("Toto,", words[0].word)
-        self.assertEqual(" I", words[1].word)
-        self.assertEqual(" anymore.", words[-1].word)
+        self.assertEqual("Toto, ", words[0].word)
+        self.assertEqual("I ", words[1].word)
+        self.assertEqual("anymore.", words[-1].word)
+
+    def test_project_timestamps_attaches_leading_punctuation_backward(self):
+        words = QwenAsrTranscriber._project_timestamps_onto_transcript(
+            transcript_text="Welcome aboard, ladies and gentlemen.",
+            aligned_units=[
+                (0, 10, "Welcome", 1.0),
+                (10, 20, "aboard", 1.0),
+                (20, 30, "ladies", 1.0),
+                (30, 40, "and", 1.0),
+                (40, 50, "gentlemen", 1.0),
+            ],
+            lang="en",
+            window_ts=0,
+            audio_ts=100,
+        )
+        self.assertEqual("Welcome aboard, ladies and gentlemen.", "".join(word.word for word in words))
+        self.assertEqual("aboard, ", words[1].word)
+        self.assertEqual("gentlemen.", words[-1].word)
 
     def test_project_timestamps_skips_units_beyond_audio_end(self):
         words = QwenAsrTranscriber._project_timestamps_onto_transcript(
@@ -170,6 +188,21 @@ class TestQwenAsrTranscriber(unittest.TestCase):
         )
         self.assertEqual(" hello", "".join(word.word for word in words))
         self.assertEqual(1, len(words))
+
+    def test_project_timestamps_appends_unmatched_tail_to_last_word(self):
+        words = QwenAsrTranscriber._project_timestamps_onto_transcript(
+            transcript_text="Jean-Francois.",
+            aligned_units=[
+                (0, 10, "Jean", 1.0),
+                (10, 20, "Francois", 1.0),
+            ],
+            lang="fr",
+            window_ts=0,
+            audio_ts=100,
+        )
+        self.assertEqual("Jean-Francois.", "".join(word.word for word in words))
+        self.assertEqual("Jean-", words[0].word)
+        self.assertEqual("Francois.", words[1].word)
 
 
 if __name__ == "__main__":
