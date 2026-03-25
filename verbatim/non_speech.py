@@ -55,7 +55,8 @@ class AstNonSpeechClassifier:
             # pylint: disable=import-outside-toplevel
             import torch
             import torchaudio
-            from transformers import AutoFeatureExtractor, AutoModelForAudioClassification
+            from transformers.models.auto.feature_extraction_auto import AutoFeatureExtractor
+            from transformers.models.auto.modeling_auto import AutoModelForAudioClassification
         except ImportError as exc:  # pragma: no cover - exercised via runtime error path
             raise RuntimeError(
                 "AST non-speech classification requires optional dependencies. Install `transformers`, `torch`, and `torchaudio`, "
