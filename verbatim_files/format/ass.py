@@ -498,14 +498,18 @@ class AssTranscriptWriter(TranscriptWriter):
                     {
                         "start": u.get_start(),
                         "end": u.get_end(),
-                        "text": f"{u.speaker}: {''.join([w.word for w in u.words])}",
-                        "words": [
-                            {
-                                "start": u.get_start(),
-                                "end": u.get_start(),
-                                "word": f"{u.speaker}: ",
-                            }
-                        ]
+                        "text": (f"{u.speaker}: {''.join([w.word for w in u.words])}" if u.words else u.text),
+                        "words": (
+                            [
+                                {
+                                    "start": u.get_start(),
+                                    "end": u.get_start(),
+                                    "word": f"{u.speaker}: ",
+                                }
+                            ]
+                            if u.speaker is not None and u.words
+                            else []
+                        )
                         + [
                             {
                                 "start": w.start_ts / 16000,

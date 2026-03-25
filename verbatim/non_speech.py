@@ -88,14 +88,17 @@ class AstNonSpeechClassifier:
         if len(audio) <= chunk_size:
             return [audio]
 
+        starts = list(range(0, max(1, len(audio) - chunk_size + 1), hop_size))
+        last_start = max(0, len(audio) - chunk_size)
+        if not starts or starts[-1] != last_start:
+            starts.append(last_start)
+
         chunks: List[NDArray[np.float32]] = []
-        for start in range(0, max(1, len(audio) - chunk_size + 1), hop_size):
+        for start in starts:
             chunk = audio[start : start + chunk_size]
             if len(chunk) == 0:
                 continue
             chunks.append(chunk)
-            if start + chunk_size >= len(audio):
-                break
         return chunks or [audio]
 
     def _scores_to_labels(self, probabilities: NDArray[np.float32]) -> List[str]:

@@ -62,6 +62,7 @@ LOG = logging.getLogger(__name__)
 STATUS_LOG = get_status_logger()
 SKIP_MARKER_MIN_DURATION_SAMPLES = int(2.5 * 16000)
 SKIP_NOISE_RMS_THRESHOLD = 0.01
+_NON_SPEECH_CLASSIFIER_FAILED = object()
 
 
 @dataclass
@@ -363,12 +364,18 @@ class Verbatim:
         )
 
     def _get_non_speech_classifier(self):
+        if self._non_speech_classifier is _NON_SPEECH_CLASSIFIER_FAILED:
+            return None
         if self._non_speech_classifier is None:
-            self._non_speech_classifier = create_non_speech_classifier(
-                backend=self.config.non_speech_backend,
-                device=self.config.device,
-                model_name=self.config.ast_audio_model_size,
-            )
+            try:
+                self._non_speech_classifier = create_non_speech_classifier(
+                    backend=self.config.non_speech_backend,
+                    device=self.config.device,
+                    model_name=self.config.ast_audio_model_size,
+                )
+            except Exception:  # pylint: disable=broad-exception-caught
+                self._non_speech_classifier = _NON_SPEECH_CLASSIFIER_FAILED
+                raise
         return self._non_speech_classifier
 
     @staticmethod
@@ -493,9 +500,11 @@ class Verbatim:
         if self.config.non_speech_backend == "ast" and label != "[SILENCE]":
             try:
                 classifier = self._get_non_speech_classifier()
-                labels = classifier.classify(samples, self.config.sampling_rate)
-                label = self._format_non_speech_labels(labels)
+                if classifier is not None:
+                    labels = classifier.classify(samples, self.config.sampling_rate)
+                    label = self._format_non_speech_labels(labels)
             except Exception:  # pylint: disable=broad-exception-caught
+                self._non_speech_classifier = _NON_SPEECH_CLASSIFIER_FAILED
                 LOG.exception("AST non-speech classification failed; falling back to energy-based label")
         elif self.config.non_speech_backend == "ast":
             LOG.debug(

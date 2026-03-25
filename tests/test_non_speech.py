@@ -55,6 +55,14 @@ class TestAstNonSpeechClassifier(unittest.TestCase):
 
         self.assertEqual(["music", "mechanical_noise"], labels)
 
+    def test_chunk_audio_includes_trailing_tail(self):
+        audio = np.zeros(int(6.25 * 16000), dtype=np.float32)
+
+        chunks = AstNonSpeechClassifier._chunk_audio(audio)
+
+        self.assertEqual(2, len(chunks))
+        self.assertEqual(int(5.0 * 16000), len(chunks[-1]))
+
 
 if __name__ == "__main__":
     unittest.main()

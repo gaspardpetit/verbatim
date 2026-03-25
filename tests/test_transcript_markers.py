@@ -3,6 +3,7 @@ import json
 import unittest
 
 from verbatim.transcript.words import Utterance
+from verbatim_files.format.ass import AssTranscriptWriter
 from verbatim_files.format.json import TranscriptFormatter as JsonTranscriptFormatter
 from verbatim_files.format.txt import COLORSCHEME_NONE
 from verbatim_files.format.txt import TranscriptFormatter as TextTranscriptFormatter
@@ -11,6 +12,7 @@ from verbatim_files.format.writer import (
     ProbabilityStyle,
     SpeakerStyle,
     TimestampStyle,
+    TranscriptWriterConfig,
 )
 
 
@@ -45,6 +47,15 @@ class TestTranscriptMarkers(unittest.TestCase):
 
         self.assertIn("[00:00:00-00:00:06]:[ENVIRONMENT NOISE]\n", rendered)
         self.assertNotIn("[SPEAKER", rendered)
+
+    def test_ass_writer_supports_marker_utterance(self):
+        writer = AssTranscriptWriter(config=TranscriptWriterConfig(), original_audio_file="sample.wav")
+        marker = Utterance.marker("utt1", 0, 96000, "[SILENCE]")
+        writer.format_utterance(marker)
+
+        rendered = writer.flush().decode("utf-8")
+
+        self.assertIn("[SILENCE]", rendered)
 
 
 if __name__ == "__main__":
