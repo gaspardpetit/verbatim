@@ -2,7 +2,7 @@
 import sys
 import types
 import unittest
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Dict, Optional
 from unittest.mock import patch
 
 import numpy as np
@@ -36,15 +36,18 @@ class FakeLoadedModel:
 
 class FakeQwen3ASRModel:
     loaded_model: ClassVar[Any] = None
+    last_args: ClassVar[Any] = None
+    last_kwargs: ClassVar[Optional[Dict[str, Any]]] = None
 
     @classmethod
     def from_pretrained(cls, *args, **kwargs):
-        _ = args, kwargs
+        cls.last_args = args
+        cls.last_kwargs = kwargs
         return cls.loaded_model
 
 
 class TestQwenAsrTranscriber(unittest.TestCase):
-    def _make_transcriber(self, results):
+    def _make_transcriber(self, results, *, device="cuda"):
         fake_model = FakeLoadedModel(results=results)
         fake_qwen_module: Any = types.ModuleType("qwen_asr")
         fake_qwen_module.Qwen3ASRModel = FakeQwen3ASRModel
@@ -52,6 +55,7 @@ class TestQwenAsrTranscriber(unittest.TestCase):
 
         fake_torch: Any = types.ModuleType("torch")
         fake_torch.bfloat16 = "bfloat16"
+        fake_torch.float16 = "float16"
         fake_torch.float32 = "float32"
 
         module_overrides = {
@@ -62,7 +66,7 @@ class TestQwenAsrTranscriber(unittest.TestCase):
             transcriber = QwenAsrTranscriber(
                 model_size_or_path="Qwen/Qwen3-ASR-1.7B",
                 aligner_model_size_or_path="Qwen/Qwen3-ForcedAligner-0.6B",
-                device="cuda",
+                device=device,
             )
 
         return transcriber, fake_model
@@ -80,6 +84,17 @@ class TestQwenAsrTranscriber(unittest.TestCase):
         self.assertEqual(1.0, probability)
         self.assertIsNone(fake_model.calls[0]["language"])
         self.assertFalse(fake_model.calls[0]["return_time_stamps"])
+
+    def test_init_supports_mps_device(self):
+        _transcriber, _fake_model = self._make_transcriber(results=[], device="mps")
+
+        self.assertIsNotNone(FakeQwen3ASRModel.last_kwargs)
+        last_kwargs = FakeQwen3ASRModel.last_kwargs or {}
+        self.assertEqual("mps", last_kwargs["device_map"])
+        self.assertEqual("float16", last_kwargs["dtype"])
+        aligner_kwargs = last_kwargs["forced_aligner_kwargs"]
+        self.assertEqual("mps", aligner_kwargs["device_map"])
+        self.assertEqual("float16", aligner_kwargs["dtype"])
 
     def test_transcribe_uses_prefix_as_context_and_returns_words(self):
         transcriber, fake_model = self._make_transcriber(

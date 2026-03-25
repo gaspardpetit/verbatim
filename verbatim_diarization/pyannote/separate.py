@@ -25,7 +25,6 @@ from verbatim_files.rttm import Segment, dumps_rttm
 from verbatim_files.vttm import AudioRef, dumps_vttm
 
 from .constants import PYANNOTE_SEPARATION_MODEL_ID
-from .ffmpeg_loader import ensure_torchcodec_audio_decoder
 from .output import select_speaker_diarization
 from .progress import StatusProgressHook
 
@@ -123,7 +122,6 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         nb_speakers: Optional[int],
         status_hook=None,
     ) -> Tuple[Any, List[Tuple[str, AudioRef]]]:
-        ensure_torchcodec_audio_decoder("pyannote separation")
         file_for_pipeline, temp_path = self._prepare_pipeline_input(file_path)
         try:
             if self.pipeline is None:

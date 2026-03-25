@@ -24,7 +24,6 @@ from verbatim_files.rttm import Annotation as RTTMAnnotation
 from verbatim_files.vttm import AudioRef, dumps_vttm
 
 from .constants import PYANNOTE_DIARIZATION_MODEL_ID
-from .ffmpeg_loader import ensure_torchcodec_audio_decoder
 from .output import select_speaker_diarization
 
 LOG = logging.getLogger(__name__)
@@ -78,8 +77,6 @@ class PyAnnoteDiarization(DiarizationStrategy):
             file_path,
             cache_len,
         )
-        # pyannote.audio 4.x requires torchcodec; ensure it is ready before pipeline work.
-        ensure_torchcodec_audio_decoder("pyannote diarization")
         diarization = None
         try:
             try:
@@ -97,6 +94,8 @@ class PyAnnoteDiarization(DiarizationStrategy):
                 waveform = torch.from_numpy(np.asarray(mono, dtype=np.float32))
                 if waveform.ndim == 1:
                     waveform = waveform.unsqueeze(0)
+                # Feed the pipeline an in-memory waveform directly so pyannote does not need
+                # to re-open the audio through torchcodec/FFmpeg on this code path.
                 file_for_pipeline = {"waveform": waveform, "sample_rate": int(sample_rate)}
             except Exception as exc:
                 raise RuntimeError(f"PyAnnote diarization requires cached audio bytes; failed to decode cache for '{file_path}': {exc}") from exc
