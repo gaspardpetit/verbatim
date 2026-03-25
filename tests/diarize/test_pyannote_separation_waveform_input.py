@@ -7,6 +7,7 @@ from unittest.mock import patch
 import numpy as np
 
 from verbatim.cache import FileBackedArtifactCache
+from verbatim_diarization.pyannote import separate as pyannote_separate
 from verbatim_diarization.pyannote.separate import PyannoteSpeakerSeparation
 
 
@@ -53,12 +54,21 @@ class _FakeSoundFileModule:
         return audio, 16000
 
     @staticmethod
-    def write(buffer, speaker_data, sample_rate, format="WAV"):
-        _ = speaker_data, sample_rate, format
+    def write(buffer, speaker_data, sample_rate, **kwargs):
+        _ = speaker_data, sample_rate, kwargs
         buffer.write(b"RIFFfakeWAVE")
 
 
 class TestPyannoteSeparationWaveformInput(unittest.TestCase):
+    @staticmethod
+    def _run_separation(separator, *, file_path, out_speaker_wav_prefix, nb_speakers):
+        return separator._separate_to_audio_refs(  # pylint: disable=protected-access
+            file_path=file_path,
+            out_speaker_wav_prefix=out_speaker_wav_prefix,
+            nb_speakers=nb_speakers,
+            status_hook=None,
+        )
+
     def test_separation_uses_waveform_input_without_torchcodec(self):
         cache = FileBackedArtifactCache(base_dir=".")
         cache.set_bytes("sample.wav", b"fake")
@@ -73,11 +83,11 @@ class TestPyannoteSeparationWaveformInput(unittest.TestCase):
         separator.pipeline = fake_pipeline
 
         with patch.dict(sys.modules, {"soundfile": fake_soundfile}):
-            diarization, audio_refs_meta = separator._separate_to_audio_refs(
+            diarization, audio_refs_meta = self._run_separation(
+                separator,
                 file_path="sample.wav",
                 out_speaker_wav_prefix="speaker",
                 nb_speakers=2,
-                status_hook=None,
             )
 
         self.assertEqual(["SPEAKER_0", "SPEAKER_1"], list(diarization.labels()))
@@ -87,6 +97,29 @@ class TestPyannoteSeparationWaveformInput(unittest.TestCase):
         self.assertIn("waveform", file_for_pipeline)
         self.assertIn("sample_rate", file_for_pipeline)
         self.assertEqual(16000, file_for_pipeline["sample_rate"])
+
+    def test_separation_file_path_fallback_enables_torchcodec(self):
+        cache = FileBackedArtifactCache(base_dir=".")
+        cache.set_bytes("sample.wav", b"fake")
+
+        fake_pipeline = _FakePipeline()
+        separator = PyannoteSpeakerSeparation.__new__(PyannoteSpeakerSeparation)
+        separator.cache = cache
+        separator.pipeline = fake_pipeline
+
+        with patch.object(separator, "_prepare_pipeline_input", return_value=("sample.wav", None)):
+            with patch.object(pyannote_separate, "ensure_torchcodec_audio_decoder") as ensure_decoder:
+                diarization, audio_refs_meta = self._run_separation(
+                    separator,
+                    file_path="sample.wav",
+                    out_speaker_wav_prefix="speaker",
+                    nb_speakers=2,
+                )
+
+        ensure_decoder.assert_called_once_with("pyannote separation")
+        self.assertEqual(["SPEAKER_0", "SPEAKER_1"], list(diarization.labels()))
+        self.assertEqual(2, len(audio_refs_meta))
+        self.assertEqual("sample.wav", fake_pipeline.calls[0]["file_for_pipeline"])
 
 
 if __name__ == "__main__":
