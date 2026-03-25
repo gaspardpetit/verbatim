@@ -87,6 +87,9 @@ diarization = [
     "pyannote-audio[separation]>=4.0.2",
     "pyannote-core==6.0.1",
 ]
+senko = [
+    "senko @ git+https://github.com/narcotic-sh/senko.git",
+]
 qwen = [
     "qwen-asr>=0.0.6",
 ]

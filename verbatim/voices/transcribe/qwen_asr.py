@@ -1,5 +1,6 @@
 import logging
 import re
+from contextlib import contextmanager
 from time import perf_counter
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -80,43 +81,75 @@ class QwenAsrTranscriber(Transcriber):
         else:
             device_map = "cpu"
 
-        self._model = Qwen3ASRModel.from_pretrained(
-            model_size_or_path,
-            dtype=qwen_dtype,
-            device_map=device_map,
-            forced_aligner=aligner_model_size_or_path,
-            forced_aligner_kwargs={
-                "dtype": qwen_dtype,
-                "device_map": device_map,
-            },
-            max_inference_batch_size=max_inference_batch_size,
-            max_new_tokens=max_new_tokens,
-        )
+        with self._suppress_transformers_generation_warnings():
+            self._model = Qwen3ASRModel.from_pretrained(
+                model_size_or_path,
+                dtype=qwen_dtype,
+                device_map=device_map,
+                forced_aligner=aligner_model_size_or_path,
+                forced_aligner_kwargs={
+                    "dtype": qwen_dtype,
+                    "device_map": device_map,
+                },
+                max_inference_batch_size=max_inference_batch_size,
+                max_new_tokens=max_new_tokens,
+            )
         self._configure_generation_padding()
+
+    @staticmethod
+    @contextmanager
+    def _suppress_transformers_generation_warnings():
+        """Quiet known benign Transformers warnings emitted while loading Qwen generation configs."""
+        logger_names = (
+            "transformers.generation.configuration_utils",
+            "transformers.configuration_utils",
+        )
+        loggers = [logging.getLogger(name) for name in logger_names]
+        previous_levels = [logger.level for logger in loggers]
+        try:
+            for logger in loggers:
+                logger.setLevel(logging.ERROR)
+            yield
+        finally:
+            for logger, level in zip(loggers, previous_levels):
+                logger.setLevel(level)
 
     def _configure_generation_padding(self) -> None:
         """Avoid repeated Transformers warnings by ensuring pad_token_id is set."""
         model = getattr(self._model, "model", None)
+        processor = getattr(self._model, "processor", None)
         if model is None:
             return
 
-        generation_config = getattr(model, "generation_config", None)
-        model_config = getattr(model, "config", None)
+        def _configure_target(target: Any, fallback_eos: Any = None) -> Any:
+            if target is None:
+                return fallback_eos
 
-        eos_token_id = None
-        if generation_config is not None:
-            eos_token_id = getattr(generation_config, "eos_token_id", None)
-        if eos_token_id is None and model_config is not None:
-            eos_token_id = getattr(model_config, "eos_token_id", None)
-        if isinstance(eos_token_id, list) and eos_token_id:
-            eos_token_id = eos_token_id[0]
-        if eos_token_id is None:
-            return
+            generation_config = getattr(target, "generation_config", None)
+            model_config = getattr(target, "config", None)
 
-        if generation_config is not None and getattr(generation_config, "pad_token_id", None) is None:
-            generation_config.pad_token_id = eos_token_id
-        if model_config is not None and getattr(model_config, "pad_token_id", None) is None:
-            model_config.pad_token_id = eos_token_id
+            eos_token_id = fallback_eos
+            if eos_token_id is None and generation_config is not None:
+                eos_token_id = getattr(generation_config, "eos_token_id", None)
+            if eos_token_id is None and model_config is not None:
+                eos_token_id = getattr(model_config, "eos_token_id", None)
+            if isinstance(eos_token_id, list) and eos_token_id:
+                eos_token_id = eos_token_id[0]
+            if eos_token_id is None:
+                return None
+
+            if generation_config is not None and getattr(generation_config, "pad_token_id", None) is None:
+                generation_config.pad_token_id = eos_token_id
+            if model_config is not None and getattr(model_config, "pad_token_id", None) is None:
+                model_config.pad_token_id = eos_token_id
+            return eos_token_id
+
+        eos_token_id = _configure_target(model)
+        _configure_target(getattr(model, "thinker", None), eos_token_id)
+
+        tokenizer = getattr(processor, "tokenizer", None)
+        if tokenizer is not None and getattr(tokenizer, "pad_token_id", None) is None and eos_token_id is not None:
+            tokenizer.pad_token_id = eos_token_id
 
     @staticmethod
     def _resolve_dtype(*, torch_module: Any, dtype: str, device: str) -> Any:

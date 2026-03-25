@@ -6,7 +6,7 @@
 
 For high quality multilingual speech to text.
 
-Verbatim uses VTTM (YAML with embedded RTTM) as the primary diarization handoff. If you provide an RTTM, it will be wrapped into VTTM internally. Pyannote-based diarization/separation is optional; install with `pip install verbatim[diarization]` when you need those backends.
+Verbatim uses VTTM (YAML with embedded RTTM) as the primary diarization handoff. If you provide an RTTM, it will be wrapped into VTTM internally. Pyannote-based diarization/separation is optional; install with `pip install verbatim[diarization]` when you need those backends. Senko-based diarization is also optional and is particularly interesting on Apple Silicon when the server keeps the diarizer warm between requests.
 
 For a broader side-by-side benchmark on the Air France bilingual sample, including Whisper, Qwen, and Verbatim variants and VibeVoice-ASR, see [Air France Comparison](doc/airfrance-comparison.md).
 
@@ -52,6 +52,12 @@ pip install "verbatim[mms_lid]"
 
 # Qwen ASR + MMS language identification
 pip install "verbatim[qwen,mms_lid]"
+
+# Pyannote diarization / separation
+pip install "verbatim[diarization]"
+
+# Senko diarization (Apple Silicon friendly)
+pip install "verbatim[senko]"
 ```
 
 With `uv` against the local project environment:
@@ -117,6 +123,9 @@ verbatim audio_file.wav --diarize "=pyannote"
 
 # Channels 1-2 energy diarization together; channel 3 pyannote; others per-channel labels (auto numbering)
 verbatim audio_file.wav --diarize "1,2=energy;3=pyannote;*=channel?speaker=HOST"
+
+# Run Senko diarization
+verbatim audio_file.wav --diarize senko
 ```
 
 For see the [detailed terminal documentation](doc/verbatim-cli.md) for additional examples and options.
@@ -203,7 +212,9 @@ Languages supported by [openai/whisper](https://github.com/openai/whisper) using
 Speeches may comprise multiple languages. This includes different languages spoken one after the other (ex. two speakers alternating two languages) or multiple languages being mixed, such as the use of English expressions within a French speech.
 
 ### Speaker Identification
-The speech recognition distinguishes between speakers using diarization based on  [pyannote](https://github.com/pyannote). 
+The speech recognition distinguishes between speakers using diarization. Verbatim currently supports [pyannote](https://github.com/pyannote) and Senko as optional diarization backends.
+
+On macOS / Apple Silicon, Senko is worth considering for server deployments that reuse warmed models. On the Air France bilingual sample in this repository, warmed Senko runs completed in about `0.15s` versus about `3.46s` for warmed pyannote on the same machine. Pyannote still produced finer-grained speaker turns on that sample, so the best choice depends on whether your priority is latency or segmentation detail.
 
 ### Word-Level Confidence
 The output provides word-level confidence, with poorly recognized words clearly identified to guide manual editing.
