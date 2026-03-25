@@ -116,6 +116,18 @@ Batch transcription
 verbatim-batch --batch-dir ./audio --match "*.wav" "*.mp3" --recursive --skip-existing --txt
 ```
 
+Backend selection examples
+```bash
+# Run Qwen ASR explicitly
+verbatim audio_file.wav --transcriber-backend qwen --languages en fr
+
+# Run Qwen ASR with MMS language identification
+verbatim audio_file.wav --transcriber-backend qwen --language-identifier-backend mms --languages en fr
+
+# On Apple Silicon, Qwen will use MPS automatically unless you force --cpu
+verbatim audio_file.wav --transcriber-backend qwen --language-identifier-backend mms --languages en fr -v
+```
+
 Diarization policy examples
 ```bash
 # Downmix all channels and run pyannote
