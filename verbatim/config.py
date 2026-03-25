@@ -168,6 +168,8 @@ class Config:
     transcriber_backend: str = "auto"
     language_identifier_backend: str = "transcriber"
     mms_lid_model_size: str = "facebook/mms-lid-126"
+    non_speech_backend: str = "energy"
+    ast_audio_model_size: str = "MIT/ast-finetuned-audioset-10-10-0.4593"
     whisper_prompts: Mapping[str, str] = field(default_factory=lambda: DEFAULT_MULTILANG_PROMPTS)
     chunk_table: List[Tuple[float, float]] = field(default_factory=list)
 

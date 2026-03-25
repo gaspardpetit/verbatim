@@ -54,3 +54,7 @@ class Utterance:
         end_ts = words[-1].end_ts
         text = "".join([w.word for w in words])
         return cls(utterance_id=utterance_id, start_ts=start_ts, end_ts=end_ts, words=words, text=text, speaker=speaker)
+
+    @classmethod
+    def marker(cls, utterance_id: str, start_ts: int, end_ts: int, text: str, *, speaker: Optional[str] = None) -> "Utterance":
+        return cls(utterance_id=utterance_id, speaker=speaker, start_ts=start_ts, end_ts=end_ts, text=text, words=[])

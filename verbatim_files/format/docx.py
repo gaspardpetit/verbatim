@@ -154,7 +154,14 @@ class DocxFormatter:
         paragraph: Paragraph = out.add_paragraph()
         md: DocxParagraph = DocxParagraph(paragraph=paragraph)
         self._format_timestamp(md=md, start_ts=utterance.start_ts, end_ts=utterance.end_ts)
-        self._format_speaker(md=md, speaker=utterance.speaker or UNKNOWN_SPEAKER)
+        if utterance.speaker is not None:
+            self._format_speaker(md=md, speaker=utterance.speaker)
+        elif utterance.words:
+            self._format_speaker(md=md, speaker=UNKNOWN_SPEAKER)
+
+        if not utterance.words:
+            md.append(utterance.text)
+            return
 
         percentile_25: float = float(np.percentile([w.probability for w in utterance.words], 25))
 

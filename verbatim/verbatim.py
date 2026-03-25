@@ -15,6 +15,7 @@ from colorama import Fore
 from numpy.typing import NDArray
 
 from verbatim.logging_utils import get_status_logger
+from verbatim.non_speech import create_non_speech_classifier
 from verbatim_audio.audio import samples_to_seconds
 from verbatim_audio.sources.audiosource import AudioSource, AudioStream
 from verbatim_files.format.factory import configure_writers
@@ -59,6 +60,8 @@ Annotation = Any  # pylint: disable=invalid-name
 # Configure logger
 LOG = logging.getLogger(__name__)
 STATUS_LOG = get_status_logger()
+SKIP_MARKER_MIN_DURATION_SAMPLES = int(2.5 * 16000)
+SKIP_NOISE_RMS_THRESHOLD = 0.01
 
 
 @dataclass
@@ -159,6 +162,12 @@ class WhisperHistory:
             key=len,
             default=[],
         )
+
+
+@dataclass
+class SkipResult:
+    next_ts: int
+    marker: Optional[Utterance] = None
 
 
 class RollingWindow:
@@ -305,6 +314,7 @@ class Verbatim:
         self.config = config
         self.state = State(config)
         self.status_hook = status_hook
+        self._non_speech_classifier = None
         if models is None:
             models = Models(
                 device=config.device,
@@ -351,6 +361,15 @@ class Verbatim:
                 unconfirmed_words=unconfirmed,
             )
         )
+
+    def _get_non_speech_classifier(self):
+        if self._non_speech_classifier is None:
+            self._non_speech_classifier = create_non_speech_classifier(
+                backend=self.config.non_speech_backend,
+                device=self.config.device,
+                model_name=self.config.ast_audio_model_size,
+            )
+        return self._non_speech_classifier
 
     @staticmethod
     def _get_total_samples(audio_stream: AudioStream) -> Optional[int]:
@@ -435,10 +454,76 @@ class Verbatim:
             parts.append(f"...(+{len(utterances) - max_items})")
         return "[" + ", ".join(parts) + "]"
 
-    def skip_leading_silence(self, max_skip: int, min_speech_duration_ms: int = 500) -> int:
+    @staticmethod
+    def _energy_skip_label(samples: NDArray[np.float32]) -> str:
+        if len(samples) == 0:
+            rms = 0.0
+        else:
+            rms = float(np.sqrt(np.mean(np.square(samples.astype(np.float64)))))
+        return "[ENVIRONMENT NOISE]" if rms >= SKIP_NOISE_RMS_THRESHOLD else "[SILENCE]"
+
+    @staticmethod
+    def _format_non_speech_labels(labels: List[str]) -> str:
+        if any(label == "silence" for label in labels):
+            return "[SILENCE]"
+        normalized = []
+        for label in labels:
+            if not label or label == "other":
+                continue
+            rendered = label.replace("_", " ").upper()
+            if rendered not in normalized:
+                normalized.append(rendered)
+        if not normalized:
+            return "[ENVIRONMENT NOISE]"
+        return "[" + ", ".join(normalized) + "]"
+
+    def _build_skip_marker(self, start_ts: int, end_ts: int, samples: NDArray[np.float32]) -> Optional[Utterance]:
+        skipped_samples = max(0, end_ts - start_ts)
+        if skipped_samples < SKIP_MARKER_MIN_DURATION_SAMPLES:
+            LOG.debug(
+                "Skipped non-speech span below marker threshold: start=%.2fs end=%.2fs duration=%.2fs threshold=%.2fs",
+                samples_to_seconds(start_ts),
+                samples_to_seconds(end_ts),
+                samples_to_seconds(skipped_samples),
+                samples_to_seconds(SKIP_MARKER_MIN_DURATION_SAMPLES),
+            )
+            return None
+
+        label = self._energy_skip_label(samples)
+        if self.config.non_speech_backend == "ast" and label != "[SILENCE]":
+            try:
+                classifier = self._get_non_speech_classifier()
+                labels = classifier.classify(samples, self.config.sampling_rate)
+                label = self._format_non_speech_labels(labels)
+            except Exception:  # pylint: disable=broad-exception-caught
+                LOG.exception("AST non-speech classification failed; falling back to energy-based label")
+        elif self.config.non_speech_backend == "ast":
+            LOG.debug(
+                "Skipping AST non-speech classification for silence-like span: start=%.2fs end=%.2fs",
+                samples_to_seconds(start_ts),
+                samples_to_seconds(end_ts),
+            )
+        rms = 0.0 if len(samples) == 0 else float(np.sqrt(np.mean(np.square(samples.astype(np.float64)))))
+        LOG.info(
+            "Long non-speech skip detected: kind=%s start=%.2fs end=%.2fs duration=%.2fs rms=%.5f",
+            label[1:-1].lower(),
+            samples_to_seconds(start_ts),
+            samples_to_seconds(end_ts),
+            samples_to_seconds(skipped_samples),
+            rms,
+        )
+        return Utterance.marker(
+            utterance_id=self.state.utterance_id.next(),
+            start_ts=start_ts,
+            end_ts=end_ts,
+            text=label,
+            speaker=None,
+        )
+
+    def skip_leading_silence(self, max_skip: int, min_speech_duration_ms: int = 500) -> SkipResult:
         if self.vad_callback is None:
             LOG.debug("VAD callback not configured; skipping silence detection and keeping current window.")
-            return self.state.window_ts
+            return SkipResult(next_ts=self.state.window_ts)
 
         min_speech_duration_ms = 750
         min_speech_duration_samples = 16000 * min_speech_duration_ms // 1000
@@ -457,9 +542,13 @@ class Verbatim:
                 f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f}"
                 f" and {samples_to_seconds(self.state.window_ts + advance_to):.2f}"
             )
-
+            marker = self._build_skip_marker(
+                start_ts=self.state.window_ts,
+                end_ts=self.state.window_ts + advance_to,
+                samples=self.state.rolling_window.array[0:advance_to],
+            )
             self.state.advance_audio_window(advance_to)
-            return self.state.audio_ts
+            return SkipResult(next_ts=self.state.audio_ts, marker=marker)
 
         voice_start = voice_segments[0]["start"]
         voice_end = voice_segments[0]["end"]
@@ -475,10 +564,15 @@ class Verbatim:
                 f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f}"
                 f" and {samples_to_seconds(self.state.window_ts + advance_to):.2f}"
             )
+            marker = self._build_skip_marker(
+                start_ts=self.state.window_ts,
+                end_ts=self.state.window_ts + advance_to,
+                samples=self.state.rolling_window.array[0:advance_to],
+            )
             self.state.advance_audio_window(advance_to)
-            return voice_length + self.state.window_ts
+            return SkipResult(next_ts=voice_length + self.state.window_ts, marker=marker)
 
-        return voice_length + self.state.window_ts
+        return SkipResult(next_ts=voice_length + self.state.window_ts)
 
     def dump_window_to_file(self, filename: str = "debug_window.wav"):
         window = self.state.rolling_window.array
@@ -992,7 +1086,9 @@ class Verbatim:
                     next_ts = min(next_ts, self.state.unacknowledged_utterances[0].start_ts)
                 if len(self.state.unconfirmed_words) > 0:
                     next_ts = min(next_ts, self.state.unconfirmed_words[0].start_ts)
-                self.skip_leading_silence(min_speech_duration_ms=min_speech_duration_ms, max_skip=next_ts - self.state.window_ts)
+                skip_result = self.skip_leading_silence(min_speech_duration_ms=min_speech_duration_ms, max_skip=next_ts - self.state.window_ts)
+                if skip_result.marker is not None:
+                    yield skip_result.marker, [], []
                 if self.state.audio_ts - self.state.window_ts < min_audio_duration_samples:
                     # we skipped all available audio - keep skipping silences and do nothing else for now
                     self.state.skip_silences = True

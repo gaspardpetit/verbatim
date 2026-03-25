@@ -212,7 +212,17 @@ class TranscriptFormatter:
     def format_utterance(self, utterance: Utterance, colours: ColorScheme) -> bytes:
         out = io.StringIO()
         self._format_timestamp(out=out, start_ts=utterance.start_ts, end_ts=utterance.end_ts, colours=colours)
-        self._format_speaker(out=out, speaker=utterance.speaker or UNKNOWN_SPEAKER, colours=colours)
+        if utterance.speaker is not None:
+            self._format_speaker(out=out, speaker=utterance.speaker, colours=colours)
+        elif utterance.words:
+            self._format_speaker(out=out, speaker=UNKNOWN_SPEAKER, colours=colours)
+
+        if not utterance.words:
+            out.write(colours.color_text)
+            out.write(utterance.text)
+            out.write(colours.color_reset)
+            out.write("\n")
+            return out.getvalue().encode("utf-8")
 
         percentile_25 = float(np.percentile([w.probability for w in utterance.words], 25))
 

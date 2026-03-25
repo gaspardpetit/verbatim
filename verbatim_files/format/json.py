@@ -32,7 +32,7 @@ class TranscriptFormatter:
             "start": round(utterance.start_ts / 16000, 5),
             "end": round(utterance.end_ts / 16000, 5),
             "speaker": utterance.speaker,
-            "language": utterance.words[0].lang,
+            "language": utterance.words[0].lang if utterance.words else None,
             "text": utterance.text,
         }
 
@@ -145,7 +145,7 @@ class JsonlTranscriptWriter(TranscriptWriter):
             "start": round(utterance.start_ts / 16000, 5),
             "end": round(utterance.end_ts / 16000, 5),
             "speaker": utterance.speaker,
-            "language": utterance.words[0].lang,
+            "language": utterance.words[0].lang if utterance.words else None,
             "text": utterance.text,
             "words": [
                 {
