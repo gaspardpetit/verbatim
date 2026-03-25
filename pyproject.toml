@@ -111,6 +111,9 @@ build-backend = "hatchling.build"
 [tool.hatch.build]
 include = ["verbatim/**/*", "verbatim_audio/**/*", "verbatim_cli/**/*", "verbatim_batch/**/*", "verbatim_transcript/**/*", "verbatim_files/**/*", "verbatim_diarization/**/*"]
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.hatch.version]
 source = "vcs"
 
