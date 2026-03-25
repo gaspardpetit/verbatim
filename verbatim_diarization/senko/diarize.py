@@ -36,7 +36,7 @@ class SenkoDiarization(DiarizationStrategy):
         quiet: bool = True,
         vad: str = "auto",
         clustering: str = "auto",
-        accurate: Optional[bool] = None,
+        accurate: Optional[bool | str] = None,
         mer_cos: Optional[float] = None,
     ):
         super().__init__(cache=cache)
