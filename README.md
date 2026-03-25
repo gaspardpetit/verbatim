@@ -73,6 +73,8 @@ Install Senko separately when you want the optional Senko diarization backend:
 uv pip install "git+https://github.com/narcotic-sh/senko.git"
 ```
 
+When using a Senko build that supports in-memory diarization, Verbatim can also run Senko without a working directory by feeding cached 16kHz mono samples directly into the diarizer. This is useful for server deployments that must avoid writing intermediate files.
+
 Install the AST audio classification model dependencies when you want richer labels for long skipped non-speech regions:
 ```bash
 uv pip install "verbatim[mms_lid]"
