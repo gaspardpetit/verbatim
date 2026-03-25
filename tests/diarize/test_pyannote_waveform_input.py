@@ -51,13 +51,13 @@ class TestPyannoteWaveformInput(unittest.TestCase):
     def test_compute_diarization_uses_waveform_input_without_torchcodec(self):
         cache = FileBackedArtifactCache(base_dir=".")
         cache.set_bytes("sample.wav", b"fake")
-        fake_huggingface_token = ""
+        access_value = ""
 
         fake_pipeline = _FakePipeline()
         fake_soundfile = types.ModuleType("soundfile")
         fake_soundfile.read = _FakeSoundFileModule.read
 
-        diarizer = PyAnnoteDiarization(cache=cache, device="cpu", huggingface_token=fake_huggingface_token)
+        diarizer = PyAnnoteDiarization(cache=cache, device="cpu", huggingface_token=access_value)
         diarizer.pipeline = fake_pipeline
 
         with patch.dict(sys.modules, {"soundfile": fake_soundfile}):
