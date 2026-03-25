@@ -64,7 +64,6 @@ dependencies = [
     "wheel>=0.45.1",
     "wtpsplit>=2.1.2",
     "pillow==10.4.0",
-    "mlx-whisper>=0.4.1 ; sys_platform == 'darwin'",
     "numba>=0.61",
     "word-levenshtein>=0.0.3",
     "python-dotenv>=1.0.1",
@@ -87,14 +86,14 @@ diarization = [
     "pyannote-audio[separation]>=4.0.2",
     "pyannote-core==6.0.1",
 ]
-senko = [
-    "senko @ git+https://github.com/narcotic-sh/senko.git",
-]
 qwen = [
     "qwen-asr>=0.0.6",
 ]
 mms_lid = [
     "transformers>=4.51.3",
+]
+mlx = [
+    "mlx-whisper>=0.4.1 ; sys_platform == 'darwin'",
 ]
 
 [project.urls]
@@ -110,9 +109,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build]
 include = ["verbatim/**/*", "verbatim_audio/**/*", "verbatim_cli/**/*", "verbatim_batch/**/*", "verbatim_transcript/**/*", "verbatim_files/**/*", "verbatim_diarization/**/*"]
-
-[tool.hatch.metadata]
-allow-direct-references = true
 
 [tool.hatch.version]
 source = "vcs"

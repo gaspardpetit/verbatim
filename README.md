@@ -53,16 +53,21 @@ pip install "verbatim[mms_lid]"
 # Qwen ASR + MMS language identification
 pip install "verbatim[qwen,mms_lid]"
 
+# MLX Whisper backend on Apple Silicon
+pip install "verbatim[mlx]"
+
 # Pyannote diarization / separation
 pip install "verbatim[diarization]"
-
-# Senko diarization (Apple Silicon friendly)
-pip install "verbatim[senko]"
 ```
 
 With `uv` against the local project environment:
 ```bash
 uv pip install -e ".[qwen,mms_lid]"
+```
+
+Install Senko separately when you want the optional Senko diarization backend:
+```bash
+uv pip install "git+https://github.com/narcotic-sh/senko.git"
 ```
 
 ### Torch with Cuda Support

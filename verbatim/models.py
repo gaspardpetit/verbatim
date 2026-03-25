@@ -101,12 +101,15 @@ class Models:
         if sys.platform == "darwin":
             # If this is an Apple Silicon device, use the MLX Whisper transcriber
             if platform.processor() == "arm":
-                STATUS_LOG.info("Using WhisperMLX transcriber on Apple Silicon")
-                from .voices.transcribe.whispermlx import WhisperMlxTranscriber  # pylint: disable=import-outside-toplevel
-
-                return WhisperMlxTranscriber(model_size_or_path=self._whisper_model_size)
-
-            raise RuntimeError("Intel macOS is no longer supported; Apple Silicon is required on macOS.")
+                try:
+                    from .voices.transcribe.whispermlx import WhisperMlxTranscriber  # pylint: disable=import-outside-toplevel
+                except ImportError:
+                    STATUS_LOG.warning("WhisperMLX is not installed; falling back to faster-whisper on Apple Silicon.")
+                else:
+                    STATUS_LOG.info("Using WhisperMLX transcriber on Apple Silicon")
+                    return WhisperMlxTranscriber(model_size_or_path=self._whisper_model_size)
+            else:
+                raise RuntimeError("Intel macOS is no longer supported; Apple Silicon is required on macOS.")
 
         STATUS_LOG.info("Using 'faster-whisper' transcriber.")
         from .voices.transcribe.faster_whisper import FasterWhisperTranscriber  # pylint: disable=import-outside-toplevel
