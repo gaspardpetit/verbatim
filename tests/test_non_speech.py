@@ -1,6 +1,5 @@
 # pylint: disable=protected-access
 import unittest
-from unittest.mock import patch
 
 import numpy as np
 
@@ -31,9 +30,9 @@ class TestNonSpeechClassifierIntegration(unittest.TestCase):
         verbatim.state.window_ts = 0
         verbatim.state.audio_ts = 100000
         verbatim.state.rolling_window.array = np.full(len(verbatim.state.rolling_window.array), 0.05, dtype=np.float32)
+        verbatim._non_speech_classifier = _FakeClassifier()
 
-        with patch("verbatim.verbatim.create_non_speech_classifier", return_value=_FakeClassifier()):
-            result = verbatim.skip_leading_silence(max_skip=100000)
+        result = verbatim.skip_leading_silence(max_skip=100000)
 
         self.assertIsNotNone(result.marker)
         marker = result.marker
