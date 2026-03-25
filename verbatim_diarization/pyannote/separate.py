@@ -123,8 +123,9 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         nb_speakers: Optional[int],
         status_hook=None,
     ) -> Tuple[Any, List[Tuple[str, AudioRef]]]:
-        ensure_torchcodec_audio_decoder("pyannote separation")
         file_for_pipeline, temp_path = self._prepare_pipeline_input(file_path)
+        if isinstance(file_for_pipeline, str):
+            ensure_torchcodec_audio_decoder("pyannote separation")
         try:
             if self.pipeline is None:
                 raise RuntimeError("Pyannote separation pipeline is not initialized")

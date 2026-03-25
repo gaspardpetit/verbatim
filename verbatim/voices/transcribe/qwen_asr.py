@@ -61,8 +61,8 @@ class QwenAsrTranscriber(Transcriber):
         max_inference_batch_size: int = 1,
         max_new_tokens: int = 256,
     ):
-        if device not in ("cpu", "cuda"):
-            raise RuntimeError("Qwen3-ASR backend currently supports only 'cpu' and 'cuda' devices.")
+        if device not in ("cpu", "cuda", "mps"):
+            raise RuntimeError("Qwen3-ASR backend currently supports only 'cpu', 'cuda', and 'mps' devices.")
 
         try:
             import torch  # pylint: disable=import-outside-toplevel
@@ -73,7 +73,12 @@ class QwenAsrTranscriber(Transcriber):
             ) from exc
 
         qwen_dtype = self._resolve_dtype(torch_module=torch, dtype=dtype, device=device)
-        device_map = "cuda:0" if device == "cuda" else "cpu"
+        if device == "cuda":
+            device_map = "cuda:0"
+        elif device == "mps":
+            device_map = "mps"
+        else:
+            device_map = "cpu"
 
         self._model = Qwen3ASRModel.from_pretrained(
             model_size_or_path,
@@ -116,7 +121,11 @@ class QwenAsrTranscriber(Transcriber):
     @staticmethod
     def _resolve_dtype(*, torch_module: Any, dtype: str, device: str) -> Any:
         if dtype == "auto":
-            return torch_module.bfloat16 if device == "cuda" else torch_module.float32
+            if device == "cuda":
+                return torch_module.bfloat16
+            if device == "mps" and hasattr(torch_module, "float16"):
+                return torch_module.float16
+            return torch_module.float32
         if not hasattr(torch_module, dtype):
             raise RuntimeError(f"Unsupported qwen dtype: {dtype}")
         return getattr(torch_module, dtype)
