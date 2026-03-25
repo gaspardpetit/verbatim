@@ -27,7 +27,7 @@ def create_diarizer(
     Factory function to create diarization strategy instances.
 
     Args:
-        strategy: Name of the strategy to use ('pyannote', 'energy', 'channel')
+        strategy: Name of the strategy to use ('pyannote', 'senko', 'energy', 'channel')
         device: Device to use for PyAnnote ('cpu' or 'cuda')
         huggingface_token: Token for PyAnnote Hub
         **kwargs: Additional strategy-specific parameters
@@ -68,6 +68,11 @@ def create_diarizer(
         from verbatim_diarization.stereo import EnergyDiarization
 
         return EnergyDiarization(cache=cache, **kwargs)
+
+    if strategy == "senko":
+        from verbatim_diarization.senko import SenkoDiarization
+
+        return SenkoDiarization(cache=cache, device=device, **kwargs)
 
     if strategy == "channel":
         from verbatim_diarization.channel import ChannelDiarization

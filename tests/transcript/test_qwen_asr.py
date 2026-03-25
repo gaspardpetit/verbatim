@@ -28,6 +28,15 @@ class FakeLoadedModel:
     def __init__(self, results):
         self.results = list(results)
         self.calls = []
+        self.generation_config = types.SimpleNamespace(eos_token_id=151645, pad_token_id=None)
+        self.config = types.SimpleNamespace(eos_token_id=151645, pad_token_id=None)
+        self.thinker = types.SimpleNamespace(
+            generation_config=types.SimpleNamespace(eos_token_id=151645, pad_token_id=None),
+            config=types.SimpleNamespace(eos_token_id=151645, pad_token_id=None),
+        )
+        self.tokenizer = types.SimpleNamespace(pad_token_id=None)
+        self.processor = types.SimpleNamespace(tokenizer=self.tokenizer)
+        self.model = self
 
     def transcribe(self, **kwargs):
         self.calls.append(kwargs)
@@ -86,7 +95,7 @@ class TestQwenAsrTranscriber(unittest.TestCase):
         self.assertFalse(fake_model.calls[0]["return_time_stamps"])
 
     def test_init_supports_mps_device(self):
-        _transcriber, _fake_model = self._make_transcriber(results=[], device="mps")
+        _transcriber, fake_model = self._make_transcriber(results=[], device="mps")
 
         self.assertIsNotNone(FakeQwen3ASRModel.last_kwargs)
         last_kwargs = FakeQwen3ASRModel.last_kwargs or {}
@@ -95,6 +104,11 @@ class TestQwenAsrTranscriber(unittest.TestCase):
         aligner_kwargs = last_kwargs["forced_aligner_kwargs"]
         self.assertEqual("mps", aligner_kwargs["device_map"])
         self.assertEqual("float16", aligner_kwargs["dtype"])
+        self.assertEqual(151645, fake_model.generation_config.pad_token_id)
+        self.assertEqual(151645, fake_model.config.pad_token_id)
+        self.assertEqual(151645, fake_model.thinker.generation_config.pad_token_id)
+        self.assertEqual(151645, fake_model.thinker.config.pad_token_id)
+        self.assertEqual(151645, fake_model.tokenizer.pad_token_id)
 
     def test_transcribe_uses_prefix_as_context_and_returns_words(self):
         transcriber, fake_model = self._make_transcriber(
