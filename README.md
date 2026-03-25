@@ -53,6 +53,9 @@ pip install "verbatim[mms_lid]"
 # Qwen ASR + MMS language identification
 pip install "verbatim[qwen,mms_lid]"
 
+# MLX Whisper backend on Apple Silicon
+pip install "verbatim[mlx]"
+
 # Pyannote diarization / separation
 pip install "verbatim[diarization]"
 ```
