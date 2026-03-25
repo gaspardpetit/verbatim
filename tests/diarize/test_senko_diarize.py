@@ -1,3 +1,4 @@
+import io
 import sys
 import tempfile
 import types
@@ -22,7 +23,27 @@ class _FakeDiarizer:
     def diarize(self, wav_path, accurate=None, generate_colors=False):
         _FakeDiarizer.calls.append(
             {
+                "mode": "path",
                 "wav_path": wav_path,
+                "accurate": accurate,
+                "generate_colors": generate_colors,
+                "init_kwargs": self.kwargs,
+            }
+        )
+        return {
+            "merged_segments": [
+                {"start": 0.0, "end": 1.0, "speaker": "SPEAKER_01"},
+                {"start": 1.0, "end": 2.5, "speaker": "SPEAKER_02"},
+            ],
+            "timing_stats": {"total_time": 0.25},
+        }
+
+    def diarize_samples(self, samples, sample_rate=16000, accurate=None, generate_colors=False):
+        _FakeDiarizer.calls.append(
+            {
+                "mode": "samples",
+                "samples_len": len(samples),
+                "sample_rate": sample_rate,
                 "accurate": accurate,
                 "generate_colors": generate_colors,
                 "init_kwargs": self.kwargs,
@@ -85,16 +106,43 @@ class TestSenkoDiarization(unittest.TestCase):
 
         self.assertFalse(_FakeDiarizer.calls[0]["accurate"])
 
-    def test_requires_disk_backed_cache_for_materialized_wav(self):
+    def test_uses_in_memory_samples_without_workdir_when_supported(self):
         fake_senko = types.ModuleType("senko")
         fake_senko.Diarizer = _FakeDiarizer
         cache = InMemoryArtifactCache()
-        cache.set_bytes("sample.mp3", b"fake")
+        buffer = io.BytesIO()
+        sf.write(buffer, np.zeros(16000, dtype=np.float32), 16000, format="WAV", subtype="PCM_16")
+        cache.set_bytes("sample.wav", buffer.getvalue())
 
         with patch.dict(sys.modules, {"senko": fake_senko}):
             diarizer = SenkoDiarization(cache=cache, device="cpu")
-            with self.assertRaises(RuntimeError):
-                diarizer.compute_diarization(file_path="sample.mp3")
+            with patch.object(diarizer, "_is_compatible_wav", return_value=False):
+                annotation = diarizer.compute_diarization(file_path="sample.wav")
+
+        self.assertEqual(2, len(annotation.segments))
+        self.assertEqual("samples", _FakeDiarizer.calls[0]["mode"])
+        self.assertEqual(16000, _FakeDiarizer.calls[0]["sample_rate"])
+
+    def test_requires_disk_backed_cache_when_in_memory_api_is_unavailable(self):
+        class _PathOnlyFakeDiarizer:
+            def __init__(self, **kwargs):
+                self.kwargs = kwargs
+
+            def diarize(self, wav_path, accurate=None, generate_colors=False):
+                return _FakeDiarizer(**self.kwargs).diarize(wav_path, accurate=accurate, generate_colors=generate_colors)
+
+        fake_senko = types.ModuleType("senko")
+        fake_senko.Diarizer = _PathOnlyFakeDiarizer
+        cache = InMemoryArtifactCache()
+        buffer = io.BytesIO()
+        sf.write(buffer, np.zeros(16000, dtype=np.float32), 16000, format="WAV", subtype="PCM_16")
+        cache.set_bytes("sample.wav", buffer.getvalue())
+
+        with patch.dict(sys.modules, {"senko": fake_senko}):
+            diarizer = SenkoDiarization(cache=cache, device="cpu")
+            with patch.object(diarizer, "_is_compatible_wav", return_value=False):
+                with self.assertRaises(RuntimeError):
+                    diarizer.compute_diarization(file_path="sample.wav")
 
     def test_materializes_wav_with_file_backed_cache(self):
         fake_senko = types.ModuleType("senko")

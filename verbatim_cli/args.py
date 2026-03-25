@@ -100,6 +100,21 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
         help="Model id or path for the MMS language identification backend.",
     )
     parser.add_argument(
+        "--non-speech-backend",
+        choices=["energy", "ast"],
+        default=None,
+        help=(
+            "Backend for labeling long skipped non-speech regions. "
+            "'energy' emits generic silence/noise markers; "
+            "'ast' uses an audio classifier for richer labels."
+        ),
+    )
+    parser.add_argument(
+        "--ast-audio-model-size",
+        default=None,
+        help="Model id or path for the AST non-speech classification backend.",
+    )
+    parser.add_argument(
         "--code-switching",
         type=parse_bool,
         default=None,

@@ -58,6 +58,9 @@ pip install "verbatim[mlx]"
 
 # Pyannote diarization / separation
 pip install "verbatim[diarization]"
+
+# AST-backed non-speech classification for long skipped regions
+pip install "verbatim[mms_lid]"
 ```
 
 With `uv` against the local project environment:
@@ -68,6 +71,13 @@ uv pip install -e ".[qwen,mms_lid]"
 Install Senko separately when you want the optional Senko diarization backend:
 ```bash
 uv pip install "git+https://github.com/narcotic-sh/senko.git"
+```
+
+When using a Senko build that supports in-memory diarization, Verbatim can also run Senko without a working directory by feeding cached 16kHz mono samples directly into the diarizer. This is useful for server deployments that must avoid writing intermediate files.
+
+Install the AST audio classification model dependencies when you want richer labels for long skipped non-speech regions:
+```bash
+uv pip install "verbatim[mms_lid]"
 ```
 
 ### Torch with Cuda Support
@@ -131,6 +141,18 @@ verbatim audio_file.wav --transcriber-backend qwen --language-identifier-backend
 
 # On Apple Silicon, Qwen will use MPS automatically unless you force --cpu
 verbatim audio_file.wav --transcriber-backend qwen --language-identifier-backend mms --languages en fr -v
+
+# Label long skipped non-speech regions with the optional AST classifier
+verbatim audio_file.wav --transcriber-backend qwen --language-identifier-backend mms --languages en fr --non-speech-backend ast -vv
+```
+
+Long-skip review markers
+```bash
+# Default energy-based labels for long skipped regions (for example [SILENCE] or [ENVIRONMENT NOISE])
+verbatim audio_file.wav --transcriber-backend qwen --language-identifier-backend mms --languages en fr
+
+# Optional AST-based labels for long skipped regions (for example [MUSIC] when the classifier is confident)
+verbatim audio_file.wav --transcriber-backend qwen --language-identifier-backend mms --languages en fr --non-speech-backend ast
 ```
 
 Diarization policy examples
@@ -243,6 +265,8 @@ The output text is associated with timestamps to facilitate source audio navigat
 Verbatim will work on unclean audio sources, for example where there might be music, keystrokes from keyboards, background noise, etc. Voices are isolated from other sounds using [adefossez/demucs](https://github.com/adefossez/demucs).
 
 For audit purposes, the audio that was removed because it was considered *background* noise is saved so it can be manually reviewed if necessary.
+
+In addition, when the rolling-window VAD skips non-speech spans of roughly 2.5 seconds or more, Verbatim can emit timeline markers to draw attention to those gaps during review. By default these are coarse markers such as `[SILENCE]` or `[ENVIRONMENT NOISE]`. When the optional AST non-speech backend is enabled, the same path can emit richer labels such as `[MUSIC]`.
 
 ### Optional GPU Acceleration (on a 12GB VRAM Budget)
 The current objective is to limit the VRAM requirements to 12GB, allowing cards such as NVidia RTX 4070 to accelerate the processing.
