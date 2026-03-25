@@ -45,7 +45,7 @@ class SenkoDiarization(DiarizationStrategy):
         self.quiet = quiet
         self.vad = vad
         self.clustering = clustering
-        self.accurate = accurate
+        self.accurate = None if accurate is None else _parse_bool(accurate)
         self.mer_cos = mer_cos
         self._diarizer: Any = None
 

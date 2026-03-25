@@ -70,6 +70,21 @@ class TestSenkoDiarization(unittest.TestCase):
         self.assertNotEqual("", cache.get_text("sample.rttm"))
         self.assertNotEqual("", cache.get_text("sample.vttm"))
 
+    def test_constructor_parses_string_accurate_flag(self):
+        fake_senko = types.ModuleType("senko")
+        fake_senko.Diarizer = _FakeDiarizer
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            wav_path = Path(tmpdir) / "sample.wav"
+            sf.write(str(wav_path), np.zeros(16000, dtype=np.int16), 16000, subtype="PCM_16")
+            cache = InMemoryArtifactCache()
+
+            with patch.dict(sys.modules, {"senko": fake_senko}):
+                diarizer = SenkoDiarization(cache=cache, device="mps", accurate="false")
+                diarizer.compute_diarization(file_path=str(wav_path))
+
+        self.assertFalse(_FakeDiarizer.calls[0]["accurate"])
+
     def test_requires_disk_backed_cache_for_materialized_wav(self):
         fake_senko = types.ModuleType("senko")
         fake_senko.Diarizer = _FakeDiarizer
