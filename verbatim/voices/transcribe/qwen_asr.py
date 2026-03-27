@@ -180,6 +180,15 @@ class QwenAsrTranscriber(Transcriber):
         return allowed_langs[0] if allowed_langs else "en"
 
     @staticmethod
+    def _language_code_raw(language: Any) -> Optional[str]:
+        if not isinstance(language, str):
+            return None
+        lowered = language.strip().lower()
+        if lowered in QWEN_LANGUAGE_CODES:
+            return QWEN_LANGUAGE_CODES[lowered]
+        return lowered or None
+
+    @staticmethod
     def _get_field(item: Any, field_name: str) -> Any:
         if hasattr(item, field_name):
             return getattr(item, field_name)
@@ -383,9 +392,11 @@ class QwenAsrTranscriber(Transcriber):
         if not results:
             return lang[0], 0.0
 
-        guessed_lang = self._language_code(self._get_field(results[0], "language"), lang)
-        probability = 1.0 if guessed_lang in lang else 0.0
-        return guessed_lang, probability
+        raw_language = self._get_field(results[0], "language")
+        guessed_lang = self._language_code_raw(raw_language)
+        if guessed_lang in lang:
+            return guessed_lang, 1.0
+        return "und", 0.0
 
     def transcribe(
         self,
