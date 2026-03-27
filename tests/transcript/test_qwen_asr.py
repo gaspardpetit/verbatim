@@ -1,4 +1,3 @@
-# pylint: disable=protected-access
 import sys
 import types
 import unittest
@@ -7,6 +6,7 @@ from unittest.mock import patch
 
 import numpy as np
 
+from verbatim.voices.transcribe.alignment_utils import project_timestamps_onto_transcript, split_transcript_text
 from verbatim.voices.transcribe.qwen_asr import QwenAsrTranscriber
 
 
@@ -159,11 +159,11 @@ class TestQwenAsrTranscriber(unittest.TestCase):
             )
 
     def test_split_transcript_text_preserves_exact_spacing(self):
-        tokens = QwenAsrTranscriber._split_transcript_text("Toto, I have\n a feeling")
+        tokens = split_transcript_text("Toto, I have\n a feeling")
         self.assertEqual(["Toto,", " I", " have", "\n a", " feeling"], tokens)
 
     def test_project_timestamps_onto_transcript_preserves_original_text(self):
-        words = QwenAsrTranscriber._project_timestamps_onto_transcript(
+        words = project_timestamps_onto_transcript(
             transcript_text="Toto, I have a feeling we're not in Kansas anymore.",
             aligned_units=[
                 (0, 10, "Toto", 1.0),
@@ -187,7 +187,7 @@ class TestQwenAsrTranscriber(unittest.TestCase):
         self.assertEqual("anymore.", words[-1].word)
 
     def test_project_timestamps_attaches_leading_punctuation_backward(self):
-        words = QwenAsrTranscriber._project_timestamps_onto_transcript(
+        words = project_timestamps_onto_transcript(
             transcript_text="Welcome aboard, ladies and gentlemen.",
             aligned_units=[
                 (0, 10, "Welcome", 1.0),
@@ -205,7 +205,7 @@ class TestQwenAsrTranscriber(unittest.TestCase):
         self.assertEqual("gentlemen.", words[-1].word)
 
     def test_project_timestamps_skips_units_beyond_audio_end(self):
-        words = QwenAsrTranscriber._project_timestamps_onto_transcript(
+        words = project_timestamps_onto_transcript(
             transcript_text=" hello world",
             aligned_units=[
                 (0, 100, "hello", 1.0),
@@ -219,7 +219,7 @@ class TestQwenAsrTranscriber(unittest.TestCase):
         self.assertEqual(1, len(words))
 
     def test_project_timestamps_appends_unmatched_tail_to_last_word(self):
-        words = QwenAsrTranscriber._project_timestamps_onto_transcript(
+        words = project_timestamps_onto_transcript(
             transcript_text="Jean-Francois.",
             aligned_units=[
                 (0, 10, "Jean", 1.0),
