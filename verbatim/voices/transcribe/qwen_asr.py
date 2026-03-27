@@ -396,7 +396,7 @@ class QwenAsrTranscriber(Transcriber):
         guessed_lang = self._language_code_raw(raw_language)
         if guessed_lang in lang:
             return guessed_lang, 1.0
-        return guessed_lang or "und", 0.0
+        return "und", 0.0
 
     def transcribe(
         self,
