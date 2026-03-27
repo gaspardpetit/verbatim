@@ -152,13 +152,13 @@ class EnglishNumberNormalizer:
         value: Optional[Union[str, int]] = None
         skip = False
 
-        def to_fraction(s: str):
+        def to_fraction(s: str) -> Optional[Fraction]:
             try:
                 return Fraction(s)
             except ValueError:
                 return None
 
-        def output(result: Union[str, int]):
+        def output(result: Union[str, int]) -> str:
             nonlocal prefix, value
             result = str(result)
             if prefix is not None:
@@ -273,12 +273,17 @@ class EnglishNumberNormalizer:
                 if value is None:
                     value = multiplier
                 elif isinstance(value, str) or value == 0:
-                    f = to_fraction(value)
-                    p = f * multiplier if f is not None else None
-                    if f is not None and p.denominator == 1:
-                        value = p.numerator
+                    fraction_text = value if isinstance(value, str) else str(value)
+                    fraction_value = to_fraction(fraction_text)
+                    if fraction_value is not None:
+                        product = fraction_value * multiplier
+                        if product.denominator == 1:
+                            value = product.numerator
+                        else:
+                            yield output(fraction_text)
+                            value = multiplier
                     else:
-                        yield output(value)
+                        yield output(fraction_text)
                         value = multiplier
                 else:
                     before = value // 1000 * 1000
@@ -289,10 +294,14 @@ class EnglishNumberNormalizer:
                 if value is None:
                     yield output(str(multiplier) + suffix)
                 elif isinstance(value, str):
-                    f = to_fraction(value)
-                    p = f * multiplier if f is not None else None
-                    if f is not None and p.denominator == 1:
-                        yield output(str(p.numerator) + suffix)
+                    fraction_value = to_fraction(value)
+                    if fraction_value is not None:
+                        product = fraction_value * multiplier
+                        if product.denominator == 1:
+                            yield output(str(product.numerator) + suffix)
+                        else:
+                            yield output(value)
+                            yield output(str(multiplier) + suffix)
                     else:
                         yield output(value)
                         yield output(str(multiplier) + suffix)
