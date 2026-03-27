@@ -2,10 +2,10 @@ import logging
 from typing import Any, List, Optional, Protocol, Tuple
 
 import torch
-from langcodes import Language
 from numpy.typing import NDArray
 
 from .config import Config
+from .languages import normalize_language
 
 LOG = logging.getLogger(__name__)
 
@@ -53,15 +53,10 @@ class MmsLanguageIdentifier:
 
     @staticmethod
     def _normalize_label(label: str) -> Optional[str]:
-        candidate = str(label).strip().lower()
-        if not candidate:
-            return None
-        try:
-            normalized = Language.get(candidate).language
-            if normalized and normalized != "und":
-                return normalized
-        except Exception:  # pylint: disable=broad-exception-caught
-            LOG.debug("Failed to normalize MMS label %r", label, exc_info=True)
+        normalized = normalize_language(label)
+        if normalized:
+            return normalized
+        LOG.debug("Failed to normalize MMS label %r", label)
         return None
 
     def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]:
