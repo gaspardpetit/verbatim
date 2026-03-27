@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from numpy.typing import NDArray
 
+from verbatim.languages import normalize_language
 from verbatim_audio.audio import samples_to_seconds
 
 from ...transcript.words import Word
@@ -45,8 +46,6 @@ QWEN_LANGUAGE_NAMES: Dict[str, str] = {
     "yue": "Cantonese",
     "zh": "Chinese",
 }
-
-QWEN_LANGUAGE_CODES: Dict[str, str] = {name.lower(): code for code, name in QWEN_LANGUAGE_NAMES.items()}
 
 
 class QwenAsrTranscriber(Transcriber):
@@ -169,24 +168,14 @@ class QwenAsrTranscriber(Transcriber):
 
     @staticmethod
     def _language_code(language: Any, allowed_langs: List[str]) -> str:
-        if isinstance(language, str):
-            lowered = language.strip().lower()
-            if lowered in QWEN_LANGUAGE_CODES:
-                mapped = QWEN_LANGUAGE_CODES[lowered]
-                if not allowed_langs or mapped in allowed_langs:
-                    return mapped
-            if language in allowed_langs:
-                return language
+        normalized = normalize_language(language)
+        if normalized and (not allowed_langs or normalized in allowed_langs):
+            return normalized
         return allowed_langs[0] if allowed_langs else "en"
 
     @staticmethod
     def _language_code_raw(language: Any) -> Optional[str]:
-        if not isinstance(language, str):
-            return None
-        lowered = language.strip().lower()
-        if lowered in QWEN_LANGUAGE_CODES:
-            return QWEN_LANGUAGE_CODES[lowered]
-        return lowered or None
+        return normalize_language(language)
 
     @staticmethod
     def _get_field(item: Any, field_name: str) -> Any:
