@@ -16,8 +16,7 @@ from numpy.typing import NDArray
 
 from verbatim.logging_utils import get_status_logger
 from verbatim.non_speech import create_non_speech_classifier
-from verbatim_audio.audio import samples_to_seconds
-from verbatim_audio.audio import seconds_to_samples
+from verbatim_audio.audio import samples_to_seconds, seconds_to_samples
 from verbatim_audio.sources.audiosource import AudioSource, AudioStream
 from verbatim_files.format.factory import configure_writers
 from verbatim_files.format.json import read_utterances
@@ -855,8 +854,7 @@ class Verbatim:
 
             transcript_history = self.state.transcript_candidate_history.transcript_history
             transcript_lines = [
-                f"H{index}: {self._summarize_words(history)} text={self._words_text(history)!r}"
-                for index, history in enumerate(transcript_history)
+                f"H{index}: {self._summarize_words(history)} text={self._words_text(history)!r}" for index, history in enumerate(transcript_history)
             ]
             transcript_lines += [
                 f"CUR: {self._summarize_words(transcript_words)} text={self._words_text(transcript_words)!r}",
