@@ -130,7 +130,7 @@ class VoxtralTranscriber(Transcriber):
 
         transcribe_start = perf_counter()
         inputs: Any = self._processor.apply_transcription_request(
-            language=mapped_language,
+            language=lang,
             audio=audio,
             model_id=self._model_size_or_path,
             sampling_rate=16000,
