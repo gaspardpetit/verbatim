@@ -67,8 +67,7 @@ class SenkoDiarization(DiarizationStrategy):
             import senko  # pylint: disable=import-outside-toplevel
         except ImportError as exc:
             raise RuntimeError(
-                "Senko diarization requires the Senko package. Install it with "
-                "`uv pip install \"git+https://github.com/narcotic-sh/senko.git\"`."
+                'Senko diarization requires the Senko package. Install it with `uv pip install "git+https://github.com/narcotic-sh/senko.git"`.'
             ) from exc
 
         self._diarizer = senko.Diarizer(
@@ -124,9 +123,7 @@ class SenkoDiarization(DiarizationStrategy):
         if samples.ndim > 1:
             samples = samples.mean(axis=1)
         if sample_rate != 16000:
-            raise RuntimeError(
-                f"Senko in-memory diarization expects 16kHz audio from the artifact cache, got {sample_rate}Hz for '{file_path}'."
-            )
+            raise RuntimeError(f"Senko in-memory diarization expects 16kHz audio from the artifact cache, got {sample_rate}Hz for '{file_path}'.")
         return samples.astype(np.float32, copy=False)
 
     @staticmethod

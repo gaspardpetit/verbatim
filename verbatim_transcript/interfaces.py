@@ -59,6 +59,9 @@ class LanguageDetectionRequest:
     timestamp: int
     window_ts: int
     audio_ts: int
+    initial_samples: int = 2 * 16000
+    increment_samples: int = 0
+    factor: float = 2.0
 
 
 @dataclass

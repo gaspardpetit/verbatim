@@ -167,6 +167,9 @@ class Config:
     code_switching: bool = True
     transcriber_backend: str = "auto"
     language_identifier_backend: str = "transcriber"
+    language_detection_initial_seconds: float = 2.0
+    language_detection_increment_seconds: float = 0.0
+    language_detection_factor: float = 2.0
     mms_lid_model_size: str = "facebook/mms-lid-126"
     non_speech_backend: str = "energy"
     ast_audio_model_size: str = "MIT/ast-finetuned-audioset-10-10-0.4593"

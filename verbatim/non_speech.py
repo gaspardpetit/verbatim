@@ -39,8 +39,7 @@ AST_LABEL_MAP = {
 
 
 class NonSpeechClassifierProtocol(Protocol):
-    def classify(self, segment: NDArray[np.float32], sample_rate: int) -> List[str]:
-        ...
+    def classify(self, segment: NDArray[np.float32], sample_rate: int) -> List[str]: ...
 
 
 def _rms(audio: NDArray[np.float32]) -> float:
