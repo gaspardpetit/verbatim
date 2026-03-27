@@ -1,5 +1,6 @@
 import io
 import os
+from typing import Optional
 
 from verbatim.cache import ArtifactCache
 
@@ -9,6 +10,7 @@ def convert_to_wav(
     working_prefix_no_ext: str,
     preserve_channels: bool = False,
     overwrite=True,
+    output_path: Optional[str] = None,
     *,
     cache: ArtifactCache,
 ) -> str:
@@ -16,7 +18,9 @@ def convert_to_wav(
     from .sources.ffmpegfileaudiosource import PyAVAudioSource
     from .sources.wavsink import WavSink
 
-    converted_path = working_prefix_no_ext + ".wav"
+    converted_path = output_path or (working_prefix_no_ext + ".wav")
+    if os.path.abspath(converted_path) == os.path.abspath(input_path):
+        converted_path = working_prefix_no_ext + ".converted.wav"
 
     if not overwrite and os.path.exists(converted_path) is True:
         return converted_path
@@ -39,15 +43,16 @@ def convert_bytes_to_wav(
     working_prefix_no_ext: str,
     preserve_channels: bool = False,
     overwrite=True,
+    output_path: Optional[str] = None,
     cache: ArtifactCache,
 ) -> str:
     # pylint: disable=import-outside-toplevel
     from .sources.ffmpegfileaudiosource import PyAVAudioSource
     from .sources.wavsink import WavSink
 
-    converted_path = working_prefix_no_ext + ".wav"
+    converted_path = output_path or (working_prefix_no_ext + ".wav")
 
-    if not overwrite and os.path.exists(converted_path) is True:
+    if not overwrite and cache.get_bytes(converted_path):
         return converted_path
 
     temp_file_audio_source = PyAVAudioSource(

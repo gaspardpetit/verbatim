@@ -2,7 +2,7 @@ import io
 import logging
 import os
 import wave
-from typing import Optional, Tuple
+from typing import BinaryIO, Literal, Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -11,14 +11,14 @@ from verbatim.cache import ArtifactCache
 from verbatim.voices.isolation import VoiceIsolation
 
 from ..audio import format_audio, sample_to_timestr
-from ..convert import convert_to_wav
+from ..convert import convert_bytes_to_wav, convert_to_wav
 from .audiosource import AudioSource, AudioStream
 
 Annotation = object  # pylint: disable=invalid-name
 
 LOG = logging.getLogger(__name__)
 
-COMPATIBLE_FORMATS = [".mp3", ".m4a"]
+COMPATIBLE_FORMATS = [".mp3", ".m4a", ".wav"]
 
 
 class FileAudioStream(AudioStream):
@@ -37,8 +37,16 @@ class FileAudioStream(AudioStream):
         self.source = source
         self.channel_indices = channel_indices
         self.file_id = file_id
-        self._buffer: Optional[io.BytesIO] = None
-        self._buffer = cache.bytes_io(self.source.file_path)
+        self._buffer: Optional[BinaryIO] = None
+        if self.source.source_backend == "cache":
+            input_bytes = cache.get_bytes(self.source.file_path)
+            if not input_bytes:
+                raise RuntimeError(
+                    f"Cached bytes missing for input '{self.source.file_path}'. Populate the artifact cache before opening the audio source."
+                )
+            self._buffer = io.BytesIO(input_bytes)
+        else:
+            self._buffer = open(self.source.file_path, "rb")  # pylint: disable=consider-using-with
         self.stream = wave.open(self._buffer, "rb")
         total_frames = self.stream.getnframes()
         file_rate = self.stream.getframerate()
@@ -118,6 +126,99 @@ class FileAudioStream(AudioStream):
 
 class FileAudioSource(AudioSource):
     diarization: Optional[Annotation]
+    source_backend: Literal["cache", "path"]
+
+    @staticmethod
+    def _is_wave_readable_bytes(audio_bytes: bytes) -> bool:
+        """Return True when the provided bytes are already a wave-readable WAV."""
+        try:
+            with io.BytesIO(audio_bytes) as buffer:
+                with wave.open(buffer, "rb"):
+                    return True
+        except (wave.Error, OSError, EOFError):
+            return False
+
+    @staticmethod
+    def _is_wave_readable_file(file_path: str) -> bool:
+        """Return True when the on-disk file is already a wave-readable WAV."""
+        try:
+            with wave.open(file_path, "rb"):
+                return True
+        except (wave.Error, OSError, EOFError):
+            return False
+
+    @staticmethod
+    def _normalized_wav_path(file_path_no_ext: str) -> str:
+        """Return the artifact path used for normalized incompatible WAV inputs."""
+        return file_path_no_ext + ".normalized.wav"
+
+    def _require_cached_input_bytes(self) -> bytes:
+        input_bytes = self.cache.get_bytes(self.file_path)
+        if not input_bytes:
+            raise RuntimeError(f"Cached bytes missing for input '{self.file_path}'. Populate the artifact cache before invoking the pipeline.")
+        return input_bytes
+
+    def _resolve_cache_backed_encoded_input(self, *, file_path_no_ext: str) -> str:
+        """Resolve encoded cache-backed inputs to a PCM WAV artifact."""
+        input_bytes = self._require_cached_input_bytes()
+        return convert_bytes_to_wav(
+            input_bytes=input_bytes,
+            input_label=self.file_path,
+            working_prefix_no_ext=file_path_no_ext,
+            preserve_channels=self.preserve_channels,
+            cache=self.cache,
+        )
+
+    def _resolve_path_backed_encoded_input(self, *, file_path_no_ext: str) -> str:
+        """Resolve encoded path-backed inputs to a PCM WAV artifact."""
+        return convert_to_wav(
+            input_path=self.file_path,
+            working_prefix_no_ext=file_path_no_ext,
+            preserve_channels=self.preserve_channels,
+            cache=self.cache,
+        )
+
+    def _resolve_cache_backed_wav_input(self, *, file_path_no_ext: str) -> str:
+        """Resolve cache-backed WAV input to a wave-readable WAV artifact."""
+        input_bytes = self._require_cached_input_bytes()
+        if self._is_wave_readable_bytes(input_bytes):
+            return self.file_path
+        return convert_bytes_to_wav(
+            input_bytes=input_bytes,
+            input_label=self.file_path,
+            working_prefix_no_ext=file_path_no_ext,
+            output_path=self._normalized_wav_path(file_path_no_ext),
+            preserve_channels=self.preserve_channels,
+            cache=self.cache,
+        )
+
+    def _resolve_path_backed_wav_input(self, *, file_path_no_ext: str) -> str:
+        """Resolve path-backed WAV input to a wave-readable WAV artifact."""
+        if self._is_wave_readable_file(self.file_path):
+            return self.file_path
+        return convert_to_wav(
+            input_path=self.file_path,
+            working_prefix_no_ext=file_path_no_ext,
+            output_path=self._normalized_wav_path(file_path_no_ext),
+            preserve_channels=self.preserve_channels,
+            cache=self.cache,
+        )
+
+    def _resolve_encoded_input(self, *, file_path_no_ext: str) -> str:
+        """Resolve encoded input formats (mp3/m4a/...) to a PCM WAV artifact."""
+        if self.source_backend == "cache":
+            return self._resolve_cache_backed_encoded_input(file_path_no_ext=file_path_no_ext)
+        if self.source_backend == "path":
+            return self._resolve_path_backed_encoded_input(file_path_no_ext=file_path_no_ext)
+        raise ValueError(f"Unsupported source backend: {self.source_backend}")
+
+    def _resolve_wav_input(self, *, file_path_no_ext: str) -> str:
+        """Resolve WAV input to a wave-readable PCM WAV artifact."""
+        if self.source_backend == "cache":
+            return self._resolve_cache_backed_wav_input(file_path_no_ext=file_path_no_ext)
+        if self.source_backend == "path":
+            return self._resolve_path_backed_wav_input(file_path_no_ext=file_path_no_ext)
+        raise ValueError(f"Unsupported source backend: {self.source_backend}")
 
     def __init__(
         self,
@@ -130,6 +231,7 @@ class FileAudioSource(AudioSource):
         preserve_channels: bool = False,
         channel_indices: Optional[list[int]] = None,
         file_id: Optional[str] = None,
+        source_backend: Literal["cache", "path"] = "cache",
     ):
         super().__init__(source_name=file)
         self.cache = cache
@@ -138,16 +240,13 @@ class FileAudioSource(AudioSource):
         self.channel_indices = channel_indices
         self.file_id = file_id
         self.preserve_channels = preserve_channels
+        self.source_backend = source_backend
         file_path_no_ext, file_path_ext = os.path.splitext(self.file_path)
-        if file_path_ext in COMPATIBLE_FORMATS:
-            # Convert encoded audio to wav
-            wav_file_path = convert_to_wav(
-                input_path=self.file_path,
-                working_prefix_no_ext=file_path_no_ext,
-                preserve_channels=preserve_channels,
-                cache=self.cache,
-            )
-            self.file_path = wav_file_path
+        file_path_ext = file_path_ext.lower()
+        if file_path_ext == ".wav":
+            self.file_path = self._resolve_wav_input(file_path_no_ext=file_path_no_ext)
+        elif file_path_ext in COMPATIBLE_FORMATS:
+            self.file_path = self._resolve_encoded_input(file_path_no_ext=file_path_no_ext)
         self.end_sample = end_sample
         self.start_sample = start_sample
 

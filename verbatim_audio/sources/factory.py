@@ -639,6 +639,7 @@ def create_audio_sources(
                     preserve_channels=False,
                     channel_indices=channel_indices or None,
                     file_id=audio_ref.id,
+                    source_backend="cache" if file_path != input_source or source_config.isolate is None else "path",
                 )
             )
         return sources
@@ -651,6 +652,7 @@ def create_audio_sources(
             end_sample=stop_sample,
             diarization=source_config.diarization,
             preserve_channels=False,
+            source_backend="path" if source_config.isolate is not None else "cache",
         )
     ]
 
@@ -723,5 +725,6 @@ def create_joint_speaker_sources(
             diarization=annotation,
             start_sample=start_sample,
             end_sample=stop_sample,
+            source_backend="cache",
         )
     ]

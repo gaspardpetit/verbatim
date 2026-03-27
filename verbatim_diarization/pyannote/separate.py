@@ -230,6 +230,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
                     end_sample=end_sample,
                     diarization=diarization_annotation,
                     file_id=audio_ref.id,
+                    source_backend="cache",
                 )
             )
 
