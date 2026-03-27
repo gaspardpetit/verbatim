@@ -49,6 +49,7 @@ def run_execute(
     output_prefix_no_ext: str,
     working_prefix_no_ext: str,
     eval_file,
+    models=None,
     status_hook: Optional[StatusHook] = None,
 ):
     execute(
@@ -60,6 +61,7 @@ def run_execute(
         output_prefix_no_ext=output_prefix_no_ext,
         working_prefix_no_ext=working_prefix_no_ext,
         eval_file=eval_file,
+        models=models,
         status_hook=status_hook,
     )
 
@@ -70,6 +72,7 @@ def run_single_input(
     log_level: int,
     source_path: str,
     config,
+    models=None,
     output_prefix_no_ext: Optional[str] = None,
     working_prefix_no_ext: Optional[str] = None,
     output_formats=None,
@@ -131,6 +134,7 @@ def run_single_input(
         output_prefix_no_ext=output_prefix_no_ext,
         working_prefix_no_ext=working_prefix_no_ext,
         eval_file=args.eval,
+        models=models,
         status_hook=status_hook,
     )
     return True
