@@ -95,6 +95,24 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
         help="Language identification backend to use. 'transcriber' uses the active ASR backend; 'mms' uses facebook/mms-lid-126.",
     )
     parser.add_argument(
+        "--language-detection-initial-seconds",
+        type=float,
+        default=None,
+        help="Initial audio duration in seconds for language detection attempts (default: 2.0).",
+    )
+    parser.add_argument(
+        "--language-detection-increment-seconds",
+        type=float,
+        default=None,
+        help="Additional seconds added at each language detection retry (default: 0.0).",
+    )
+    parser.add_argument(
+        "--language-detection-factor",
+        type=float,
+        default=None,
+        help="Multiplicative growth factor for language detection retries (default: 2.0, clamped to >= 1.0).",
+    )
+    parser.add_argument(
         "--mms-lid-model-size",
         default=None,
         help="Model id or path for the MMS language identification backend.",

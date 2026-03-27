@@ -36,6 +36,12 @@ def make_config(args) -> Config:
         config.transcriber_backend = args.transcriber_backend
     if getattr(args, "language_identifier_backend", None):
         config.language_identifier_backend = args.language_identifier_backend
+    if getattr(args, "language_detection_initial_seconds", None) is not None:
+        config.language_detection_initial_seconds = args.language_detection_initial_seconds
+    if getattr(args, "language_detection_increment_seconds", None) is not None:
+        config.language_detection_increment_seconds = args.language_detection_increment_seconds
+    if getattr(args, "language_detection_factor", None) is not None:
+        config.language_detection_factor = args.language_detection_factor
     if getattr(args, "mms_lid_model_size", None):
         config.mms_lid_model_size = args.mms_lid_model_size
     if getattr(args, "non_speech_backend", None):
