@@ -48,7 +48,7 @@ class TranscriptFormatter:
                 for word in utterance.words
             ]
 
-        indented_lines = "\n".join("    " + line for line in json.dumps(utterance_dict, indent=2).splitlines())
+        indented_lines = "\n".join("    " + line for line in json.dumps(utterance_dict, indent=2, ensure_ascii=False).splitlines())
 
         # Use json.dumps to write the formatted JSON
         chunks.append(indented_lines)
