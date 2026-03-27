@@ -1571,10 +1571,11 @@ def execute(
     output_prefix_no_ext: str,
     working_prefix_no_ext: str,
     eval_file: Optional[str],
+    models: Optional["Models"] = None,
     status_hook: Optional[StatusHook] = None,
 ):
     all_utterances: List[Utterance] = []
-    transcriber = Verbatim(config, status_hook=status_hook)
+    transcriber = Verbatim(config, models=models, status_hook=status_hook)
     stdout_enabled = True
     for idx, audio_source in enumerate(audio_sources):
         STATUS_LOG.info("Transcribing from audio source: %s", audio_source.source_name)
