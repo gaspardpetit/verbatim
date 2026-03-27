@@ -83,8 +83,19 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
         help="Whisper model size or path (e.g., 'large-v3' or 'nyrahealth/faster_CrisperWhisper')",
     )
     parser.add_argument(
+        "--voxtral-model",
+        default=None,
+        help="Voxtral model id or path (e.g., 'mistralai/Voxtral-Mini-3B-2507')",
+    )
+    parser.add_argument(
+        "--voxtral-max-new-tokens",
+        type=int,
+        default=None,
+        help="Maximum number of generated tokens for the Voxtral transcription backend.",
+    )
+    parser.add_argument(
         "--transcriber-backend",
-        choices=["auto", "qwen", "qwen-asr"],
+        choices=["auto", "qwen", "qwen-asr", "voxtral"],
         default=None,
         help="Transcription backend to use. Defaults to the standard Whisper backend when unset.",
     )

@@ -91,6 +91,9 @@ class MmsLanguageIdentifier:
 def create_language_identifier(config: Config, models: _TranscriberOwnerProtocol) -> LanguageIdentifierProtocol:
     backend = (config.language_identifier_backend or "transcriber").lower()
     if backend == "transcriber":
+        if (config.transcriber_backend or "").lower() == "voxtral":
+            LOG.warning("Voxtral backend does not provide native language identification; falling back to MMS language identifier.")
+            return MmsLanguageIdentifier(model_size_or_path=config.mms_lid_model_size, device=config.device)
         return TranscriberLanguageIdentifier(models=models)
     if backend == "mms":
         return MmsLanguageIdentifier(model_size_or_path=config.mms_lid_model_size, device=config.device)

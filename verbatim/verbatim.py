@@ -320,6 +320,9 @@ class Verbatim:
             models = Models(
                 device=config.device,
                 whisper_model_size=config.whisper_model_size,
+                voxtral_model_size=config.voxtral_model_size,
+                voxtral_dtype=config.voxtral_dtype,
+                voxtral_max_new_tokens=config.voxtral_max_new_tokens,
                 stream=config.stream,
                 transcriber=transcriber,
                 transcriber_backend=config.transcriber_backend,

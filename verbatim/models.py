@@ -25,6 +25,9 @@ class Models:
         *,
         device: str,
         whisper_model_size: str = "large-v3",
+        voxtral_model_size: str = "mistralai/Voxtral-Mini-3B-2507",
+        voxtral_dtype: str = "auto",
+        voxtral_max_new_tokens: int = 256,
         stream: bool = False,
         transcriber: Optional[TranscriberProtocol] = None,
         transcriber_backend: str = "auto",
@@ -37,6 +40,9 @@ class Models:
         self._transcriber: Optional[TranscriberProtocol] = transcriber
         self._device = device
         self._whisper_model_size = whisper_model_size
+        self._voxtral_model_size = voxtral_model_size
+        self._voxtral_dtype = voxtral_dtype
+        self._voxtral_max_new_tokens = voxtral_max_new_tokens
         self._config_transcriber_backend = transcriber_backend
         self._qwen_asr_model_size = qwen_asr_model_size
         self._qwen_aligner_model_size = qwen_aligner_model_size
@@ -96,6 +102,18 @@ class Models:
                 dtype=self._qwen_dtype,
                 max_inference_batch_size=self._qwen_max_inference_batch_size,
                 max_new_tokens=self._qwen_max_new_tokens,
+            )
+
+        if backend == "voxtral":
+            STATUS_LOG.info("Using Voxtral transcriber with Qwen forced alignment.")
+            from .voices.transcribe.voxtral import VoxtralTranscriber  # pylint: disable=import-outside-toplevel
+
+            return VoxtralTranscriber(
+                model_size_or_path=self._voxtral_model_size,
+                aligner_model_size_or_path=self._qwen_aligner_model_size,
+                device=self._device,
+                dtype=self._voxtral_dtype,
+                max_new_tokens=self._voxtral_max_new_tokens,
             )
 
         if sys.platform == "darwin":
