@@ -78,7 +78,7 @@ def normalize_language(value: Any, *, aliases: Optional[Mapping[str, str]] = Non
 
     try:
         normalized = Language.get(candidate).language
-    except Exception:
+    except (AttributeError, LookupError, TypeError, ValueError):
         return None
 
     if not normalized or normalized == "und":
