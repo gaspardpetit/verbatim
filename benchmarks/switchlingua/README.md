@@ -1,12 +1,13 @@
 # SwitchLingua Benchmark
 
-This folder is the benchmark bootstrap corner for SwitchLingua. For now it carries the local installation/bootstrap scaffolding plus the dataset downloader so the first PR can stay small. The rest of the benchmark scripts still live under `tools/`.
+This folder is the benchmark bootstrap corner for SwitchLingua. For now it carries the local installation/bootstrap scaffolding plus the dataset downloader and master-manifest builder so the first PRs can stay small. The rest of the benchmark scripts still live under `tools/`.
 
 ## Layout
 
 - `Makefile`: benchmark-local setup and run entrypoints
 - `requirements.txt`: extra helper dependency needed by the downloader
 - `scripts/download.py`: benchmark-local dataset bootstrap script
+- `scripts/manifest.py`: benchmark-local master-manifest builder
 
 ## Install
 
@@ -33,6 +34,7 @@ Defaults for `make install`:
 - installs `benchmarks/switchlingua/requirements.txt`
 - uses `MAX_WORKERS=1` for a conservative Hugging Face sync
 - starts syncing the full audio dataset into `ext/switchlingua`
+- writes a benchmark-owned master manifest to `benchmarks/switchlingua/manifests/manifest_bootstrap.jsonl`
 
 Override that on demand:
 
@@ -55,6 +57,11 @@ The manifest generator can use either a `metadata.*` file or per-language metada
 
 The dataset is gated on Hugging Face. Accept the terms and set `HUGGINGFACE_TOKEN` or `HF_TOKEN` before downloading.
 
+The bootstrap manifest is normalized for direct benchmark consumption:
+- `languages` is normalized and filled with dataset-level fallbacks when metadata is incomplete
+- `text` is reduced to the per-audio utterance instead of preserving a raw multi-turn payload
+- `normalized` is precomputed for scoring
+
 ## Current Runner Location
 
 The benchmark scripts currently stay outside this folder:
@@ -63,4 +70,4 @@ The benchmark scripts currently stay outside this folder:
 - `tools/switchlingua_run_all.py`
 - `tools/switchlingua_report.py`
 
-Only the downloader has been moved locally so far.
+The runner/report scripts still stay outside this folder for now.
