@@ -353,6 +353,19 @@ def _is_rate_limited(exc: BaseException) -> bool:
     return "Too Many Requests" in str(exc)
 
 
+def _rate_limit_backoff_seconds(
+    *,
+    base_sleep_seconds: int,
+    consecutive_failures: int,
+    retry_after_seconds: Optional[int],
+) -> int:
+    if retry_after_seconds is not None and retry_after_seconds > 0:
+        return max(base_sleep_seconds, retry_after_seconds)
+    # HF quotas are often enforced on a 5 minute window; scale up quickly from the base sleep.
+    multiplier = 2 ** min(max(consecutive_failures, 0), 2)  # 1x, 2x, 4x then clamp
+    return min(300, max(1, base_sleep_seconds) * multiplier)
+
+
 def _download_repo(
     repo_id: str,
     *,
@@ -365,7 +378,7 @@ def _download_repo(
 ) -> Path:
     LOG.info("Downloading %s", repo_id)
     local_dir = outdir / repo_id.split("/")[-1]
-    sleep_seconds = _rate_limit_sleep_seconds()
+    base_sleep_seconds = _rate_limit_sleep_seconds()
     max_consecutive_failures = _rate_limit_max_retries()
     consecutive_failures = 0
     last_file_count = _count_local_files(local_dir)
@@ -401,11 +414,11 @@ def _download_repo(
             LOG.warning(
                 "SwitchLingua metadata not present yet in %s. Sleeping %ds and retrying (consecutive failures=%d/%d).",
                 local_dir,
-                sleep_seconds,
+                base_sleep_seconds,
                 consecutive_failures,
                 max_consecutive_failures,
             )
-            time.sleep(sleep_seconds)
+            time.sleep(base_sleep_seconds)
         except LocalEntryNotFoundError as exc:
             new_file_count = _count_local_files(local_dir)
             if new_file_count > last_file_count:
@@ -421,21 +434,25 @@ def _download_repo(
                 ) from exc
             LOG.warning(
                 "SwitchLingua download incomplete (cache miss). Sleeping %ds and retrying (consecutive failures=%d/%d).",
-                sleep_seconds,
+                base_sleep_seconds,
                 consecutive_failures,
                 max_consecutive_failures,
             )
-            time.sleep(sleep_seconds)
+            time.sleep(base_sleep_seconds)
         except HfHubHTTPError as exc:
             if _is_rate_limited(exc):
                 retry_after = _extract_retry_after_seconds(exc)
-                wait_seconds = max(sleep_seconds, retry_after or 0)
                 new_file_count = _count_local_files(local_dir)
                 if new_file_count > last_file_count:
                     consecutive_failures = 0
                     last_file_count = new_file_count
                 else:
                     consecutive_failures += 1
+                wait_seconds = _rate_limit_backoff_seconds(
+                    base_sleep_seconds=base_sleep_seconds,
+                    consecutive_failures=consecutive_failures,
+                    retry_after_seconds=retry_after,
+                )
 
                 if consecutive_failures > max_consecutive_failures:
                     raise RuntimeError(
