@@ -56,6 +56,17 @@ def _normalize_language(value: Any) -> Optional[str]:
 
 
 def _parse_language(record: dict[str, Any]) -> str:
+    languages_value = record.get("languages")
+    if languages_value:
+        if isinstance(languages_value, str):
+            first = languages_value.split(",", 1)[0].strip()
+            normalized = _normalize_language(first)
+            if normalized:
+                return normalized
+        elif isinstance(languages_value, list) and languages_value:
+            normalized = _normalize_language(languages_value[0])
+            if normalized:
+                return normalized
     for key in ("matrix_language", "first_language", "language", "lang", "language_pair"):
         value = record.get(key)
         if value:
@@ -64,6 +75,11 @@ def _parse_language(record: dict[str, Any]) -> str:
             normalized = _normalize_language(value)
             if normalized:
                 return normalized
+    set_value = record.get("set")
+    if set_value:
+        normalized = _normalize_language(set_value)
+        if normalized:
+            return normalized
     return "und"
 
 
@@ -170,10 +186,15 @@ def _load_records(path: Path) -> List[dict[str, Any]]:
     raise ValueError(f"Unsupported manifest format: {path.suffix}")
 
 
-def load_manifest(path: Path) -> Dict[str, RefItem]:
+def load_manifest(path: Path, *, run_name: Optional[str] = None) -> Dict[str, RefItem]:
     records = _load_records(path)
     ref_map: Dict[str, RefItem] = {}
+    normalized_run_name = run_name.strip().lower() if run_name else None
     for record in records:
+        if normalized_run_name:
+            record_set = str(record.get("set", "")).strip().lower()
+            if record_set and record_set != normalized_run_name:
+                continue
         audio_value = _first_present(record, PATH_FIELDS)
         item_id = str(_first_present(record, ID_FIELDS) or Path(str(audio_value)).stem)
         normalized_id = _slugify(item_id)
@@ -247,8 +268,6 @@ def _iter_output_jsons(system_dir: Path) -> Iterable[Path]:
 
 def compute_report(manifest: Optional[Path], outdir: Path, manifest_root: Path) -> List[dict[str, Any]]:
     manifest_cache: Dict[str, Dict[str, RefItem]] = {}
-    if manifest is not None:
-        manifest_cache["__explicit__"] = load_manifest(manifest)
     results: Dict[Tuple[str, str], dict[str, Any]] = {}
 
     for run_name, system_name, system_dir in _iter_system_dirs(outdir):
@@ -261,7 +280,11 @@ def compute_report(manifest: Optional[Path], outdir: Path, manifest_root: Path) 
                 continue
             manifest_key = run_name
             if manifest_key not in manifest_cache:
-                manifest_cache[manifest_key] = load_manifest(inferred_manifest)
+                manifest_cache[manifest_key] = load_manifest(inferred_manifest, run_name=run_name)
+        else:
+            manifest_key = run_name or "__explicit__"
+            if manifest_key not in manifest_cache:
+                manifest_cache[manifest_key] = load_manifest(manifest, run_name=run_name)
         ref_map = manifest_cache[manifest_key]
 
         if not system_dir.exists():
