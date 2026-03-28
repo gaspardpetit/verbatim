@@ -31,6 +31,9 @@ LANGUAGE_FALLBACKS = {
     "russian": ["ru", "en"],
     "spanish": ["es", "en"],
 }
+LANGUAGE_AUDIO_DIRS = {
+    key: key.title() for key in LANGUAGE_FALLBACKS
+}
 
 PATH_FIELDS = ("audio", "audio_path", "audio_file", "path", "file", "filename", "file_name")
 ID_FIELDS = ("id", "item_id", "sample_id", "audio_id", "uid", "file_name")
@@ -276,7 +279,7 @@ def infer_language_names(patterns: Optional[Sequence[str]]) -> List[str]:
     return sorted(language_names)
 
 
-def _resolve_audio_path(value: str, *, audio_root: Path, record_root: Path) -> Path:
+def _resolve_audio_path(value: str, *, audio_root: Path, record_root: Path, dataset_lang: Optional[str]) -> Path:
     path = Path(value).expanduser()
     if path.is_absolute():
         return path
@@ -284,6 +287,12 @@ def _resolve_audio_path(value: str, *, audio_root: Path, record_root: Path) -> P
         candidate = (base / path).resolve()
         if candidate.exists():
             return candidate
+    if dataset_lang and len(path.parts) == 1:
+        dataset_dir = LANGUAGE_AUDIO_DIRS.get(dataset_lang.strip().lower())
+        if dataset_dir:
+            candidate = (audio_root / dataset_dir / path).resolve()
+            if candidate.exists():
+                return candidate
     return (record_root / path).resolve()
 
 
@@ -324,7 +333,7 @@ def build_manifest_items(
             raise ValueError(message)
 
         item_id = str(_first_present(record, ID_FIELDS) or Path(str(audio_value)).stem)
-        audio_path = _resolve_audio_path(str(audio_value), audio_root=audio_root, record_root=record_root)
+        audio_path = _resolve_audio_path(str(audio_value), audio_root=audio_root, record_root=record_root, dataset_lang=dataset_lang)
 
         metadata = {key: record[key] for key in METADATA_KEYS if key in record and record[key] not in (None, "")}
         for key in LANGUAGE_FIELDS:
