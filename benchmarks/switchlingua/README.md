@@ -1,11 +1,12 @@
 # SwitchLingua Benchmark
 
-This folder is the benchmark bootstrap corner for SwitchLingua. For now it only carries the local installation/bootstrap scaffolding so the first PR can stay small. The actual benchmark scripts still live under `tools/`.
+This folder is the benchmark bootstrap corner for SwitchLingua. For now it carries the local installation/bootstrap scaffolding plus the dataset downloader so the first PR can stay small. The rest of the benchmark scripts still live under `tools/`.
 
 ## Layout
 
 - `Makefile`: benchmark-local setup and run entrypoints
 - `requirements.txt`: extra helper dependency needed by the downloader
+- `scripts/download.py`: benchmark-local dataset bootstrap script
 
 ## Install
 
@@ -45,10 +46,9 @@ The dataset is gated on Hugging Face. Accept the terms and set `HUGGINGFACE_TOKE
 ## Current Runner Location
 
 The benchmark scripts currently stay outside this folder:
-- `tools/switchlingua_download.py`
 - `tools/switchlingua_manifest.py`
 - `tools/switchlingua_benchmark.py`
 - `tools/switchlingua_run_all.py`
 - `tools/switchlingua_report.py`
 
-This folder only standardizes installation/bootstrap for now.
+Only the downloader has been moved locally so far.
