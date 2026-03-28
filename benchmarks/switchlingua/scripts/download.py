@@ -16,6 +16,7 @@ from huggingface_hub.errors import HfHubHTTPError, LocalEntryNotFoundError
 from verbatim_cli.env import load_env_file
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+# pylint: disable=wrong-import-position,wrong-import-order
 from manifest import infer_language_names
 
 LOG = logging.getLogger(__name__)
