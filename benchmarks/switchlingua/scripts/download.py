@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import re
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, List, Optional, Sequence
@@ -41,6 +42,9 @@ METADATA_KEYS = (
     "cs_type",
     "language_pair",
 )
+
+DEFAULT_RATE_LIMIT_SLEEP_SECONDS = 60
+DEFAULT_RATE_LIMIT_MAX_RETRIES = 10
 
 
 @dataclass
@@ -263,6 +267,53 @@ def _require_token(token: Optional[str]) -> str:
     )
 
 
+def _rate_limit_sleep_seconds() -> int:
+    raw = os.getenv("SWITCHLINGUA_RATE_LIMIT_SLEEP_SECONDS")
+    if raw is None:
+        return DEFAULT_RATE_LIMIT_SLEEP_SECONDS
+    try:
+        value = int(raw)
+    except ValueError:
+        LOG.warning("Invalid SWITCHLINGUA_RATE_LIMIT_SLEEP_SECONDS=%r; using default %d", raw, DEFAULT_RATE_LIMIT_SLEEP_SECONDS)
+        return DEFAULT_RATE_LIMIT_SLEEP_SECONDS
+    return max(1, value)
+
+
+def _rate_limit_max_retries() -> int:
+    raw = os.getenv("SWITCHLINGUA_RATE_LIMIT_MAX_RETRIES")
+    if raw is None:
+        return DEFAULT_RATE_LIMIT_MAX_RETRIES
+    try:
+        value = int(raw)
+    except ValueError:
+        LOG.warning("Invalid SWITCHLINGUA_RATE_LIMIT_MAX_RETRIES=%r; using default %d", raw, DEFAULT_RATE_LIMIT_MAX_RETRIES)
+        return DEFAULT_RATE_LIMIT_MAX_RETRIES
+    return max(0, value)
+
+
+def _extract_retry_after_seconds(exc: BaseException) -> Optional[int]:
+    response = getattr(exc, "response", None)
+    headers = getattr(response, "headers", None)
+    if not headers:
+        return None
+    value = headers.get("Retry-After")
+    if not value:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
+
+
+def _is_rate_limited(exc: BaseException) -> bool:
+    if not isinstance(exc, HfHubHTTPError):
+        return False
+    status_code = getattr(getattr(exc, "response", None), "status_code", None)
+    if status_code == 429:
+        return True
+    return "Too Many Requests" in str(exc)
+
+
 def _download_repo(
     repo_id: str,
     *,
@@ -271,37 +322,79 @@ def _download_repo(
     max_workers: int,
     allow_patterns: Optional[List[str]],
     ignore_patterns: Optional[List[str]],
+    require_metadata: bool = False,
 ) -> Path:
     LOG.info("Downloading %s", repo_id)
     local_dir = outdir / repo_id.split("/")[-1]
-    local_dir.mkdir(parents=True, exist_ok=True)
-    try:
-        snapshot_download(
-            repo_id=repo_id,
-            repo_type="dataset",
-            local_dir=str(local_dir),
-            local_dir_use_symlinks=False,
-            token=_require_token(token),
-            max_workers=max_workers,
-            resume_download=True,
-            allow_patterns=allow_patterns,
-            ignore_patterns=ignore_patterns,
-        )
-    except LocalEntryNotFoundError as exc:
-        raise RuntimeError(
-            "The SwitchLingua download did not complete and the requested files were not available in the local cache. "
-            "This commonly happens after an HF rate limit. Re-run the install with MAX_WORKERS=1 or restrict the sync with ALLOW_PATTERN."
-        ) from exc
-    except HfHubHTTPError as exc:
-        status_code = getattr(getattr(exc, "response", None), "status_code", None)
-        if status_code == 429 or "Too Many Requests" in str(exc):
+    sleep_seconds = _rate_limit_sleep_seconds()
+    max_retries = _rate_limit_max_retries()
+    total_attempts = max_retries + 1
+
+    for attempt in range(1, total_attempts + 1):
+        try:
+            snapshot_download(
+                repo_id=repo_id,
+                repo_type="dataset",
+                local_dir=str(local_dir),
+                local_dir_use_symlinks=False,
+                token=_require_token(token),
+                max_workers=max_workers,
+                resume_download=True,
+                allow_patterns=allow_patterns,
+                ignore_patterns=ignore_patterns,
+            )
+            if require_metadata and _find_metadata_file(local_dir) is None:
+                if attempt < total_attempts:
+                    LOG.warning(
+                        "SwitchLingua metadata not present yet in %s. Sleeping %ds and retrying (%d/%d).",
+                        local_dir,
+                        sleep_seconds,
+                        attempt,
+                        total_attempts,
+                    )
+                    time.sleep(sleep_seconds)
+                    continue
+                raise RuntimeError(
+                    "SwitchLingua download completed but no metadata file was found. "
+                    "If you are restricting the sync, ensure your patterns include a metadata CSV/JSON/JSONL (or pass --metadata)."
+                )
+            break
+        except LocalEntryNotFoundError as exc:
+            if attempt < total_attempts:
+                LOG.warning(
+                    "SwitchLingua download incomplete (cache miss). Sleeping %ds and retrying (%d/%d).",
+                    sleep_seconds,
+                    attempt,
+                    total_attempts,
+                )
+                time.sleep(sleep_seconds)
+                continue
             raise RuntimeError(
-                "Hugging Face rate limited the SwitchLingua download. "
-                f"Retry with a lower concurrency (current MAX_WORKERS={max_workers}, recommended: 1), "
-                "or restrict the sync with ALLOW_PATTERN, for example "
-                '`make -C benchmarks/switchlingua install ALLOW_PATTERN="Arabic/*.m4a"`.'
+                "The SwitchLingua download did not complete and the requested files were not available in the local cache. "
+                "This commonly happens after an HF rate limit. Re-run the install with MAX_WORKERS=1 or restrict the sync with ALLOW_PATTERN."
             ) from exc
-        raise
+        except HfHubHTTPError as exc:
+            if _is_rate_limited(exc):
+                retry_after = _extract_retry_after_seconds(exc)
+                wait_seconds = max(sleep_seconds, retry_after or 0)
+                if attempt < total_attempts:
+                    LOG.warning(
+                        "Hugging Face rate limited the SwitchLingua download (HTTP 429). Sleeping %ds and retrying (%d/%d). "
+                        "Tip: lower concurrency (current MAX_WORKERS=%d, recommended: 1).",
+                        wait_seconds,
+                        attempt,
+                        total_attempts,
+                        max_workers,
+                    )
+                    time.sleep(wait_seconds)
+                    continue
+                raise RuntimeError(
+                    "Hugging Face rate limited the SwitchLingua download. "
+                    f"Retry with a lower concurrency (current MAX_WORKERS={max_workers}, recommended: 1), "
+                    "or restrict the sync with ALLOW_PATTERN, for example "
+                    '`make -C benchmarks/switchlingua install ALLOW_PATTERN="Arabic/*.m4a"`.'
+                ) from exc
+            raise
     return local_dir
 
 
@@ -395,6 +488,7 @@ def main() -> int:
             max_workers=args.max_workers,
             allow_patterns=allow_patterns or None,
             ignore_patterns=args.ignore_pattern,
+            require_metadata=False,
         )
     if download_audio:
         audio_dir = _download_repo(
@@ -404,6 +498,7 @@ def main() -> int:
             max_workers=args.max_workers,
             allow_patterns=allow_patterns or None,
             ignore_patterns=args.ignore_pattern,
+            require_metadata=not bool(args.metadata),
         )
 
     metadata_paths: List[Path] = []

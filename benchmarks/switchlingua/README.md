@@ -47,6 +47,10 @@ Increase concurrency only if your HF quota can sustain it:
 make -C benchmarks/switchlingua install MAX_WORKERS=4
 ```
 
+If Hugging Face rate limits the download (HTTP 429), the downloader sleeps for 60 seconds and retries automatically. Override with:
+- `SWITCHLINGUA_RATE_LIMIT_SLEEP_SECONDS`
+- `SWITCHLINGUA_RATE_LIMIT_MAX_RETRIES`
+
 The dataset is gated on Hugging Face. Accept the terms and set `HUGGINGFACE_TOKEN` or `HF_TOKEN` before downloading.
 
 ## Current Runner Location

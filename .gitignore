@@ -188,3 +188,6 @@ tmp
 .verbatim/**
 verbatim/_version.py
 config.yaml
+
+# Benchmark files
+ext/switchlingua
