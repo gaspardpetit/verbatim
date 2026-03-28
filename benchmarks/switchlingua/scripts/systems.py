@@ -8,6 +8,7 @@ import yaml
 SYSTEMS_CONFIG_PATH = Path(__file__).resolve().parents[1] / "systems.yaml"
 BENCHMARK_CONFIG_PATH = Path(__file__).resolve().parents[1] / "benchmark.yaml"
 _ALLOWED_SYSTEM_KEYS = {"description", "mode", "fixed_primary_language", "overrides"}
+_ALLOWED_SYSTEM_MODES = {"pipeline", "whisper_baseline", "whisper_mlx_baseline", "qwen_baseline"}
 
 
 def _read_yaml(path: Path) -> Any:
@@ -33,12 +34,21 @@ def load_system_specs(config_path: Path | None = None) -> dict[str, dict[str, An
         description = spec.get("description")
         if not isinstance(description, str) or not description.strip():
             raise ValueError(f"System '{name}' must define a non-empty description in {path}")
+        mode = spec.get("mode")
+        if mode in (None, ""):
+            normalized_mode = "pipeline"
+        elif isinstance(mode, str):
+            normalized_mode = mode.strip()
+        else:
+            raise ValueError(f"System '{name}' mode must be a string in {path}")
+        if normalized_mode not in _ALLOWED_SYSTEM_MODES:
+            raise ValueError(f"System '{name}' has unsupported mode '{normalized_mode}' in {path}")
         overrides = spec.get("overrides", {})
         if not isinstance(overrides, dict):
             raise ValueError(f"System '{name}' overrides must be a mapping in {path}")
         systems[name.strip()] = {
             "description": description.strip(),
-            "mode": spec.get("mode"),
+            "mode": normalized_mode,
             "fixed_primary_language": bool(spec.get("fixed_primary_language", False)),
             "overrides": dict(overrides),
         }

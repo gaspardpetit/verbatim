@@ -682,7 +682,10 @@ def list_systems() -> None:
 
 
 def _system_mode(system_name: str) -> str:
-    return str(DEFAULT_SYSTEMS[system_name].get("mode", "pipeline"))
+    mode = DEFAULT_SYSTEMS[system_name].get("mode")
+    if not mode:
+        return "pipeline"
+    return str(mode)
 
 
 def _fixed_primary_language(system_name: str) -> bool:

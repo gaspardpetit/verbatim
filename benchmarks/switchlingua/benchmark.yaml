@@ -12,10 +12,13 @@ languages:
 
 systems:
 #  - whisper_native
-  - whisper_mlx_native
+#  - whisper_mlx_native
 #  - whisper_builtin
 #  - qwen_native
 #  - qwen_builtin
 #  - whisper_mms
-#  - voxtral_mms
+  - voxtral_native
+  - voxtral_mms
+  - voxtral_small_native
+  - voxtral_small_mms
 #  - qwen_mms

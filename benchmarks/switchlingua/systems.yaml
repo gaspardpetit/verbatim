@@ -43,6 +43,29 @@ voxtral_mms:
     transcriber_backend: voxtral
     language_identifier_backend: mms
     code_switching: true
+    
+voxtral_small_mms:
+  description: Voxtral Small 24B with MMS language identification, Qwen forced alignment, and code-switching enabled.
+  overrides:
+    transcriber_backend: voxtral
+    language_identifier_backend: mms
+    code_switching: true
+    voxtral_model: mistralai/Voxtral-Small-24B-2507
+
+voxtral_native:
+  description: Voxtral with native/transcriber language identification and code-switching enabled.
+  overrides:
+    transcriber_backend: voxtral
+    language_identifier_backend: transcriber
+    code_switching: true
+
+voxtral_small_native:
+  description: Voxtral Small 24B with native/transcriber language identification and code-switching enabled.
+  overrides:
+    transcriber_backend: voxtral
+    language_identifier_backend: transcriber
+    code_switching: true
+    voxtral_model: mistralai/Voxtral-Small-24B-2507
 
 voxtral_mms_naive:
   description: Voxtral with MMS language identification, Qwen forced alignment, and single-pass transcription.
