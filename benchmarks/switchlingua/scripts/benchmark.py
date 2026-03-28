@@ -185,6 +185,69 @@ class WhisperBaselineRunner:
         return json_path, {"detected_language": result.get("language", "und") or "und"}
 
 
+class WhisperMlxBaselineRunner:
+    def __init__(self, *, model_name: str):
+        try:
+            from verbatim.voices.transcribe.whispermlx import WhisperMlxTranscriber  # pylint: disable=import-outside-toplevel
+        except ImportError as exc:
+            raise RuntimeError("MLX Whisper baseline requires the optional `mlx-whisper` package.") from exc
+
+        self._model = WhisperMlxTranscriber(model_size_or_path=model_name)
+        self._model_name = model_name
+
+    def transcribe(
+        self,
+        audio_path: Path,
+        output_dir: Path,
+        stem: str,
+        allowed_languages: list[str],
+        forced_language: Optional[str] = None,
+    ) -> tuple[Path, dict[str, Any]]:
+        audio = load_audio_mono(audio_path)
+        detected_language = forced_language
+        detected_prob = 1.0 if forced_language else None
+        if not detected_language:
+            detected_language, detected_prob = self._model.guess_language(audio, allowed_languages)
+
+        words = self._model.transcribe(
+            audio=audio,
+            lang=detected_language,
+            prompt="",
+            prefix="",
+            window_ts=0,
+            audio_ts=len(audio),
+        )
+        text = "".join(word.word for word in words).strip()
+        if words:
+            utterances = [Utterance.from_words("utt1", words, speaker="SPEAKER")]
+        else:
+            utterances = [
+                Utterance(
+                    utterance_id="utt1",
+                    speaker="SPEAKER",
+                    start_ts=0,
+                    end_ts=len(audio),
+                    text=text,
+                    words=[],
+                )
+            ]
+        json_path, _ = write_outputs(
+            outdir=output_dir,
+            stem=stem,
+            utterances=utterances,
+            metadata={
+                "baseline": {
+                    "backend": "mlx-whisper",
+                    "model": self._model_name,
+                    "device": "mps",
+                    "detected_language": detected_language,
+                    "detected_language_probability": detected_prob,
+                }
+            },
+        )
+        return json_path, {"detected_language": detected_language}
+
+
 class QwenBaselineRunner:
     def __init__(self, *, model_name: str, device: str):
         if device not in ("cpu", "cuda", "mps"):
@@ -646,12 +709,23 @@ def _default_torch_device(*, force_cpu: bool) -> str:
     return "cpu"
 
 
+def _default_whisper_device(*, force_cpu: bool) -> str:
+    if force_cpu:
+        return "cpu"
+    if sys.platform == "darwin":
+        return "cpu"
+    return _default_torch_device(force_cpu=False)
+
+
 def _create_shared_runner(args: argparse.Namespace, system_name: str) -> Optional[Any]:
     mode = _system_mode(system_name)
-    device = _default_torch_device(force_cpu=args.cpu)
     if mode == "whisper_baseline":
+        device = _default_whisper_device(force_cpu=args.cpu)
         return WhisperBaselineRunner(model_name=args.whisper_model or "large-v3", device=device)
+    if mode == "whisper_mlx_baseline":
+        return WhisperMlxBaselineRunner(model_name=args.whisper_model or "large-v3")
     if mode == "qwen_baseline":
+        device = _default_torch_device(force_cpu=args.cpu)
         return QwenBaselineRunner(model_name=args.qwen_model or "Qwen/Qwen3-ASR-1.7B", device=device)
     return None
 
@@ -1190,6 +1264,16 @@ def run_item(
             if models is None:
                 raise RuntimeError("Whisper baseline runner is not initialized.")
             output_json_path, _ = models.transcribe(item.audio_path, temp_dir, item.audio_path.stem, forced_language=forced_language)
+        elif mode == "whisper_mlx_baseline":
+            if models is None:
+                raise RuntimeError("MLX Whisper baseline runner is not initialized.")
+            output_json_path, _ = models.transcribe(
+                item.audio_path,
+                temp_dir,
+                item.audio_path.stem,
+                item.languages or ["en"],
+                forced_language=forced_language,
+            )
         elif mode == "qwen_baseline":
             if models is None:
                 raise RuntimeError("Qwen baseline runner is not initialized.")

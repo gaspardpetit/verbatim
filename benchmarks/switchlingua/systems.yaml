@@ -76,6 +76,17 @@ whisper_native_fixed:
   fixed_primary_language: true
   overrides: {}
 
+whisper_mlx_native:
+  description: Naive whole-file MLX Whisper baseline with auto language detection on macOS.
+  mode: whisper_mlx_baseline
+  overrides: {}
+
+whisper_mlx_native_fixed:
+  description: Naive whole-file MLX Whisper baseline forced to the primary manifest language on macOS.
+  mode: whisper_mlx_baseline
+  fixed_primary_language: true
+  overrides: {}
+
 whisper_mms_naive:
   description: Whisper backend with MMS language identification and single-pass transcription.
   overrides:

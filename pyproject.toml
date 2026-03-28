@@ -92,6 +92,9 @@ qwen = [
 benchmark = [
     "sentence-transformers",
 ]
+whisper = [
+    "openai-whisper",
+]
 mms_lid = [
     "transformers>=4.51.3",
 ]
