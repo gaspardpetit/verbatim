@@ -20,7 +20,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--languages", nargs="*", default=None, help="Languages to run in sequence.")
     parser.add_argument("--systems", nargs="*", default=None, help="Systems to run for each language.")
     parser.add_argument("--continue-on-error", action="store_true", help="Continue with remaining runs after a failure.")
-    parser.add_argument("--verbose", action="count", default=0, help="Forward -v / -vv to benchmark.py")
+    parser.add_argument("-v", "--verbose", action="count", default=0, help="Forward -v / -vv to benchmark.py")
     parser.add_argument("extra_args", nargs=argparse.REMAINDER, help="Extra arguments forwarded to benchmark.py")
     return parser
 

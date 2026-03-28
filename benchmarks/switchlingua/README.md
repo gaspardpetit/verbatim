@@ -94,6 +94,12 @@ Run the configured default matrix:
 make -C benchmarks/switchlingua benchmark
 ```
 
+Adjust benchmark log verbosity from `make` with `LOG_LEVEL=warning|info|debug`:
+
+```bash
+make -C benchmarks/switchlingua benchmark LOG_LEVEL=debug
+```
+
 The runner config is split in two:
 - `systems.yaml` defines each named system and its overrides
 - `benchmark.yaml` defines the default language/system set used by `make benchmark`

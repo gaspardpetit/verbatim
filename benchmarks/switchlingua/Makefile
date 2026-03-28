@@ -15,6 +15,17 @@ OUTDIR ?= ext/switchlingua
 MANIFEST ?= benchmarks/switchlingua/manifests/manifest_bootstrap.jsonl
 SYSTEMS_CONFIG ?= benchmarks/switchlingua/systems.yaml
 BENCHMARK_CONFIG ?= benchmarks/switchlingua/benchmark.yaml
+LOG_LEVEL ?= info
+
+ifeq ($(LOG_LEVEL),debug)
+BENCHMARK_VERBOSE = --verbose --verbose --verbose
+else ifeq ($(LOG_LEVEL),info)
+BENCHMARK_VERBOSE = --verbose --verbose
+else ifeq ($(LOG_LEVEL),warning)
+BENCHMARK_VERBOSE =
+else
+$(error Unsupported LOG_LEVEL '$(LOG_LEVEL)'. Use warning, info, or debug)
+endif
 
 install:
 	$(VENV_PYTHON) -m pip install uv
@@ -23,4 +34,4 @@ install:
 	$(VENV_PYTHON) scripts/manifest.py --audio-root ../../$(OUTDIR)/SwitchLingua_audio --manifest ../../$(MANIFEST) $(if $(ALLOW_PATTERN),--allow-pattern "$(ALLOW_PATTERN)",)
 
 benchmark:
-	$(VENV_PYTHON) scripts/run_all.py --continue-on-error --benchmark-config ../../$(BENCHMARK_CONFIG) --systems-config ../../$(SYSTEMS_CONFIG)
+	$(VENV_PYTHON) scripts/run_all.py --continue-on-error --benchmark-config ../../$(BENCHMARK_CONFIG) --systems-config ../../$(SYSTEMS_CONFIG) $(BENCHMARK_VERBOSE)

@@ -1665,7 +1665,14 @@ def main() -> int:
         LOG.info("Running system %s over %d items", system_name, len(items))
         shared_models: Optional[Any] = None
         for index, item in enumerate(items):
-            LOG.info("Running %s on %s", system_name, item.audio_path)
+            LOG.info(
+                "Processing %s item %d/%d: %s (%s)",
+                system_name,
+                index + 1,
+                len(items),
+                item.item_id,
+                item.audio_path.name,
+            )
             if shared_models is None:
                 if _system_mode(system_name) == "pipeline":
                     run_args = _build_run_namespace(
