@@ -1,4 +1,4 @@
-.PHONY: install benchmark
+.PHONY: install benchmark report
 
 ifeq ($(OS),Windows_NT)
 VENV_PYTHON ?= ..\\..\\.venv\\Scripts\\python.exe
@@ -35,3 +35,6 @@ install:
 
 benchmark:
 	$(VENV_PYTHON) scripts/run_all.py --continue-on-error --benchmark-config ../../$(BENCHMARK_CONFIG) --systems-config ../../$(SYSTEMS_CONFIG) $(BENCHMARK_VERBOSE)
+
+report:
+	$(VENV_PYTHON) scripts/report.py $(REPORT_ARGS)

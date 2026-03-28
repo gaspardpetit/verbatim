@@ -11,6 +11,7 @@ This folder is the benchmark corner for SwitchLingua. It carries local installat
 - `scripts/_baseline_common.py`: benchmark-local shared helper for baseline-style runners
 - `scripts/benchmark.py`: benchmark-local runner
 - `scripts/run_all.py`: benchmark-local sequential launcher
+- `scripts/report.py`: benchmark-local console report generator
 - `scripts/systems.py`: benchmark config loader and validator
 - `systems.yaml`: system definitions and argument overrides
 - `benchmark.yaml`: enabled language/system set for `make benchmark`
@@ -106,3 +107,19 @@ The runner config is split in two:
 
 By default, benchmark outputs now land under `benchmarks/switchlingua/out/`.
 `make benchmark` also resumes with `--skip-existing` and continues past failures by default. Cached runs reuse any stored `SEM`/`SAER` scores unless you explicitly pass `-- --recompute-semantic-on-resume`.
+
+## Report
+
+Print a console report from the benchmark-local output tree:
+
+```bash
+make -C benchmarks/switchlingua report REPORT_ARGS="--pivot --pair"
+```
+
+or:
+
+```bash
+python benchmarks/switchlingua/scripts/report.py --pivot --pair --average
+```
+
+With no extra flags, the local report now defaults to the pivot CER/WER pair view. HTML/Markdown/SVG can come later as a separate presentation-layer increment.
