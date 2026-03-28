@@ -182,6 +182,9 @@ class Config:
     whisper_temperatures: List[float] = field(default_factory=list)
     # Whisper model size/path used by transcribers; default matches production
     whisper_model_size: str = "large-v3"
+    voxtral_model_size: str = "mistralai/Voxtral-Mini-3B-2507"
+    voxtral_dtype: str = "auto"
+    voxtral_max_new_tokens: int = 256
     qwen_asr_model_size: str = "Qwen/Qwen3-ASR-1.7B"
     qwen_aligner_model_size: str = "Qwen/Qwen3-ForcedAligner-0.6B"
     qwen_dtype: str = "auto"

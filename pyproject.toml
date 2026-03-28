@@ -92,6 +92,10 @@ qwen = [
 mms_lid = [
     "transformers>=4.51.3",
 ]
+voxtral = [
+    "transformers>=4.57.0",
+    "mistral-common>=1.10.0",
+]
 mlx = [
     "mlx-whisper>=0.4.1 ; sys_platform == 'darwin'",
 ]

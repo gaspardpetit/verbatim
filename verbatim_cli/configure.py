@@ -32,6 +32,10 @@ def make_config(args) -> Config:
     )
     if getattr(args, "whisper_model", None):
         config.whisper_model_size = args.whisper_model
+    if getattr(args, "voxtral_model", None):
+        config.voxtral_model_size = args.voxtral_model
+    if getattr(args, "voxtral_max_new_tokens", None) is not None:
+        config.voxtral_max_new_tokens = args.voxtral_max_new_tokens
     if getattr(args, "transcriber_backend", None):
         config.transcriber_backend = args.transcriber_backend
     if getattr(args, "language_identifier_backend", None):
