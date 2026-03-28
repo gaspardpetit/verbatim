@@ -3,8 +3,6 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, List
 
-import tqdm
-
 from ..transcript.words import Utterance
 from .diarization_metrics import UtteranceMetrics, compute_utterance_metrics
 
@@ -45,7 +43,7 @@ def compute_metrics_summary(
                 compute_diarization_metrics = False
                 break
     result_dict = Metrics()
-    for utt in tqdm.tqdm(json_dict["utterances"]):
+    for utt in json_dict["utterances"]:
         if compute_diarization_metrics:
             utt_metrics = compute_utterance_metrics(
                 hyp_text=utt[hyp_text_field],
