@@ -8,6 +8,7 @@ This folder is the benchmark corner for SwitchLingua. It carries local installat
 - `requirements.txt`: extra helper dependency needed by the downloader
 - `scripts/download.py`: benchmark-local dataset bootstrap script
 - `scripts/manifest.py`: benchmark-local master-manifest builder
+- `scripts/_baseline_common.py`: benchmark-local shared helper for baseline-style runners
 - `scripts/benchmark.py`: benchmark-local runner
 - `scripts/run_all.py`: benchmark-local sequential launcher
 - `scripts/systems.py`: benchmark config loader and validator

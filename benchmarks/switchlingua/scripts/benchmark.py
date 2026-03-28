@@ -30,9 +30,9 @@ _DEFAULT_OUTDIR = _BENCHMARK_ROOT / "out"
 if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
+from _baseline_common import load_audio_mono, write_outputs  # noqa: E402
 from systems import SYSTEMS_CONFIG_PATH, load_system_specs  # noqa: E402
 
-from tools._baseline_common import load_audio_mono, write_outputs  # noqa: E402
 from verbatim.eval.compare import Metrics, compute_metrics  # noqa: E402
 from verbatim.languages import normalize_language  # noqa: E402
 from verbatim.models import Models  # noqa: E402
