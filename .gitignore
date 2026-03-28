@@ -184,6 +184,7 @@ samples/private
 
 # Temporary files
 tmp
+temp
 .pkg-venv
 .verbatim/**
 verbatim/_version.py
@@ -191,3 +192,4 @@ config.yaml
 
 # Benchmark files
 ext/switchlingua
+benchmarks/switchlingua/manifests/

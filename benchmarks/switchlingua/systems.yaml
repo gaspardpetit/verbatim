@@ -1,0 +1,91 @@
+qwen_mms:
+  description: Qwen3-ASR with MMS language identification and code-switching enabled.
+  overrides:
+    transcriber_backend: qwen
+    language_identifier_backend: mms
+    code_switching: true
+
+qwen_builtin:
+  description: Qwen3-ASR with built-in/transcriber language identification and code-switching enabled.
+  overrides:
+    transcriber_backend: qwen
+    language_identifier_backend: transcriber
+    code_switching: true
+
+qwen_native:
+  description: Naive whole-file Qwen3-ASR baseline with one-shot language detection.
+  mode: qwen_baseline
+  overrides: {}
+
+qwen_native_fixed:
+  description: Naive whole-file Qwen3-ASR baseline forced to the primary manifest language.
+  mode: qwen_baseline
+  fixed_primary_language: true
+  overrides: {}
+
+qwen_mms_naive:
+  description: Qwen3-ASR with MMS language identification and single-pass transcription.
+  overrides:
+    transcriber_backend: qwen
+    language_identifier_backend: mms
+    code_switching: false
+
+qwen_native_naive:
+  description: Qwen3-ASR with native language identification and single-pass transcription.
+  overrides:
+    transcriber_backend: qwen
+    language_identifier_backend: transcriber
+    code_switching: false
+
+voxtral_mms:
+  description: Voxtral with MMS language identification, Qwen forced alignment, and code-switching enabled.
+  overrides:
+    transcriber_backend: voxtral
+    language_identifier_backend: mms
+    code_switching: true
+
+voxtral_mms_naive:
+  description: Voxtral with MMS language identification, Qwen forced alignment, and single-pass transcription.
+  overrides:
+    transcriber_backend: voxtral
+    language_identifier_backend: mms
+    code_switching: false
+
+whisper_mms:
+  description: Whisper backend with MMS language identification and code-switching enabled.
+  overrides:
+    transcriber_backend: auto
+    language_identifier_backend: mms
+    code_switching: true
+
+whisper_builtin:
+  description: Whisper backend with built-in/transcriber language identification and code-switching enabled.
+  overrides:
+    transcriber_backend: auto
+    language_identifier_backend: transcriber
+    code_switching: true
+
+whisper_native:
+  description: Naive whole-file official Whisper baseline with auto language detection.
+  mode: whisper_baseline
+  overrides: {}
+
+whisper_native_fixed:
+  description: Naive whole-file official Whisper baseline forced to the primary manifest language.
+  mode: whisper_baseline
+  fixed_primary_language: true
+  overrides: {}
+
+whisper_mms_naive:
+  description: Whisper backend with MMS language identification and single-pass transcription.
+  overrides:
+    transcriber_backend: auto
+    language_identifier_backend: mms
+    code_switching: false
+
+whisper_native_naive:
+  description: Whisper backend with native language identification and single-pass transcription.
+  overrides:
+    transcriber_backend: auto
+    language_identifier_backend: transcriber
+    code_switching: false

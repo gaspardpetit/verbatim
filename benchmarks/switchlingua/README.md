@@ -1,6 +1,6 @@
 # SwitchLingua Benchmark
 
-This folder is the benchmark bootstrap corner for SwitchLingua. For now it carries the local installation/bootstrap scaffolding plus the dataset downloader and master-manifest builder so the first PRs can stay small. The rest of the benchmark scripts still live under `tools/`.
+This folder is the benchmark corner for SwitchLingua. It carries local installation/bootstrap scaffolding, the dataset downloader, the master-manifest builder, and benchmark-local runner/config files so the workflow can move out of `tools/` in small reviewable steps.
 
 ## Layout
 
@@ -8,6 +8,11 @@ This folder is the benchmark bootstrap corner for SwitchLingua. For now it carri
 - `requirements.txt`: extra helper dependency needed by the downloader
 - `scripts/download.py`: benchmark-local dataset bootstrap script
 - `scripts/manifest.py`: benchmark-local master-manifest builder
+- `scripts/benchmark.py`: benchmark-local runner
+- `scripts/run_all.py`: benchmark-local sequential launcher
+- `scripts/systems.py`: benchmark config loader and validator
+- `systems.yaml`: system definitions and argument overrides
+- `benchmark.yaml`: enabled language/system set for `make benchmark`
 
 ## Install
 
@@ -62,12 +67,28 @@ The bootstrap manifest is normalized for direct benchmark consumption:
 - `text` is reduced to the per-audio utterance instead of preserving a raw multi-turn payload
 - `normalized` is precomputed for scoring
 
-## Current Runner Location
+## Run
 
-The benchmark scripts currently stay outside this folder:
-- `tools/switchlingua_manifest.py`
-- `tools/switchlingua_benchmark.py`
-- `tools/switchlingua_run_all.py`
-- `tools/switchlingua_report.py`
+List benchmark systems from the local config:
 
-The runner/report scripts still stay outside this folder for now.
+```bash
+python benchmarks/switchlingua/scripts/benchmark.py --list-systems
+```
+
+Run one language/system slice:
+
+```bash
+python benchmarks/switchlingua/scripts/benchmark.py --lang french --systems qwen_mms
+```
+
+Run the configured default matrix:
+
+```bash
+make -C benchmarks/switchlingua benchmark
+```
+
+The runner config is split in two:
+- `systems.yaml` defines each named system and its overrides
+- `benchmark.yaml` defines the default language/system set used by `make benchmark`
+
+By default, benchmark outputs now land under `benchmarks/switchlingua/out/`.
