@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Iterable, List, Optional, Sequence
 
 from huggingface_hub import HfApi, snapshot_download
+from huggingface_hub.errors import HfHubHTTPError, LocalEntryNotFoundError
 
 from verbatim_cli.env import load_env_file
 
@@ -274,17 +275,33 @@ def _download_repo(
     LOG.info("Downloading %s", repo_id)
     local_dir = outdir / repo_id.split("/")[-1]
     local_dir.mkdir(parents=True, exist_ok=True)
-    snapshot_download(
-        repo_id=repo_id,
-        repo_type="dataset",
-        local_dir=str(local_dir),
-        local_dir_use_symlinks=False,
-        token=_require_token(token),
-        max_workers=max_workers,
-        resume_download=True,
-        allow_patterns=allow_patterns,
-        ignore_patterns=ignore_patterns,
-    )
+    try:
+        snapshot_download(
+            repo_id=repo_id,
+            repo_type="dataset",
+            local_dir=str(local_dir),
+            local_dir_use_symlinks=False,
+            token=_require_token(token),
+            max_workers=max_workers,
+            resume_download=True,
+            allow_patterns=allow_patterns,
+            ignore_patterns=ignore_patterns,
+        )
+    except LocalEntryNotFoundError as exc:
+        raise RuntimeError(
+            "The SwitchLingua download did not complete and the requested files were not available in the local cache. "
+            "This commonly happens after an HF rate limit. Re-run the install with MAX_WORKERS=1 or restrict the sync with ALLOW_PATTERN."
+        ) from exc
+    except HfHubHTTPError as exc:
+        status_code = getattr(getattr(exc, "response", None), "status_code", None)
+        if status_code == 429 or "Too Many Requests" in str(exc):
+            raise RuntimeError(
+                "Hugging Face rate limited the SwitchLingua download. "
+                f"Retry with a lower concurrency (current MAX_WORKERS={max_workers}, recommended: 1), "
+                "or restrict the sync with ALLOW_PATTERN, for example "
+                '`make -C benchmarks/switchlingua install ALLOW_PATTERN="Arabic/*.m4a"`.'
+            ) from exc
+        raise
     return local_dir
 
 

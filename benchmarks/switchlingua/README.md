@@ -31,6 +31,7 @@ make -C benchmarks/switchlingua install
 Defaults for `make install`:
 - installs `.[qwen,mms_lid]`
 - installs `benchmarks/switchlingua/requirements.txt`
+- uses `MAX_WORKERS=1` for a conservative Hugging Face sync
 - starts syncing the full audio dataset into `ext/switchlingua`
 
 Override that on demand:
@@ -40,6 +41,11 @@ make -C benchmarks/switchlingua install BENCHMARK_EXTRAS="qwen,mms_lid,voxtral" 
 ```
 
 Set `ALLOW_PATTERN` only when you want to restrict the sync to a subset.
+Increase concurrency only if your HF quota can sustain it:
+
+```bash
+make -C benchmarks/switchlingua install MAX_WORKERS=4
+```
 
 The dataset is gated on Hugging Face. Accept the terms and set `HUGGINGFACE_TOKEN` or `HF_TOKEN` before downloading.
 
