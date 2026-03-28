@@ -9,7 +9,7 @@ UV_PIP_INSTALL = UV_LINK_MODE=$(UV_LINK_MODE) uv pip install -e "../..[$(BENCHMA
 endif
 
 UV_LINK_MODE ?= copy
-BENCHMARK_EXTRAS ?= qwen,mms_lid
+BENCHMARK_EXTRAS ?= qwen,mms_lid,benchmark
 MAX_WORKERS ?= 1
 OUTDIR ?= ext/switchlingua
 MANIFEST ?= benchmarks/switchlingua/manifests/manifest_bootstrap.jsonl

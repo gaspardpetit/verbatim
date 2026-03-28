@@ -89,6 +89,9 @@ diarization = [
 qwen = [
     "qwen-asr>=0.0.6",
 ]
+benchmark = [
+    "sentence-transformers",
+]
 mms_lid = [
     "transformers>=4.51.3",
 ]

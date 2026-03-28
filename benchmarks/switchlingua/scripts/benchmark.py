@@ -626,9 +626,29 @@ def _fixed_primary_language(system_name: str) -> bool:
     return bool(DEFAULT_SYSTEMS[system_name].get("fixed_primary_language", False))
 
 
+def _default_torch_device(*, force_cpu: bool) -> str:
+    if force_cpu:
+        return "cpu"
+    if sys.platform == "darwin":
+        try:
+            import torch  # type: ignore
+        except ImportError:
+            return "cpu"
+        if getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
+            return "mps"
+        return "cpu"
+    try:
+        import torch  # type: ignore
+    except ImportError:
+        return "cpu"
+    if torch.cuda.is_available():
+        return "cuda"
+    return "cpu"
+
+
 def _create_shared_runner(args: argparse.Namespace, system_name: str) -> Optional[Any]:
     mode = _system_mode(system_name)
-    device = "cpu" if args.cpu else "cuda"
+    device = _default_torch_device(force_cpu=args.cpu)
     if mode == "whisper_baseline":
         return WhisperBaselineRunner(model_name=args.whisper_model or "large-v3", device=device)
     if mode == "qwen_baseline":
@@ -1517,7 +1537,7 @@ def main() -> int:
         if not args.saer:
             args.saer = True
         if args.saer_device is None:
-            args.saer_device = "cuda" if not args.cpu else "cpu"
+            args.saer_device = _default_torch_device(force_cpu=args.cpu)
         if not args.txt:
             args.txt = True
 
@@ -1548,7 +1568,7 @@ def main() -> int:
     results: List[RunResult] = []
     semantic_model = None
     if args.saer:
-        saer_device = args.saer_device or ("cuda" if not args.cpu else "cpu")
+        saer_device = args.saer_device or _default_torch_device(force_cpu=args.cpu)
         LOG.info("Loading semantic model %s on %s", args.saer_model, saer_device)
         semantic_model = _load_semantic_model(
             args.saer_model,

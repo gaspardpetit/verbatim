@@ -20,13 +20,13 @@ This folder is the benchmark corner for SwitchLingua. It carries local installat
 Install the repo plus the benchmark helper dependency:
 
 ```bash
-uv pip install -e ".[qwen,mms_lid]" -r benchmarks/switchlingua/requirements.txt
+uv pip install -e ".[qwen,mms_lid,benchmark]" -r benchmarks/switchlingua/requirements.txt
 ```
 
 Add Voxtral support when needed:
 
 ```bash
-uv pip install -e ".[qwen,mms_lid,voxtral]" -r benchmarks/switchlingua/requirements.txt
+uv pip install -e ".[qwen,mms_lid,benchmark,voxtral]" -r benchmarks/switchlingua/requirements.txt
 ```
 
 Or let the benchmark-local make target do it and start a dataset pull:
@@ -36,7 +36,7 @@ make -C benchmarks/switchlingua install
 ```
 
 Defaults for `make install`:
-- installs `.[qwen,mms_lid]`
+- installs `.[qwen,mms_lid,benchmark]`
 - installs `benchmarks/switchlingua/requirements.txt`
 - uses `MAX_WORKERS=1` for a conservative Hugging Face sync
 - starts syncing the full audio dataset into `ext/switchlingua`
@@ -45,7 +45,7 @@ Defaults for `make install`:
 Override that on demand:
 
 ```bash
-make -C benchmarks/switchlingua install BENCHMARK_EXTRAS="qwen,mms_lid,voxtral" ALLOW_PATTERN="Arabic/*.m4a"
+make -C benchmarks/switchlingua install BENCHMARK_EXTRAS="qwen,mms_lid,benchmark,voxtral" ALLOW_PATTERN="Arabic/*.m4a"
 ```
 
 Set `ALLOW_PATTERN` only when you want to restrict the sync to a subset.
