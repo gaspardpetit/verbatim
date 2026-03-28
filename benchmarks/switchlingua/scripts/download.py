@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, List, Optional, Sequence
 
+import requests
 from huggingface_hub import HfApi, snapshot_download
 from huggingface_hub.errors import HfHubHTTPError, LocalEntryNotFoundError
 
@@ -162,21 +163,6 @@ def _find_language_metadata_files(root: Path) -> List[Path]:
     _extend(root)
     _extend(root / "data")
     return candidates
-
-
-def _has_any_metadata(root: Path) -> bool:
-    if _find_metadata_file(root) is not None:
-        return True
-    return bool(_find_language_metadata_files(root))
-
-
-def _count_local_files(root: Path) -> int:
-    if not root.exists():
-        return 0
-    total = 0
-    for _, _, filenames in os.walk(root):
-        total += len(filenames)
-    return total
 
 
 def _infer_metadata_from_patterns(root: Path, patterns: Optional[Sequence[str]]) -> List[Path]:
@@ -366,6 +352,42 @@ def _rate_limit_backoff_seconds(
     return min(300, max(1, base_sleep_seconds) * multiplier)
 
 
+def _handle_rate_limit(
+    *,
+    exc: BaseException,
+    base_sleep_seconds: int,
+    consecutive_failures: int,
+    max_consecutive_failures: int,
+    max_workers: int,
+) -> int:
+    retry_after = _extract_retry_after_seconds(exc)
+    consecutive_failures += 1
+    wait_seconds = _rate_limit_backoff_seconds(
+        base_sleep_seconds=base_sleep_seconds,
+        consecutive_failures=consecutive_failures,
+        retry_after_seconds=retry_after,
+    )
+
+    if consecutive_failures > max_consecutive_failures:
+        raise RuntimeError(
+            "Hugging Face rate limited the SwitchLingua download. "
+            f"Retry with a lower concurrency (current MAX_WORKERS={max_workers}, recommended: 1), "
+            "or restrict the sync with ALLOW_PATTERN, for example "
+            '`make -C benchmarks/switchlingua install ALLOW_PATTERN="Arabic/*.m4a"`.'
+        ) from exc
+
+    LOG.warning(
+        "Hugging Face rate limited the SwitchLingua download (HTTP 429). Sleeping %ds and retrying "
+        "(consecutive failures=%d/%d). Tip: lower concurrency (current MAX_WORKERS=%d, recommended: 1).",
+        wait_seconds,
+        consecutive_failures,
+        max_consecutive_failures,
+        max_workers,
+    )
+    time.sleep(wait_seconds)
+    return consecutive_failures
+
+
 def _download_repo(
     repo_id: str,
     *,
@@ -374,58 +396,49 @@ def _download_repo(
     max_workers: int,
     allow_patterns: Optional[List[str]],
     ignore_patterns: Optional[List[str]],
-    require_metadata: bool = False,
 ) -> Path:
     LOG.info("Downloading %s", repo_id)
     local_dir = outdir / repo_id.split("/")[-1]
+    token_value = _require_token(token)
+    api = HfApi(token=token_value)
     base_sleep_seconds = _rate_limit_sleep_seconds()
     max_consecutive_failures = _rate_limit_max_retries()
     consecutive_failures = 0
-    last_file_count = _count_local_files(local_dir)
 
     while True:
+        try:
+            # Preflight the repo access ourselves. Without this, `snapshot_download` can
+            # treat a 429 as success and return the existing local_dir unchanged.
+            api.repo_info(repo_id=repo_id, repo_type="dataset")
+        except HfHubHTTPError as exc:
+            if _is_rate_limited(exc):
+                consecutive_failures = _handle_rate_limit(
+                    exc=exc,
+                    base_sleep_seconds=base_sleep_seconds,
+                    consecutive_failures=consecutive_failures,
+                    max_consecutive_failures=max_consecutive_failures,
+                    max_workers=max_workers,
+                )
+                continue
+            raise
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+            raise
+
         try:
             snapshot_download(
                 repo_id=repo_id,
                 repo_type="dataset",
                 local_dir=str(local_dir),
                 local_dir_use_symlinks=False,
-                token=_require_token(token),
+                token=token_value,
                 max_workers=max_workers,
                 resume_download=True,
                 allow_patterns=allow_patterns,
                 ignore_patterns=ignore_patterns,
             )
-            if not require_metadata or _has_any_metadata(local_dir):
-                return local_dir
-
-            new_file_count = _count_local_files(local_dir)
-            if new_file_count > last_file_count:
-                consecutive_failures = 0
-                last_file_count = new_file_count
-            else:
-                consecutive_failures += 1
-
-            if consecutive_failures > max_consecutive_failures:
-                raise RuntimeError(
-                    "SwitchLingua download did not produce any metadata files. "
-                    "If you are restricting the sync, ensure your patterns include a metadata CSV/JSON/JSONL (or pass --metadata)."
-                )
-            LOG.warning(
-                "SwitchLingua metadata not present yet in %s. Sleeping %ds and retrying (consecutive failures=%d/%d).",
-                local_dir,
-                base_sleep_seconds,
-                consecutive_failures,
-                max_consecutive_failures,
-            )
-            time.sleep(base_sleep_seconds)
+            return local_dir
         except LocalEntryNotFoundError as exc:
-            new_file_count = _count_local_files(local_dir)
-            if new_file_count > last_file_count:
-                consecutive_failures = 0
-                last_file_count = new_file_count
-            else:
-                consecutive_failures += 1
+            consecutive_failures += 1
 
             if consecutive_failures > max_consecutive_failures:
                 raise RuntimeError(
@@ -441,35 +454,13 @@ def _download_repo(
             time.sleep(base_sleep_seconds)
         except HfHubHTTPError as exc:
             if _is_rate_limited(exc):
-                retry_after = _extract_retry_after_seconds(exc)
-                new_file_count = _count_local_files(local_dir)
-                if new_file_count > last_file_count:
-                    consecutive_failures = 0
-                    last_file_count = new_file_count
-                else:
-                    consecutive_failures += 1
-                wait_seconds = _rate_limit_backoff_seconds(
+                consecutive_failures = _handle_rate_limit(
+                    exc=exc,
                     base_sleep_seconds=base_sleep_seconds,
                     consecutive_failures=consecutive_failures,
-                    retry_after_seconds=retry_after,
+                    max_consecutive_failures=max_consecutive_failures,
+                    max_workers=max_workers,
                 )
-
-                if consecutive_failures > max_consecutive_failures:
-                    raise RuntimeError(
-                        "Hugging Face rate limited the SwitchLingua download. "
-                        f"Retry with a lower concurrency (current MAX_WORKERS={max_workers}, recommended: 1), "
-                        "or restrict the sync with ALLOW_PATTERN, for example "
-                        '`make -C benchmarks/switchlingua install ALLOW_PATTERN="Arabic/*.m4a"`.'
-                    ) from exc
-                LOG.warning(
-                    "Hugging Face rate limited the SwitchLingua download (HTTP 429). Sleeping %ds and retrying "
-                    "(consecutive failures=%d/%d). Tip: lower concurrency (current MAX_WORKERS=%d, recommended: 1).",
-                    wait_seconds,
-                    consecutive_failures,
-                    max_consecutive_failures,
-                    max_workers,
-                )
-                time.sleep(wait_seconds)
                 continue
             raise
 
@@ -564,7 +555,6 @@ def main() -> int:
             max_workers=args.max_workers,
             allow_patterns=allow_patterns or None,
             ignore_patterns=args.ignore_pattern,
-            require_metadata=False,
         )
     if download_audio:
         audio_dir = _download_repo(
@@ -574,7 +564,6 @@ def main() -> int:
             max_workers=args.max_workers,
             allow_patterns=allow_patterns or None,
             ignore_patterns=args.ignore_pattern,
-            require_metadata=not bool(args.metadata),
         )
 
     metadata_paths: List[Path] = []
