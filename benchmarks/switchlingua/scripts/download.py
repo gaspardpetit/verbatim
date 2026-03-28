@@ -140,6 +140,45 @@ def _find_metadata_file(root: Path) -> Optional[Path]:
     return None
 
 
+def _find_language_metadata_files(root: Path) -> List[Path]:
+    candidates: List[Path] = []
+
+    def _extend(directory: Path) -> None:
+        if not directory.exists():
+            return
+        for path in sorted(directory.glob("*.csv")):
+            if path.name.lower() == "metadata.csv":
+                continue
+            candidates.append(path)
+        for path in sorted(directory.glob("*.jsonl")):
+            if path.name.lower() == "metadata.jsonl":
+                continue
+            candidates.append(path)
+        for path in sorted(directory.glob("*.json")):
+            if path.name.lower() == "metadata.json":
+                continue
+            candidates.append(path)
+
+    _extend(root)
+    _extend(root / "data")
+    return candidates
+
+
+def _has_any_metadata(root: Path) -> bool:
+    if _find_metadata_file(root) is not None:
+        return True
+    return bool(_find_language_metadata_files(root))
+
+
+def _count_local_files(root: Path) -> int:
+    if not root.exists():
+        return 0
+    total = 0
+    for _, _, filenames in os.walk(root):
+        total += len(filenames)
+    return total
+
+
 def _infer_metadata_from_patterns(root: Path, patterns: Optional[Sequence[str]]) -> List[Path]:
     if not patterns:
         return []
@@ -327,10 +366,11 @@ def _download_repo(
     LOG.info("Downloading %s", repo_id)
     local_dir = outdir / repo_id.split("/")[-1]
     sleep_seconds = _rate_limit_sleep_seconds()
-    max_retries = _rate_limit_max_retries()
-    total_attempts = max_retries + 1
+    max_consecutive_failures = _rate_limit_max_retries()
+    consecutive_failures = 0
+    last_file_count = _count_local_files(local_dir)
 
-    for attempt in range(1, total_attempts + 1):
+    while True:
         try:
             snapshot_download(
                 repo_id=repo_id,
@@ -343,59 +383,78 @@ def _download_repo(
                 allow_patterns=allow_patterns,
                 ignore_patterns=ignore_patterns,
             )
-            if require_metadata and _find_metadata_file(local_dir) is None:
-                if attempt < total_attempts:
-                    LOG.warning(
-                        "SwitchLingua metadata not present yet in %s. Sleeping %ds and retrying (%d/%d).",
-                        local_dir,
-                        sleep_seconds,
-                        attempt,
-                        total_attempts,
-                    )
-                    time.sleep(sleep_seconds)
-                    continue
+            if not require_metadata or _has_any_metadata(local_dir):
+                return local_dir
+
+            new_file_count = _count_local_files(local_dir)
+            if new_file_count > last_file_count:
+                consecutive_failures = 0
+                last_file_count = new_file_count
+            else:
+                consecutive_failures += 1
+
+            if consecutive_failures > max_consecutive_failures:
                 raise RuntimeError(
-                    "SwitchLingua download completed but no metadata file was found. "
+                    "SwitchLingua download did not produce any metadata files. "
                     "If you are restricting the sync, ensure your patterns include a metadata CSV/JSON/JSONL (or pass --metadata)."
                 )
-            break
+            LOG.warning(
+                "SwitchLingua metadata not present yet in %s. Sleeping %ds and retrying (consecutive failures=%d/%d).",
+                local_dir,
+                sleep_seconds,
+                consecutive_failures,
+                max_consecutive_failures,
+            )
+            time.sleep(sleep_seconds)
         except LocalEntryNotFoundError as exc:
-            if attempt < total_attempts:
-                LOG.warning(
-                    "SwitchLingua download incomplete (cache miss). Sleeping %ds and retrying (%d/%d).",
-                    sleep_seconds,
-                    attempt,
-                    total_attempts,
-                )
-                time.sleep(sleep_seconds)
-                continue
-            raise RuntimeError(
-                "The SwitchLingua download did not complete and the requested files were not available in the local cache. "
-                "This commonly happens after an HF rate limit. Re-run the install with MAX_WORKERS=1 or restrict the sync with ALLOW_PATTERN."
-            ) from exc
+            new_file_count = _count_local_files(local_dir)
+            if new_file_count > last_file_count:
+                consecutive_failures = 0
+                last_file_count = new_file_count
+            else:
+                consecutive_failures += 1
+
+            if consecutive_failures > max_consecutive_failures:
+                raise RuntimeError(
+                    "The SwitchLingua download did not complete and the requested files were not available in the local cache. "
+                    "This commonly happens after an HF rate limit. Re-run the install with MAX_WORKERS=1 or restrict the sync with ALLOW_PATTERN."
+                ) from exc
+            LOG.warning(
+                "SwitchLingua download incomplete (cache miss). Sleeping %ds and retrying (consecutive failures=%d/%d).",
+                sleep_seconds,
+                consecutive_failures,
+                max_consecutive_failures,
+            )
+            time.sleep(sleep_seconds)
         except HfHubHTTPError as exc:
             if _is_rate_limited(exc):
                 retry_after = _extract_retry_after_seconds(exc)
                 wait_seconds = max(sleep_seconds, retry_after or 0)
-                if attempt < total_attempts:
-                    LOG.warning(
-                        "Hugging Face rate limited the SwitchLingua download (HTTP 429). Sleeping %ds and retrying (%d/%d). "
-                        "Tip: lower concurrency (current MAX_WORKERS=%d, recommended: 1).",
-                        wait_seconds,
-                        attempt,
-                        total_attempts,
-                        max_workers,
-                    )
-                    time.sleep(wait_seconds)
-                    continue
-                raise RuntimeError(
-                    "Hugging Face rate limited the SwitchLingua download. "
-                    f"Retry with a lower concurrency (current MAX_WORKERS={max_workers}, recommended: 1), "
-                    "or restrict the sync with ALLOW_PATTERN, for example "
-                    '`make -C benchmarks/switchlingua install ALLOW_PATTERN="Arabic/*.m4a"`.'
-                ) from exc
+                new_file_count = _count_local_files(local_dir)
+                if new_file_count > last_file_count:
+                    consecutive_failures = 0
+                    last_file_count = new_file_count
+                else:
+                    consecutive_failures += 1
+
+                if consecutive_failures > max_consecutive_failures:
+                    raise RuntimeError(
+                        "Hugging Face rate limited the SwitchLingua download. "
+                        f"Retry with a lower concurrency (current MAX_WORKERS={max_workers}, recommended: 1), "
+                        "or restrict the sync with ALLOW_PATTERN, for example "
+                        '`make -C benchmarks/switchlingua install ALLOW_PATTERN="Arabic/*.m4a"`.'
+                    ) from exc
+                LOG.warning(
+                    "Hugging Face rate limited the SwitchLingua download (HTTP 429). Sleeping %ds and retrying "
+                    "(consecutive failures=%d/%d). Tip: lower concurrency (current MAX_WORKERS=%d, recommended: 1).",
+                    wait_seconds,
+                    consecutive_failures,
+                    max_consecutive_failures,
+                    max_workers,
+                )
+                time.sleep(wait_seconds)
+                continue
             raise
-    return local_dir
 
 
 def _list_repo_files(repo_id: str, *, token: Optional[str]) -> None:
@@ -512,6 +571,8 @@ def main() -> int:
             candidate = _find_metadata_file(audio_dir)
             if candidate is not None:
                 metadata_paths = [candidate]
+            else:
+                metadata_paths = _find_language_metadata_files(audio_dir)
 
     if not metadata_paths:
         raise RuntimeError("Unable to locate a metadata file for the audio dataset. Pass --metadata <path> once you identify the metadata file.")

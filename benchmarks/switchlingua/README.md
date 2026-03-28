@@ -51,6 +51,8 @@ If Hugging Face rate limits the download (HTTP 429), the downloader sleeps for 6
 - `SWITCHLINGUA_RATE_LIMIT_SLEEP_SECONDS`
 - `SWITCHLINGUA_RATE_LIMIT_MAX_RETRIES`
 
+The manifest generator can use either a `metadata.*` file or per-language metadata files like `Arabic.csv` located at the dataset root.
+
 The dataset is gated on Hugging Face. Accept the terms and set `HUGGINGFACE_TOKEN` or `HF_TOKEN` before downloading.
 
 ## Current Runner Location
