@@ -573,6 +573,11 @@ def build_switchlingua_parser() -> argparse.ArgumentParser:
     parser.add_argument("--saer-alpha", type=float, default=0.5, help="SAER alpha weight (0..1)")
     parser.add_argument("--saer-device", default=None, help="Device for SEM/SAER model (e.g., cpu, cuda)")
     parser.add_argument(
+        "--recompute-semantic-on-resume",
+        action="store_true",
+        help="When --skip-existing hits cached outputs, recompute SEM/SAER instead of reusing stored scores.",
+    )
+    parser.add_argument(
         "--install-switchlingua",
         action="store_true",
         help="Clone SwitchLingua into ext/switchlingua if it is missing (non-submodule).",
@@ -591,8 +596,8 @@ def _resolve_lang_defaults(lang: str) -> tuple[Path, Path, str]:
     normalized = lang.strip().lower()
     if not normalized:
         raise ValueError("Language name cannot be empty.")
-    manifest_path = Path("benchmarks") / "switchlingua" / "manifests" / "manifest_bootstrap.jsonl"
-    audio_root = Path("ext") / "switchlingua" / "SwitchLingua_audio"
+    manifest_path = _BENCHMARK_ROOT / "manifests" / "manifest_bootstrap.jsonl"
+    audio_root = _REPO_ROOT / "ext" / "switchlingua" / "SwitchLingua_audio"
     run_name = normalized
     return manifest_path, audio_root, run_name
 
@@ -953,6 +958,24 @@ def _compute_semantic_metrics(
     return {"sem": sem, "saer": saer, "cer": cer_value}
 
 
+def _read_existing_score_values(output_json_path: Path) -> dict[str, Optional[float]]:
+    try:
+        with output_json_path.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except Exception:  # pylint: disable=broad-exception-caught
+        return {"cer": None, "sem": None, "saer": None}
+    if not isinstance(payload, dict):
+        return {"cer": None, "sem": None, "saer": None}
+    score = payload.get("score")
+    if not isinstance(score, dict):
+        return {"cer": None, "sem": None, "saer": None}
+    return {
+        "cer": score.get("cer"),
+        "sem": score.get("sem"),
+        "saer": score.get("saer"),
+    }
+
+
 def _inject_scores(output_json_path: Path, metric_values: dict[str, float]) -> None:
     try:
         if not output_json_path.exists():
@@ -1068,7 +1091,8 @@ def run_item(
             normalized_ref_text=item.normalized_reference_text,
         )
         metric_values.update(count_values)
-        if semantic_model is not None:
+        metric_values.update(_read_existing_score_values(final_output_json))
+        if semantic_model is not None and args.recompute_semantic_on_resume:
             sem_metrics = _compute_semantic_metrics(
                 hyp_utterances=scored_hyp_utterances,
                 ref_utterances=scored_ref_utterances,

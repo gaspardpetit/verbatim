@@ -23,4 +23,4 @@ install:
 	$(VENV_PYTHON) scripts/manifest.py --audio-root ../../$(OUTDIR)/SwitchLingua_audio --manifest ../../$(MANIFEST) $(if $(ALLOW_PATTERN),--allow-pattern "$(ALLOW_PATTERN)",)
 
 benchmark:
-	$(VENV_PYTHON) scripts/run_all.py --benchmark-config ../../$(BENCHMARK_CONFIG) --systems-config ../../$(SYSTEMS_CONFIG)
+	$(VENV_PYTHON) scripts/run_all.py --continue-on-error --benchmark-config ../../$(BENCHMARK_CONFIG) --systems-config ../../$(SYSTEMS_CONFIG)

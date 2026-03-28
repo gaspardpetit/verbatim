@@ -92,3 +92,4 @@ The runner config is split in two:
 - `benchmark.yaml` defines the default language/system set used by `make benchmark`
 
 By default, benchmark outputs now land under `benchmarks/switchlingua/out/`.
+`make benchmark` also resumes with `--skip-existing` and continues past failures by default. Cached runs reuse any stored `SEM`/`SAER` scores unless you explicitly pass `-- --recompute-semantic-on-resume`.
