@@ -5,6 +5,7 @@ import argparse
 import ast
 import csv
 import gc
+import io
 import json
 import logging
 import math
@@ -18,7 +19,7 @@ from argparse import Namespace
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from time import perf_counter
-from typing import Any, Iterable, List, Optional
+from typing import Any, Iterable, List, Optional, cast
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(_REPO_ROOT) not in sys.path:
@@ -339,6 +340,189 @@ class QwenBaselineRunner:
             },
         )
         return json_path, {"detected_language": detected_language}
+
+
+class VoxtralMlxBaselineRunner:
+    def __init__(self, *, model_name: str):
+        try:
+            from verbatim.voices.transcribe.voxtralmlx import VoxtralMlxTranscriber  # pylint: disable=import-outside-toplevel
+        except ImportError as exc:
+            raise RuntimeError("MLX Voxtral baseline requires the optional `mlx-voxtral` package.") from exc
+
+        self._model = VoxtralMlxTranscriber(
+            model_size_or_path=model_name,
+            aligner_model_size_or_path="Qwen/Qwen3-ForcedAligner-0.6B",
+            device="mps",
+        )
+        self._model_name = model_name
+
+    def transcribe(
+        self,
+        audio_path: Path,
+        output_dir: Path,
+        stem: str,
+        allowed_languages: list[str],
+        forced_language: Optional[str] = None,
+    ) -> tuple[Path, dict[str, Any]]:
+        audio = load_audio_mono(audio_path)
+        detected_language = forced_language
+        detected_prob = 1.0 if forced_language else None
+        if not detected_language:
+            detected_language, detected_prob = self._model.guess_language(audio, allowed_languages)
+
+        words = self._model.transcribe(
+            audio=audio,
+            lang=detected_language,
+            prompt="",
+            prefix="",
+            window_ts=0,
+            audio_ts=len(audio),
+        )
+        text = "".join(word.word for word in words).strip()
+        if words:
+            utterances = [Utterance.from_words("utt1", words, speaker="SPEAKER")]
+        else:
+            utterances = [
+                Utterance(
+                    utterance_id="utt1",
+                    speaker="SPEAKER",
+                    start_ts=0,
+                    end_ts=len(audio),
+                    text=text,
+                    words=[],
+                )
+            ]
+        json_path, _ = write_outputs(
+            outdir=output_dir,
+            stem=stem,
+            utterances=utterances,
+            metadata={
+                "baseline": {
+                    "backend": "mlx-voxtral",
+                    "model": self._model_name,
+                    "device": "mps",
+                    "detected_language": detected_language,
+                    "detected_language_probability": detected_prob,
+                }
+            },
+        )
+        return json_path, {"detected_language": detected_language}
+
+
+class VoxtralBaselineRunner:
+    def __init__(self, *, model_name: str, device: str, max_new_tokens: int = 256):
+        if device not in ("cpu", "cuda", "mps"):
+            raise RuntimeError("Voxtral baseline supports only 'cpu', 'cuda', and 'mps'.")
+        try:
+            import torch  # pylint: disable=import-outside-toplevel
+            from mistral_common.protocol.transcription.request import TranscriptionRequest  # pylint: disable=import-outside-toplevel
+            from transformers import VoxtralForConditionalGeneration, VoxtralProcessor  # pylint: disable=import-outside-toplevel
+        except ImportError as exc:
+            raise RuntimeError(
+                "Voxtral baseline requires optional dependencies. Install `transformers`, `mistral-common`, and `torch`."
+            ) from exc
+        from verbatim.voices.transcribe.voxtral import VoxtralTranscriber  # pylint: disable=import-outside-toplevel
+
+        voxtral_dtype = VoxtralTranscriber._resolve_dtype(torch_module=torch, dtype="auto", device=device)
+        if device == "cuda":
+            device_map = "cuda:0"
+        elif device == "mps":
+            device_map = "mps"
+        else:
+            device_map = "cpu"
+
+        self._processor = VoxtralProcessor.from_pretrained(model_name)  # nosec B615
+        self._model = VoxtralForConditionalGeneration.from_pretrained(  # nosec B615
+            model_name,
+            dtype=voxtral_dtype,
+            device_map=device_map,
+            low_cpu_mem_usage=True,
+        )
+        self._device = device
+        self._device_map = device_map
+        self._model_name = model_name
+        self._max_new_tokens = max_new_tokens
+        self._transcription_request_type = TranscriptionRequest
+
+    def _build_inputs(self, *, audio, language: Optional[str]) -> Any:
+        try:
+            import soundfile as sf  # pylint: disable=import-outside-toplevel
+        except ImportError as exc:
+            raise RuntimeError("Voxtral baseline requires the optional `soundfile` package.") from exc
+
+        audio_buffer = io.BytesIO()
+        sf.write(audio_buffer, audio, samplerate=16000, format="WAV")
+        audio_buffer.seek(0)
+
+        openai_request: dict[str, Any] = {"model": self._model_name, "file": audio_buffer}
+        if language is not None:
+            openai_request["language"] = language
+
+        transcription_request = self._transcription_request_type.from_openai(openai_request)
+        tokenized_request = self._processor.tokenizer.tokenizer.encode_transcription(transcription_request)
+        encoding = self._processor.tokenizer(
+            [tokenized_request.tokens],
+            add_special_tokens=False,
+            padding=True,
+            return_tensors="pt",
+        )
+        feature_batch = self._processor.feature_extractor(
+            [item.audio_array for item in tokenized_request.audios],
+            sampling_rate=16000,
+            padding=True,
+            truncation=False,
+            pad_to_multiple_of=480000,
+            return_tensors="pt",
+        )
+        data = dict(encoding)
+        data["input_features"] = feature_batch["input_features"]
+        return data
+
+    def transcribe(
+        self,
+        audio_path: Path,
+        output_dir: Path,
+        stem: str,
+        allowed_languages: list[str],
+        forced_language: Optional[str] = None,
+    ) -> tuple[Path, dict[str, Any]]:
+        audio = load_audio_mono(audio_path)
+        chosen_language = forced_language
+        inputs: Any = self._build_inputs(audio=audio, language=chosen_language)
+        if hasattr(inputs, "to"):
+            inputs = inputs.to(self._device_map)
+        generated_ids = self._model.generate(**cast(dict[str, Any], inputs), max_new_tokens=self._max_new_tokens)
+        prompt_length = inputs["input_ids"].shape[1]
+        transcript_ids = generated_ids[:, prompt_length:]
+        transcript_text = self._processor.batch_decode(transcript_ids, skip_special_tokens=True)[0].strip()
+
+        utterances = [
+            Utterance(
+                utterance_id="utt1",
+                speaker="SPEAKER",
+                start_ts=0,
+                end_ts=len(audio),
+                text=transcript_text,
+                words=[],
+            )
+        ]
+        json_path, _ = write_outputs(
+            outdir=output_dir,
+            stem=stem,
+            utterances=utterances,
+            metadata={
+                "baseline": {
+                    "backend": "voxtral",
+                    "model": self._model_name,
+                    "device": self._device,
+                    "word_alignment": False,
+                    "detected_language": chosen_language,
+                    "detected_language_probability": None,
+                    "allowed_languages": allowed_languages,
+                }
+            },
+        )
+        return json_path, {"detected_language": chosen_language}
 
 
 def _slugify(value: str) -> str:
@@ -720,16 +904,36 @@ def _default_whisper_device(*, force_cpu: bool) -> str:
     return _default_torch_device(force_cpu=False)
 
 
+def _default_voxtral_device(*, force_cpu: bool) -> str:
+    if force_cpu:
+        return "cpu"
+    if sys.platform == "darwin":
+        return "cpu"
+    return _default_torch_device(force_cpu=False)
+
+
 def _create_shared_runner(args: argparse.Namespace, system_name: str) -> Optional[Any]:
     mode = _system_mode(system_name)
+    overrides = DEFAULT_SYSTEMS[system_name].get("overrides", {})
     if mode == "whisper_baseline":
         device = _default_whisper_device(force_cpu=args.cpu)
-        return WhisperBaselineRunner(model_name=args.whisper_model or "large-v3", device=device)
+        return WhisperBaselineRunner(model_name=args.whisper_model or overrides.get("whisper_model") or "large-v3", device=device)
     if mode == "whisper_mlx_baseline":
-        return WhisperMlxBaselineRunner(model_name=args.whisper_model or "large-v3")
+        return WhisperMlxBaselineRunner(model_name=args.whisper_model or overrides.get("whisper_model") or "large-v3")
+    if mode == "voxtral_mlx_baseline":
+        return VoxtralMlxBaselineRunner(
+            model_name=args.voxtral_model or overrides.get("voxtral_model") or "mistralai/Voxtral-Mini-3B-2507"
+        )
     if mode == "qwen_baseline":
         device = _default_torch_device(force_cpu=args.cpu)
-        return QwenBaselineRunner(model_name=args.qwen_model or "Qwen/Qwen3-ASR-1.7B", device=device)
+        return QwenBaselineRunner(model_name=args.qwen_model or overrides.get("qwen_model") or "Qwen/Qwen3-ASR-1.7B", device=device)
+    if mode == "voxtral_baseline":
+        device = _default_voxtral_device(force_cpu=args.cpu)
+        return VoxtralBaselineRunner(
+            model_name=args.voxtral_model or overrides.get("voxtral_model") or "mistralai/Voxtral-Mini-3B-2507",
+            device=device,
+            max_new_tokens=args.voxtral_max_new_tokens or overrides.get("voxtral_max_new_tokens") or 256,
+        )
     return None
 
 
@@ -1280,6 +1484,26 @@ def run_item(
         elif mode == "qwen_baseline":
             if models is None:
                 raise RuntimeError("Qwen baseline runner is not initialized.")
+            output_json_path, _ = models.transcribe(
+                item.audio_path,
+                temp_dir,
+                item.audio_path.stem,
+                item.languages or ["en"],
+                forced_language=forced_language,
+            )
+        elif mode == "voxtral_mlx_baseline":
+            if models is None:
+                raise RuntimeError("MLX Voxtral baseline runner is not initialized.")
+            output_json_path, _ = models.transcribe(
+                item.audio_path,
+                temp_dir,
+                item.audio_path.stem,
+                item.languages or ["en"],
+                forced_language=forced_language,
+            )
+        elif mode == "voxtral_baseline":
+            if models is None:
+                raise RuntimeError("Voxtral baseline runner is not initialized.")
             output_json_path, _ = models.transcribe(
                 item.audio_path,
                 temp_dir,

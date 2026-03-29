@@ -8,7 +8,7 @@ import yaml
 SYSTEMS_CONFIG_PATH = Path(__file__).resolve().parents[1] / "systems.yaml"
 BENCHMARK_CONFIG_PATH = Path(__file__).resolve().parents[1] / "benchmark.yaml"
 _ALLOWED_SYSTEM_KEYS = {"description", "mode", "fixed_primary_language", "overrides"}
-_ALLOWED_SYSTEM_MODES = {"pipeline", "whisper_baseline", "whisper_mlx_baseline", "qwen_baseline"}
+_ALLOWED_SYSTEM_MODES = {"pipeline", "whisper_baseline", "whisper_mlx_baseline", "qwen_baseline", "voxtral_baseline", "voxtral_mlx_baseline"}
 
 
 def _read_yaml(path: Path) -> Any:

@@ -30,6 +30,12 @@ Add Voxtral support when needed:
 uv pip install -e ".[qwen,mms_lid,benchmark,whisper,mlx,voxtral]" -r benchmarks/switchlingua/requirements.txt
 ```
 
+Add MLX Voxtral support on macOS when needed:
+
+```bash
+uv pip install -e ".[qwen,mms_lid,benchmark,whisper,mlx,mlx_voxtral]" -r benchmarks/switchlingua/requirements.txt
+```
+
 Or let the benchmark-local make target do it and start a dataset pull:
 
 ```bash

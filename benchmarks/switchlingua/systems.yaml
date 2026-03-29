@@ -43,7 +43,14 @@ voxtral_mms:
     transcriber_backend: voxtral
     language_identifier_backend: mms
     code_switching: true
-    
+
+voxtral_mlx_mms:
+  description: Voxtral Mini via mlx-voxtral with MMS language identification and code-switching enabled on macOS.
+  overrides:
+    transcriber_backend: voxtral_mlx
+    language_identifier_backend: mms
+    code_switching: true
+
 voxtral_small_mms:
   description: Voxtral Small 24B with MMS language identification, Qwen forced alignment, and code-switching enabled.
   overrides:
@@ -53,18 +60,51 @@ voxtral_small_mms:
     voxtral_model: mistralai/Voxtral-Small-24B-2507
 
 voxtral_native:
-  description: Voxtral with native/transcriber language identification and code-switching enabled.
+  description: Naive whole-file Voxtral baseline using the Transformers API with model-native language detection.
+  mode: voxtral_baseline
+  overrides: {}
+
+voxtral_mlx_native:
+  description: Naive whole-file MLX Voxtral Mini baseline with model-native language detection on macOS.
+  mode: voxtral_mlx_baseline
+  overrides: {}
+
+voxtral_mlx_native_fixed:
+  description: Naive whole-file MLX Voxtral Mini baseline forced to the primary manifest language on macOS.
+  mode: voxtral_mlx_baseline
+  fixed_primary_language: true
+  overrides: {}
+
+voxtral_small_mlx_native:
+  description: Naive whole-file MLX Voxtral Small baseline with model-native language detection on macOS.
+  mode: voxtral_mlx_baseline
   overrides:
-    transcriber_backend: voxtral
-    language_identifier_backend: transcriber
-    code_switching: true
+    voxtral_model: mistralai/Voxtral-Small-24B-2507
+
+voxtral_small_mlx_native_fixed:
+  description: Naive whole-file MLX Voxtral Small baseline forced to the primary manifest language on macOS.
+  mode: voxtral_mlx_baseline
+  fixed_primary_language: true
+  overrides:
+    voxtral_model: mistralai/Voxtral-Small-24B-2507
+
+voxtral_native_fixed:
+  description: Naive whole-file Voxtral baseline forced to the primary manifest language.
+  mode: voxtral_baseline
+  fixed_primary_language: true
+  overrides: {}
 
 voxtral_small_native:
-  description: Voxtral Small 24B with native/transcriber language identification and code-switching enabled.
+  description: Naive whole-file Voxtral Small 24B baseline using the Transformers API with model-native language detection.
+  mode: voxtral_baseline
   overrides:
-    transcriber_backend: voxtral
-    language_identifier_backend: transcriber
-    code_switching: true
+    voxtral_model: mistralai/Voxtral-Small-24B-2507
+
+voxtral_small_native_fixed:
+  description: Naive whole-file Voxtral Small 24B baseline forced to the primary manifest language.
+  mode: voxtral_baseline
+  fixed_primary_language: true
+  overrides:
     voxtral_model: mistralai/Voxtral-Small-24B-2507
 
 voxtral_mms_naive:

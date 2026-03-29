@@ -116,6 +116,17 @@ class Models:
                 max_new_tokens=self._voxtral_max_new_tokens,
             )
 
+        if backend == "voxtral_mlx":
+            STATUS_LOG.info("Using MLX Voxtral transcriber on Apple Silicon.")
+            from .voices.transcribe.voxtralmlx import VoxtralMlxTranscriber  # pylint: disable=import-outside-toplevel
+
+            return VoxtralMlxTranscriber(
+                model_size_or_path=self._voxtral_model_size,
+                aligner_model_size_or_path=self._qwen_aligner_model_size,
+                device=self._device,
+                max_new_tokens=self._voxtral_max_new_tokens,
+            )
+
         if sys.platform == "darwin":
             # If this is an Apple Silicon device, use the MLX Whisper transcriber
             if platform.processor() == "arm":

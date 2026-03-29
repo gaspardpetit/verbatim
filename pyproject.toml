@@ -105,6 +105,9 @@ voxtral = [
 mlx = [
     "mlx-whisper>=0.4.1 ; sys_platform == 'darwin'",
 ]
+mlx_voxtral = [
+    "mlx-voxtral>=0.0.4 ; sys_platform == 'darwin'",
+]
 
 [project.urls]
 Homepage = "https://github.com/gaspardpetit/verbatim"

@@ -1,14 +1,14 @@
 languages:
   - french
-#  - italian
-#  - german
-#  - japanese
-#  - mandarin
-#  - russian
-#  - korean
-#  - hindi
-#  - cantonese
-#  - arabic
+  - italian
+  - german
+  - japanese
+  - mandarin
+  - russian
+  - korean
+  - hindi
+  - cantonese
+  - arabic
 
 systems:
 #  - whisper_native
@@ -17,8 +17,11 @@ systems:
 #  - qwen_native
 #  - qwen_builtin
 #  - whisper_mms
-  - voxtral_native
-  - voxtral_mms
-  - voxtral_small_native
-  - voxtral_small_mms
+#  - voxtral_small_mms
+#  - voxtral_mms
+#  - voxtral_native_fixed
+#  - voxtral_small_native_fixed
 #  - qwen_mms
+  - voxtral_mlx_native_fixed
+  - voxtral_small_mlx_native_fixed
+
