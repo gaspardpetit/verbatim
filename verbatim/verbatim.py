@@ -971,7 +971,7 @@ class Verbatim:
         # check if the last utterance is complete
         last_valid_utterance_index = len(utterances) - 1
         valid_endings = tuple(APPEND_PUNCTUATIONS)
-        if not utterances[last_valid_utterance_index].text.endswith(valid_endings):
+        if not utterances[last_valid_utterance_index].text.rstrip().endswith(valid_endings):
             last_valid_utterance_index = last_valid_utterance_index - 1
 
         if last_valid_utterance_index < 0:
