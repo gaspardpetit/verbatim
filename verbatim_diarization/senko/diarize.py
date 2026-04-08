@@ -7,7 +7,9 @@ import numpy as np
 import soundfile as sf
 
 from verbatim.cache import ArtifactCache, FileBackedArtifactCache
+from verbatim_audio.audio import format_audio
 from verbatim_audio.convert import convert_bytes_to_wav
+from verbatim_audio.settings import AUDIO_PARAMS
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.utils import sanitize_uri_component
 from verbatim_files.rttm import Annotation, Segment, dumps_rttm
@@ -120,11 +122,8 @@ class SenkoDiarization(DiarizationStrategy):
             raise RuntimeError(f"Cached bytes missing for input '{file_path}'. Populate the artifact cache before invoking Senko.")
 
         samples, sample_rate = sf.read(io.BytesIO(input_bytes), dtype="float32")
-        if samples.ndim > 1:
-            samples = samples.mean(axis=1)
-        if sample_rate != 16000:
-            raise RuntimeError(f"Senko in-memory diarization expects 16kHz audio from the artifact cache, got {sample_rate}Hz for '{file_path}'.")
-        return samples.astype(np.float32, copy=False)
+        normalized_samples = format_audio(samples, from_sampling_rate=sample_rate)
+        return normalized_samples.astype(np.float32, copy=False)
 
     @staticmethod
     def _segments_to_annotation(segments: List[Dict[str, Any]], *, file_id: str) -> Annotation:
@@ -164,7 +163,12 @@ class SenkoDiarization(DiarizationStrategy):
             elif callable(getattr(diarizer, "diarize_samples", None)) and not isinstance(self.cache, FileBackedArtifactCache):
                 samples = self._prepare_samples(file_path)
                 LOG.info("Using Senko in-memory diarization for %s", file_path)
-                result = diarizer.diarize_samples(samples, sample_rate=16000, accurate=accurate, generate_colors=False)
+                result = diarizer.diarize_samples(
+                    samples,
+                    sample_rate=AUDIO_PARAMS.sample_rate,
+                    accurate=accurate,
+                    generate_colors=False,
+                )
             else:
                 wav_path, temp_path = self._prepare_wav_path(file_path)
                 result = diarizer.diarize(wav_path, accurate=accurate, generate_colors=False)
