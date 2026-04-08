@@ -123,6 +123,24 @@ class TestSenkoDiarization(unittest.TestCase):
         self.assertEqual("samples", _FakeDiarizer.calls[0]["mode"])
         self.assertEqual(16000, _FakeDiarizer.calls[0]["sample_rate"])
 
+    def test_resamples_in_memory_samples_without_workdir_when_supported(self):
+        fake_senko = types.ModuleType("senko")
+        fake_senko.Diarizer = _FakeDiarizer
+        cache = InMemoryArtifactCache()
+        buffer = io.BytesIO()
+        sf.write(buffer, np.zeros(11025, dtype=np.float32), 11025, format="WAV", subtype="PCM_16")
+        cache.set_bytes("sample.wav", buffer.getvalue())
+
+        with patch.dict(sys.modules, {"senko": fake_senko}):
+            diarizer = SenkoDiarization(cache=cache, device="cpu")
+            with patch.object(diarizer, "_is_compatible_wav", return_value=False):
+                annotation = diarizer.compute_diarization(file_path="sample.wav")
+
+        self.assertEqual(2, len(annotation.segments))
+        self.assertEqual("samples", _FakeDiarizer.calls[0]["mode"])
+        self.assertEqual(16000, _FakeDiarizer.calls[0]["sample_rate"])
+        self.assertEqual(16000, _FakeDiarizer.calls[0]["samples_len"])
+
     def test_requires_disk_backed_cache_when_in_memory_api_is_unavailable(self):
         class _PathOnlyFakeDiarizer:
             def __init__(self, **kwargs):
