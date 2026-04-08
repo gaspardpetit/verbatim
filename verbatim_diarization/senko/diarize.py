@@ -7,15 +7,14 @@ import numpy as np
 import soundfile as sf
 
 from verbatim.cache import ArtifactCache, FileBackedArtifactCache
-from verbatim_audio.audio import format_audio
 from verbatim_audio.convert import convert_bytes_to_wav
-from verbatim_audio.settings import AUDIO_PARAMS
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.utils import sanitize_uri_component
 from verbatim_files.rttm import Annotation, Segment, dumps_rttm
 from verbatim_files.vttm import AudioRef, dumps_vttm
 
 LOG = logging.getLogger(__name__)
+SENKO_SAMPLE_RATE = 16000
 
 
 def _parse_bool(value: Any) -> bool:
@@ -89,7 +88,7 @@ class SenkoDiarization(DiarizationStrategy):
 
         info = sf.info(path)
         subtype = (info.subtype or "").upper()
-        return info.samplerate == 16000 and info.channels == 1 and subtype == "PCM_16"
+        return info.samplerate == SENKO_SAMPLE_RATE and info.channels == 1 and subtype == "PCM_16"
 
     def _prepare_wav_path(self, file_path: str) -> tuple[str, Optional[str]]:
         if self._is_compatible_wav(file_path):
@@ -122,8 +121,14 @@ class SenkoDiarization(DiarizationStrategy):
             raise RuntimeError(f"Cached bytes missing for input '{file_path}'. Populate the artifact cache before invoking Senko.")
 
         samples, sample_rate = sf.read(io.BytesIO(input_bytes), dtype="float32")
-        normalized_samples = format_audio(samples, from_sampling_rate=sample_rate)
-        return normalized_samples.astype(np.float32, copy=False)
+        if samples.ndim > 1:
+            samples = samples.mean(axis=1)
+        if sample_rate != SENKO_SAMPLE_RATE:
+            from scipy.signal import resample  # type: ignore  # pylint: disable=import-outside-toplevel
+
+            target_len = int(len(samples) * SENKO_SAMPLE_RATE / sample_rate)
+            samples = np.asarray(resample(samples, target_len), dtype=np.float32)
+        return samples.astype(np.float32, copy=False)
 
     @staticmethod
     def _segments_to_annotation(segments: List[Dict[str, Any]], *, file_id: str) -> Annotation:
@@ -165,7 +170,7 @@ class SenkoDiarization(DiarizationStrategy):
                 LOG.info("Using Senko in-memory diarization for %s", file_path)
                 result = diarizer.diarize_samples(
                     samples,
-                    sample_rate=AUDIO_PARAMS.sample_rate,
+                    sample_rate=SENKO_SAMPLE_RATE,
                     accurate=accurate,
                     generate_colors=False,
                 )
