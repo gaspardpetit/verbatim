@@ -15,7 +15,7 @@ from torch.serialization import add_safe_globals
 
 from verbatim.cache import ArtifactCache
 from verbatim.logging_utils import get_status_logger, status_enabled
-from verbatim_audio.audio import wav_to_int16
+from verbatim_audio.audio import constrain_audio_range, wav_to_int16
 from verbatim_audio.sources.audiosource import AudioSource
 from verbatim_audio.sources.fileaudiosource import FileAudioSource
 from verbatim_diarization.separate.base import SeparationStrategy
@@ -107,7 +107,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             else:
                 mono = audio
 
-            waveform = torch.from_numpy(np.asarray(mono, dtype=np.float32))
+            waveform = torch.from_numpy(constrain_audio_range(np.asarray(mono, dtype=np.float32)))
             if waveform.ndim == 1:
                 waveform = waveform.unsqueeze(0)
             return {"waveform": waveform, "sample_rate": int(sample_rate)}, None

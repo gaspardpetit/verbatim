@@ -8,7 +8,7 @@ import av
 import numpy as np
 from numpy.typing import NDArray
 
-from ..audio import seconds_to_samples
+from ..audio import resample_audio, seconds_to_samples, to_float32_audio
 from .audiosource import AudioSource, AudioStream
 
 LOG = logging.getLogger(__name__)
@@ -123,8 +123,8 @@ class PyAVAudioStream(AudioStream):
                     self._done_decoding = True
                     break
 
-            # Convert the frame to ndarray, float32
-            arr = frame.to_ndarray().astype(np.float32, copy=False)
+            # Normalize decoded PCM types explicitly instead of relying on PyAV output format details.
+            arr = to_float32_audio(frame.to_ndarray())
 
             # Normalize shape to always be (channels, samples)
             if arr.ndim == 1:
@@ -154,16 +154,9 @@ class PyAVAudioStream(AudioStream):
         if original_sample_rate != target_sample_rate:
             LOG.debug(f"Resampling from {original_sample_rate} → {target_sample_rate} Hz")
 
-            # Resample each channel independently
-            up = int(target_sample_rate)
-            down = int(original_sample_rate)
-
-            # Lazy import to avoid pulling scipy.signal during CLI startup
-            from scipy.signal import resample_poly  # type: ignore  # pylint: disable=import-outside-toplevel
-
             resampled_channels = []
             for ch_idx in range(full_array.shape[0]):
-                resampled = resample_poly(full_array[ch_idx], up, down)
+                resampled = resample_audio(full_array[ch_idx], original_sample_rate, target_sample_rate, method="poly")
                 resampled_channels.append(resampled)
 
             # Stack back into (channels, samples)

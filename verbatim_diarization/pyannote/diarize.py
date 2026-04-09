@@ -15,6 +15,7 @@ from torch.serialization import add_safe_globals
 
 from verbatim.cache import ArtifactCache
 from verbatim.logging_utils import get_status_logger, status_enabled
+from verbatim_audio.audio import constrain_audio_range
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.pyannote.progress import StatusProgressHook
 from verbatim_diarization.pyannote.separate import PyannoteSpeakerSeparation, _build_rttm_annotation
@@ -91,7 +92,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
                 else:
                     mono = audio
 
-                waveform = torch.from_numpy(np.asarray(mono, dtype=np.float32))
+                waveform = torch.from_numpy(constrain_audio_range(np.asarray(mono, dtype=np.float32)))
                 if waveform.ndim == 1:
                     waveform = waveform.unsqueeze(0)
                 # Feed the pipeline an in-memory waveform directly so pyannote does not need

@@ -6,6 +6,8 @@ from typing import List, Protocol
 import numpy as np
 from numpy.typing import NDArray
 
+from verbatim_audio.audio import constrain_audio_range
+
 LOG = logging.getLogger(__name__)
 
 DEFAULT_AST_AUDIO_MODEL = "MIT/ast-finetuned-audioset-10-10-0.4593"
@@ -74,11 +76,11 @@ class AstNonSpeechClassifier:
 
     def _resample(self, audio: NDArray[np.float32], sample_rate: int) -> NDArray[np.float32]:
         if sample_rate == TARGET_SR:
-            return audio.astype(np.float32, copy=False)
+            return constrain_audio_range(audio.astype(np.float32, copy=False))
 
         waveform = self._torch.from_numpy(audio.astype(np.float32, copy=False)).unsqueeze(0)
         resampled = self._torchaudio.functional.resample(waveform, sample_rate, TARGET_SR)
-        return resampled.squeeze(0).cpu().numpy().astype(np.float32, copy=False)
+        return constrain_audio_range(resampled.squeeze(0).cpu().numpy().astype(np.float32, copy=False))
 
     @staticmethod
     def _chunk_audio(audio: NDArray[np.float32]) -> List[NDArray[np.float32]]:

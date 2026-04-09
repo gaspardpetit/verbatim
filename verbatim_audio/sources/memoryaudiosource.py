@@ -3,22 +3,10 @@ from typing import Optional
 import numpy as np
 from numpy.typing import NDArray
 
-from ..audio import format_audio
+from ..audio import format_audio, to_float32_audio
 from .audiosource import AudioSource, AudioStream
 
 Annotation = object  # pylint: disable=invalid-name
-
-
-def _to_float32(audio: NDArray) -> NDArray:
-    if audio.dtype == np.float32:
-        return audio
-    if audio.dtype == np.int8:
-        return audio.astype(np.float32) / 128.0
-    if audio.dtype == np.int16:
-        return audio.astype(np.float32) / 32768.0
-    if audio.dtype == np.int32:
-        return audio.astype(np.float32) / 2147483648.0
-    return audio.astype(np.float32)
 
 
 class MemoryAudioStream(AudioStream):
@@ -44,10 +32,10 @@ class MemoryAudioStream(AudioStream):
             return np.array([], dtype=np.float32)
 
         if self.source.preserve_channels:
-            return _to_float32(raw)
+            return to_float32_audio(raw)
 
         # Mix down and resample to target rate via format_audio
-        return format_audio(_to_float32(raw), from_sampling_rate=self.source.sample_rate)
+        return format_audio(to_float32_audio(raw), from_sampling_rate=self.source.sample_rate)
 
     def has_more(self) -> bool:
         end = self.source.end_sample or self.source.total_samples
