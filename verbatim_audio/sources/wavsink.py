@@ -4,6 +4,7 @@ import wave
 import numpy as np
 
 from verbatim.cache import ArtifactCache
+from verbatim_audio.audio import constrain_audio_range, resample_audio
 
 from .audiosource import AudioSource
 
@@ -39,11 +40,8 @@ class WavSink:
 
                     # Resample the audio if needed
                     if input_sample_rate != sample_rate:
-                        # Lazy import to avoid pulling scipy.signal during CLI startup
-                        from scipy.signal import resample  # type: ignore  # pylint: disable=import-outside-toplevel
-
-                        target_len = int(len(audio_chunk) * sample_rate / input_sample_rate)
-                        audio_chunk = np.asarray(resample(audio_chunk, target_len))
+                        audio_chunk = resample_audio(audio_chunk, input_sample_rate, sample_rate)
+                    audio_chunk = constrain_audio_range(audio_chunk)
 
                     # Convert to 16-bit PCM
                     int_samples = (audio_chunk * 32767).clip(-32768, 32767).astype(np.int16)

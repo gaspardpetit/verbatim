@@ -1,22 +1,47 @@
+import io
 import math
 import unittest
+import wave
+from typing import cast
 
 import numpy as np
 
+from verbatim.cache import InMemoryArtifactCache
 from verbatim_audio.settings import AUDIO_PARAMS
 
 # pylint: disable=import-outside-toplevel
 
 
 class TestAudioProcessing(unittest.TestCase):
+    def test_constrain_audio_range(self):
+        from verbatim_audio.audio import constrain_audio_range
+
+        audio = np.array([0.0, 1.25, -0.5], dtype=np.float32)
+        output = constrain_audio_range(audio)
+        self.assertEqual(output.dtype, np.float32)
+        self.assertLessEqual(float(np.max(np.abs(output))), 1.0)
+        np.testing.assert_array_almost_equal(output, np.array([0.0, 1.0, -0.5], dtype=np.float32), decimal=5)
+
+    def test_resample_audio_uses_resampling_branch(self):
+        from verbatim_audio.audio import resample_audio
+
+        audio = np.array([0.0, 1.0, 0.0, -1.0], dtype=np.float32)
+        output = resample_audio(audio, from_sampling_rate=8000, to_sampling_rate=16000)
+        self.assertEqual(output.dtype, np.float32)
+        self.assertEqual(output.shape[0], 8)
+
     def test_format_audio(self):
-        from verbatim_audio.audio import format_audio
+        from verbatim_audio.audio import format_audio, to_float32_audio
 
         sample_rate = AUDIO_PARAMS.sample_rate
         audio_mono_float = np.array([0.0, 0.5, -0.5, 1.0, -1.0], dtype=np.float32)
         output = format_audio(audio_mono_float, sample_rate)
         np.testing.assert_array_almost_equal(output, audio_mono_float)
         self.assertEqual(output.dtype, np.float32)
+
+        audio_hot_float = np.array([0.0, 1.25, -1.25], dtype=np.float32)
+        output = format_audio(audio_hot_float, sample_rate)
+        np.testing.assert_array_almost_equal(output, audio_hot_float)
 
         audio_mono_int16 = np.array([0, 16384, -16384, 32767, -32768], dtype=np.int16)
         output = format_audio(audio_mono_int16, sample_rate)
@@ -43,11 +68,19 @@ class TestAudioProcessing(unittest.TestCase):
         audio_short = np.array([0.5], dtype=np.float32)
         output = format_audio(audio_short, from_sampling_rate)
         self.assertEqual(output.size, 0)
-        self.assertEqual(output.dtype, np.int16)
+        self.assertEqual(output.dtype, np.float32)
 
         audio_mono_int8 = np.array([0, 64, -64, 127, -128], dtype=np.int8)
         output = format_audio(audio_mono_int8, sample_rate)
         expected = audio_mono_int8.astype(np.float32) / 128.0
+        np.testing.assert_array_almost_equal(output, expected, decimal=5)
+
+        audio_mono_uint8 = np.array([0, 128, 255], dtype=np.uint8)
+        output = to_float32_audio(audio_mono_uint8)
+        expected = np.array([-1.0, 0.0, 127.0 / 128.0], dtype=np.float32)
+        np.testing.assert_array_almost_equal(output, expected, decimal=5)
+
+        output = format_audio(audio_mono_uint8, sample_rate)
         np.testing.assert_array_almost_equal(output, expected, decimal=5)
 
     def test_wav_to_int16(self):
@@ -65,6 +98,27 @@ class TestAudioProcessing(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             wav_to_int16(np.array([0, 1, 2], dtype=np.uint8))
+
+    def test_file_audio_source_decodes_pcm_u8_wav(self):
+        from verbatim_audio.sources.fileaudiosource import FileAudioSource
+
+        buffer = io.BytesIO()
+        wav_file = cast(wave.Wave_write, wave.open(buffer, "wb"))
+        with wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(1)
+            wav_file.setframerate(AUDIO_PARAMS.sample_rate)
+            wav_file.writeframes(np.array([0, 128, 255], dtype=np.uint8).tobytes())
+
+        cache = InMemoryArtifactCache()
+        cache.set_bytes("sample.wav", buffer.getvalue())
+        source = FileAudioSource(file="sample.wav", cache=cache, diarization=None)
+
+        with source.open() as stream:
+            output = stream.next_chunk(chunk_length=1)
+
+        expected = np.array([-1.0, 0.0, 127.0 / 128.0], dtype=np.float32)
+        np.testing.assert_array_almost_equal(output, expected, decimal=5)
 
     def test_samples_to_seconds(self):
         from verbatim_audio.audio import samples_to_seconds

@@ -10,7 +10,7 @@ from numpy.typing import NDArray
 from verbatim.cache import ArtifactCache
 from verbatim.voices.isolation import VoiceIsolation
 
-from ..audio import format_audio, sample_to_timestr
+from ..audio import format_audio, sample_to_timestr, to_float32_audio
 from ..convert import convert_bytes_to_wav, convert_to_wav
 from .audiosource import AudioSource, AudioStream
 
@@ -89,8 +89,8 @@ class FileAudioStream(AudioStream):
                 LOG.warning("Requested channel indices %s exceed available channels %s", self.channel_indices, n_channels)
                 return np.array([], dtype=np.float32)
 
-        # Convert to float32
-        audio_array = audio_array.astype(np.float32) / 32768.0
+        # Convert PCM samples to float32 using the shared full-scale mapping.
+        audio_array = to_float32_audio(audio_array)
 
         if hasattr(self.source, "preserve_channels") and self.source.preserve_channels:
             # For diarization purposes, return stereo

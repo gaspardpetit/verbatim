@@ -7,6 +7,7 @@ import numpy as np
 import soundfile as sf
 
 from verbatim.cache import ArtifactCache, FileBackedArtifactCache
+from verbatim_audio.audio import constrain_audio_range, resample_audio
 from verbatim_audio.convert import convert_bytes_to_wav
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.utils import sanitize_uri_component
@@ -124,11 +125,8 @@ class SenkoDiarization(DiarizationStrategy):
         if samples.ndim > 1:
             samples = samples.mean(axis=1)
         if sample_rate != SENKO_SAMPLE_RATE:
-            from scipy.signal import resample  # type: ignore  # pylint: disable=import-outside-toplevel
-
-            target_len = int(len(samples) * SENKO_SAMPLE_RATE / sample_rate)
-            samples = np.asarray(resample(samples, target_len), dtype=np.float32)
-        return samples.astype(np.float32, copy=False)
+            samples = resample_audio(samples, sample_rate, SENKO_SAMPLE_RATE)
+        return constrain_audio_range(samples)
 
     @staticmethod
     def _segments_to_annotation(segments: List[Dict[str, Any]], *, file_id: str) -> Annotation:
