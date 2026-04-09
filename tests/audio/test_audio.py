@@ -2,6 +2,7 @@ import io
 import math
 import unittest
 import wave
+from typing import cast
 
 import numpy as np
 
@@ -102,7 +103,8 @@ class TestAudioProcessing(unittest.TestCase):
         from verbatim_audio.sources.fileaudiosource import FileAudioSource
 
         buffer = io.BytesIO()
-        with wave.open(buffer, "wb") as wav_file:
+        wav_file = cast(wave.Wave_write, wave.open(buffer, "wb"))
+        with wav_file:
             wav_file.setnchannels(1)
             wav_file.setsampwidth(1)
             wav_file.setframerate(AUDIO_PARAMS.sample_rate)
