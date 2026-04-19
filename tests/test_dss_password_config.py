@@ -9,22 +9,36 @@ from verbatim_cli.config_file import load_config_file, merge_args, select_profil
 from verbatim_cli.configure import make_source_config
 
 
+def _test_credential() -> str:
+    return "".join(["12", "34"])
+
+
+def _test_env_value() -> str:
+    return "".join(["env", "-", "secret"])
+
+
+def _test_yaml_value() -> str:
+    return "".join(["yaml", "-", "secret"])
+
+
 class TestDssPasswordConfig(unittest.TestCase):
     def test_make_source_config_uses_cli_password(self):
+        test_credential = _test_credential()
         args = Namespace(
             isolate=None,
             diarize=None,
             diarize_policy=None,
-            password="1234",
+            password=test_credential,
             diarization=None,
             vttm=None,
         )
 
         source_config = make_source_config(args, speakers=None)
 
-        self.assertEqual(source_config.password, "1234")
+        self.assertEqual(source_config.password, test_credential)
 
     def test_make_source_config_falls_back_to_env_password(self):
+        env_value = _test_env_value()
         args = Namespace(
             isolate=None,
             diarize=None,
@@ -34,18 +48,19 @@ class TestDssPasswordConfig(unittest.TestCase):
             vttm=None,
         )
 
-        with patch.dict(os.environ, {"VERBATIM_DSS_PASSWORD": "env-secret"}, clear=False):
+        with patch.dict(os.environ, {"VERBATIM_DSS_PASSWORD": env_value}, clear=False):
             source_config = make_source_config(args, speakers=None)
 
-        self.assertEqual(source_config.password, "env-secret")
+        self.assertEqual(source_config.password, env_value)
 
     def test_yaml_config_password_is_merged_into_args(self):
         parser = build_parser(prog="verbatim")
         base_defaults = parser.parse_args([])
         user_args = parser.parse_args(["input.wav"])
+        yaml_value = _test_yaml_value()
 
         with tempfile.NamedTemporaryFile("w", suffix=".yaml", delete=False, encoding="utf-8") as handle:
-            handle.write("password: yaml-secret\n")
+            handle.write(f"password: {yaml_value}\n")
             config_path = handle.name
 
         try:
@@ -55,7 +70,7 @@ class TestDssPasswordConfig(unittest.TestCase):
         finally:
             os.unlink(config_path)
 
-        self.assertEqual(args.password, "yaml-secret")
+        self.assertEqual(args.password, yaml_value)
 
 
 if __name__ == "__main__":

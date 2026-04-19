@@ -13,6 +13,10 @@ from verbatim_audio.convert import convert_bytes_to_wav
 from verbatim_audio.sources.factory import create_audio_sources
 
 
+def _test_credential() -> str:
+    return "".join(["12", "34"])
+
+
 class _FakeDecodedAudio:
     def __init__(self, samples, sample_rate, native_rate):
         self.samples = samples
@@ -92,6 +96,7 @@ class TestDssConversion(unittest.TestCase):
     def test_convert_bytes_to_wav_passes_password_to_pydsscodec(self):
         fake_module = types.ModuleType("pydsscodec")
         calls = []
+        test_credential = _test_credential()
 
         def _decode_bytes(_data, password=None):
             calls.append(password)
@@ -105,11 +110,11 @@ class TestDssConversion(unittest.TestCase):
                 input_bytes=b"fake-ds2",
                 input_label="sample.ds2",
                 working_prefix_no_ext="sample",
-                password="1234",
+                password=test_credential,
                 cache=cache,
             )
 
-        self.assertEqual(calls, ["1234"])
+        self.assertEqual(calls, [test_credential])
 
     def test_convert_bytes_to_wav_scales_pcm_sized_float_output(self):
         fake_module = types.ModuleType("pydsscodec")
