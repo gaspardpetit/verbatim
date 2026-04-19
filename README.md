@@ -8,6 +8,8 @@ For high quality multilingual speech to text.
 
 Verbatim uses VTTM (YAML with embedded RTTM) as the primary diarization handoff. If you provide an RTTM, it will be wrapped into VTTM internally. Pyannote-based diarization/separation is optional; install with `pip install verbatim[diarization]` when you need those backends. Senko-based diarization is also optional and is particularly interesting on Apple Silicon when the server keeps the diarizer warm between requests.
 
+Olympus `.dss` and `.ds2` dictation files are supported through the optional `pydsscodec` backend. Install `pip install "verbatim[dss]"` when you need those formats.
+
 For a broader side-by-side benchmark on the Air France bilingual sample, including Whisper, Qwen, and Verbatim variants and VibeVoice-ASR, see [Air France Comparison](doc/airfrance-comparison.md).
 
 # Installation
@@ -59,6 +61,9 @@ pip install "verbatim[mlx]"
 # Pyannote diarization / separation
 pip install "verbatim[diarization]"
 
+# Olympus DSS / DS2 dictation files
+pip install "verbatim[dss]"
+
 # AST-backed non-speech classification for long skipped regions
 pip install "verbatim[mms_lid]"
 ```
@@ -71,6 +76,13 @@ uv pip install -e ".[qwen,mms_lid]"
 Install Senko separately when you want the optional Senko diarization backend:
 ```bash
 uv pip install "git+https://github.com/narcotic-sh/senko.git"
+```
+
+Encrypted DS2 files can be opened with `password:` in a YAML/JSON config file or the `VERBATIM_DSS_PASSWORD` environment variable. A `--password` switch is also available, but it is less safe because it can leak secrets via shell history and process listings.
+
+Recommended:
+```bash
+VERBATIM_DSS_PASSWORD=1234 verbatim recording.ds2 --txt
 ```
 
 When using a Senko build that supports in-memory diarization, Verbatim can also run Senko without a working directory by feeding cached 16kHz mono samples directly into the diarizer. This is useful for server deployments that must avoid writing intermediate files.
@@ -129,6 +141,11 @@ verbatim audio_file.mp3 -o ./output/
 Batch transcription
 ```bash
 verbatim-batch --batch-dir ./audio --match "*.wav" "*.mp3" --recursive --skip-existing --txt
+```
+
+Batch transcription including Olympus dictation files
+```bash
+verbatim-batch --batch-dir ./audio --match "*.wav" "*.mp3" "*.dss" "*.ds2" --recursive --skip-existing --txt
 ```
 
 Backend selection examples

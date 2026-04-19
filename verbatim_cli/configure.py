@@ -85,6 +85,7 @@ def make_source_config(args, speakers: Optional[int]) -> SourceConfig:
         isolate=args.isolate,
         diarize_strategy=args.diarize_policy or args.diarize,
         speakers=speakers,
+        password=getattr(args, "password", None) or os.getenv("VERBATIM_DSS_PASSWORD"),
         diarization_file=args.diarization,
         vttm_file=vttm_path,
     )
