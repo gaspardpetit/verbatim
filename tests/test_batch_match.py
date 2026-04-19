@@ -25,9 +25,23 @@ class TestBatchMatch(unittest.TestCase):
             kept.write_bytes(b"dss")
             skipped.write_bytes(b"ds2")
 
-            filtered = filter_input_files([kept, skipped], ["skip.*"])
+            filtered = filter_input_files([kept, skipped], ["skip.*"], batch_dir=base)
 
         self.assertEqual([path.name for path in filtered], ["keep.dss"])
+
+    def test_filter_input_files_applies_ignore_patterns_by_relative_path(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            nested_dir = base / "archive"
+            nested_dir.mkdir()
+            kept = base / "keep.ds2"
+            skipped = nested_dir / "skip.dss"
+            kept.write_bytes(b"ds2")
+            skipped.write_bytes(b"dss")
+
+            filtered = filter_input_files([kept, skipped], ["archive/*"], batch_dir=base)
+
+        self.assertEqual([path.name for path in filtered], ["keep.ds2"])
 
 
 if __name__ == "__main__":

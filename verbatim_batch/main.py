@@ -32,11 +32,21 @@ def iter_input_files(batch_dir: Path, patterns: Iterable[str], recursive: bool) 
     return sorted({p.resolve() for p in files if p.is_file()})
 
 
-def filter_input_files(inputs: Iterable[Path], ignore_patterns: Iterable[str]) -> List[Path]:
+def filter_input_files(inputs: Iterable[Path], ignore_patterns: Iterable[str], *, batch_dir: Path) -> List[Path]:
     ignored = [pattern for pattern in ignore_patterns if pattern]
     if not ignored:
         return list(inputs)
-    return [p for p in inputs if not any(fnmatch(p.name, pattern) for pattern in ignored)]
+
+    kept: List[Path] = []
+    for path in inputs:
+        try:
+            relative_name = path.relative_to(batch_dir).as_posix()
+        except ValueError:
+            relative_name = path.as_posix()
+        if any(fnmatch(relative_name, pattern) or fnmatch(path.name, pattern) for pattern in ignored):
+            continue
+        kept.append(path)
+    return kept
 
 
 def build_batch_parser() -> argparse.ArgumentParser:
@@ -116,7 +126,7 @@ def main():
     include_patterns = args.match
     inputs = iter_input_files(batch_dir, include_patterns, args.recursive)
     if args.ignore:
-        inputs = filter_input_files(inputs, args.ignore)
+        inputs = filter_input_files(inputs, args.ignore, batch_dir=batch_dir)
     if not inputs:
         LOG.info("No input files found under %s with patterns %s", batch_dir, include_patterns)
         return
