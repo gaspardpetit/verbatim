@@ -17,7 +17,7 @@ from verbatim_files.rttm import Segment, dumps_rttm, rttm_to_vttm
 from verbatim_files.vttm import AudioRef, dumps_vttm, loads_vttm, normalize_channel_spec
 
 from ..audio import samples_to_seconds, timestr_to_samples
-from ..convert import convert_bytes_to_wav
+from ..convert import convert_bytes_to_wav, is_dss_path
 from .audiosource import AudioSource
 from .sourceconfig import SourceConfig
 
@@ -469,7 +469,24 @@ def create_audio_sources(
 
     preserve_for_diarization = source_config.diarize_strategy is not None or source_config.vttm_file is not None
 
-    if os.path.splitext(input_source)[-1] != ".wav":
+    input_ext = os.path.splitext(input_source)[-1].lower()
+    if input_ext != ".wav":
+        if is_dss_path(input_source):
+            input_bytes = cache.get_bytes(input_source)
+            if not input_bytes:
+                raise RuntimeError(f"Cached bytes missing for input '{input_source}'. Populate the artifact cache before invoking the CLI.")
+            if status_hook is not None:
+                status_hook(StatusUpdate(state="converting"))
+            input_source = convert_bytes_to_wav(
+                input_bytes=input_bytes,
+                input_label=input_source,
+                working_prefix_no_ext=working_prefix_no_ext,
+                preserve_channels=preserve_for_diarization,
+                password=source_config.password,
+                cache=cache,
+            )
+            input_ext = os.path.splitext(input_source)[-1].lower()
+
         if not (not stream and (source_config.isolate is not None or preserve_for_diarization)):
             input_bytes = cache.get_bytes(input_source)
             if not input_bytes:
@@ -496,6 +513,7 @@ def create_audio_sources(
             input_label=input_source,
             working_prefix_no_ext=working_prefix_no_ext,
             preserve_channels=preserve_for_diarization,
+            password=source_config.password,
             cache=cache,
         )
 
@@ -625,6 +643,7 @@ def create_audio_sources(
                     input_label=file_path,
                     working_prefix_no_ext=f"{working_prefix_no_ext}-{audio_ref.id}",
                     preserve_channels=True,
+                    password=source_config.password,
                     cache=cache,
                 )
             diarization_obj = source_config.diarization if isinstance(source_config.diarization, RTTMAnnotation) else None
@@ -639,6 +658,7 @@ def create_audio_sources(
                     preserve_channels=False,
                     channel_indices=channel_indices or None,
                     file_id=audio_ref.id,
+                    password=source_config.password,
                     source_backend="cache" if file_path != input_source or source_config.isolate is None else "path",
                 )
             )
@@ -652,6 +672,7 @@ def create_audio_sources(
             end_sample=stop_sample,
             diarization=source_config.diarization,
             preserve_channels=False,
+            password=source_config.password,
             source_backend="path" if source_config.isolate is not None else "cache",
         )
     ]
@@ -683,6 +704,7 @@ def create_joint_speaker_sources(
             input_label=input_source,
             working_prefix_no_ext=working_prefix_no_ext,
             preserve_channels=True,
+            password=source_config.password,
             cache=cache,
         )
         return create_joint_speaker_sources(
@@ -725,6 +747,7 @@ def create_joint_speaker_sources(
             diarization=annotation,
             start_sample=start_sample,
             end_sample=stop_sample,
+            password=source_config.password,
             source_backend="cache",
         )
     ]

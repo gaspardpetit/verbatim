@@ -18,7 +18,7 @@ Annotation = object  # pylint: disable=invalid-name
 
 LOG = logging.getLogger(__name__)
 
-COMPATIBLE_FORMATS = [".mp3", ".m4a", ".wav"]
+COMPATIBLE_FORMATS = [".dss", ".ds2", ".mp3", ".m4a", ".wav"]
 
 
 class FileAudioStream(AudioStream):
@@ -166,6 +166,7 @@ class FileAudioSource(AudioSource):
             input_label=self.file_path,
             working_prefix_no_ext=file_path_no_ext,
             preserve_channels=self.preserve_channels,
+            password=self.password,
             cache=self.cache,
         )
 
@@ -175,6 +176,7 @@ class FileAudioSource(AudioSource):
             input_path=self.file_path,
             working_prefix_no_ext=file_path_no_ext,
             preserve_channels=self.preserve_channels,
+            password=self.password,
             cache=self.cache,
         )
 
@@ -189,6 +191,7 @@ class FileAudioSource(AudioSource):
             working_prefix_no_ext=file_path_no_ext,
             output_path=self._normalized_wav_path(file_path_no_ext),
             preserve_channels=self.preserve_channels,
+            password=self.password,
             cache=self.cache,
         )
 
@@ -201,6 +204,7 @@ class FileAudioSource(AudioSource):
             working_prefix_no_ext=file_path_no_ext,
             output_path=self._normalized_wav_path(file_path_no_ext),
             preserve_channels=self.preserve_channels,
+            password=self.password,
             cache=self.cache,
         )
 
@@ -231,6 +235,7 @@ class FileAudioSource(AudioSource):
         preserve_channels: bool = False,
         channel_indices: Optional[list[int]] = None,
         file_id: Optional[str] = None,
+        password: Optional[str] = None,
         source_backend: Literal["cache", "path"] = "cache",
     ):
         super().__init__(source_name=file)
@@ -240,6 +245,7 @@ class FileAudioSource(AudioSource):
         self.channel_indices = channel_indices
         self.file_id = file_id
         self.preserve_channels = preserve_channels
+        self.password = password
         self.source_backend = source_backend
         file_path_no_ext, file_path_ext = os.path.splitext(self.file_path)
         file_path_ext = file_path_ext.lower()

@@ -2,6 +2,7 @@ import argparse
 import logging
 import sys
 from argparse import Namespace
+from fnmatch import fnmatch
 from pathlib import Path
 from typing import Iterable, List
 
@@ -29,6 +30,23 @@ def iter_input_files(batch_dir: Path, patterns: Iterable[str], recursive: bool) 
             files.extend(batch_dir.glob(pattern))
     # Deduplicate and sort for determinism
     return sorted({p.resolve() for p in files if p.is_file()})
+
+
+def filter_input_files(inputs: Iterable[Path], ignore_patterns: Iterable[str], *, batch_dir: Path) -> List[Path]:
+    ignored = [pattern for pattern in ignore_patterns if pattern]
+    if not ignored:
+        return list(inputs)
+
+    kept: List[Path] = []
+    for path in inputs:
+        try:
+            relative_name = path.relative_to(batch_dir).as_posix()
+        except ValueError:
+            relative_name = path.as_posix()
+        if any(fnmatch(relative_name, pattern) or fnmatch(path.name, pattern) for pattern in ignored):
+            continue
+        kept.append(path)
+    return kept
 
 
 def build_batch_parser() -> argparse.ArgumentParser:
@@ -105,25 +123,12 @@ def main():
     if not batch_dir.exists():
         parser.error(f"Batch directory does not exist: {batch_dir}")
 
-    from verbatim_cli.config_file import DEFAULT_MATCH
-
-    include_patterns = DEFAULT_MATCH
+    include_patterns = args.match
     inputs = iter_input_files(batch_dir, include_patterns, args.recursive)
-    user_match_filter = args.match if args.match and args.match != DEFAULT_MATCH else None
-    if user_match_filter:
-        inputs = [p for p in inputs if any(p.match(pattern) for pattern in user_match_filter)]
     if args.ignore:
-        inputs = [p for p in inputs if not any(p.match(pattern) for pattern in args.ignore)]
+        inputs = filter_input_files(inputs, args.ignore, batch_dir=batch_dir)
     if not inputs:
-        if user_match_filter:
-            LOG.info(
-                "No input files found under %s with default patterns %s and match filter %s",
-                batch_dir,
-                DEFAULT_MATCH,
-                user_match_filter,
-            )
-        else:
-            LOG.info("No input files found under %s with patterns %s", batch_dir, DEFAULT_MATCH)
+        LOG.info("No input files found under %s with patterns %s", batch_dir, include_patterns)
         return
 
     LOG.info("Found %d input files to process", len(inputs))

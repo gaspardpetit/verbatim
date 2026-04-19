@@ -152,6 +152,14 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
     )
     parser.add_argument("--config", help="Path to YAML or JSON config file for defaults")
     parser.add_argument(
+        "--password",
+        default=None,
+        help=(
+            "Password for encrypted DSS/DS2 input. Less safe than env/config because it can leak via shell history or process listings; "
+            "prefer VERBATIM_DSS_PASSWORD or a config file."
+        ),
+    )
+    parser.add_argument(
         "--install",
         action="store_true",
         help="Prefetch commonly used models into the cache and exit",
