@@ -77,7 +77,13 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
     parser.add_argument("--cpu", action="store_true", help="Toggle CPU usage")
     parser.add_argument("-s", "--stream", action="store_true", help="Set mode to low latency streaming")
     parser.add_argument("--offline", action="store_true", help="Disallow any network/model downloads; use cache only")
-    parser.add_argument("--modeldir", default=None, help="Deterministic model/cache directory for models and downloads")
+    parser.add_argument(
+        "--modeldir",
+        "--model-cache",
+        dest="modeldir",
+        default=None,
+        help="Deterministic model/cache directory for models and downloads",
+    )
     parser.add_argument(
         "--asr-model",
         default=None,

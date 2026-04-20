@@ -217,6 +217,11 @@ class TestEnvConfig(unittest.TestCase):
         self.assertEqual(config.ast_audio_model_size, "acme/noise-model")
         self.assertFalse(config.code_switching)
 
+    def test_legacy_model_cache_alias_maps_to_modeldir(self):
+        _parser, _base_defaults, args = self._build_args(["input.wav", "--model-cache", "D:/models"])
+
+        self.assertEqual(args.modeldir, "D:/models")
+
     def test_cli_beats_env_for_vad_and_noise_knobs(self):
         _parser, base_defaults, user_args = self._build_args(
             [
