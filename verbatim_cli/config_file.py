@@ -14,6 +14,18 @@ from verbatim_files.format.writer import LanguageStyle, ProbabilityStyle, Speake
 
 OUTPUT_FLAGS = ("ass", "docx", "txt", "json", "jsonl", "md")
 DEFAULT_MATCH = ["*.wav", "*.mp3", "*.m4a", "*.mp4"]
+# Temporary legacy config warning shim. Remove on the next minor-version cleanup.
+LEGACY_CONFIG_KEY_RENAMES = {
+    "transcriber_backend": "asr_backend",
+    "language_identifier_backend": "language_backend",
+    "mms_lid_model_size": "language_model",
+    "non_speech_backend": "vad_backend",
+    "ast_audio_model_size": "noise_model",
+    "whisper_model": "asr_model",
+    "whisper_model_size": "asr_model",
+    "voxtral_model": "asr_model",
+    "voxtral_model_size": "asr_model",
+}
 
 
 def load_config_file(path: str) -> Dict[str, Any]:
@@ -74,6 +86,24 @@ def _flatten_format(format_section: Dict[str, Any]) -> Dict[str, Any]:
 def flatten_profile(profile: Dict[str, Any]) -> Dict[str, Any]:
     flat: Dict[str, Any] = {}
     for key, val in profile.items():
+        if key == "asr_backend":
+            flat["asr_backend"] = val
+            continue
+        if key == "language_model":
+            flat["language_model"] = val
+            continue
+        if key == "language_backend":
+            flat["language_backend"] = val
+            continue
+        if key == "vad_backend":
+            flat["vad_backend"] = val
+            continue
+        if key == "noise_model":
+            flat["noise_model"] = val
+            continue
+        if key == "asr_model":
+            flat["asr_model"] = val
+            continue
         if key == "match":
             if isinstance(val, dict):
                 filenames = val.get("filename")
@@ -100,6 +130,23 @@ def flatten_profile(profile: Dict[str, Any]) -> Dict[str, Any]:
             continue
         flat[key] = val
     return _normalize_styles(flat)
+
+
+def find_legacy_config_keys(config_data: Any, *, _prefix: str = "") -> list[tuple[str, str]]:
+    findings: list[tuple[str, str]] = []
+    if isinstance(config_data, dict):
+        for key, value in config_data.items():
+            path = f"{_prefix}.{key}" if _prefix else key
+            replacement = LEGACY_CONFIG_KEY_RENAMES.get(key)
+            if replacement:
+                findings.append((path, replacement))
+            findings.extend(find_legacy_config_keys(value, _prefix=path))
+        return findings
+    if isinstance(config_data, list):
+        for index, value in enumerate(config_data):
+            path = f"{_prefix}[{index}]" if _prefix else f"[{index}]"
+            findings.extend(find_legacy_config_keys(value, _prefix=path))
+    return findings
 
 
 def _match_profile(profile: Dict[str, Any], filename: Optional[str]) -> bool:

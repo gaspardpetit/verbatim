@@ -48,7 +48,7 @@ class TestDssPasswordConfig(unittest.TestCase):
             vttm=None,
         )
 
-        with patch.dict(os.environ, {"VERBATIM_DSS_PASSWORD": env_value}, clear=False):
+        with patch.dict(os.environ, {"VERBATIM_AUDIO_PASSWORD": env_value}, clear=False):
             source_config = make_source_config(args, speakers=None)
 
         self.assertEqual(source_config.password, env_value)

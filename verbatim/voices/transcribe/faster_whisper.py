@@ -29,7 +29,7 @@ class FasterWhisperTranscriber(Transcriber):
             whisper_temperatures = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
 
         # Configure cache root and offline mode from environment
-        cache_root = os.getenv("VERBATIM_MODEL_CACHE")
+        cache_root = os.getenv("VERBATIM_MODELDIR")
         download_root = os.path.join(cache_root, "faster-whisper") if cache_root else None
         offline_env = os.getenv("VERBATIM_OFFLINE", "0").lower() in ("1", "true", "yes")
 

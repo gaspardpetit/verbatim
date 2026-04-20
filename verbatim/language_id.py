@@ -6,6 +6,7 @@ from numpy.typing import NDArray
 
 from .config import Config
 from .languages import normalize_language
+from .model_cache import build_transformers_load_kwargs, prefetch_hf_snapshot, resolve_hf_snapshot_path
 
 LOG = logging.getLogger(__name__)
 
@@ -45,8 +46,13 @@ class MmsLanguageIdentifier:
         else:
             torch_device = "cpu"
 
-        self._feature_extractor: Any = AutoFeatureExtractor.from_pretrained(model_size_or_path)  # nosec B615
-        self._model: Any = Wav2Vec2ForSequenceClassification.from_pretrained(model_size_or_path)  # nosec B615
+        resolved_model = resolve_hf_snapshot_path(
+            model_size_or_path,
+            purpose="MMS language model",
+        )
+        load_kwargs = build_transformers_load_kwargs()
+        self._feature_extractor: Any = AutoFeatureExtractor.from_pretrained(resolved_model, **load_kwargs)  # nosec B615
+        self._model: Any = Wav2Vec2ForSequenceClassification.from_pretrained(resolved_model, **load_kwargs)  # nosec B615
         self._model.to(torch_device)
         self._model.eval()
         self._device = torch_device
@@ -98,3 +104,7 @@ def create_language_identifier(config: Config, models: _TranscriberOwnerProtocol
     if backend == "mms":
         return MmsLanguageIdentifier(model_size_or_path=config.mms_lid_model_size, device=config.device)
     raise RuntimeError(f"Unsupported language_identifier_backend: {config.language_identifier_backend}")
+
+
+def prefetch_language_identifier_models(model_size_or_path: str) -> None:
+    prefetch_hf_snapshot(model_size_or_path)

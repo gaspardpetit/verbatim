@@ -73,19 +73,15 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
     )
     parser.add_argument("-v", "--verbose", action="count", default=0, help="Increase verbosity (specify multiple times for more verbosity)")
     parser.add_argument("--version", action="version", version=f"{prog} {__version__}")
+    parser.add_argument("--device", choices=["auto", "cpu", "cuda", "mps"], default="auto", help="Execution device to use")
     parser.add_argument("--cpu", action="store_true", help="Toggle CPU usage")
     parser.add_argument("-s", "--stream", action="store_true", help="Set mode to low latency streaming")
     parser.add_argument("--offline", action="store_true", help="Disallow any network/model downloads; use cache only")
-    parser.add_argument("--model-cache", default=None, help="Deterministic cache directory for models and downloads")
+    parser.add_argument("--modeldir", default=None, help="Deterministic model/cache directory for models and downloads")
     parser.add_argument(
-        "--whisper-model",
+        "--asr-model",
         default=None,
-        help="Whisper model size or path (e.g., 'large-v3' or 'nyrahealth/faster_CrisperWhisper')",
-    )
-    parser.add_argument(
-        "--voxtral-model",
-        default=None,
-        help="Voxtral model id or path (e.g., 'mistralai/Voxtral-Mini-3B-2507')",
+        help="ASR model id or path for the active ASR backend (for example Whisper or Qwen ASR).",
     )
     parser.add_argument(
         "--voxtral-max-new-tokens",
@@ -94,13 +90,14 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
         help="Maximum number of generated tokens for the Voxtral transcription backend.",
     )
     parser.add_argument(
-        "--transcriber-backend",
+        "--asr-backend",
         choices=["auto", "qwen", "qwen-asr", "voxtral"],
         default=None,
-        help="Transcription backend to use. Defaults to the standard Whisper backend when unset.",
+        help="ASR backend to use. Defaults to the standard Whisper backend when unset.",
     )
     parser.add_argument(
-        "--language-identifier-backend",
+        "--language-backend",
+        dest="language_backend",
         choices=["transcriber", "mms"],
         default=None,
         help="Language identification backend to use. 'transcriber' uses the active ASR backend; 'mms' uses facebook/mms-lid-126.",
@@ -124,12 +121,14 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
         help="Multiplicative growth factor for language detection retries (default: 2.0, clamped to >= 1.0).",
     )
     parser.add_argument(
-        "--mms-lid-model-size",
+        "--language-model",
+        dest="language_model",
         default=None,
-        help="Model id or path for the MMS language identification backend.",
+        help="Model id or path for the active language identification backend.",
     )
     parser.add_argument(
-        "--non-speech-backend",
+        "--non-vad-backend",
+        dest="vad_backend",
         choices=["energy", "ast"],
         default=None,
         help=(
@@ -139,9 +138,10 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
         ),
     )
     parser.add_argument(
-        "--ast-audio-model-size",
+        "--noise-model",
+        dest="noise_model",
         default=None,
-        help="Model id or path for the AST non-speech classification backend.",
+        help="Model id or path for the active noise/non-speech classification backend.",
     )
     parser.add_argument(
         "--code-switching",
@@ -156,13 +156,13 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
         default=None,
         help=(
             "Password for encrypted DSS/DS2 input. Less safe than env/config because it can leak via shell history or process listings; "
-            "prefer VERBATIM_DSS_PASSWORD or a config file."
+            "prefer VERBATIM_AUDIO_PASSWORD or a config file."
         ),
     )
     parser.add_argument(
         "--install",
         action="store_true",
-        help="Prefetch commonly used models into the cache and exit",
+        help="Prefetch the models required by the current effective configuration into the cache and exit",
     )
     parser.add_argument(
         "-w",

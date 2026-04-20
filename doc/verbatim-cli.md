@@ -49,6 +49,7 @@ If no input file is provided, Verbatim expects input from stdin or can use the m
 - `--md`: Enable Markdown output
 
 #### Performance & Debugging
+- `--device <auto|cpu|cuda|mps>`: Select the execution device explicitly
 - `--cpu`: Force CPU usage
 - `-s, --stream`: Enable low latency streaming mode
 - `-v, --verbose`: Increase verbosity (use multiple times for more detail)
@@ -93,6 +94,11 @@ verbatim input.wav --md --json --docx
 ### Adjusting Processing Performance
 ```
 verbatim input.wav -b 12 --cpu
+```
+
+### Select Device Explicitly
+```
+verbatim input.wav --device cuda
 ```
 
 ## Exit Codes

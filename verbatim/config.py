@@ -229,13 +229,33 @@ class Config:
 
         return "cpu"
 
+    @staticmethod
+    def is_device_supported(device: str) -> bool:
+        # pylint: disable=import-outside-toplevel
+        import torch
+
+        if device == "cpu":
+            return True
+        if device == "cuda":
+            return bool(torch.cuda.is_available())
+        if device == "mps":
+            return bool(platform.processor() == "arm" and platform.system() == "Darwin" and torch.backends.mps.is_available())
+        return False
+
     def configure_device(self, device: str) -> "Config":
-        # Configure device
         if device == "auto":
             self.device = Config.detect_device()
+        else:
+            if device not in ("cpu", "cuda", "mps"):
+                raise RuntimeError(f"Unsupported device '{device}'. Expected one of: auto, cpu, cuda, mps.")
+            if not Config.is_device_supported(device):
+                raise RuntimeError(f"Requested device '{device}' is not available on this system.")
+            self.device = device
 
         if self.device != "cuda":
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Set CUDA_VISIBLE_DEVICES to -1 to force CPU
+        elif os.environ.get("CUDA_VISIBLE_DEVICES") == "-1":
+            del os.environ["CUDA_VISIBLE_DEVICES"]
 
         if self.device == "cuda":
             STATUS_LOG.info("Using GPU (CUDA)")
@@ -296,7 +316,7 @@ class Config:
 
         - Sets environment variables that major libs honor:
           HF_HOME/HUGGINGFACE_HUB_CACHE for Hugging Face, and a project-specific
-          VERBATIM_MODEL_CACHE and VERBATIM_OFFLINE.
+          VERBATIM_MODELDIR and VERBATIM_OFFLINE.
         - Creates directories if they do not exist.
         """
         # Offline toggle
@@ -332,7 +352,7 @@ class Config:
                 return self
 
             # Root is usable; set env and create subdirs guardedly
-            os.environ["VERBATIM_MODEL_CACHE"] = model_cache_dir
+            os.environ["VERBATIM_MODELDIR"] = model_cache_dir
 
             # XDG cache root influences many libs (incl. whisper default cache path)
             try:
@@ -350,6 +370,13 @@ class Config:
                 os.environ.setdefault("HUGGINGFACE_HUB_CACHE", os.path.join(hf_home, "hub"))
             except OSError:
                 LOG.warning(f"Could not prepare Hugging Face cache under {model_cache_dir}")
+
+            try:
+                pyannote_cache = os.path.join(model_cache_dir, "pyannote")
+                os.makedirs(pyannote_cache, exist_ok=True)
+                os.environ["PYANNOTE_CACHE"] = pyannote_cache
+            except OSError:
+                LOG.warning(f"Could not prepare pyannote cache under {model_cache_dir}")
 
         return self
 

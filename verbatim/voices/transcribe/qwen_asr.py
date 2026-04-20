@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import contextmanager
 from time import perf_counter
 from typing import Any, Dict, List, Optional, Tuple
@@ -6,6 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from numpy.typing import NDArray
 
 from verbatim.languages import normalize_language
+from verbatim.model_cache import get_hf_cache_dir, is_offline_mode, prefetch_hf_snapshot, resolve_hf_snapshot_path
 from verbatim_audio.audio import samples_to_seconds
 
 from ...transcript.words import Word
@@ -80,16 +82,34 @@ class QwenAsrTranscriber(Transcriber):
         else:
             device_map = "cpu"
 
+        offline_env = is_offline_mode()
+        hf_cache_dir = get_hf_cache_dir()
+        resolved_model = resolve_hf_snapshot_path(
+            model_size_or_path,
+            purpose="Qwen ASR model",
+            cache_dir=hf_cache_dir,
+            offline=offline_env,
+        )
+        resolved_aligner = resolve_hf_snapshot_path(
+            aligner_model_size_or_path,
+            purpose="Qwen forced aligner",
+            cache_dir=hf_cache_dir,
+            offline=offline_env,
+        )
         with self._suppress_transformers_generation_warnings():
             self._model = Qwen3ASRModel.from_pretrained(
-                model_size_or_path,
+                resolved_model,
                 dtype=qwen_dtype,
                 device_map=device_map,
-                forced_aligner=aligner_model_size_or_path,
+                forced_aligner=resolved_aligner,
                 forced_aligner_kwargs={
                     "dtype": qwen_dtype,
                     "device_map": device_map,
+                    "local_files_only": offline_env,
+                    "cache_dir": hf_cache_dir,
                 },
+                local_files_only=offline_env,
+                cache_dir=hf_cache_dir,
                 max_inference_batch_size=max_inference_batch_size,
                 max_new_tokens=max_new_tokens,
             )
@@ -404,3 +424,10 @@ class QwenAsrTranscriber(Transcriber):
         )
 
         return transcript_words
+
+
+def prefetch_qwen_models(*, model_size_or_path: str, aligner_model_size_or_path: str) -> None:
+    if not os.path.exists(os.path.expanduser(model_size_or_path)):
+        prefetch_hf_snapshot(model_size_or_path)
+    if not os.path.exists(os.path.expanduser(aligner_model_size_or_path)):
+        prefetch_hf_snapshot(aligner_model_size_or_path)

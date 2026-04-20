@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from time import perf_counter
 from typing import List
 
+from verbatim.model_cache import build_transformers_load_kwargs, prefetch_hf_snapshot, resolve_hf_snapshot_path
 from verbatim.transcript.words import Word
 from verbatim_audio.audio import samples_to_seconds
 
@@ -53,12 +54,24 @@ class FastSentenceTokenizer(SentenceTokenizer):
 
 
 class SaTSentenceTokenizer(SentenceTokenizer):
-    def __init__(self, device: str, model="sat-3l-sm"):
+    def __init__(self, device: str, model="sat-3l-sm", tokenizer_name_or_path: str = "facebookAI/xlm-roberta-base"):
         LOG.debug("Lazy-loading SaT Sentence Tokenizer (model=%s)", model)
         start = perf_counter()
         from wtpsplit import SaT  # pylint: disable=import-outside-toplevel
 
-        self.sat_sm = SaT(model)
+        resolved_model = resolve_hf_snapshot_path(
+            f"segment-any-text/{model}" if "/" not in model and not re.search(r"[\\/]", model) else model,
+            purpose="sentence tokenizer model",
+        )
+        resolved_tokenizer = resolve_hf_snapshot_path(
+            tokenizer_name_or_path,
+            purpose="sentence tokenizer tokenizer",
+        )
+        self.sat_sm = SaT(
+            resolved_model,
+            tokenizer_name_or_path=resolved_tokenizer,
+            from_pretrained_kwargs=build_transformers_load_kwargs(),
+        )
         self.sat_sm.half().to(device)
         LOG.debug("SaT Sentence Tokenizer ready in %.2fs", perf_counter() - start)
 
@@ -174,3 +187,11 @@ class BoundedSentenceTokenizer(SentenceTokenizer):
             return tok
 
         return self.bounding_tokenizer.split(words=words)
+
+
+def prefetch_sentence_tokenizer_models(*, model_name_or_path: str = "sat-3l-sm", tokenizer_name_or_path: str = "facebookAI/xlm-roberta-base") -> None:
+    repo_id = model_name_or_path
+    if "/" not in repo_id and not re.search(r"[\\/]", repo_id):
+        repo_id = f"segment-any-text/{repo_id}"
+    prefetch_hf_snapshot(repo_id)
+    prefetch_hf_snapshot(tokenizer_name_or_path)

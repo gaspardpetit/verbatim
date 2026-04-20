@@ -8,12 +8,15 @@ from typing import Iterable, List
 
 # pylint: disable=import-outside-toplevel
 from verbatim_cli.args import add_shared_arguments
-from verbatim_cli.config_file import load_config_file, merge_args, select_profile
+from verbatim_cli.config_file import find_legacy_config_keys, load_config_file, merge_args, select_profile
 from verbatim_cli.configure import (
+    apply_env_defaults,
     build_output_formats,
     build_prefixes,
-    compute_log_level,
     make_config,
+    make_source_config,
+    resolve_log_level,
+    resolve_speakers,
 )
 from verbatim_cli.env import load_env_file
 from verbatim_cli.run_single import run_single_input
@@ -82,10 +85,58 @@ def outputs_exist(output_prefix_no_ext: str, output_formats: List[str]) -> bool:
     return False
 
 
+def _install_target_key(config, source_config) -> tuple:
+    return (
+        config.model_cache_dir,
+        config.stream,
+        config.transcriber_backend,
+        config.whisper_model_size,
+        config.qwen_asr_model_size,
+        config.qwen_aligner_model_size,
+        config.voxtral_model_size,
+        config.language_identifier_backend,
+        config.mms_lid_model_size,
+        config.non_speech_backend,
+        config.ast_audio_model_size,
+        source_config.diarize_strategy,
+        source_config.isolate,
+    )
+
+
+def collect_install_targets(
+    *,
+    base_defaults: Namespace,
+    user_args: Namespace,
+    cfg_data: dict,
+    global_profile: dict,
+    inputs: Iterable[Path],
+) -> list[tuple]:
+    targets = []
+    seen: set[tuple] = set()
+    candidate_args = [merge_args(base_defaults, global_profile, user_args)]
+    for source_path in inputs:
+        profile = select_profile(cfg_data, filename=str(source_path))
+        candidate_args.append(merge_args(base_defaults, {**global_profile, **profile}, user_args))
+
+    for candidate in candidate_args:
+        resolved_args = apply_env_defaults(candidate, base_defaults)
+        speakers = resolve_speakers(resolved_args)
+        config = make_config(resolved_args)
+        source_config = make_source_config(resolved_args, speakers=speakers)
+        key = _install_target_key(config, source_config)
+        if key in seen:
+            continue
+        seen.add(key)
+        targets.append((config, source_config))
+    return targets
+
+
 def main():
     parser = build_batch_parser()
     base_defaults: Namespace = parser.parse_args([])
     user_args = parser.parse_args()
+
+    load_env_file()
 
     cfg_data = {}
     if getattr(user_args, "config", None):
@@ -93,8 +144,9 @@ def main():
 
     global_profile = select_profile(cfg_data, filename=None)
     args = merge_args(base_defaults, global_profile, user_args)
+    args = apply_env_defaults(args, base_defaults)
 
-    log_level = compute_log_level(args.verbose)
+    log_level = resolve_log_level(args, base_defaults)
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
     logging.basicConfig(
@@ -104,18 +156,15 @@ def main():
         datefmt="%Y-%m-%dT%H:%M:%SZ",
     )
 
-    load_env_file()
-
-    # Handle install-only mode
-    if args.install:
-        LOG.info("Installing/prefetching models into cache...")
-        from verbatim.prefetch import prefetch
-
-        # Use default whisper model size from a temporary config
-        cfg = make_config(args)
-        prefetch(model_cache_dir=args.model_cache, whisper_size=cfg.whisper_model_size)
-        LOG.info("Model prefetch complete.")
-        return
+    if cfg_data and getattr(user_args, "config", None):
+        for path, replacement in find_legacy_config_keys(cfg_data):
+            LOG.warning(
+                "Config file %s uses deprecated key '%s'; use '%s' instead. "
+                "This warning shim will be removed in the next minor version bump.",
+                user_args.config,
+                path,
+                replacement,
+            )
 
     if not args.batch_dir:
         parser.error("Batch directory must be specified via --batch-dir or config file")
@@ -127,6 +176,23 @@ def main():
     inputs = iter_input_files(batch_dir, include_patterns, args.recursive)
     if args.ignore:
         inputs = filter_input_files(inputs, args.ignore, batch_dir=batch_dir)
+
+    # Handle install-only mode
+    if args.install:
+        LOG.info("Installing/prefetching models into cache...")
+        from verbatim.prefetch import prefetch
+
+        install_targets = collect_install_targets(
+            base_defaults=base_defaults,
+            user_args=user_args,
+            cfg_data=cfg_data,
+            global_profile=global_profile,
+            inputs=inputs,
+        )
+        for config, source_config in install_targets:
+            prefetch(config=config, source_config=source_config)
+        LOG.info("Model prefetch complete for %d effective batch configuration(s).", len(install_targets))
+        return
     if not inputs:
         LOG.info("No input files found under %s with patterns %s", batch_dir, include_patterns)
         return
@@ -138,6 +204,7 @@ def main():
 
         profile = select_profile(cfg_data, filename=source_path)
         file_args = merge_args(base_defaults, {**global_profile, **profile}, user_args)
+        file_args = apply_env_defaults(file_args, base_defaults)
 
         config = make_config(file_args)
         output_formats = build_output_formats(file_args, default_stdout=False)

@@ -3,16 +3,30 @@ import os
 import platform
 import re
 import sys
+from dataclasses import dataclass
 from typing import Optional
 
-# pylint: disable=broad-exception-caught
-
-# Note on import order:
-# We import huggingface_hub inside prefetch() after applying cache/offline env so that
-# the library picks up VERBATIM/HF_* cache dirs. Importing at module level would make
-# it stick to the user's default ~/.cache path.
+from verbatim.config import Config
+from verbatim_audio.sources.sourceconfig import SourceConfig
 
 LOG = logging.getLogger(__name__)
+
+DEFAULT_SENTENCE_TOKENIZER_MODEL = "sat-3l-sm"
+DEFAULT_SENTENCE_TOKENIZER_TOKENIZER = "facebookAI/xlm-roberta-base"
+
+
+@dataclass
+class InstallRequirements:
+    include_sat: bool = False
+    include_mms_language_model: bool = False
+    include_ast_noise_model: bool = False
+    include_faster_whisper: bool = False
+    include_mlx_whisper: bool = False
+    include_qwen_asr: bool = False
+    include_voxtral: bool = False
+    include_pyannote_diarization: bool = False
+    include_pyannote_separation: bool = False
+    include_isolation: bool = False
 
 
 def _bool_env(name: str, default: bool = False) -> bool:
@@ -23,27 +37,22 @@ def _bool_env(name: str, default: bool = False) -> bool:
 
 
 def apply_cache_env(model_cache_dir: Optional[str], offline: bool = False) -> None:
-    """Apply cache/offline environment variables for this process.
-
-    Mirrors Config.configure_cache without importing the full Config to avoid side effects.
-    """
+    """Apply cache/offline environment variables for this process."""
     if offline:
         os.environ["VERBATIM_OFFLINE"] = "1"
         os.environ["HF_HUB_OFFLINE"] = "1"
         os.environ["TRANSFORMERS_OFFLINE"] = "1"
     else:
-        # Prefetch requires network; make sure offline flags do not linger
         os.environ["VERBATIM_OFFLINE"] = "0"
         os.environ["HF_HUB_OFFLINE"] = "0"
         os.environ["TRANSFORMERS_OFFLINE"] = "0"
 
-    # Default to local project cache if unspecified
     if not model_cache_dir:
         model_cache_dir = os.path.join(os.getcwd(), ".verbatim")
 
     if model_cache_dir:
         os.makedirs(model_cache_dir, exist_ok=True)
-        os.environ["VERBATIM_MODEL_CACHE"] = model_cache_dir
+        os.environ["VERBATIM_MODELDIR"] = model_cache_dir
 
         xdg_cache = os.path.join(model_cache_dir, "xdg")
         os.makedirs(xdg_cache, exist_ok=True)
@@ -53,29 +62,28 @@ def apply_cache_env(model_cache_dir: Optional[str], offline: bool = False) -> No
         os.makedirs(hf_home, exist_ok=True)
         os.environ.setdefault("HF_HOME", hf_home)
         os.environ.setdefault("HUGGINGFACE_HUB_CACHE", os.path.join(hf_home, "hub"))
+
+        pyannote_cache = os.path.join(model_cache_dir, "pyannote")
+        os.makedirs(pyannote_cache, exist_ok=True)
+        os.environ["PYANNOTE_CACHE"] = pyannote_cache
     LOG.debug(
-        "Cache env: VERBATIM_MODEL_CACHE=%s HF_HOME=%s HUGGINGFACE_HUB_CACHE=%s",
-        os.getenv("VERBATIM_MODEL_CACHE"),
+        "Cache env: VERBATIM_MODELDIR=%s HF_HOME=%s HUGGINGFACE_HUB_CACHE=%s PYANNOTE_CACHE=%s",
+        os.getenv("VERBATIM_MODELDIR"),
         os.getenv("HF_HOME"),
         os.getenv("HUGGINGFACE_HUB_CACHE"),
+        os.getenv("PYANNOTE_CACHE"),
     )
 
 
 def _hf_models_dir(repo_id: str) -> str:
-    """Return the Hugging Face hub models directory name for a repo id.
-
-    Example: "org/name" -> "models--org--name"
-    """
     parts = repo_id.split("/")
     if len(parts) != 2:
-        # Best-effort; fallback to replacing separators
         safe = repo_id.replace("/", "--")
         return f"models--{safe}"
     return f"models--{parts[0]}--{parts[1]}"
 
 
 def _classify_whisper_model(value: str) -> str:
-    """Classify whisper model as size token, HF repo id, or local path."""
     model_kind = "size"
     if not value:
         model_kind = "unknown"
@@ -97,25 +105,13 @@ def _classify_whisper_model(value: str) -> str:
 
 
 def _resolve_hf_revision(repo_id: str, *, local_dir: Optional[str] = None) -> str:
-    """Best-effort resolution of a pinned revision for a HF repo.
-
-    Tries to read a cached commit hash from refs/main if available in either:
-      - the provided local_dir (when using snapshot_download local_dir), or
-      - the global HF cache pointed by HUGGINGFACE_HUB_CACHE/HF_HOME.
-
-    Falls back to 'main' when no hash is found. Bandit B615 accepts the presence
-    of the 'revision' argument; when available we prefer an actual SHA.
-    """
-    # Regex for 40-hex commit SHA
     sha_re = re.compile(r"^[0-9a-f]{40}$")
-
     candidates = []
     models_dirname = _hf_models_dir(repo_id)
 
     if local_dir:
         candidates.append(os.path.join(local_dir, models_dirname, "refs", "main"))
 
-    # Global hub cache (preferred path when not using local_dir)
     hub_cache = os.getenv("HUGGINGFACE_HUB_CACHE")
     if not hub_cache:
         hf_home = os.getenv("HF_HOME")
@@ -126,8 +122,8 @@ def _resolve_hf_revision(repo_id: str, *, local_dir: Optional[str] = None) -> st
 
     for ref_path in candidates:
         try:
-            with open(ref_path, "r", encoding="utf-8") as f:
-                ref = f.read().strip()
+            with open(ref_path, "r", encoding="utf-8") as handle:
+                ref = handle.read().strip()
             if sha_re.match(ref):
                 return ref
         except OSError:
@@ -136,77 +132,81 @@ def _resolve_hf_revision(repo_id: str, *, local_dir: Optional[str] = None) -> st
     return "main"
 
 
-def prefetch(
-    *,
-    model_cache_dir: Optional[str],
-    whisper_size: str = "large-v3",
-    include_pyannote: bool = True,
-    include_faster_whisper: bool = True,
-    # Defer platform checks to runtime to keep import safe on Windows
-    include_mlx_whisper: Optional[bool] = None,
-) -> None:
-    """Prefetch commonly used models into the cache.
+def _parse_diarization_requirements(source_config: SourceConfig) -> tuple[bool, bool]:
+    strategy = source_config.diarize_strategy
+    if not strategy:
+        return False, False
 
-    This function attempts to only download/copy into the provided cache directory,
-    so later runs can use --offline.
-    """
-    # Compute default for MLX Whisper lazily to avoid os.uname() at import time
-    if include_mlx_whisper is None:
-        include_mlx_whisper = sys.platform == "darwin" and platform.machine().lower() in ("arm64", "aarch64")
+    if strategy in ("pyannote", "separate"):
+        return strategy == "pyannote", strategy == "separate"
+
+    if "=" not in strategy and ";" not in strategy:
+        return False, False
+
+    try:
+        from verbatim_diarization.policy import parse_policy  # pylint: disable=import-outside-toplevel
+    except ImportError:
+        return False, False
+
+    include_pyannote = False
+    include_separate = False
+    for clause in parse_policy(strategy):
+        include_pyannote = include_pyannote or clause.strategy == "pyannote"
+        include_separate = include_separate or clause.strategy == "separate"
+    return include_pyannote, include_separate
+
+
+def collect_install_requirements(*, config: Config, source_config: SourceConfig) -> InstallRequirements:
+    requirements = InstallRequirements()
+    asr_backend = (config.transcriber_backend or "auto").lower()
+
+    if not config.stream:
+        requirements.include_sat = True
+
+    if asr_backend in ("qwen", "qwen-asr"):
+        requirements.include_qwen_asr = True
+    elif asr_backend == "voxtral":
+        requirements.include_voxtral = True
+    else:
+        requirements.include_faster_whisper = True
+        requirements.include_mlx_whisper = sys.platform == "darwin" and platform.machine().lower() in ("arm64", "aarch64")
+
+    language_backend = (config.language_identifier_backend or "transcriber").lower()
+    if language_backend == "mms" or asr_backend == "voxtral":
+        requirements.include_mms_language_model = True
+
+    if (config.non_speech_backend or "energy").lower() == "ast":
+        requirements.include_ast_noise_model = True
+
+    include_pyannote, include_separate = _parse_diarization_requirements(source_config)
+    requirements.include_pyannote_diarization = include_pyannote or include_separate
+    requirements.include_pyannote_separation = include_separate
+    requirements.include_isolation = source_config.isolate is not None
+    return requirements
+
+
+def prefetch_faster_whisper_model(*, whisper_size: str, include_mlx_whisper: bool) -> None:
+    try:  # type: ignore
+        from huggingface_hub import snapshot_download  # pylint: disable=import-outside-toplevel
+        from huggingface_hub.errors import HfHubHTTPError  # pylint: disable=import-outside-toplevel
+        from huggingface_hub.utils import LocalEntryNotFoundError  # pylint: disable=import-outside-toplevel
+    except ImportError:  # pragma: no cover
+        LOG.warning("huggingface_hub not available: cannot prefetch HF-hosted models")
+        return
 
     model_kind = _classify_whisper_model(whisper_size)
     if model_kind == "path":
-        LOG.info(
-            "Skipping whisper model prefetch for local/custom path: %s",
-            whisper_size,
-        )
-        include_mlx_whisper = False
-        include_faster_whisper = False
-    elif model_kind == "hf_repo":
-        LOG.info(
-            "Prefetching custom HF whisper repo: %s",
-            whisper_size,
-        )
-        include_mlx_whisper = False
-
-    apply_cache_env(model_cache_dir, offline=False)
-
-    # Lazy-import huggingface_hub after env is configured so it uses our cache dirs
-    # pylint: disable=import-outside-toplevel
-    try:  # type: ignore
-        from huggingface_hub import snapshot_download  # type: ignore
-        from huggingface_hub.errors import HfHubHTTPError  # type: ignore
-        from huggingface_hub.utils import LocalEntryNotFoundError  # type: ignore
-    except ImportError:  # pragma: no cover
-        snapshot_download = None  # type: ignore
-        HfHubHTTPError = Exception  # type: ignore
-        LocalEntryNotFoundError = Exception  # type: ignore
-
-    # 1) Hugging Face models via huggingface_hub
-    if snapshot_download is None:  # pragma: no cover - optional path
-        LOG.warning("huggingface_hub not available: cannot prefetch HF-hosted models")
+        LOG.info("Skipping whisper model prefetch for local/custom path: %s", whisper_size)
+        return
 
     hf_token = os.getenv("HUGGINGFACE_TOKEN")
     hub_cache = os.getenv("HUGGINGFACE_HUB_CACHE")
 
-    # Pyannote diarization/separation
-    if include_pyannote:
-        try:
-            from verbatim_diarization.prefetch import prefetch_diarization_models
-        except ImportError as exc:  # pragma: no cover - defensive
-            LOG.warning("verbatim_diarization not available; skipping diarization prefetch: %s", exc)
-        else:
-            try:
-                prefetch_diarization_models(hf_token=hf_token, cache_dir=hub_cache, offline=False)
-            except ImportError as exc:  # pragma: no cover - optional dependency missing
-                LOG.warning("pyannote not available; skipping diarization prefetch: %s", exc)
-
-    # MLX Whisper models (macOS/Apple Silicon) hosted on HF
-    if include_mlx_whisper and snapshot_download is not None:
+    if include_mlx_whisper:
         mlx_repo = f"mlx-community/whisper-{whisper_size}-mlx"
         mlx_rev = _resolve_hf_revision(mlx_repo)
         try:
-            LOG.info(f"Prefetching HF repo: {mlx_repo} (rev={mlx_rev})")
+            LOG.info("Prefetching HF repo: %s (rev=%s)", mlx_repo, mlx_rev)
             local_path = snapshot_download(  # nosec B615 - revision provided via variable
                 repo_id=mlx_repo,
                 token=hf_token,
@@ -215,56 +215,106 @@ def prefetch(
                 cache_dir=hub_cache,
             )
             LOG.info("Downloaded: %s (rev=%s) to %s", mlx_repo, mlx_rev, local_path)
-        except HfHubHTTPError as e:  # pragma: no cover
-            LOG.warning(f"Failed to prefetch {mlx_repo}: {e}")
+        except HfHubHTTPError as exc:  # pragma: no cover
+            LOG.warning("Failed to prefetch %s: %s", mlx_repo, exc)
 
-    # 2) Faster-Whisper: populate cache without heavy initialization
-    if include_faster_whisper:
+    try:
+        cache_root = os.getenv("VERBATIM_MODELDIR")
+        download_root = os.path.join(cache_root, "faster-whisper") if cache_root else None
+        fw_repo = f"Systran/faster-whisper-{whisper_size}" if model_kind != "hf_repo" else whisper_size
+        fw_rev = _resolve_hf_revision(fw_repo, local_dir=download_root)
+
+        if download_root:
+            os.makedirs(download_root, exist_ok=True)
+            try:
+                snapshot_download(  # nosec B615 - revision provided via variable
+                    repo_id=fw_repo,
+                    local_files_only=True,
+                    revision=fw_rev,
+                    cache_dir=download_root,
+                )
+                LOG.info("Already cached: faster-whisper (%s)", whisper_size)
+            except LocalEntryNotFoundError:
+                LOG.info("Prefetching faster-whisper model: %s", whisper_size)
+                local_path = snapshot_download(  # nosec B615 - revision provided via variable
+                    repo_id=fw_repo,
+                    local_files_only=False,
+                    revision=fw_rev,
+                    cache_dir=download_root,
+                )
+                LOG.info("Downloaded: %s (rev=%s) to %s", fw_repo, fw_rev, local_path)
+        else:
+            LOG.info("Prefetching faster-whisper model: %s", whisper_size)
+            local_path = snapshot_download(  # nosec B615 - revision provided via variable
+                repo_id=fw_repo,
+                local_files_only=False,
+                revision=fw_rev,
+                cache_dir=hub_cache,
+            )
+            LOG.info("Downloaded (HF cache): %s (rev=%s) to %s", fw_repo, fw_rev, local_path)
+    except (OSError, HfHubHTTPError) as exc:  # pragma: no cover
+        LOG.warning("Failed to prefetch faster-whisper %s: %s", whisper_size, exc)
+
+
+def prefetch(*, config: Config, source_config: SourceConfig) -> None:
+    """Prefetch the models required by the effective runtime configuration."""
+    apply_cache_env(config.model_cache_dir, offline=False)
+    requirements = collect_install_requirements(config=config, source_config=source_config)
+
+    if requirements.include_sat:
+        from verbatim.transcript.sentences import prefetch_sentence_tokenizer_models  # pylint: disable=import-outside-toplevel
+
+        prefetch_sentence_tokenizer_models(
+            model_name_or_path=DEFAULT_SENTENCE_TOKENIZER_MODEL,
+            tokenizer_name_or_path=DEFAULT_SENTENCE_TOKENIZER_TOKENIZER,
+        )
+
+    if requirements.include_mms_language_model:
+        from verbatim.language_id import prefetch_language_identifier_models  # pylint: disable=import-outside-toplevel
+
+        prefetch_language_identifier_models(config.mms_lid_model_size)
+
+    if requirements.include_ast_noise_model:
+        from verbatim.non_speech import prefetch_non_speech_models  # pylint: disable=import-outside-toplevel
+
+        prefetch_non_speech_models(config.ast_audio_model_size)
+
+    if requirements.include_qwen_asr:
+        from verbatim.voices.transcribe.qwen_asr import prefetch_qwen_models  # pylint: disable=import-outside-toplevel
+
+        prefetch_qwen_models(
+            model_size_or_path=config.qwen_asr_model_size,
+            aligner_model_size_or_path=config.qwen_aligner_model_size,
+        )
+
+    if requirements.include_voxtral:
+        from verbatim.voices.transcribe.voxtral import prefetch_voxtral_models  # pylint: disable=import-outside-toplevel
+
+        prefetch_voxtral_models(
+            model_size_or_path=config.voxtral_model_size,
+            aligner_model_size_or_path=config.qwen_aligner_model_size,
+        )
+
+    if requirements.include_faster_whisper:
+        prefetch_faster_whisper_model(
+            whisper_size=config.whisper_model_size,
+            include_mlx_whisper=requirements.include_mlx_whisper,
+        )
+
+    if requirements.include_pyannote_diarization or requirements.include_pyannote_separation:
         try:
-            cache_root = os.getenv("VERBATIM_MODEL_CACHE")
-            download_root = os.path.join(cache_root, "faster-whisper") if cache_root else None
-            fw_repo = f"Systran/faster-whisper-{whisper_size}" if model_kind != "hf_repo" else whisper_size
-            fw_rev = _resolve_hf_revision(fw_repo, local_dir=download_root)
+            from verbatim_diarization.prefetch import prefetch_diarization_models  # pylint: disable=import-outside-toplevel
+        except ImportError as exc:  # pragma: no cover - defensive
+            LOG.warning("verbatim_diarization not available; skipping diarization prefetch: %s", exc)
+        else:
+            prefetch_diarization_models(
+                hf_token=os.getenv("HUGGINGFACE_TOKEN"),
+                cache_dir=os.getenv("PYANNOTE_CACHE"),
+                offline=False,
+                include_separation=requirements.include_pyannote_separation,
+            )
 
-            if download_root:
-                os.makedirs(download_root, exist_ok=True)
-                if snapshot_download is not None:
-                    try:
-                        # Check if already present in the same cache layout runtime will use
-                        snapshot_download(  # nosec B615 - revision provided via variable
-                            repo_id=fw_repo,
-                            local_files_only=True,
-                            revision=fw_rev,
-                            cache_dir=download_root,
-                        )
-                        LOG.info("Already cached: faster-whisper (%s)", whisper_size)
-                    except LocalEntryNotFoundError:
-                        LOG.info(f"Prefetching faster-whisper model: {whisper_size}")
-                        # Populate download_root as a full HF cache so runtime offline lookup succeeds
-                        local_path = snapshot_download(  # nosec B615 - revision provided via variable
-                            repo_id=fw_repo,
-                            local_files_only=False,
-                            revision=fw_rev,
-                            cache_dir=download_root,
-                        )
-                        LOG.info("Downloaded: %s (rev=%s) to %s", fw_repo, fw_rev, local_path)
-            else:
-                if snapshot_download is not None:
-                    LOG.info(f"Prefetching faster-whisper model: {whisper_size}")
-                    # No specific download_root: populate global project HF cache
-                    local_path = snapshot_download(  # nosec B615 - revision provided via variable
-                        repo_id=fw_repo,
-                        local_files_only=False,
-                        revision=fw_rev,
-                        cache_dir=hub_cache,
-                    )
-                    LOG.info("Downloaded (HF cache): %s (rev=%s) to %s", fw_repo, fw_rev, local_path)
-        except (OSError, HfHubHTTPError) as e:  # pragma: no cover
-            LOG.warning(f"Failed to prefetch faster-whisper {whisper_size}: {e}")
+    if requirements.include_isolation:
+        from verbatim.voices.isolation import prefetch_isolation_model  # pylint: disable=import-outside-toplevel
 
-    # 3) Voice isolation: provide guidance; download may be manual depending on backend
-    cache_root = os.getenv("VERBATIM_MODEL_CACHE")
-    if cache_root:
-        iso_dir = os.path.join(cache_root, "audio-separator")
-        os.makedirs(iso_dir, exist_ok=True)
-        LOG.info(f"If needed, place MDX checkpoint (e.g., MDX23C-8KFFT-InstVoc_HQ_2.ckpt) under: {iso_dir} to enable offline isolation")
+        prefetch_isolation_model()

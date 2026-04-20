@@ -1,5 +1,6 @@
 import logging
 import os
+import tempfile
 from typing import Optional, Tuple
 
 import librosa
@@ -8,6 +9,7 @@ from audio_separator.separator import Separator
 from numpy.typing import NDArray
 from scipy.io.wavfile import write as wav_write
 
+from verbatim.model_cache import get_audio_separator_cache_dir, is_offline_mode
 from verbatim_audio.audio import format_audio
 
 # Configure logger
@@ -16,9 +18,11 @@ LOG = logging.getLogger(__name__)
 
 class VoiceIsolation:
     def __init__(self, log_level: int = logging.WARN, model_name: str = "MDX23C-8KFFT-InstVoc_HQ_2.ckpt"):
-        self.separator = Separator(log_level=log_level, sample_rate=16000)
-        cache_root = os.getenv("VERBATIM_MODEL_CACHE")
-        offline_env = os.getenv("VERBATIM_OFFLINE", "0").lower() in ("1", "true", "yes")
+        cache_dir = get_audio_separator_cache_dir()
+        fallback_cache_dir = os.path.join(tempfile.gettempdir(), "audio-separator-models")
+        self.separator = Separator(log_level=log_level, sample_rate=16000, model_file_dir=cache_dir or fallback_cache_dir)
+        cache_root = os.getenv("VERBATIM_MODELDIR")
+        offline_env = is_offline_mode()
 
         # If a cache is configured, prefer a cached checkpoint path under it
         model_path = model_name
@@ -90,3 +94,13 @@ class VoiceIsolation:
             formatted_voice_audio = formatted_voice_audio[:input_length]
 
         return formatted_voice_audio
+
+
+def prefetch_isolation_model(model_name: str = "MDX23C-8KFFT-InstVoc_HQ_2.ckpt") -> None:
+    cache_dir = get_audio_separator_cache_dir()
+    if not cache_dir:
+        LOG.warning("No VERBATIM_MODELDIR configured; skipping isolation model prefetch.")
+        return
+    os.makedirs(cache_dir, exist_ok=True)
+    separator = Separator(log_level=logging.WARN, sample_rate=16000, model_file_dir=cache_dir)
+    separator.download_model_files(model_name)

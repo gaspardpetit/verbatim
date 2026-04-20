@@ -5,6 +5,7 @@ from typing import Any, List, Optional, Tuple, cast
 
 from numpy.typing import NDArray
 
+from verbatim.model_cache import get_hf_cache_dir, is_offline_mode, prefetch_hf_snapshot, resolve_hf_snapshot_path
 from verbatim_audio.audio import samples_to_seconds
 
 from ...transcript.words import Word
@@ -46,22 +47,41 @@ class VoxtralTranscriber(Transcriber):
         else:
             device_map = "cpu"
 
-        offline_env = os.getenv("VERBATIM_OFFLINE", "0").lower() in ("1", "true", "yes")
+        offline_env = is_offline_mode()
+        hf_cache_dir = get_hf_cache_dir()
+        resolved_model = resolve_hf_snapshot_path(
+            model_size_or_path,
+            purpose="Voxtral ASR model",
+            cache_dir=hf_cache_dir,
+            offline=offline_env,
+        )
+        resolved_aligner = resolve_hf_snapshot_path(
+            aligner_model_size_or_path,
+            purpose="Qwen forced aligner",
+            cache_dir=hf_cache_dir,
+            offline=offline_env,
+        )
 
         self._model_size_or_path = model_size_or_path
-        self._processor: Any = VoxtralProcessor.from_pretrained(model_size_or_path, local_files_only=offline_env)  # nosec B615
+        self._processor: Any = VoxtralProcessor.from_pretrained(  # nosec B615
+            resolved_model,
+            local_files_only=offline_env,
+            cache_dir=hf_cache_dir,
+        )
         self._model: Any = VoxtralForConditionalGeneration.from_pretrained(  # nosec B615
-            model_size_or_path,
+            resolved_model,
             dtype=voxtral_dtype,
             device_map=device_map,
             low_cpu_mem_usage=True,
             local_files_only=offline_env,
+            cache_dir=hf_cache_dir,
         )
         self._aligner: Any = Qwen3ForcedAligner.from_pretrained(
-            aligner_model_size_or_path,
+            resolved_aligner,
             dtype=voxtral_dtype,
             device_map=device_map,
             local_files_only=offline_env,
+            cache_dir=hf_cache_dir,
         )
         self._device_map = device_map
         self._max_new_tokens = max_new_tokens
@@ -100,7 +120,7 @@ class VoxtralTranscriber(Transcriber):
             return lang[0], 1.0
         if not self._warned_guess_language:
             LOG.warning(
-                "Voxtral backend does not provide native language identification. Use language_identifier_backend='mms' for reliable code-switching."
+                "Voxtral backend does not provide native language identification. Use language_backend='mms' for reliable code-switching."
             )
             self._warned_guess_language = True
         return lang[0], 0.0
@@ -206,3 +226,10 @@ class VoxtralTranscriber(Transcriber):
             lang,
         )
         return transcript_words
+
+
+def prefetch_voxtral_models(*, model_size_or_path: str, aligner_model_size_or_path: str) -> None:
+    if not os.path.exists(os.path.expanduser(model_size_or_path)):
+        prefetch_hf_snapshot(model_size_or_path)
+    if not os.path.exists(os.path.expanduser(aligner_model_size_or_path)):
+        prefetch_hf_snapshot(aligner_model_size_or_path)

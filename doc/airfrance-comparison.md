@@ -33,9 +33,9 @@ The goal is to compare backend quality and the effect of Verbatim's code-switchi
   --json `
   --outdir out\airfrance_whisper_mms_naive `
   --workdir out\airfrance_whisper_mms_naive_work `
-  --transcriber-backend auto `
-  --language-identifier-backend mms `
-  --mms-lid-model-size facebook/mms-lid-126 `
+  --asr-backend auto `
+  --language-backend mms `
+  --language-model facebook/mms-lid-126 `
   --log-file out\airfrance_whisper_mms_naive_clean.log
 ```
 
@@ -51,9 +51,9 @@ The goal is to compare backend quality and the effect of Verbatim's code-switchi
   --json `
   --outdir out\airfrance_whisper_mms `
   --workdir out\airfrance_whisper_mms_work `
-  --transcriber-backend auto `
-  --language-identifier-backend mms `
-  --mms-lid-model-size facebook/mms-lid-126 `
+  --asr-backend auto `
+  --language-backend mms `
+  --language-model facebook/mms-lid-126 `
   --log-file out\airfrance_whisper_mms_clean.log
 ```
 
@@ -70,9 +70,9 @@ The goal is to compare backend quality and the effect of Verbatim's code-switchi
   --json `
   --outdir out\airfrance_qwen_mms_naive `
   --workdir out\airfrance_qwen_mms_naive_work `
-  --transcriber-backend qwen `
-  --language-identifier-backend mms `
-  --mms-lid-model-size facebook/mms-lid-126 `
+  --asr-backend qwen `
+  --language-backend mms `
+  --language-model facebook/mms-lid-126 `
   --log-file out\airfrance_qwen_mms_naive_clean.log
 ```
 
@@ -88,9 +88,9 @@ The goal is to compare backend quality and the effect of Verbatim's code-switchi
   --json `
   --outdir out\airfrance_qwen_mms `
   --workdir out\airfrance_qwen_mms_work `
-  --transcriber-backend qwen `
-  --language-identifier-backend mms `
-  --mms-lid-model-size facebook/mms-lid-126 `
+  --asr-backend qwen `
+  --language-backend mms `
+  --language-model facebook/mms-lid-126 `
   --log-file out\airfrance_qwen_mms_clean.log
 ```
 
