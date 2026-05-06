@@ -3,8 +3,9 @@ import math
 import re
 from abc import ABC, abstractmethod
 from time import perf_counter
-from typing import List
+from typing import List, cast
 
+from verbatim.model_cache import build_transformers_load_kwargs, prefetch_hf_snapshot, resolve_hf_snapshot_path
 from verbatim.transcript.words import Word
 from verbatim_audio.audio import samples_to_seconds
 
@@ -53,12 +54,26 @@ class FastSentenceTokenizer(SentenceTokenizer):
 
 
 class SaTSentenceTokenizer(SentenceTokenizer):
-    def __init__(self, device: str, model="sat-3l-sm"):
+    def __init__(self, device: str, model="sat-3l-sm", tokenizer_name_or_path: str = "facebookAI/xlm-roberta-base"):
         LOG.debug("Lazy-loading SaT Sentence Tokenizer (model=%s)", model)
         start = perf_counter()
         from wtpsplit import SaT  # pylint: disable=import-outside-toplevel
 
-        self.sat_sm = SaT(model)
+        resolved_model = resolve_hf_snapshot_path(
+            _normalize_sat_model_name(model),
+            purpose="sentence tokenizer model",
+        )
+        resolved_tokenizer = resolve_hf_snapshot_path(
+            tokenizer_name_or_path,
+            purpose="sentence tokenizer tokenizer",
+        )
+        sat_model_name_or_path = _normalize_sat_model_name(resolved_model)
+        self.sat_sm = SaT(
+            sat_model_name_or_path,
+            tokenizer_name_or_path=resolved_tokenizer,
+            from_pretrained_kwargs=build_transformers_load_kwargs(),
+            hub_prefix=cast(str, None),
+        )
         self.sat_sm.half().to(device)
         LOG.debug("SaT Sentence Tokenizer ready in %.2fs", perf_counter() - start)
 
@@ -174,3 +189,23 @@ class BoundedSentenceTokenizer(SentenceTokenizer):
             return tok
 
         return self.bounding_tokenizer.split(words=words)
+
+
+def prefetch_sentence_tokenizer_models(*, model_name_or_path: str = "sat-3l-sm", tokenizer_name_or_path: str = "facebookAI/xlm-roberta-base") -> None:
+    repo_id = _normalize_sat_model_name(model_name_or_path)
+    prefetch_hf_snapshot(repo_id)
+    prefetch_hf_snapshot(tokenizer_name_or_path)
+
+
+def _normalize_sat_model_name(model_name_or_path: str) -> str:
+    candidate = model_name_or_path.strip()
+    while candidate.startswith("segment-any-text/segment-any-text/"):
+        candidate = candidate[len("segment-any-text/") :]
+    if candidate.startswith("segment-any-text/"):
+        suffix = candidate[len("segment-any-text/") :]
+        if "/" in suffix and not re.search(r"[\\/]", suffix):
+            return suffix
+        return candidate
+    if "/" not in candidate and not re.search(r"[\\/]", candidate):
+        return f"segment-any-text/{candidate}"
+    return candidate

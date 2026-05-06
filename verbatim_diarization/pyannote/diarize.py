@@ -5,7 +5,7 @@ import sys
 import time
 from typing import Any, Optional
 
-# pylint: disable=import-outside-toplevel,broad-exception-caught
+# pylint: disable=import-outside-toplevel,broad-exception-caught,unexpected-keyword-arg
 import numpy as np
 import torch
 from pyannote.audio import Pipeline
@@ -15,6 +15,7 @@ from torch.serialization import add_safe_globals
 
 from verbatim.cache import ArtifactCache
 from verbatim.logging_utils import get_status_logger, status_enabled
+from verbatim.model_cache import get_pyannote_cache_dir, resolve_hf_file_path
 from verbatim_audio.audio import constrain_audio_range
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.pyannote.progress import StatusProgressHook
@@ -24,7 +25,7 @@ from verbatim_diarization.utils import sanitize_uri_component
 from verbatim_files.rttm import Annotation as RTTMAnnotation
 from verbatim_files.vttm import AudioRef, dumps_vttm
 
-from .constants import PYANNOTE_DIARIZATION_MODEL_ID
+from .constants import PYANNOTE_DIARIZATION_MODEL_ID, PYANNOTE_DIARIZATION_MODEL_REVISION
 from .output import select_speaker_diarization
 
 LOG = logging.getLogger(__name__)
@@ -49,11 +50,23 @@ class PyAnnoteDiarization(DiarizationStrategy):
                 safe_types.append(torch_version_mod.TorchVersion)  # type: ignore[attr-defined]
             add_safe_globals(safe_types)  # pyright: ignore[reportArgumentType]
             # Default to community-friendly model
-            self.pipeline = Pipeline.from_pretrained(self.model_id, token=self.huggingface_token)
+            pipeline_path = resolve_hf_file_path(
+                self.model_id,
+                filename="config.yaml",
+                purpose="pyannote diarization model",
+                cache_dir=get_pyannote_cache_dir(),
+                revision=PYANNOTE_DIARIZATION_MODEL_REVISION,
+                token=self.huggingface_token or None,
+            )
+            self.pipeline = Pipeline.from_pretrained(
+                pipeline_path,
+                token=self.huggingface_token or None,
+                cache_dir=get_pyannote_cache_dir(),
+            )
         if self.pipeline is None:
             raise RuntimeError("PyAnnote pipeline failed to initialize")
         self.pipeline.instantiate({})
-        self.pipeline.to(torch.device(self.device))
+        self.pipeline.to(torch.device(self.device))  # pyright: ignore[reportPrivateImportUsage]
 
     # pylint: disable=too-many-positional-arguments
     def compute_diarization(
@@ -92,7 +105,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
                 else:
                     mono = audio
 
-                waveform = torch.from_numpy(constrain_audio_range(np.asarray(mono, dtype=np.float32)))
+                waveform = torch.as_tensor(constrain_audio_range(np.asarray(mono, dtype=np.float32)))  # pyright: ignore[reportPrivateImportUsage]
                 if waveform.ndim == 1:
                     waveform = waveform.unsqueeze(0)
                 # Feed the pipeline an in-memory waveform directly so pyannote does not need

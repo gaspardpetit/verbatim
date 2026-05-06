@@ -8,7 +8,12 @@ from typing import Optional
 LOG = logging.getLogger(__name__)
 
 
-def prefetch_diarization_models(hf_token: Optional[str] = None, cache_dir: Optional[str] = None, offline: bool = False) -> None:
+def prefetch_diarization_models(
+    hf_token: Optional[str] = None,
+    cache_dir: Optional[str] = None,
+    offline: bool = False,
+    include_separation: bool = True,
+) -> None:
     """Prefetch diarization/separation models (pyannote).
 
     Expects cache/offline environment variables to be set by the caller.
@@ -28,10 +33,11 @@ def prefetch_diarization_models(hf_token: Optional[str] = None, cache_dir: Optio
         PYANNOTE_SEPARATION_MODEL_REVISION,
     )
 
-    repos = (
+    repos = [
         (PYANNOTE_DIARIZATION_MODEL_ID, PYANNOTE_DIARIZATION_MODEL_REVISION),
-        (PYANNOTE_SEPARATION_MODEL_ID, PYANNOTE_SEPARATION_MODEL_REVISION),
-    )
+    ]
+    if include_separation:
+        repos.append((PYANNOTE_SEPARATION_MODEL_ID, PYANNOTE_SEPARATION_MODEL_REVISION))
     for repo, revision in repos:
         pinned_revision = revision or "refs/heads/main"
         try:

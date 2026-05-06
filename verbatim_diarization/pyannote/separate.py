@@ -5,7 +5,7 @@ import os
 import sys
 from typing import Any, Dict, List, Optional, Tuple, cast
 
-# pylint: disable=import-outside-toplevel,broad-exception-caught
+# pylint: disable=import-outside-toplevel,broad-exception-caught,unexpected-keyword-arg
 import numpy as np
 import torch
 from pyannote.audio import Pipeline
@@ -15,6 +15,7 @@ from torch.serialization import add_safe_globals
 
 from verbatim.cache import ArtifactCache
 from verbatim.logging_utils import get_status_logger, status_enabled
+from verbatim.model_cache import get_pyannote_cache_dir, resolve_hf_file_path
 from verbatim_audio.audio import constrain_audio_range, wav_to_int16
 from verbatim_audio.sources.audiosource import AudioSource
 from verbatim_audio.sources.fileaudiosource import FileAudioSource
@@ -24,7 +25,7 @@ from verbatim_files.rttm import Annotation as RTTMAnnotation
 from verbatim_files.rttm import Segment, dumps_rttm
 from verbatim_files.vttm import AudioRef, dumps_vttm
 
-from .constants import PYANNOTE_SEPARATION_MODEL_ID
+from .constants import PYANNOTE_SEPARATION_MODEL_ID, PYANNOTE_SEPARATION_MODEL_REVISION
 from .ffmpeg_loader import ensure_torchcodec_audio_decoder
 from .output import select_speaker_diarization
 from .progress import StatusProgressHook
@@ -67,7 +68,19 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             safe_types.append(torch_version_mod.TorchVersion)  # type: ignore[attr-defined]
         add_safe_globals(safe_types)  # pyright: ignore[reportArgumentType]
 
-        self.pipeline = Pipeline.from_pretrained(separation_model, token=self.huggingface_token)
+        pipeline_path = resolve_hf_file_path(
+            separation_model,
+            filename="config.yaml",
+            purpose="pyannote separation model",
+            cache_dir=get_pyannote_cache_dir(),
+            revision=PYANNOTE_SEPARATION_MODEL_REVISION,
+            token=self.huggingface_token or None,
+        )
+        self.pipeline = Pipeline.from_pretrained(
+            pipeline_path,
+            token=self.huggingface_token or None,
+            cache_dir=get_pyannote_cache_dir(),
+        )
         hyper_parameters = {
             "segmentation": {"min_duration_off": 0.0, "threshold": 0.82},
             "clustering": {
@@ -85,7 +98,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             raise RuntimeError("Pyannote separation pipeline failed to initialize")
 
         self.pipeline.instantiate(hyper_parameters)
-        self.pipeline.to(torch.device(device))
+        self.pipeline.to(torch.device(device))  # pyright: ignore[reportPrivateImportUsage]
 
     def __enter__(self) -> "PyannoteSpeakerSeparation":
         return self
@@ -107,7 +120,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             else:
                 mono = audio
 
-            waveform = torch.from_numpy(constrain_audio_range(np.asarray(mono, dtype=np.float32)))
+            waveform = torch.as_tensor(constrain_audio_range(np.asarray(mono, dtype=np.float32)))  # pyright: ignore[reportPrivateImportUsage]
             if waveform.ndim == 1:
                 waveform = waveform.unsqueeze(0)
             return {"waveform": waveform, "sample_rate": int(sample_rate)}, None

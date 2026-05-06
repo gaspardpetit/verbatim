@@ -6,6 +6,7 @@ from typing import List, Protocol
 import numpy as np
 from numpy.typing import NDArray
 
+from verbatim.model_cache import build_transformers_load_kwargs, prefetch_hf_snapshot, resolve_hf_snapshot_path
 from verbatim_audio.audio import constrain_audio_range
 
 LOG = logging.getLogger(__name__)
@@ -68,8 +69,19 @@ class AstNonSpeechClassifier:
         self._torchaudio = torchaudio
         self._device = device
         self._model_name = model_name
-        self._feature_extractor = AutoFeatureExtractor.from_pretrained(model_name)  # nosec B615 - model id is operator-configured
-        self._model = AutoModelForAudioClassification.from_pretrained(model_name).to(device)  # nosec B615 - model id is operator-configured
+        resolved_model = resolve_hf_snapshot_path(
+            model_name,
+            purpose="noise model",
+        )
+        load_kwargs = build_transformers_load_kwargs()
+        self._feature_extractor = AutoFeatureExtractor.from_pretrained(  # nosec B615 - model id is operator-configured
+            resolved_model,
+            **load_kwargs,
+        )
+        self._model = AutoModelForAudioClassification.from_pretrained(  # nosec B615 - model id is operator-configured
+            resolved_model,
+            **load_kwargs,
+        ).to(device)
         self._model.eval()
         self._problem_type = getattr(self._model.config, "problem_type", None)
         LOG.info("Loaded AST non-speech classifier model=%s device=%s", model_name, device)
@@ -78,7 +90,7 @@ class AstNonSpeechClassifier:
         if sample_rate == TARGET_SR:
             return constrain_audio_range(audio.astype(np.float32, copy=False))
 
-        waveform = self._torch.from_numpy(audio.astype(np.float32, copy=False)).unsqueeze(0)
+        waveform = self._torch.as_tensor(audio.astype(np.float32, copy=False)).unsqueeze(0)  # pyright: ignore[reportPrivateImportUsage]
         resampled = self._torchaudio.functional.resample(waveform, sample_rate, TARGET_SR)
         return constrain_audio_range(resampled.squeeze(0).cpu().numpy().astype(np.float32, copy=False))
 
@@ -126,9 +138,9 @@ class AstNonSpeechClassifier:
             with self._torch.no_grad():
                 logits = self._model(**inputs).logits
             if self._problem_type == "multi_label_classification":
-                probs = self._torch.sigmoid(logits)[0].detach().cpu().numpy().astype(np.float32, copy=False)
+                probs = logits.sigmoid()[0].detach().cpu().numpy().astype(np.float32, copy=False)
             else:
-                probs = self._torch.softmax(logits, dim=-1)[0].detach().cpu().numpy().astype(np.float32, copy=False)
+                probs = logits.softmax(dim=-1)[0].detach().cpu().numpy().astype(np.float32, copy=False)
             all_probabilities.append(probs)
 
         mean_probabilities = np.mean(np.vstack(all_probabilities), axis=0)
@@ -140,3 +152,7 @@ def create_non_speech_classifier(*, backend: str, device: str, model_name: str) 
     if normalized == "ast":
         return AstNonSpeechClassifier(model_name=model_name, device=device)
     raise RuntimeError(f"Unsupported non_speech_backend: {backend}")
+
+
+def prefetch_non_speech_models(model_name: str) -> None:
+    prefetch_hf_snapshot(model_name)

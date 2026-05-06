@@ -47,7 +47,7 @@ class FakeNoGrad:
 
 class FakeFeatureExtractor:
     @classmethod
-    def from_pretrained(cls, _model_size_or_path):
+    def from_pretrained(cls, _model_size_or_path, **_kwargs):
         return cls()
 
     def __call__(self, audio, sampling_rate, return_tensors):
@@ -65,7 +65,7 @@ class FakeModel:
         self.config = types.SimpleNamespace(id2label={0: "eng", 1: "fra", 2: "deu"})
 
     @classmethod
-    def from_pretrained(cls, _model_size_or_path):
+    def from_pretrained(cls, _model_size_or_path, **_kwargs):
         return cls()
 
     def to(self, _device):

@@ -78,11 +78,11 @@ Install Senko separately when you want the optional Senko diarization backend:
 uv pip install "git+https://github.com/narcotic-sh/senko.git"
 ```
 
-Encrypted DS2 files can be opened with `password:` in a YAML/JSON config file or the `VERBATIM_DSS_PASSWORD` environment variable. A `--password` switch is also available, but it is less safe because it can leak secrets via shell history and process listings.
+Encrypted DS2 files can be opened with `password:` in a YAML/JSON config file or the `VERBATIM_AUDIO_PASSWORD` environment variable. A `--password` switch is also available, but it is less safe because it can leak secrets via shell history and process listings.
 
 Recommended:
 ```bash
-VERBATIM_DSS_PASSWORD=1234 verbatim recording.ds2 --txt
+VERBATIM_AUDIO_PASSWORD=1234 verbatim recording.ds2 --txt
 ```
 
 When using a Senko build that supports in-memory diarization, Verbatim can also run Senko without a working directory by feeding cached 16kHz mono samples directly into the diarizer. This is useful for server deployments that must avoid writing intermediate files.
@@ -133,6 +133,11 @@ Force CPU only
 verbatim audio_file.mp3 --cpu
 ```
 
+Select device explicitly
+```bash
+verbatim audio_file.mp3 --device cuda
+```
+
 Save file in a specific directory
 ```bash
 verbatim audio_file.mp3 -o ./output/
@@ -151,25 +156,43 @@ verbatim-batch --batch-dir ./audio --match "*.wav" "*.mp3" "*.dss" "*.ds2" --rec
 Backend selection examples
 ```bash
 # Run Qwen ASR explicitly
-verbatim audio_file.wav --transcriber-backend qwen --languages en fr
+verbatim audio_file.wav --asr-backend qwen --languages en fr
 
 # Run Qwen ASR with MMS language identification
-verbatim audio_file.wav --transcriber-backend qwen --language-identifier-backend mms --languages en fr
+verbatim audio_file.wav --asr-backend qwen --language-backend mms --language-model facebook/mms-lid-126 --languages en fr
 
 # On Apple Silicon, Qwen will use MPS automatically unless you force --cpu
-verbatim audio_file.wav --transcriber-backend qwen --language-identifier-backend mms --languages en fr -v
+verbatim audio_file.wav --asr-backend qwen --language-backend mms --language-model facebook/mms-lid-126 --languages en fr -v
 
 # Label long skipped non-speech regions with the optional AST classifier
-verbatim audio_file.wav --transcriber-backend qwen --language-identifier-backend mms --languages en fr --non-speech-backend ast -vv
+verbatim audio_file.wav --asr-backend qwen --language-backend mms --language-model facebook/mms-lid-126 --languages en fr --non-vad-backend ast --noise-model MIT/ast-finetuned-audioset-10-10-0.4593 -vv
 ```
+
+Equivalent environment variables
+```bash
+VERBATIM_ASR_BACKEND=qwen
+VERBATIM_LANGUAGE_BACKEND=mms
+VERBATIM_LANGUAGE_MODEL=facebook/mms-lid-126
+VERBATIM_DIARIZE=senko
+VERBATIM_ASR_MODEL=Qwen/Qwen3-ASR-1.7B
+VERBATIM_DEVICE=cuda
+VERBATIM_VAD_BACKEND=ast
+VERBATIM_NOISE_MODEL=MIT/ast-finetuned-audioset-10-10-0.4593
+VERBATIM_VOXTRAL_MAX_NEW_TOKENS=512
+VERBATIM_CODE_SWITCHING=false
+```
+
+Precedence is `CLI > config file > environment variable > default`.
+
+`--cpu` is a shorthand for `--device cpu`. When `--device cuda` or `VERBATIM_DEVICE=cuda` is requested explicitly, Verbatim now fails fast if CUDA is unavailable.
 
 Long-skip review markers
 ```bash
 # Default energy-based labels for long skipped regions (for example [SILENCE] or [ENVIRONMENT NOISE])
-verbatim audio_file.wav --transcriber-backend qwen --language-identifier-backend mms --languages en fr
+verbatim audio_file.wav --asr-backend qwen --language-backend mms --languages en fr
 
 # Optional AST-based labels for long skipped regions (for example [MUSIC] when the classifier is confident)
-verbatim audio_file.wav --transcriber-backend qwen --language-identifier-backend mms --languages en fr --non-speech-backend ast
+verbatim audio_file.wav --asr-backend qwen --language-backend mms --languages en fr --non-vad-backend ast --noise-model MIT/ast-finetuned-audioset-10-10-0.4593
 ```
 
 Diarization policy examples
@@ -625,26 +648,32 @@ A direct use of whisper on an audio clip like this one results in many errors. S
 
 Verbatim can prefetch and reuse models from a deterministic cache directory, and can run 100% offline once the cache is warmed.
 
-- `--model-cache <dir>`: sets a shared cache directory used by Hugging Face and faster-whisper.
+- `--modeldir <dir>`: sets a shared model/cache directory used by Hugging Face and faster-whisper.
 - `--offline`: prevents any network access and model downloads. All models must already be present in the cache; otherwise a clear error is raised.
-- `--install`: prefetches commonly used models into the selected cache and exits.
+- `--install`: prefetches the models required by the current effective configuration into the selected cache and exits.
 
 Examples
 
-1) Prefetch models (first run, with network):
+1) Prefetch models for the exact configuration you plan to run offline:
 ```
-HUGGINGFACE_TOKEN=hf_... verbatim --install --model-cache /models
-```
-
-2) Fully offline run reusing the cache:
-```
-verbatim input.mp3 -o out --model-cache /models --offline
+HUGGINGFACE_TOKEN=hf_... verbatim input.mp3 --modeldir /models --asr-backend qwen --language-backend mms --install
 ```
 
-Default cache location (when `--model-cache` is not specified):
+2) Fully offline run reusing the same configuration and cache:
+```
+verbatim input.mp3 -o out --modeldir /models --asr-backend qwen --language-backend mms --offline
+```
+
+The offline guarantee is configuration-specific: warm the cache with the same effective CLI/config/env settings that you plan to reuse offline. This includes transitive runtime dependencies such as MMS language identification for Voxtral, AST noise classification, SaT sentence tokenization for non-stream runs, and pyannote diarization/separation when selected.
+
+Default cache location (when `--modeldir` is not specified):
 - Local project directory `./.verbatim/` is used as the root cache.
 - Subdirectories are created inside: `./.verbatim/hf`, `./.verbatim/whisper`, etc.
 - If `./.verbatim/` cannot be created or is not writable, the app gracefully falls back to library defaults.
 
 Voice isolation (MDX): the `audio-separator` backend loads a checkpoint (e.g., `MDX23C-8KFFT-InstVoc_HQ_2.ckpt`).
-For offline use with `--model-cache`, place the file under `<cache>/audio-separator/`.
+When `--isolate` is part of the installed configuration, Verbatim now prefetches that checkpoint into `<cache>/audio-separator/`.
+
+Pyannote diarization/separation still requires `HUGGINGFACE_TOKEN` during `--install` if the selected configuration uses those backends and the models are not yet cached. Once cached, offline reuse does not require the token.
+
+Senko is intentionally excluded from the hard offline-install guarantee for now because its own warmup/download behavior is managed by the upstream package rather than Verbatim.

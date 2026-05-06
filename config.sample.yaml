@@ -1,8 +1,14 @@
 batch_dir: "./input/"
 
-#transcriber_backend: qwen
-#language_identifier_backend: mms
-#mms_lid_model_size: facebook/mms-lid-126
+#device: auto
+#asr_backend: qwen
+#language_backend: mms
+#language_model: facebook/mms-lid-126
+#asr_model: Qwen/Qwen3-ASR-1.7B
+#vad_backend: ast
+#noise_model: MIT/ast-finetuned-audioset-10-10-0.4593
+#voxtral_max_new_tokens: 512
+#code_switching: false
 
 include:
   filename: ["*.wav", "*.mp3", "*.m4a"]

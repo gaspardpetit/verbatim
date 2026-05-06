@@ -36,7 +36,7 @@ class SileroVoiceActivityDetection(VoiceActivityDetection):
         min_speech_duration_ms: int = 250,
         min_silence_duration_ms: int = 100,
     ) -> List[Dict[str, int]]:
-        audio_tensor = torch.from_numpy(audio).float()
+        audio_tensor = torch.as_tensor(audio).float()  # pyright: ignore[reportPrivateImportUsage]
         speech_timestamps = get_speech_timestamps(
             audio=audio_tensor,
             model=self.model,
