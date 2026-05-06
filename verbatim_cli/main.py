@@ -1,5 +1,6 @@
 import logging
 import sys
+from typing import cast
 
 LOG = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ def main():
 
     if not args.input:
         parser.error("Input audio file must be specified")
-    source_path = args.input
+    source_path: str = cast(str, args.input)
 
     log_level = resolve_log_level(args, base_defaults)
     status_verbose = resolve_status_verbose(args, base_defaults)
@@ -96,7 +97,7 @@ def main():
         status_log.info("Model prefetch complete.")
         return
 
-    source_path = args.input
+    source_path = cast(str, args.input)
     speakers = resolve_speakers(args)
 
     status_log.info(

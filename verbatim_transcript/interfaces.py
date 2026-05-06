@@ -48,7 +48,7 @@ class VadProtocol(Protocol):
 VadFn = VadProtocol
 GuessLanguageFn = Callable[[NDArray, List[str]], Tuple[str, float]]
 
-TUtt_co = TypeVar("TUtt_co", covariant=True)  # pylint: disable=invalid-name
+TUtterance_co = TypeVar("TUtterance_co", covariant=True)  # pylint: disable=invalid-name
 TWord_co = TypeVar("TWord_co", covariant=True)  # pylint: disable=invalid-name
 
 
@@ -72,9 +72,9 @@ class LanguageDetectionResult:
 
 
 @dataclass
-class TranscriptionWindowResult(Generic[TUtt_co, TWord_co]):
-    utterance: TUtt_co
-    unacknowledged: Sequence[TUtt_co]
+class TranscriptionWindowResult(Generic[TUtterance_co, TWord_co]):
+    utterance: TUtterance_co
+    unacknowledged: Sequence[TUtterance_co]
     unconfirmed_words: Sequence[TWord_co]
 
     def as_tuple(self):

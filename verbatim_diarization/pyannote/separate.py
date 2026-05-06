@@ -78,7 +78,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
         )
         self.pipeline = Pipeline.from_pretrained(
             pipeline_path,
-            use_auth_token=self.huggingface_token or None,
+            token=self.huggingface_token or None,
             cache_dir=get_pyannote_cache_dir(),
         )
         hyper_parameters = {
@@ -98,7 +98,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             raise RuntimeError("Pyannote separation pipeline failed to initialize")
 
         self.pipeline.instantiate(hyper_parameters)
-        self.pipeline.to(torch.device(device))
+        self.pipeline.to(torch.device(device))  # pyright: ignore[reportPrivateImportUsage]
 
     def __enter__(self) -> "PyannoteSpeakerSeparation":
         return self
@@ -120,7 +120,7 @@ class PyannoteSpeakerSeparation(SeparationStrategy):
             else:
                 mono = audio
 
-            waveform = torch.from_numpy(constrain_audio_range(np.asarray(mono, dtype=np.float32)))
+            waveform = torch.as_tensor(constrain_audio_range(np.asarray(mono, dtype=np.float32)))  # pyright: ignore[reportPrivateImportUsage]
             if waveform.ndim == 1:
                 waveform = waveform.unsqueeze(0)
             return {"waveform": waveform, "sample_rate": int(sample_rate)}, None

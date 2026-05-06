@@ -60,13 +60,13 @@ class PyAnnoteDiarization(DiarizationStrategy):
             )
             self.pipeline = Pipeline.from_pretrained(
                 pipeline_path,
-                use_auth_token=self.huggingface_token or None,
+                token=self.huggingface_token or None,
                 cache_dir=get_pyannote_cache_dir(),
             )
         if self.pipeline is None:
             raise RuntimeError("PyAnnote pipeline failed to initialize")
         self.pipeline.instantiate({})
-        self.pipeline.to(torch.device(self.device))
+        self.pipeline.to(torch.device(self.device))  # pyright: ignore[reportPrivateImportUsage]
 
     # pylint: disable=too-many-positional-arguments
     def compute_diarization(
@@ -105,7 +105,7 @@ class PyAnnoteDiarization(DiarizationStrategy):
                 else:
                     mono = audio
 
-                waveform = torch.from_numpy(constrain_audio_range(np.asarray(mono, dtype=np.float32)))
+                waveform = torch.as_tensor(constrain_audio_range(np.asarray(mono, dtype=np.float32)))  # pyright: ignore[reportPrivateImportUsage]
                 if waveform.ndim == 1:
                     waveform = waveform.unsqueeze(0)
                 # Feed the pipeline an in-memory waveform directly so pyannote does not need

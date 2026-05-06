@@ -1,3 +1,6 @@
+"""Senko diarization adapter."""
+# pylint: disable=import-outside-toplevel
+
 import io
 import logging
 import os
@@ -65,8 +68,8 @@ class SenkoDiarization(DiarizationStrategy):
         if self._diarizer is not None:
             return self._diarizer
 
-        try:
-            import senko  # pylint: disable=import-outside-toplevel
+        try:  # pylint: disable=import-outside-toplevel
+            import senko
         except ImportError as exc:
             raise RuntimeError(
                 'Senko diarization requires the Senko package. Install it with `uv pip install "git+https://github.com/narcotic-sh/senko.git"`.'

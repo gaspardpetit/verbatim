@@ -90,7 +90,7 @@ class AstNonSpeechClassifier:
         if sample_rate == TARGET_SR:
             return constrain_audio_range(audio.astype(np.float32, copy=False))
 
-        waveform = self._torch.from_numpy(audio.astype(np.float32, copy=False)).unsqueeze(0)
+        waveform = self._torch.as_tensor(audio.astype(np.float32, copy=False)).unsqueeze(0)  # pyright: ignore[reportPrivateImportUsage]
         resampled = self._torchaudio.functional.resample(waveform, sample_rate, TARGET_SR)
         return constrain_audio_range(resampled.squeeze(0).cpu().numpy().astype(np.float32, copy=False))
 
@@ -138,9 +138,9 @@ class AstNonSpeechClassifier:
             with self._torch.no_grad():
                 logits = self._model(**inputs).logits
             if self._problem_type == "multi_label_classification":
-                probs = self._torch.sigmoid(logits)[0].detach().cpu().numpy().astype(np.float32, copy=False)
+                probs = logits.sigmoid()[0].detach().cpu().numpy().astype(np.float32, copy=False)
             else:
-                probs = self._torch.softmax(logits, dim=-1)[0].detach().cpu().numpy().astype(np.float32, copy=False)
+                probs = logits.softmax(dim=-1)[0].detach().cpu().numpy().astype(np.float32, copy=False)
             all_probabilities.append(probs)
 
         mean_probabilities = np.mean(np.vstack(all_probabilities), axis=0)
