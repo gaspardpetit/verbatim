@@ -118,7 +118,6 @@ def _hf_hub_download(
         kwargs["cache_dir"] = cache_dir
     if token:
         kwargs["token"] = token
-        kwargs["use_auth_token"] = token
     return hf_hub_download(  # nosec B615 - revision is provided explicitly by the caller
         repo_id=kwargs["repo_id"],
         filename=kwargs["filename"],
@@ -126,7 +125,6 @@ def _hf_hub_download(
         revision=kwargs["revision"],
         cache_dir=kwargs.get("cache_dir"),
         token=kwargs.get("token"),
-        use_auth_token=kwargs.get("use_auth_token"),
     )
 
 

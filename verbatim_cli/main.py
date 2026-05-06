@@ -37,6 +37,10 @@ def main():
     args = merge_args(base_defaults, profile_overrides, user_args)
     args = apply_env_defaults(args, base_defaults)
 
+    if not args.input:
+        parser.error("Input audio file must be specified")
+    source_path = args.input
+
     log_level = resolve_log_level(args, base_defaults)
     status_verbose = resolve_status_verbose(args, base_defaults)
     for handler in logging.root.handlers[:]:

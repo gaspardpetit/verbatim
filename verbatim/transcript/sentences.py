@@ -3,7 +3,7 @@ import math
 import re
 from abc import ABC, abstractmethod
 from time import perf_counter
-from typing import List
+from typing import List, cast
 
 from verbatim.model_cache import build_transformers_load_kwargs, prefetch_hf_snapshot, resolve_hf_snapshot_path
 from verbatim.transcript.words import Word
@@ -72,7 +72,7 @@ class SaTSentenceTokenizer(SentenceTokenizer):
             sat_model_name_or_path,
             tokenizer_name_or_path=resolved_tokenizer,
             from_pretrained_kwargs=build_transformers_load_kwargs(),
-            hub_prefix=None,
+            hub_prefix=cast(str, None),
         )
         self.sat_sm.half().to(device)
         LOG.debug("SaT Sentence Tokenizer ready in %.2fs", perf_counter() - start)

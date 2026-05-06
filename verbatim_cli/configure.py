@@ -3,7 +3,7 @@
 import logging
 import os
 from argparse import Namespace
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, cast
 
 from verbatim.config import Config
 from verbatim_audio.sources.sourceconfig import SourceConfig
@@ -196,7 +196,7 @@ def _parse_log_level(value: str) -> int:
     normalized = aliases.get(normalized, normalized)
     if normalized.isdigit():
         return int(normalized)
-    mapping: Callable[[], dict] = getattr(logging, "getLevelNamesMapping", None)
+    mapping = cast(Optional[Callable[[], dict[str, int]]], getattr(logging, "getLevelNamesMapping", None))
     if mapping is not None:
         level = mapping().get(normalized)
         if isinstance(level, int):
