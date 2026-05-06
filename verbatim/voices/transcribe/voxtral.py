@@ -15,6 +15,16 @@ from .transcribe import Transcriber
 
 LOG = logging.getLogger(__name__)
 
+try:
+    import torch
+    from qwen_asr.inference.qwen3_forced_aligner import Qwen3ForcedAligner  # type: ignore[import-not-found]
+    from transformers import VoxtralForConditionalGeneration, VoxtralProcessor
+except ImportError:
+    torch = None
+    Qwen3ForcedAligner = None
+    VoxtralForConditionalGeneration = None
+    VoxtralProcessor = None
+
 
 class VoxtralTranscriber(Transcriber):
     def __init__(
@@ -29,17 +39,16 @@ class VoxtralTranscriber(Transcriber):
         if device not in ("cpu", "cuda", "mps"):
             raise RuntimeError("Voxtral backend currently supports only 'cpu', 'cuda', and 'mps' devices.")
 
-        try:
-            import torch  # pylint: disable=import-outside-toplevel
-            from qwen_asr.inference.qwen3_forced_aligner import (
-                Qwen3ForcedAligner,  # type: ignore[import-not-found]  # pylint: disable=import-outside-toplevel
-            )
-            from transformers import VoxtralForConditionalGeneration, VoxtralProcessor  # pylint: disable=import-outside-toplevel
-        except ImportError as exc:
+        if (
+            torch is None
+            or Qwen3ForcedAligner is None
+            or VoxtralForConditionalGeneration is None
+            or VoxtralProcessor is None
+        ):
             raise RuntimeError(
                 "Voxtral backend requires optional dependencies. Install `transformers`, `mistral-common`, `qwen-asr`, and `torch` "
                 "to use transcriber_backend='voxtral'."
-            ) from exc
+            )
 
         voxtral_dtype = self._resolve_dtype(torch_module=torch, dtype=dtype, device=device)
         if device == "cuda":
