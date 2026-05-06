@@ -188,10 +188,7 @@ def collect_install_requirements(*, config: Config, source_config: SourceConfig)
 def prefetch_faster_whisper_model(*, whisper_size: str, include_mlx_whisper: bool) -> None:
     try:  # type: ignore
         from huggingface_hub import snapshot_download  # pylint: disable=import-outside-toplevel
-        from huggingface_hub.errors import (
-            HfHubHTTPError,  # pylint: disable=import-outside-toplevel
-            LocalEntryNotFoundError,  # pylint: disable=import-outside-toplevel
-        )
+        from huggingface_hub.errors import HfHubHTTPError, LocalEntryNotFoundError  # pylint: disable=import-outside-toplevel
     except ImportError:  # pragma: no cover
         LOG.warning("huggingface_hub not available: cannot prefetch HF-hosted models")
         return
