@@ -119,9 +119,7 @@ class VoxtralTranscriber(Transcriber):
         if len(lang) == 1:
             return lang[0], 1.0
         if not self._warned_guess_language:
-            LOG.warning(
-                "Voxtral backend does not provide native language identification. Use language_backend='mms' for reliable code-switching."
-            )
+            LOG.warning("Voxtral backend does not provide native language identification. Use language_backend='mms' for reliable code-switching.")
             self._warned_guess_language = True
         return lang[0], 0.0
 

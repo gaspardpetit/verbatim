@@ -202,6 +202,38 @@ class TestOfflineModelLoading(unittest.TestCase):
         self.assertEqual(kwargs["tokenizer_name_or_path"], "D:/cache/tokenizer")
         self.assertTrue(kwargs["from_pretrained_kwargs"]["local_files_only"])
 
+    def test_sat_does_not_double_prefix_segment_any_text_repo(self):
+        fake_wtpsplit = types.ModuleType("wtpsplit")
+        fake_wtpsplit.SaT = _FakeSaT
+
+        with (
+            patch.dict(sys.modules, {"wtpsplit": fake_wtpsplit}),
+            patch.object(
+                sentences_module,
+                "resolve_hf_snapshot_path",
+                side_effect=["D:/cache/sat-model", "D:/cache/tokenizer"],
+            ) as resolve_snapshot,
+        ):
+            SaTSentenceTokenizer(device="cpu", model="segment-any-text/sat-3l-sm")
+
+        self.assertEqual(resolve_snapshot.call_args_list[0].args[0], "segment-any-text/sat-3l-sm")
+
+    def test_sat_collapses_already_doubled_segment_any_text_repo(self):
+        fake_wtpsplit = types.ModuleType("wtpsplit")
+        fake_wtpsplit.SaT = _FakeSaT
+
+        with (
+            patch.dict(sys.modules, {"wtpsplit": fake_wtpsplit}),
+            patch.object(
+                sentences_module,
+                "resolve_hf_snapshot_path",
+                side_effect=["D:/cache/sat-model", "D:/cache/tokenizer"],
+            ) as resolve_snapshot,
+        ):
+            SaTSentenceTokenizer(device="cpu", model="segment-any-text/segment-any-text/sat-3l-sm")
+
+        self.assertEqual(resolve_snapshot.call_args_list[0].args[0], "segment-any-text/sat-3l-sm")
+
 
 if __name__ == "__main__":
     unittest.main()

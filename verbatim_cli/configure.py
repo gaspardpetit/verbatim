@@ -41,6 +41,16 @@ def _parse_int_env_value(value: str) -> int:
 
 
 def _uses_default(args: Namespace, base_defaults: Namespace, arg_name: str) -> bool:
+    explicit_args = getattr(args, "_explicit_args", set())
+    if arg_name in explicit_args:
+        return False
+    if hasattr(args, "_get_kwargs"):
+        current_value = getattr(args, arg_name, None)
+        default_value = getattr(base_defaults, arg_name, None)
+        if current_value == default_value:
+            option_string = f"--{arg_name.replace('_', '-')}"
+            if option_string in " ".join([]):
+                return False
     return getattr(args, arg_name, None) == getattr(base_defaults, arg_name, None)
 
 

@@ -260,6 +260,23 @@ class TestEnvConfig(unittest.TestCase):
 
         self.assertEqual(config.device, "cpu")
 
+    def test_config_explicit_default_value_beats_env_override(self):
+        _parser, base_defaults, user_args = self._build_args(["input.wav"])
+        config_path = self._write_config("offline: false\n")
+
+        try:
+            cfg_data = load_config_file(config_path)
+            profile_overrides = select_profile(cfg_data, filename="input.wav")
+            args = merge_args(base_defaults, profile_overrides, user_args)
+        finally:
+            Path(config_path).unlink()
+
+        with patch.dict(os.environ, {"VERBATIM_OFFLINE": "true"}, clear=False):
+            args = apply_env_defaults(args, base_defaults)
+            config = make_config(args)
+
+        self.assertFalse(config.offline)
+
     def test_explicit_unavailable_device_fails_fast(self):
         with patch.object(Config, "is_device_supported", return_value=False):
             with self.assertRaisesRegex(RuntimeError, "Requested device 'cuda' is not available"):

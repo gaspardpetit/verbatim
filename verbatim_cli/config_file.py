@@ -206,15 +206,18 @@ def select_profile(config_data: Dict[str, Any], filename: Optional[str]) -> Dict
 
 def merge_args(base_defaults: Namespace, profile_overrides: Dict[str, Any], user_args: Namespace) -> Namespace:
     merged = vars(base_defaults).copy()
+    explicit_args = set(profile_overrides.keys())
     merged.update(profile_overrides)
     for key, val in vars(user_args).items():
         # Only override when the user provided a value different from the parser default
         if key in merged and val == getattr(base_defaults, key, None):
             continue
         merged[key] = val
+        explicit_args.add(key)
     # If match/ignore not specified by user or profile, ensure defaults
     if "match" not in merged or merged["match"] is None:
         merged["match"] = DEFAULT_MATCH
     if "ignore" not in merged or merged["ignore"] is None:
         merged["ignore"] = []
+    merged["_explicit_args"] = explicit_args
     return argparse.Namespace(**merged)

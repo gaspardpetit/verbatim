@@ -1,7 +1,9 @@
+import os
 import unittest
+from unittest.mock import patch
 
 from verbatim.config import Config
-from verbatim.prefetch import collect_install_requirements
+from verbatim.prefetch import apply_cache_env, collect_install_requirements
 from verbatim_audio.sources.sourceconfig import SourceConfig
 
 
@@ -69,6 +71,26 @@ class TestInstallRequirements(unittest.TestCase):
         requirements = collect_install_requirements(config=config, source_config=source_config)
 
         self.assertTrue(requirements.include_isolation)
+
+    def test_apply_cache_env_replaces_hf_cache_paths_between_targets(self):
+        with patch.dict(
+            "os.environ",
+            {
+                "HF_HOME": "C:/old/hf",
+                "HUGGINGFACE_HUB_CACHE": "C:/old/hf/hub",
+                "XDG_CACHE_HOME": "C:/old/xdg",
+            },
+            clear=False,
+        ):
+            apply_cache_env("D:/models-a", offline=False)
+            self.assertEqual(os.environ["HF_HOME"].replace("\\", "/"), "D:/models-a/hf")
+            self.assertEqual(os.environ["HUGGINGFACE_HUB_CACHE"].replace("\\", "/"), "D:/models-a/hf/hub")
+            self.assertEqual(os.environ["XDG_CACHE_HOME"].replace("\\", "/"), "D:/models-a/xdg")
+
+            apply_cache_env("D:/models-b", offline=False)
+            self.assertEqual(os.environ["HF_HOME"].replace("\\", "/"), "D:/models-b/hf")
+            self.assertEqual(os.environ["HUGGINGFACE_HUB_CACHE"].replace("\\", "/"), "D:/models-b/hf/hub")
+            self.assertEqual(os.environ["XDG_CACHE_HOME"].replace("\\", "/"), "D:/models-b/xdg")
 
 
 if __name__ == "__main__":

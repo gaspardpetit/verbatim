@@ -66,8 +66,7 @@ def main():
     if cfg_data and getattr(user_args, "config", None):
         for path, replacement in find_legacy_config_keys(cfg_data):
             LOG.warning(
-                "Config file %s uses deprecated key '%s'; use '%s' instead. "
-                "This warning shim will be removed in the next minor version bump.",
+                "Config file %s uses deprecated key '%s'; use '%s' instead. This warning shim will be removed in the next minor version bump.",
                 user_args.config,
                 path,
                 replacement,

@@ -56,12 +56,12 @@ def apply_cache_env(model_cache_dir: Optional[str], offline: bool = False) -> No
 
         xdg_cache = os.path.join(model_cache_dir, "xdg")
         os.makedirs(xdg_cache, exist_ok=True)
-        os.environ.setdefault("XDG_CACHE_HOME", xdg_cache)
+        os.environ["XDG_CACHE_HOME"] = xdg_cache
 
         hf_home = os.path.join(model_cache_dir, "hf")
         os.makedirs(hf_home, exist_ok=True)
-        os.environ.setdefault("HF_HOME", hf_home)
-        os.environ.setdefault("HUGGINGFACE_HUB_CACHE", os.path.join(hf_home, "hub"))
+        os.environ["HF_HOME"] = hf_home
+        os.environ["HUGGINGFACE_HUB_CACHE"] = os.path.join(hf_home, "hub")
 
         pyannote_cache = os.path.join(model_cache_dir, "pyannote")
         os.makedirs(pyannote_cache, exist_ok=True)
