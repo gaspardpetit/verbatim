@@ -2,9 +2,17 @@ import json
 import os
 import re
 from fractions import Fraction
-from typing import Iterator, List, Match, Optional, Union
+from typing import Iterator, List, Match, Optional, Union, cast
 
-from more_itertools import windowed
+try:  # pragma: no cover - optional dependency import
+    from more_itertools import windowed
+except ImportError:  # pragma: no cover - optional dependency fallback
+
+    def windowed(iterable, n):
+        items = list(iterable)
+        for index in range(len(items) - n + 1):
+            yield tuple(items[index : index + n])
+
 
 from .basic import remove_symbols_and_diacritics
 
@@ -175,6 +183,9 @@ class EnglishNumberNormalizer:
                 skip = False
                 continue
 
+            if current is None:
+                continue
+
             next_is_numeric = next is not None and re.match(r"^\d+(\.\d+)?$", next)
             has_prefix = current[0] in self.prefixes
             current_without_prefix = current[1:] if has_prefix else current
@@ -209,8 +220,9 @@ class EnglishNumberNormalizer:
                     value = ones
                 elif isinstance(value, str) or prev in self.ones:
                     if prev in self.tens and ones < 10:  # replace the last zero with the digit
-                        assert value[-1] == "0"
-                        value = value[:-1] + str(ones)
+                        value_str = cast(str, value)
+                        assert value_str[-1] == "0"
+                        value = value_str[:-1] + str(ones)
                     else:
                         value = str(value) + str(ones)
                 elif ones < 10:
@@ -230,8 +242,9 @@ class EnglishNumberNormalizer:
                     yield output(str(ones) + suffix)
                 elif isinstance(value, str) or prev in self.ones:
                     if prev in self.tens and ones < 10:
-                        assert value[-1] == "0"
-                        yield output(value[:-1] + str(ones) + suffix)
+                        value_str = cast(str, value)
+                        assert value_str[-1] == "0"
+                        yield output(value_str[:-1] + str(ones) + suffix)
                     else:
                         yield output(str(value) + str(ones) + suffix)
                 elif ones < 10:

@@ -31,7 +31,9 @@ class VoxtralTranscriber(Transcriber):
 
         try:
             import torch  # pylint: disable=import-outside-toplevel
-            from qwen_asr.inference.qwen3_forced_aligner import Qwen3ForcedAligner  # pylint: disable=import-outside-toplevel
+            from qwen_asr.inference.qwen3_forced_aligner import (
+                Qwen3ForcedAligner,  # type: ignore[import-not-found]  # pylint: disable=import-outside-toplevel
+            )
             from transformers import VoxtralForConditionalGeneration, VoxtralProcessor  # pylint: disable=import-outside-toplevel
         except ImportError as exc:
             raise RuntimeError(

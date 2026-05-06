@@ -3,7 +3,7 @@ import sys
 import types
 import unittest
 import wave
-from typing import cast
+from typing import Any, cast
 from unittest.mock import patch
 
 import numpy as np
@@ -37,7 +37,7 @@ class TestDssConversion(unittest.TestCase):
         return buffer.getvalue()
 
     def test_convert_bytes_to_wav_uses_pydsscodec_for_ds2(self):
-        fake_module = types.ModuleType("pydsscodec")
+        fake_module = cast(Any, types.ModuleType("pydsscodec"))
         fake_module.decode_bytes = lambda _data, password=None: _FakeDecodedAudio(
             samples=[0.0, 0.5, -0.5, 1.25],
             sample_rate=16000,
@@ -94,7 +94,7 @@ class TestDssConversion(unittest.TestCase):
         self.assertEqual(getattr(sources[0], "file_path", None), "sample.wav")
 
     def test_convert_bytes_to_wav_passes_password_to_pydsscodec(self):
-        fake_module = types.ModuleType("pydsscodec")
+        fake_module = cast(Any, types.ModuleType("pydsscodec"))
         calls = []
         test_credential = _test_credential()
 
@@ -117,7 +117,7 @@ class TestDssConversion(unittest.TestCase):
         self.assertEqual(calls, [test_credential])
 
     def test_convert_bytes_to_wav_scales_pcm_sized_float_output(self):
-        fake_module = types.ModuleType("pydsscodec")
+        fake_module = cast(Any, types.ModuleType("pydsscodec"))
         fake_module.decode_bytes = lambda _data, password=None: _FakeDecodedAudio(
             samples=[-32768.0, -16384.0, 0.0, 16384.0, 32767.0],
             sample_rate=16000,

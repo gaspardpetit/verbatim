@@ -3,6 +3,7 @@ import builtins
 import sys
 import types
 import unittest
+from typing import Any, cast
 from unittest.mock import patch
 
 from verbatim.models import Models
@@ -26,7 +27,7 @@ class TestModels(unittest.TestCase):
         models._qwen_max_inference_batch_size = 1
         models._qwen_max_new_tokens = 256
 
-        fake_fw_module = types.ModuleType("verbatim.voices.transcribe.faster_whisper")
+        fake_fw_module = cast(Any, types.ModuleType("verbatim.voices.transcribe.faster_whisper"))
         fake_fw_module.FasterWhisperTranscriber = _FakeFasterWhisperTranscriber
 
         original_import = builtins.__import__

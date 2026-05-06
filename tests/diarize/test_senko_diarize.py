@@ -4,6 +4,7 @@ import tempfile
 import types
 import unittest
 from pathlib import Path
+from typing import Any, cast
 from unittest.mock import patch
 
 import numpy as np
@@ -66,10 +67,10 @@ class TestSenkoDiarization(unittest.TestCase):
     def test_factory_creates_senko_strategy(self):
         diarizer = create_diarizer(strategy="senko", device="mps", cache=InMemoryArtifactCache())
         self.assertIsInstance(diarizer, SenkoDiarization)
-        self.assertEqual("coreml", diarizer.device)
+        self.assertEqual("coreml", cast(Any, diarizer).device)
 
     def test_compute_diarization_from_existing_wav(self):
-        fake_senko = types.ModuleType("senko")
+        fake_senko = cast(Any, types.ModuleType("senko"))
         fake_senko.Diarizer = _FakeDiarizer
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -93,7 +94,7 @@ class TestSenkoDiarization(unittest.TestCase):
         self.assertNotEqual("", cache.get_text("sample.vttm"))
 
     def test_constructor_parses_string_accurate_flag(self):
-        fake_senko = types.ModuleType("senko")
+        fake_senko = cast(Any, types.ModuleType("senko"))
         fake_senko.Diarizer = _FakeDiarizer
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -108,7 +109,7 @@ class TestSenkoDiarization(unittest.TestCase):
         self.assertFalse(_FakeDiarizer.calls[0]["accurate"])
 
     def test_uses_in_memory_samples_without_workdir_when_supported(self):
-        fake_senko = types.ModuleType("senko")
+        fake_senko = cast(Any, types.ModuleType("senko"))
         fake_senko.Diarizer = _FakeDiarizer
         cache = InMemoryArtifactCache()
         buffer = io.BytesIO()
@@ -125,7 +126,7 @@ class TestSenkoDiarization(unittest.TestCase):
         self.assertEqual(16000, _FakeDiarizer.calls[0]["sample_rate"])
 
     def test_resamples_in_memory_samples_without_workdir_when_supported(self):
-        fake_senko = types.ModuleType("senko")
+        fake_senko = cast(Any, types.ModuleType("senko"))
         fake_senko.Diarizer = _FakeDiarizer
         cache = InMemoryArtifactCache()
         buffer = io.BytesIO()
@@ -143,7 +144,7 @@ class TestSenkoDiarization(unittest.TestCase):
         self.assertEqual(16000, _FakeDiarizer.calls[0]["samples_len"])
 
     def test_normalizes_in_memory_samples_when_peak_exceeds_one(self):
-        fake_senko = types.ModuleType("senko")
+        fake_senko = cast(Any, types.ModuleType("senko"))
         fake_senko.Diarizer = _FakeDiarizer
         cache = InMemoryArtifactCache()
         buffer = io.BytesIO()
@@ -168,7 +169,7 @@ class TestSenkoDiarization(unittest.TestCase):
             def diarize(self, wav_path, accurate=None, generate_colors=False):
                 return _FakeDiarizer(**self.kwargs).diarize(wav_path, accurate=accurate, generate_colors=generate_colors)
 
-        fake_senko = types.ModuleType("senko")
+        fake_senko = cast(Any, types.ModuleType("senko"))
         fake_senko.Diarizer = _PathOnlyFakeDiarizer
         cache = InMemoryArtifactCache()
         buffer = io.BytesIO()
@@ -182,7 +183,7 @@ class TestSenkoDiarization(unittest.TestCase):
                     diarizer.compute_diarization(file_path="sample.wav")
 
     def test_materializes_wav_with_file_backed_cache(self):
-        fake_senko = types.ModuleType("senko")
+        fake_senko = cast(Any, types.ModuleType("senko"))
         fake_senko.Diarizer = _FakeDiarizer
 
         with tempfile.TemporaryDirectory() as tmpdir:

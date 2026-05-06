@@ -1,13 +1,16 @@
 import io
 import os
 import wave
-from typing import Optional, cast
+from typing import TYPE_CHECKING, Optional, cast
 
 import numpy as np
 
 from verbatim.cache import ArtifactCache
 
 from .audio import constrain_audio_range, resample_audio
+
+if TYPE_CHECKING:  # pragma: no cover
+    pass
 
 DSS_EXTENSIONS = {".dss", ".ds2"}
 
@@ -19,7 +22,7 @@ def is_dss_path(path: str) -> bool:
 def _import_pydsscodec():
     # pylint: disable=import-outside-toplevel
     try:
-        import pydsscodec
+        import pydsscodec  # type: ignore[import-not-found]
     except ImportError as exc:  # pragma: no cover - exercised via caller-facing error
         raise RuntimeError(
             "DSS/DS2 support requires the optional `pydsscodec` package. Install `pip install pydsscodec` or `verbatim[dss]`."

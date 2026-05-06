@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Union, cast
 
 from verbatim_files.rttm import Annotation, Segment
 
@@ -15,7 +15,8 @@ def to_rttm_annotation(annotation: Union[Annotation, "PyannoteAnnotation"]) -> A
         return annotation
     if hasattr(annotation, "segments"):
         try:
-            return Annotation(segments=list(annotation.segments), file_id=getattr(annotation, "file_id", None))
+            annotation_with_segments = cast(Any, annotation)
+            return Annotation(segments=list(annotation_with_segments.segments), file_id=getattr(annotation_with_segments, "file_id", None))
         except Exception as exc:  # pragma: no cover - defensive: unexpected segments shape
             raise TypeError("Unsupported diarization annotation segments") from exc
     if hasattr(annotation, "itertracks"):
