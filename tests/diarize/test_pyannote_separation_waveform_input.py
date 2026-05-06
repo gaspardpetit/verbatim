@@ -2,6 +2,7 @@ import sys
 import types
 import unittest
 from types import SimpleNamespace
+from typing import Any, cast
 from unittest.mock import patch
 
 import numpy as np
@@ -74,13 +75,13 @@ class TestPyannoteSeparationWaveformInput(unittest.TestCase):
         cache.set_bytes("sample.wav", b"fake")
 
         fake_pipeline = _FakePipeline()
-        fake_soundfile = types.ModuleType("soundfile")
+        fake_soundfile = cast(Any, types.ModuleType("soundfile"))
         fake_soundfile.read = _FakeSoundFileModule.read
         fake_soundfile.write = _FakeSoundFileModule.write
 
         separator = PyannoteSpeakerSeparation.__new__(PyannoteSpeakerSeparation)
         separator.cache = cache
-        separator.pipeline = fake_pipeline
+        separator.pipeline = cast(Any, fake_pipeline)
 
         with patch.dict(sys.modules, {"soundfile": fake_soundfile}):
             diarization, audio_refs_meta = self._run_separation(
@@ -105,7 +106,7 @@ class TestPyannoteSeparationWaveformInput(unittest.TestCase):
         fake_pipeline = _FakePipeline()
         separator = PyannoteSpeakerSeparation.__new__(PyannoteSpeakerSeparation)
         separator.cache = cache
-        separator.pipeline = fake_pipeline
+        separator.pipeline = cast(Any, fake_pipeline)
 
         with patch.object(separator, "_prepare_pipeline_input", return_value=("sample.wav", None)):
             with patch.object(pyannote_separate, "ensure_torchcodec_audio_decoder") as ensure_decoder:

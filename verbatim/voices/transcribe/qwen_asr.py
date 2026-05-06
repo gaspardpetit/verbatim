@@ -68,7 +68,7 @@ class QwenAsrTranscriber(Transcriber):
 
         try:
             import torch  # pylint: disable=import-outside-toplevel
-            from qwen_asr import Qwen3ASRModel  # pylint: disable=import-outside-toplevel
+            from qwen_asr import Qwen3ASRModel  # type: ignore[attr-defined]  # pylint: disable=import-outside-toplevel
         except ImportError as exc:
             raise RuntimeError(
                 "Qwen3-ASR backend requires optional dependencies. Install `qwen-asr` and `torch` to use transcriber_backend='qwen'."

@@ -2,6 +2,7 @@ import sys
 import types
 import unittest
 from types import SimpleNamespace
+from typing import Any, cast
 from unittest.mock import patch
 
 import numpy as np
@@ -54,11 +55,11 @@ class TestPyannoteWaveformInput(unittest.TestCase):
         access_value = ""
 
         fake_pipeline = _FakePipeline()
-        fake_soundfile = types.ModuleType("soundfile")
+        fake_soundfile = cast(Any, types.ModuleType("soundfile"))
         fake_soundfile.read = _FakeSoundFileModule.read
 
         diarizer = PyAnnoteDiarization(cache=cache, device="cpu", huggingface_token=access_value)
-        diarizer.pipeline = fake_pipeline
+        diarizer.pipeline = cast(Any, fake_pipeline)
 
         with patch.dict(sys.modules, {"soundfile": fake_soundfile}):
             annotation = diarizer.compute_diarization(file_path="sample.wav", nb_speakers=2)

@@ -145,6 +145,9 @@ reportMissingImports = "warning"
 exclude = [
     # Highly dynamic formatting helpers; complex typing provides low value
     "verbatim_files/format/ass.py",
+    # Optional dependency shims exercised via runtime guards and tests
+    "verbatim_audio/convert.py",
+    "verbatim_benchmarks/normalizers/english.py",
     # Exclude local virtual envs and non-source directories
     ".venv",
     ".venv/**",

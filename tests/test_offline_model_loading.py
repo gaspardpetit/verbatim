@@ -119,12 +119,12 @@ class TestOfflineModelLoading(unittest.TestCase):
                     )
 
     def test_mms_uses_local_files_only_when_offline(self):
-        fake_torch = types.ModuleType("torch")
+        fake_torch = cast(Any, types.ModuleType("torch"))
         fake_torch.no_grad = _FakeNoGrad
         fake_torch.nn = types.SimpleNamespace(functional=types.SimpleNamespace(softmax=lambda logits, dim=-1: logits))
-        fake_transformers_auto = types.ModuleType("transformers.models.auto.feature_extraction_auto")
+        fake_transformers_auto = cast(Any, types.ModuleType("transformers.models.auto.feature_extraction_auto"))
         fake_transformers_auto.AutoFeatureExtractor = _FakeFeatureExtractor
-        fake_transformers_wav2vec2 = types.ModuleType("transformers.models.wav2vec2")
+        fake_transformers_wav2vec2 = cast(Any, types.ModuleType("transformers.models.wav2vec2"))
         fake_transformers_wav2vec2.Wav2Vec2ForSequenceClassification = _FakeLanguageModel
 
         with (
@@ -151,11 +151,11 @@ class TestOfflineModelLoading(unittest.TestCase):
         self.assertTrue(model_call[1]["local_files_only"])
 
     def test_ast_uses_local_files_only_when_offline(self):
-        fake_torch = types.ModuleType("torch")
-        fake_torchaudio = types.ModuleType("torchaudio")
-        fake_transformers_auto_feature = types.ModuleType("transformers.models.auto.feature_extraction_auto")
+        fake_torch = cast(Any, types.ModuleType("torch"))
+        fake_torchaudio = cast(Any, types.ModuleType("torchaudio"))
+        fake_transformers_auto_feature = cast(Any, types.ModuleType("transformers.models.auto.feature_extraction_auto"))
         fake_transformers_auto_feature.AutoFeatureExtractor = _FakeFeatureExtractor
-        fake_transformers_auto_model = types.ModuleType("transformers.models.auto.modeling_auto")
+        fake_transformers_auto_model = cast(Any, types.ModuleType("transformers.models.auto.modeling_auto"))
         fake_transformers_auto_model.AutoModelForAudioClassification = _FakeAudioModel
 
         with (
@@ -182,7 +182,7 @@ class TestOfflineModelLoading(unittest.TestCase):
         self.assertTrue(model_call[1]["local_files_only"])
 
     def test_sat_uses_local_paths_and_offline_kwargs(self):
-        fake_wtpsplit = types.ModuleType("wtpsplit")
+        fake_wtpsplit = cast(Any, types.ModuleType("wtpsplit"))
         fake_wtpsplit.SaT = _FakeSaT
 
         with (
@@ -203,7 +203,7 @@ class TestOfflineModelLoading(unittest.TestCase):
         self.assertTrue(kwargs["from_pretrained_kwargs"]["local_files_only"])
 
     def test_sat_does_not_double_prefix_segment_any_text_repo(self):
-        fake_wtpsplit = types.ModuleType("wtpsplit")
+        fake_wtpsplit = cast(Any, types.ModuleType("wtpsplit"))
         fake_wtpsplit.SaT = _FakeSaT
 
         with (
@@ -219,7 +219,7 @@ class TestOfflineModelLoading(unittest.TestCase):
         self.assertEqual(resolve_snapshot.call_args_list[0].args[0], "segment-any-text/sat-3l-sm")
 
     def test_sat_collapses_already_doubled_segment_any_text_repo(self):
-        fake_wtpsplit = types.ModuleType("wtpsplit")
+        fake_wtpsplit = cast(Any, types.ModuleType("wtpsplit"))
         fake_wtpsplit.SaT = _FakeSaT
 
         with (

@@ -8,7 +8,7 @@ import wave
 from dataclasses import dataclass, field
 from io import StringIO
 from time import perf_counter
-from typing import Any, Generator, List, Optional, TextIO, Tuple
+from typing import Any, Generator, List, Optional, TextIO, Tuple, cast
 
 import numpy as np
 from colorama import Fore
@@ -507,7 +507,7 @@ class Verbatim:
             try:
                 classifier = self._get_non_speech_classifier()
                 if classifier is not None:
-                    labels = classifier.classify(samples, self.config.sampling_rate)
+                    labels = cast(Any, classifier).classify(samples, self.config.sampling_rate)
                     label = self._format_non_speech_labels(labels)
             except Exception:  # pylint: disable=broad-exception-caught
                 self._non_speech_classifier = _NON_SPEECH_CLASSIFIER_FAILED
