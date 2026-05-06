@@ -39,12 +39,7 @@ class VoxtralTranscriber(Transcriber):
         if device not in ("cpu", "cuda", "mps"):
             raise RuntimeError("Voxtral backend currently supports only 'cpu', 'cuda', and 'mps' devices.")
 
-        if (
-            torch is None
-            or Qwen3ForcedAligner is None
-            or VoxtralForConditionalGeneration is None
-            or VoxtralProcessor is None
-        ):
+        if torch is None or Qwen3ForcedAligner is None or VoxtralForConditionalGeneration is None or VoxtralProcessor is None:
             raise RuntimeError(
                 "Voxtral backend requires optional dependencies. Install `transformers`, `mistral-common`, `qwen-asr`, and `torch` "
                 "to use transcriber_backend='voxtral'."

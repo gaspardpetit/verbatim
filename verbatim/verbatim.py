@@ -62,7 +62,33 @@ LOG = logging.getLogger(__name__)
 STATUS_LOG = get_status_logger()
 SKIP_MARKER_MIN_DURATION_SAMPLES = int(2.5 * 16000)
 SKIP_NOISE_RMS_THRESHOLD = 0.01
+MERGED_NON_SPEECH_COLLAR_SAMPLES = int(0.5 * 16000)
 _NON_SPEECH_CLASSIFIER_FAILED = object()
+
+
+def _is_null_speaker_non_speech_marker(utterance: Utterance) -> bool:
+    text = utterance.text.strip()
+    return utterance.speaker is None and len(text) > 1 and text.startswith("[") and text.endswith("]")
+
+
+def _has_spoken_text(utterance: Utterance) -> bool:
+    return utterance.speaker is not None and bool(utterance.text.strip())
+
+
+def _overlaps_with_collar(left: Utterance, right: Utterance, collar_samples: int) -> bool:
+    return left.start_ts <= right.end_ts + collar_samples and right.start_ts <= left.end_ts + collar_samples
+
+
+def filter_merged_non_speech_markers(utterances: List[Utterance], *, collar_samples: int = MERGED_NON_SPEECH_COLLAR_SAMPLES) -> List[Utterance]:
+    spoken_utterances = [utterance for utterance in utterances if _has_spoken_text(utterance)]
+    filtered: List[Utterance] = []
+    for utterance in utterances:
+        if _is_null_speaker_non_speech_marker(utterance) and any(
+            _overlaps_with_collar(utterance, spoken_utterance, collar_samples) for spoken_utterance in spoken_utterances
+        ):
+            continue
+        filtered.append(utterance)
+    return filtered
 
 
 @dataclass
@@ -1609,7 +1635,8 @@ def execute(
         STATUS_LOG.info("Done transcribing from audio source: %s", audio_source.source_name)
 
     if len(audio_sources) > 1:
-        sorted_utterances: List[Utterance] = sorted(all_utterances, key=lambda x: x.start_ts)
+        merged_utterances = filter_merged_non_speech_markers(all_utterances)
+        sorted_utterances: List[Utterance] = sorted(merged_utterances, key=lambda x: x.start_ts)
         writer = configure_writers(
             write_config,
             output_formats=output_formats,
@@ -1626,7 +1653,8 @@ def execute(
         LOG.info("Lazy-loading evaluation metrics.")
         from .eval.compare import compute_metrics  # pylint: disable=import-outside-toplevel
 
-        sorted_utterances: List[Utterance] = sorted(all_utterances, key=lambda x: x.start_ts)
+        merged_utterances = filter_merged_non_speech_markers(all_utterances) if len(audio_sources) > 1 else all_utterances
+        sorted_utterances: List[Utterance] = sorted(merged_utterances, key=lambda x: x.start_ts)
         ref_utterances: List[Utterance] = read_utterances(eval_file)
         metrics = compute_metrics(sorted_utterances, ref_utterances)
         print(metrics)
