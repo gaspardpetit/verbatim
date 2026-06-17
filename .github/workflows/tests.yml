@@ -73,6 +73,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
+            .verbatim
             ~/.cache/huggingface
             ~/.cache/ctranslate2
             ~/.cache/whisper
@@ -88,6 +89,7 @@ jobs:
           uv pip install --system -r requirements.txt
 
       - name: Prefetch models into .verbatim cache
+        if: runner.os == 'Linux' && matrix.python-version == '3.11'
         shell: bash
         env:
           VERBATIM_OFFLINE: "0"
@@ -147,6 +149,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
+            .verbatim
             ~/.cache/huggingface
             ~/.cache/ctranslate2
             ~/.cache/whisper
@@ -161,14 +164,6 @@ jobs:
           python -m pip install -U pip uv
           uv pip install --system -r requirements.txt
           uv pip install --system coverage pytest
-
-      - name: Prefetch models into .verbatim cache
-        shell: bash
-        env:
-          VERBATIM_OFFLINE: "0"
-          HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
-        run: |
-          verbatim --install --modeldir "$GITHUB_WORKSPACE/.verbatim"
 
       - name: Create .coveragerc
         shell: bash
