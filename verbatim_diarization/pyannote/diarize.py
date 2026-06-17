@@ -15,7 +15,7 @@ from torch.serialization import add_safe_globals
 
 from verbatim.cache import ArtifactCache
 from verbatim.logging_utils import get_status_logger, status_enabled
-from verbatim.model_cache import get_pyannote_cache_dir, resolve_hf_file_path
+from verbatim.model_cache import get_pyannote_cache_dir, is_offline_mode, prefetch_hf_snapshot, resolve_hf_snapshot_path
 from verbatim_audio.audio import constrain_audio_range
 from verbatim_diarization.diarize.base import DiarizationStrategy
 from verbatim_diarization.pyannote.progress import StatusProgressHook
@@ -50,18 +50,26 @@ class PyAnnoteDiarization(DiarizationStrategy):
                 safe_types.append(torch_version_mod.TorchVersion)  # type: ignore[attr-defined]
             add_safe_globals(safe_types)  # pyright: ignore[reportArgumentType]
             # Default to community-friendly model
-            pipeline_path = resolve_hf_file_path(
-                self.model_id,
-                filename="config.yaml",
-                purpose="pyannote diarization model",
-                cache_dir=get_pyannote_cache_dir(),
-                revision=PYANNOTE_DIARIZATION_MODEL_REVISION,
-                token=self.huggingface_token or None,
-            )
+            cache_dir = get_pyannote_cache_dir()
+            if is_offline_mode():
+                pipeline_path = resolve_hf_snapshot_path(
+                    self.model_id,
+                    purpose="pyannote diarization model",
+                    cache_dir=cache_dir,
+                    revision=PYANNOTE_DIARIZATION_MODEL_REVISION,
+                    token=self.huggingface_token or None,
+                )
+            else:
+                pipeline_path = prefetch_hf_snapshot(
+                    self.model_id,
+                    cache_dir=cache_dir,
+                    revision=PYANNOTE_DIARIZATION_MODEL_REVISION,
+                    token=self.huggingface_token or None,
+                )
             self.pipeline = Pipeline.from_pretrained(
                 pipeline_path,
                 token=self.huggingface_token or None,
-                cache_dir=get_pyannote_cache_dir(),
+                cache_dir=cache_dir,
             )
         if self.pipeline is None:
             raise RuntimeError("PyAnnote pipeline failed to initialize")
