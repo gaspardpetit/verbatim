@@ -35,10 +35,10 @@ class PyAVAudioStream(AudioStream):
 
         if self.source.file_obj is not None:
             LOG.debug("Opening cached bytes with PyAV: %s", self.source.file_path)
-            self._container = av.open(self.source.file_obj, format=self.source.format_hint)
+            self._container = av.open(self.source.file_obj, format=self.source.format_hint, metadata_errors="ignore")
         else:
             LOG.debug("Opening file with PyAV: %s", self.source.file_path)
-            self._container = av.open(self.source.file_path)
+            self._container = av.open(self.source.file_path, metadata_errors="ignore")
 
         # Find the first audio stream (or choose a specific one if needed)
         audio_streams = [s for s in self._container.streams if s.type == "audio"]
