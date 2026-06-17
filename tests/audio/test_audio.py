@@ -3,6 +3,7 @@ import math
 import unittest
 import wave
 from typing import cast
+from unittest.mock import patch
 
 import numpy as np
 
@@ -119,6 +120,21 @@ class TestAudioProcessing(unittest.TestCase):
 
         expected = np.array([-1.0, 0.0, 127.0 / 128.0], dtype=np.float32)
         np.testing.assert_array_almost_equal(output, expected, decimal=5)
+
+    def test_pyav_audio_source_ignores_invalid_metadata_bytes(self):
+        from verbatim_audio.sources.ffmpegfileaudiosource import PyAVAudioSource
+
+        def fake_open(*_args, **kwargs):
+            if kwargs.get("metadata_errors") != "ignore":
+                raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte")
+            raise RuntimeError("stop after validating open options")
+
+        source = PyAVAudioSource(file_path="sample.wav", file_obj=io.BytesIO(b"RIFF"), preserve_channels=False)
+
+        with patch("verbatim_audio.sources.ffmpegfileaudiosource.av.open", side_effect=fake_open), self.assertRaisesRegex(
+            RuntimeError, "stop after validating open options"
+        ):
+            source.open()
 
     def test_samples_to_seconds(self):
         from verbatim_audio.audio import samples_to_seconds
