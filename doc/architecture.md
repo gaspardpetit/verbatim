@@ -124,6 +124,12 @@ def transcribe_window(self) -> Tuple[List[Word], List[Word]]:
 - Prefix text ensures continuity with previous confirmed words.
 - Avoids transcribing unnecessary silence or incomplete utterances.
 
+## Transcriber capability contract
+
+The selected transcriber exposes `get_capabilities()` through `TranscriberProtocol`. The returned immutable `TranscriberCapabilities` describes whether the backend accepts a language hint, can detect a language separately, reports a language in its transcription output, and uses prompt or prefix context. These values currently document backend behavior; the orchestration flow above does not yet branch on them. A backend may override the method for a particular model later.
+
+`reports_language` means the adapter supplies a language determined from the transcription result. A word labeled with the language hint that Verbatim supplied does not count as reporting language. `supports_prompt` and `supports_prefix` describe distinct inputs; a backend may use them differently.
+
 ## Conclusion
 
 In short, multilingual support is achieved by:
@@ -131,4 +137,3 @@ In short, multilingual support is achieved by:
 - Detecting language using the shortest audio length that provides sufficient confidence.
 
 By dynamically adapting transcription windows and refining language detection, Verbatim transforms Whisper into a truly multilingual ASR system, capable of handling real-world multilingual conversations with precision.
-
