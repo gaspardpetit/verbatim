@@ -340,6 +340,7 @@ class Verbatim:
     ):
         self.config = config
         self.state = State(config)
+        self.raise_on_transcription_error = False
         self.status_hook = status_hook
         self._non_speech_classifier = None
         if models is None:
@@ -1562,6 +1563,8 @@ class Verbatim:
         except Exception as e:  # pylint: disable=broad-exception-caught
             LOG.error(f"An unexpected error occurred: {e}\n{traceback.format_exc()}")
             LOG.debug("Stopping...")
+            if self.raise_on_transcription_error:
+                raise
         finally:
             LOG.info(
                 (
