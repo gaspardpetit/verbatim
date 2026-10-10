@@ -620,10 +620,7 @@ class Verbatim:
             # preserve a bit of audio at the end that may have been too short just because it is truncated
             padding = min_speech_duration_samples
             remaining_audio = self.state.audio_ts - self.state.window_ts - padding
-            advance_to = remaining_audio
-            # pylint: disable=consider-using-min-builtin
-            if max_skip < advance_to:
-                advance_to = max_skip
+            advance_to = max(0, min(max_skip, remaining_audio))
             LOG.debug(
                 f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f}"
                 f" and {samples_to_seconds(self.state.window_ts + advance_to):.2f}"
@@ -642,10 +639,7 @@ class Verbatim:
 
         # skip leading silences
         if voice_start > 0:
-            # pylint: disable=consider-using-min-builtin
-            advance_to = voice_start
-            if max_skip < advance_to:
-                advance_to = max_skip
+            advance_to = max(0, min(max_skip, voice_start))
             LOG.debug(
                 f"Skipping silences between {samples_to_seconds(self.state.window_ts):.2f}"
                 f" and {samples_to_seconds(self.state.window_ts + advance_to):.2f}"
