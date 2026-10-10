@@ -1,3 +1,6 @@
+"""Capability contract tests, including backends with optional native imports."""
+# pylint: disable=import-outside-toplevel
+
 import importlib.util
 import sys
 import unittest
@@ -18,7 +21,7 @@ class TestTranscriberCapabilities(unittest.TestCase):
         }
         mlx_available = all(importlib.util.find_spec(name) is not None for name in ("mlx", "mlx_whisper"))
         if sys.platform != "darwin" or mlx_available:
-            from verbatim.voices.transcribe.whispermlx import WhisperMlxTranscriber  # pylint: disable=import-outside-toplevel
+            from verbatim.voices.transcribe.whispermlx import WhisperMlxTranscriber
 
             expected[WhisperMlxTranscriber] = (True, True, False, True, False)
         for backend, flags in expected.items():
