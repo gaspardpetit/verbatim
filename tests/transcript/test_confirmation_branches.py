@@ -5,12 +5,17 @@ import numpy as np
 from verbatim.config import Config
 from verbatim.transcript.words import Utterance, Word
 from verbatim.verbatim import Verbatim, WhisperHistory
+from verbatim_transcript import TranscriberCapabilities
 
 
 class DummyTranscriber:
-    def __init__(self, outputs_by_lang):
+    def __init__(self, outputs_by_lang, capabilities=None):
         self.outputs_by_lang = outputs_by_lang
+        self.capabilities = capabilities or TranscriberCapabilities(True, True, False, True, True)
         self.calls = []
+
+    def get_capabilities(self):
+        return self.capabilities
 
     def transcribe(
         self,
@@ -59,6 +64,24 @@ def make_word(start_ts, end_ts, text, lang="en"):
 class TestConfirmationBranches(unittest.TestCase):
     def setUp(self):
         self.config = Config(device="cpu")
+
+    def test_backend_without_language_hints_skips_detection_and_retry(self):
+        word = make_word(12000, 13000, " hello", lang="und")
+        transcriber = DummyTranscriber(outputs_by_lang={None: [word]}, capabilities=TranscriberCapabilities(False, False, False, False, False))
+
+        def unexpected_detection(_timestamp):
+            self.fail("Language detection should not run without language hints")
+
+        verbatim = TestVerbatim(config=self.config, models=DummyModels(transcriber), guess_language_fn=unexpected_detection)
+        verbatim.state.audio_ts = 16000
+        verbatim.state.window_ts = 0
+        confirmed, unconfirmed = verbatim.transcribe_window()
+
+        self.assertEqual([None], [call["lang"] for call in transcriber.calls])
+        self.assertEqual("und", verbatim.state.last_transcribe_lang)
+        self.assertEqual([], confirmed)
+        self.assertEqual([word], unconfirmed)
+        self.assertFalse(verbatim.gap_language_mismatch(start_ts=0, end_ts=8000, expected_lang="en"))
 
     def test_prefix_text_stops_on_language_change(self):
         transcriber = DummyTranscriber(outputs_by_lang={"en": []})

@@ -7,14 +7,19 @@ from verbatim.status_types import StatusProgress, StatusUpdate
 from verbatim.transcript.words import Word
 from verbatim.verbatim import Verbatim
 from verbatim_audio.sources.audiosource import AudioStream
+from verbatim_transcript import TranscriberCapabilities
 
 
 class DummyTranscriber:
-    def __init__(self, words, guessed_lang="en"):
+    def __init__(self, words, guessed_lang="en", capabilities=None):
         self.words = words
         self.guessed_lang = guessed_lang
+        self.capabilities = capabilities or TranscriberCapabilities(True, True, False, True, True)
         self.calls = []
         self.guess_calls = []
+
+    def get_capabilities(self):
+        return self.capabilities
 
     def guess_language(self, audio, lang):
         self.guess_calls.append({"samples": len(audio), "lang": list(lang)})
@@ -105,6 +110,21 @@ class DummyAudioStream(AudioStream):
 
 
 class TestNaiveMode(unittest.TestCase):
+    def test_no_hint_backend_transcribes_without_language_detection(self):
+        config = Config(device="cpu")
+        config.code_switching = False
+        word = Word(start_ts=0, end_ts=8000, word="Hello. ", probability=1.0, lang="und")
+        transcriber = DummyTranscriber(words=[word], capabilities=TranscriberCapabilities(False, False, False, False, False))
+        verbatim = Verbatim(config=config, models=SingleSentenceModels(transcriber))
+
+        emitted = list(verbatim.transcribe(DummyAudioStream(chunks=[np.zeros(16000, dtype=np.float32)])))
+
+        self.assertEqual([], transcriber.guess_calls)
+        self.assertEqual(None, transcriber.calls[0]["lang"])
+        self.assertEqual("", transcriber.calls[0]["prompt"])
+        self.assertEqual("und", verbatim.state.last_transcribe_lang)
+        self.assertEqual("Hello. ", emitted[0][0].text)
+
     def test_transcribe_naive_reads_full_audio_and_emits_sentence_utterances(self):
         config = Config(device="cpu")
         config.code_switching = False

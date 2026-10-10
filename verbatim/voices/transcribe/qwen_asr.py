@@ -281,7 +281,7 @@ class QwenAsrTranscriber(Transcriber):
         self,
         *,
         audio: NDArray,
-        lang: str,
+        lang: Optional[str],
         prompt: str,
         prefix: str,
         window_ts: int,
@@ -293,6 +293,8 @@ class QwenAsrTranscriber(Transcriber):
     ) -> List[Word]:
         _ = whisper_beam_size, whisper_best_of, whisper_patience, whisper_temperatures
 
+        if lang is None:
+            raise RuntimeError("Qwen3-ASR requires a language hint.")
         qwen_language = self._language_name(lang)
         if qwen_language is None:
             raise RuntimeError(f"Language '{lang}' is not supported by the Qwen3-ASR adapter mapping.")

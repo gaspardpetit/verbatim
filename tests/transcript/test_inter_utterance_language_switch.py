@@ -6,6 +6,7 @@ from verbatim.config import Config
 from verbatim.transcript.words import Word
 from verbatim.verbatim import Verbatim
 from verbatim_audio.sources.audiosource import AudioStream
+from verbatim_transcript import TranscriberCapabilities
 
 
 class DummyAudioStream(AudioStream):
@@ -38,6 +39,9 @@ class DummyTranscriber:
     def __init__(self, outputs_by_lang):
         self.outputs_by_lang = outputs_by_lang
         self.calls = []
+
+    def get_capabilities(self):
+        return TranscriberCapabilities(True, True, False, True, True)
 
     def transcribe(
         self,

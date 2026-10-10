@@ -43,38 +43,22 @@ class FasterWhisperTranscriber(Transcriber):
         offline_env = os.getenv("VERBATIM_OFFLINE", "0").lower() in ("1", "true", "yes")
 
         if device == "cpu":
-            try:
-                self.whisper_model = WhisperModel(
-                    model_size_or_path=model_size_or_path,
-                    device=device,
-                    compute_type="default",
-                    cpu_threads=16,
-                    download_root=download_root,
-                    local_files_only=offline_env,
-                )
-            except TypeError:
-                # Older faster-whisper without these kwargs
-                self.whisper_model = WhisperModel(
-                    model_size_or_path=model_size_or_path,
-                    device=device,
-                    compute_type="default",
-                    cpu_threads=16,
-                )
+            self.whisper_model = WhisperModel(
+                model_size_or_path=model_size_or_path,
+                device=device,
+                compute_type="default",
+                cpu_threads=16,
+                download_root=download_root,
+                local_files_only=offline_env,
+            )
         else:
-            try:
-                self.whisper_model = WhisperModel(
-                    model_size_or_path=model_size_or_path,
-                    device=device,
-                    compute_type="float16",
-                    download_root=download_root,
-                    local_files_only=offline_env,
-                )
-            except TypeError:
-                self.whisper_model = WhisperModel(
-                    model_size_or_path=model_size_or_path,
-                    device=device,
-                    compute_type="float16",
-                )
+            self.whisper_model = WhisperModel(
+                model_size_or_path=model_size_or_path,
+                device=device,
+                compute_type="float16",
+                download_root=download_root,
+                local_files_only=offline_env,
+            )
 
         self.whisper_beam_size = whisper_beam_size
         self.whisper_best_of = whisper_best_of
@@ -102,7 +86,7 @@ class FasterWhisperTranscriber(Transcriber):
         self,
         *,
         audio: NDArray,
-        lang: str,
+        lang: Optional[str],
         prompt: str,
         prefix: str,
         window_ts: int,
@@ -165,7 +149,7 @@ class FasterWhisperTranscriber(Transcriber):
             if not words:
                 continue
             for w in words:
-                word = Word.from_word(word=w, lang=lang, ts_offset=window_ts)
+                word = Word.from_word(word=w, lang=lang or info.language or "und", ts_offset=window_ts)
                 if word.end_ts > audio_ts:
                     continue
 

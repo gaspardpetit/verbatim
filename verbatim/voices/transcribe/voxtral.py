@@ -142,7 +142,7 @@ class VoxtralTranscriber(Transcriber):
         self,
         *,
         audio: NDArray,
-        lang: str,
+        lang: Optional[str],
         prompt: str,
         prefix: str,
         window_ts: int,
@@ -154,6 +154,8 @@ class VoxtralTranscriber(Transcriber):
     ) -> List[Word]:
         _ = whisper_beam_size, whisper_best_of, whisper_patience, whisper_temperatures
 
+        if lang is None:
+            raise RuntimeError("Voxtral requires a language hint.")
         mapped_language = self._language_name(lang)
         if mapped_language is None:
             raise RuntimeError(f"Language '{lang}' is not supported by the shared Qwen aligner mapping.")

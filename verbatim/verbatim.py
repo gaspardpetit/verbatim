@@ -772,16 +772,22 @@ class Verbatim:
         LOG.debug("Valid audio range: 0.0 - %s", samples_to_seconds(self.state.audio_ts - self.state.window_ts))
 
         acknowledged_words_in_window = WhisperHistory.advance_transcript(timestamp=self.state.window_ts, transcript=self.state.acknowledged_words)
-        detect_start = perf_counter()
-        lang, _prob, used_samples_for_language = self.guess_language(timestamp=max(0, self.state.acknowledged_ts))
-        self.state.last_transcribe_lang = lang
-        detect_ms = (perf_counter() - detect_start) * 1000.0
+        capabilities = self.models.transcriber.get_capabilities()
+        lang: Optional[str] = None
+        used_samples_for_language = 0
+        detect_ms = 0.0
+        if capabilities.accepts_language_hint:
+            detect_start = perf_counter()
+            lang, _prob, used_samples_for_language = self.guess_language(timestamp=max(0, self.state.acknowledged_ts))
+            detect_ms = (perf_counter() - detect_start) * 1000.0
+        self.state.last_transcribe_lang = lang or "und"
         prefix_text = ""
-        for word in [w for u in self.state.unacknowledged_utterances for w in u.words]:
-            if word.lang != lang:
-                break
-            prefix_text += word.word
-        whisper_prompt = self.config.whisper_prompts[lang] if lang in self.config.whisper_prompts else self.config.whisper_prompts["en"]
+        if lang is not None:
+            for word in [w for u in self.state.unacknowledged_utterances for w in u.words]:
+                if word.lang != lang:
+                    break
+                prefix_text += word.word
+        whisper_prompt = self.config.whisper_prompts.get(lang, self.config.whisper_prompts["en"]) if lang else ""
 
         try:
             transcribe_start = perf_counter()
@@ -807,7 +813,7 @@ class Verbatim:
             }
             return [], []
 
-        if len(transcript_words) > 0 and len(self.config.lang) > 1:
+        if capabilities.accepts_language_hint and len(transcript_words) > 0 and len(self.config.lang) > 1:
             # make sure that the first word detected is within the audio samples used
             # to guess the language; otherwise, language might have been guess from a short utterance such
             # as "hmm hmm" followed by a pause and then actual words
@@ -911,6 +917,8 @@ class Verbatim:
         return confirmed_words, unconfirmed_words
 
     def gap_language_mismatch(self, *, start_ts: int, end_ts: int, expected_lang: str, min_gap_samples: int = 4000) -> bool:
+        if not self.models.transcriber.get_capabilities().accepts_language_hint:
+            return False
         if not expected_lang or end_ts <= start_ts:
             return False
         if end_ts - start_ts < min_gap_samples:
@@ -1440,18 +1448,22 @@ class Verbatim:
 
         self.state.audio_ts = self.state.window_ts + len(full_audio)
 
-        detect_start = perf_counter()
-        lang_result = self._detect_language_for_audio(
-            audio=full_audio,
-            window_ts=self.state.window_ts,
-            audio_ts=self.state.audio_ts,
-            timestamp=max(0, self.state.window_ts),
-        )
-        lang = lang_result.language
-        self.state.last_transcribe_lang = lang
-        detect_ms = (perf_counter() - detect_start) * 1000.0
+        capabilities = self.models.transcriber.get_capabilities()
+        lang: Optional[str] = None
+        detect_ms = 0.0
+        if capabilities.accepts_language_hint:
+            detect_start = perf_counter()
+            lang_result = self._detect_language_for_audio(
+                audio=full_audio,
+                window_ts=self.state.window_ts,
+                audio_ts=self.state.audio_ts,
+                timestamp=max(0, self.state.window_ts),
+            )
+            lang = lang_result.language
+            detect_ms = (perf_counter() - detect_start) * 1000.0
+        self.state.last_transcribe_lang = lang or "und"
 
-        whisper_prompt = self.config.whisper_prompts[lang] if lang in self.config.whisper_prompts else self.config.whisper_prompts["en"]
+        whisper_prompt = self.config.whisper_prompts.get(lang, self.config.whisper_prompts["en"]) if lang else ""
         transcribe_start = perf_counter()
         transcript_words = self.models.transcriber.transcribe(
             audio=full_audio,
