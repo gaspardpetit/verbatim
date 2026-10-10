@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 from numpy.typing import NDArray
 
 from verbatim_audio.audio import samples_to_seconds
+from verbatim_transcript import TranscriberCapabilities
 
 from ...transcript.words import Word
 from .transcribe import Transcriber
@@ -54,6 +55,14 @@ class WhisperMlxTranscriber(Transcriber):
     - Those knobs are still exposed on the class for API compatibility with
       FasterWhisperTranscriber, but effectively no-ops on this backend.
     """
+
+    CAPABILITIES = TranscriberCapabilities(
+        accepts_language_hint=True,
+        detects_language=True,
+        reports_language=False,
+        supports_prompt=True,
+        supports_prefix=False,
+    )
 
     model_path: str
     whisper_beam_size: int

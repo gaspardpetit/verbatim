@@ -7,6 +7,7 @@ from numpy.typing import NDArray
 
 from verbatim.logging_utils import status_enabled
 from verbatim_audio.audio import samples_to_seconds
+from verbatim_transcript import TranscriberCapabilities
 
 from ...transcript.words import Word
 from .transcribe import Transcriber, WhisperConfig
@@ -15,6 +16,14 @@ LOG = logging.getLogger(__name__)
 
 
 class FasterWhisperTranscriber(Transcriber):
+    CAPABILITIES = TranscriberCapabilities(
+        accepts_language_hint=True,
+        detects_language=True,
+        reports_language=False,
+        supports_prompt=True,
+        supports_prefix=True,
+    )
+
     def __init__(
         self,
         *,

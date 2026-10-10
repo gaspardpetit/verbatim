@@ -9,6 +9,7 @@ from numpy.typing import NDArray
 from verbatim.languages import normalize_language
 from verbatim.model_cache import get_hf_cache_dir, is_offline_mode, prefetch_hf_snapshot, resolve_hf_snapshot_path
 from verbatim_audio.audio import samples_to_seconds
+from verbatim_transcript import TranscriberCapabilities
 
 from ...transcript.words import Word
 from .alignment_utils import project_timestamps_onto_transcript, split_transcript_text
@@ -52,6 +53,14 @@ QWEN_LANGUAGE_NAMES: Dict[str, str] = {
 
 class QwenAsrTranscriber(Transcriber):
     """Adapter that keeps all Qwen3-ASR specifics contained behind the transcriber interface."""
+
+    CAPABILITIES = TranscriberCapabilities(
+        accepts_language_hint=True,
+        detects_language=True,
+        reports_language=False,
+        supports_prompt=True,
+        supports_prefix=True,
+    )
 
     def __init__(
         self,

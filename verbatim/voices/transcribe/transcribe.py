@@ -1,8 +1,10 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple
+from typing import ClassVar, List, Optional, Tuple
 
 from numpy.typing import NDArray
+
+from verbatim_transcript import TranscriberCapabilities
 
 from ...transcript.words import Word
 
@@ -26,6 +28,12 @@ class WhisperConfig:
 
 
 class Transcriber(ABC):
+    CAPABILITIES: ClassVar[TranscriberCapabilities]
+
+    def get_capabilities(self) -> TranscriberCapabilities:
+        """Return capabilities for this backend and selected model."""
+        return self.CAPABILITIES
+
     @abstractmethod
     def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]:
         pass

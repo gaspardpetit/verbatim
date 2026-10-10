@@ -22,7 +22,14 @@ class TestModels(unittest.TestCase):
         models._whisper_model_size = "large-v3"
         models._device = "cpu"
 
-        with patch.dict(sys.modules, {"faster_whisper": None}):
+        original_import = builtins.__import__
+
+        def missing_faster_whisper(name, globals_=None, locals_=None, fromlist=(), level=0):
+            if name.endswith("faster_whisper"):
+                raise ModuleNotFoundError("No module named 'faster_whisper'", name="faster_whisper")
+            return original_import(name, globals_, locals_, fromlist, level)
+
+        with patch("builtins.__import__", side_effect=missing_faster_whisper):
             with self.assertRaisesRegex(RuntimeError, "verbatim\\[faster_whisper\\]"):
                 models._build_transcriber()
 

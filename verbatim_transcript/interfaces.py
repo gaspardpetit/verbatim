@@ -21,7 +21,20 @@ else:  # pragma: no cover - type-only fallback to avoid heavy imports
     Word = object  # pylint: disable=invalid-name
 
 
+@dataclass(frozen=True)
+class TranscriberCapabilities:
+    """Features exposed by a selected transcriber, potentially model-specific."""
+
+    accepts_language_hint: bool
+    detects_language: bool
+    reports_language: bool
+    supports_prompt: bool
+    supports_prefix: bool
+
+
 class TranscriberProtocol(Protocol):
+    def get_capabilities(self) -> TranscriberCapabilities: ...
+
     def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]: ...
 
     def transcribe(
