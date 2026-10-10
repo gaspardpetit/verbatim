@@ -16,7 +16,8 @@ class TestTranscriberCapabilities(unittest.TestCase):
             QwenAsrTranscriber: (True, True, False, True, True),
             VoxtralTranscriber: (True, False, False, False, False),
         }
-        if sys.platform != "darwin" or importlib.util.find_spec("mlx_whisper") is not None:
+        mlx_available = all(importlib.util.find_spec(name) is not None for name in ("mlx", "mlx_whisper"))
+        if sys.platform != "darwin" or mlx_available:
             from verbatim.voices.transcribe.whispermlx import WhisperMlxTranscriber  # pylint: disable=import-outside-toplevel
 
             expected[WhisperMlxTranscriber] = (True, True, False, True, False)
