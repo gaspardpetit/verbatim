@@ -72,7 +72,7 @@ class SenkoDiarization(DiarizationStrategy):
             import senko
         except ImportError as exc:
             raise RuntimeError(
-                'Senko diarization requires the Senko package. Install it with `uv pip install "git+https://github.com/narcotic-sh/senko.git"`.'
+                'Senko diarization requires the Senko package. Install it with `pip install "verbatim[senko]"`.'
             ) from exc
 
         self._diarizer = senko.Diarizer(

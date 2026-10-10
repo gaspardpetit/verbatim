@@ -73,9 +73,9 @@ With `uv` against the local project environment:
 uv pip install -e ".[qwen,mms_lid]"
 ```
 
-Install Senko separately when you want the optional Senko diarization backend:
+Install the optional Senko diarization backend:
 ```bash
-uv pip install "git+https://github.com/narcotic-sh/senko.git"
+uv pip install -e ".[senko]"
 ```
 
 Encrypted DS2 files can be opened with `password:` in a YAML/JSON config file or the `VERBATIM_AUDIO_PASSWORD` environment variable. A `--password` switch is also available, but it is less safe because it can leak secrets via shell history and process listings.

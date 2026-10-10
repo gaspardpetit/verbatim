@@ -1546,8 +1546,7 @@ class Verbatim:
         except KeyboardInterrupt:
             LOG.warning("KeyboardInterrupt detected, stopping transcription.")
             LOG.debug("Stopping...")
-        # pylint: disable=broad-exception-caught
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             LOG.error(f"An unexpected error occurred: {e}\n{traceback.format_exc()}")
             LOG.debug("Stopping...")
         finally:
