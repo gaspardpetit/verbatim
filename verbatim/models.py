@@ -130,6 +130,11 @@ class Models:
                 raise RuntimeError("Intel macOS is no longer supported; Apple Silicon is required on macOS.")
 
         STATUS_LOG.info("Using 'faster-whisper' transcriber.")
-        from .voices.transcribe.faster_whisper import FasterWhisperTranscriber  # pylint: disable=import-outside-toplevel
+        try:
+            from .voices.transcribe.faster_whisper import FasterWhisperTranscriber  # pylint: disable=import-outside-toplevel
+        except ModuleNotFoundError as exc:
+            if exc.name != "faster_whisper":
+                raise
+            raise RuntimeError('Faster Whisper requires its optional dependencies. Install `verbatim[faster_whisper]`.') from exc
 
         return FasterWhisperTranscriber(model_size_or_path=self._whisper_model_size, device=self._device)

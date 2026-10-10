@@ -16,6 +16,16 @@ class _FakeFasterWhisperTranscriber:
 
 
 class TestModels(unittest.TestCase):
+    def test_missing_default_backend_has_install_hint(self):
+        models = Models.__new__(Models)
+        models._config_transcriber_backend = "auto"
+        models._whisper_model_size = "large-v3"
+        models._device = "cpu"
+
+        with patch.dict(sys.modules, {"faster_whisper": None}):
+            with self.assertRaisesRegex(RuntimeError, "verbatim\\[faster_whisper\\]"):
+                models._build_transcriber()
+
     def test_build_transcriber_falls_back_when_mlx_is_unavailable(self):
         models = Models.__new__(Models)
         models._config_transcriber_backend = "auto"

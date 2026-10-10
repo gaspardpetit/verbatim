@@ -9,7 +9,7 @@
 
 ## Build, Test, and Development Commands
 - Create env (Python 3.10–3.12): `python -m venv .venv && source .venv/bin/activate`.
-- Install deps (preferred): `pip install uv && uv pip install .`.
+- Install deps for the default Faster Whisper backend (preferred): `pip install uv && uv pip install ".[faster_whisper]"`.
 - Alt install: `pip install -r requirements.txt` (GPU: `requirements-gpu.txt`).
 - Run CLI: `verbatim samples/…/audio.mp3 -v -o out`.
 - Local demo: `python run.py`.

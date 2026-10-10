@@ -61,12 +61,12 @@ release:
 	  python -c "import verbatim; print('Imported verbatim', getattr(verbatim, '__version__', 'unknown'))"
 
 install-cpu:
-	uv sync --python $(PYTHON) --extra diarization
+	uv sync --python $(PYTHON) --extra diarization --extra faster_whisper
 	uv pip install --python $(PYTHON) torch==2.8.0+cpu torchvision==0.23.0+cpu torchaudio==2.8.0+cpu --index-url https://download.pytorch.org/whl/cpu --reinstall
 	@echo "Note: if diarization fails with torchcodec/FFmpeg errors, install FFmpeg 4–7 and set FFMPEG_DLL_DIR (Windows) or add ffmpeg to PATH."
 
 install-cuda:
-	uv sync --python $(PYTHON) --extra diarization
+	uv sync --python $(PYTHON) --extra diarization --extra faster_whisper
 	uv pip install --python $(PYTHON) torch==2.8.0+cu126 torchvision==0.23.0+cu126 torchaudio==2.8.0+cu126 --index-url https://download.pytorch.org/whl/cu126 --reinstall
 	@echo "Note: if diarization fails with torchcodec/FFmpeg errors, install FFmpeg 4–7 and set FFMPEG_DLL_DIR (Windows) or add ffmpeg to PATH."
 
