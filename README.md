@@ -36,18 +36,24 @@ Install on macOS:
 
 Install from PyPI:
 ```
-pip install verbatim
+pip install "verbatim[faster_whisper]"
 ```
 
 Install the latest from git:
 ```
-pip install git+https://github.com/gaspardpetit/verbatim.git
+pip install "verbatim[faster_whisper] @ git+https://github.com/gaspardpetit/verbatim.git"
 ```
 
 Optional backend extras:
 ```bash
+# Default Faster Whisper backend (required on Windows/Linux unless another ASR backend is selected)
+pip install "verbatim[faster_whisper]"
+
 # Qwen ASR backend
 pip install "verbatim[qwen]"
+
+# Voxtral backend with Qwen word alignment
+pip install "verbatim[voxtral]"
 
 # MMS language identification backend
 pip install "verbatim[mms_lid]"

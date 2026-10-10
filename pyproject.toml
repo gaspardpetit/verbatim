@@ -49,7 +49,6 @@ dependencies = [
     "colorama>=0.4.6",
     "dataclasses-json>=0.6.7",
     "demucs>=4.0.1",
-    "faster-whisper>=1.1.1",
     "langcodes>=3.5.0",
     "numpy>=2.2.2,<3",
     "onnxruntime>=1.16.0,<1.20",
@@ -79,6 +78,9 @@ dev = [
 ]
 
 [project.optional-dependencies]
+faster_whisper = [
+    "faster-whisper>=1.1.1",
+]
 cuda_gpu = [
     "onnxruntime-gpu>=1.16.0,<1.20",
 ]
@@ -102,6 +104,7 @@ mms_lid = [
 voxtral = [
     "transformers>=4.57.0",
     "mistral-common>=1.10.0",
+    "qwen-asr>=0.0.6",
 ]
 mlx = [
     "mlx-whisper>=0.4.1 ; sys_platform == 'darwin'",

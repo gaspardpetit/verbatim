@@ -59,9 +59,9 @@ pip install uv
 ### Install Dependencies with Astral UV
 Use the `uv` CLI to install dependencies as per the configurations in `pyproject.toml`:
 ```bash
-uv pip install .  --group dev
+uv pip install ".[faster_whisper]" --group dev
 # or if you will be working on the project:
-# uv pip install -e .  --group dev
+# uv pip install -e ".[faster_whisper]" --group dev
 # or if you also want to pull pyannote diarization support:
 # uv pip install -e ".[diarization]" --group dev
 ```
@@ -73,7 +73,7 @@ This project uses a `pyproject.toml` file for dependency and build configuration
 ### Install Dependencies with `pip`
 If not already done, dependencies listed in `pyproject.toml` can be installed with:
 ```bash
-pip install .
+pip install ".[faster_whisper]"
 ```
 
 ### Using `Poetry` (Optional)

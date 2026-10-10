@@ -2155,17 +2155,17 @@ name = "mlx-whisper"
 version = "0.4.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "huggingface-hub", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten') or (python_full_version < '3.11' and sys_platform == 'win32') or (sys_platform != 'emscripten' and sys_platform != 'win32')" },
-    { name = "mlx", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten') or (python_full_version < '3.11' and sys_platform == 'win32') or (sys_platform != 'emscripten' and sys_platform != 'win32')" },
-    { name = "more-itertools", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten') or (python_full_version < '3.11' and sys_platform == 'win32') or (sys_platform != 'emscripten' and sys_platform != 'win32')" },
-    { name = "numba", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten') or (python_full_version < '3.11' and sys_platform == 'win32') or (sys_platform != 'emscripten' and sys_platform != 'win32')" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and sys_platform != 'emscripten' and sys_platform != 'win32'" },
-    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.17.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and sys_platform != 'emscripten' and sys_platform != 'win32'" },
-    { name = "tiktoken", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten') or (python_full_version < '3.11' and sys_platform == 'win32') or (sys_platform != 'emscripten' and sys_platform != 'win32')" },
-    { name = "torch", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten') or (python_full_version < '3.11' and sys_platform == 'win32') or (sys_platform != 'emscripten' and sys_platform != 'win32')" },
-    { name = "tqdm", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten') or (python_full_version < '3.11' and sys_platform == 'win32') or (sys_platform != 'emscripten' and sys_platform != 'win32')" },
+    { name = "huggingface-hub", marker = "sys_platform == 'darwin'" },
+    { name = "mlx", marker = "sys_platform == 'darwin'" },
+    { name = "more-itertools", marker = "sys_platform == 'darwin'" },
+    { name = "numba", marker = "sys_platform == 'darwin'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' and sys_platform == 'darwin'" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and sys_platform == 'darwin'" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' and sys_platform == 'darwin'" },
+    { name = "scipy", version = "1.17.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and sys_platform == 'darwin'" },
+    { name = "tiktoken", marker = "sys_platform == 'darwin'" },
+    { name = "torch", marker = "sys_platform == 'darwin'" },
+    { name = "tqdm", marker = "sys_platform == 'darwin'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/22/b7/a35232812a2ccfffcb7614ba96a91338551a660a0e9815cee668bf5743f0/mlx_whisper-0.4.3-py3-none-any.whl", hash = "sha256:6b82b6597a994643a3e5496c7bc229a672e5ca308458455bfe276e76ae024489", size = 890544, upload-time = "2025-08-29T14:56:13.815Z" },
@@ -5545,7 +5545,6 @@ dependencies = [
     { name = "colorama" },
     { name = "dataclasses-json" },
     { name = "demucs" },
-    { name = "faster-whisper" },
     { name = "langcodes" },
     { name = "llvmlite" },
     { name = "numba" },
@@ -5579,6 +5578,9 @@ diarization = [
 dss = [
     { name = "pydsscodec" },
 ]
+faster-whisper = [
+    { name = "faster-whisper" },
+]
 mlx = [
     { name = "mlx-whisper", marker = "sys_platform == 'darwin'" },
 ]
@@ -5594,6 +5596,7 @@ senko = [
 ]
 voxtral = [
     { name = "mistral-common" },
+    { name = "qwen-asr" },
     { name = "transformers" },
 ]
 
@@ -5611,7 +5614,7 @@ requires-dist = [
     { name = "colorama", specifier = ">=0.4.6" },
     { name = "dataclasses-json", specifier = ">=0.6.7" },
     { name = "demucs", specifier = ">=4.0.1" },
-    { name = "faster-whisper", specifier = ">=1.1.1" },
+    { name = "faster-whisper", marker = "extra == 'faster-whisper'", specifier = ">=1.1.1" },
     { name = "langcodes", specifier = ">=3.5.0" },
     { name = "llvmlite", specifier = ">=0.44" },
     { name = "mistral-common", marker = "extra == 'voxtral'", specifier = ">=1.10.0" },
@@ -5630,6 +5633,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "qwen-asr", marker = "extra == 'qwen'", specifier = ">=0.0.6" },
+    { name = "qwen-asr", marker = "extra == 'voxtral'", specifier = ">=0.0.6" },
     { name = "senko", marker = "sys_platform == 'darwin' and extra == 'senko'", specifier = "==0.2.1" },
     { name = "senko", extras = ["nvidia-windows"], marker = "sys_platform != 'darwin' and extra == 'senko'", specifier = "==0.2.1" },
     { name = "silero-vad", specifier = ">=5.1.2" },
@@ -5643,7 +5647,7 @@ requires-dist = [
     { name = "word-levenshtein", specifier = ">=0.0.3" },
     { name = "wtpsplit", specifier = ">=2.1.2" },
 ]
-provides-extras = ["cuda-gpu", "diarization", "dss", "mlx", "mms-lid", "qwen", "senko", "voxtral"]
+provides-extras = ["cuda-gpu", "diarization", "dss", "faster-whisper", "mlx", "mms-lid", "qwen", "senko", "voxtral"]
 
 [package.metadata.requires-dev]
 dev = [
