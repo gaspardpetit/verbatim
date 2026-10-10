@@ -179,7 +179,7 @@ class WhisperMlxTranscriber(Transcriber):
         self,
         *,
         audio: NDArray,
-        lang: str,
+        lang: Optional[str],
         prompt: str,
         prefix: str,
         window_ts: int,
@@ -247,6 +247,7 @@ class WhisperMlxTranscriber(Transcriber):
         )
 
         result: TranscribeResult = cast(TranscribeResult, raw_result)
+        lang = cast(str, lang or result.get("language") or "und")
         segments_obj = result.get("segments")
         if not isinstance(segments_obj, list):
             LOG.warning("MLX transcription returned no segments list")

@@ -43,7 +43,7 @@ class Transcriber(ABC):
         self,
         *,
         audio: NDArray,
-        lang: str,
+        lang: Optional[str],
         prompt: str,
         prefix: str,
         window_ts: int,

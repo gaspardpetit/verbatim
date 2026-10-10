@@ -102,7 +102,7 @@ class FasterWhisperTranscriber(Transcriber):
         self,
         *,
         audio: NDArray,
-        lang: str,
+        lang: Optional[str],
         prompt: str,
         prefix: str,
         window_ts: int,
@@ -165,7 +165,7 @@ class FasterWhisperTranscriber(Transcriber):
             if not words:
                 continue
             for w in words:
-                word = Word.from_word(word=w, lang=lang, ts_offset=window_ts)
+                word = Word.from_word(word=w, lang=lang or info.language or "und", ts_offset=window_ts)
                 if word.end_ts > audio_ts:
                     continue
 
