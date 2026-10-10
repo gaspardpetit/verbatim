@@ -200,52 +200,59 @@ class SkipResult:
 class RollingWindow:
     _array: NDArray
 
-    def __init__(self, window_size, dtype=np.float32):
+    def __init__(self, window_size, dtype=np.float32, history_size=0):
+        self.history_capacity = history_size
         self.reset(window_size=window_size, dtype=dtype)
 
     def reset(self, window_size=-1, dtype=None):
         if window_size == -1:
-            window_size = len(self._array)
+            window_size = self.capacity
         if dtype is None:
             dtype = self._array.dtype
-        self._array = np.zeros(window_size, dtype=dtype)
+        self._array = np.zeros(self.history_capacity + window_size, dtype=dtype)
+        self.history_samples = 0
 
     @property
     def capacity(self) -> int:
-        return len(self._array)
+        return len(self._array) - self.history_capacity
 
     def window_audio(self) -> NDArray:
         """Return the full window, including zero padding required by language detection."""
-        return self._array
+        return self._array[self.history_capacity :]
 
     def active_audio(self, valid_samples: int) -> NDArray:
         """Return ingested audio beginning at the active window start."""
         if not 0 <= valid_samples <= self.capacity:
             raise ValueError("active audio exceeds window capacity")
-        return self._array[:valid_samples]
+        return self.window_audio()[:valid_samples]
 
     def audio_between(self, start_ts: int, end_ts: int, window_ts: int, audio_ts: int) -> NDArray:
         """Return an absolute-time range currently held in the window."""
-        if not window_ts <= start_ts <= end_ts <= audio_ts:
-            raise ValueError("audio range is outside the active window")
-        return self._array[start_ts - window_ts : end_ts - window_ts]
+        if not window_ts - self.history_samples <= start_ts <= end_ts <= audio_ts:
+            raise ValueError("audio range is outside the retained window")
+        start = self.history_capacity + start_ts - window_ts
+        return self._array[start : start + end_ts - start_ts]
 
     def write(self, offset: int, samples: NDArray) -> None:
         if not 0 <= offset <= offset + len(samples) <= self.capacity:
             raise ValueError("audio write exceeds window capacity")
-        self._array[offset : offset + len(samples)] = samples
+        start = self.history_capacity + offset
+        self._array[start : start + len(samples)] = samples
 
     def advance(self, samples: int) -> None:
         if not 0 < samples <= self.capacity:
             raise ValueError("audio advance exceeds window capacity")
         self._array = np.roll(self._array, -samples)
         self._array[-samples:] = 0
+        self.history_samples = min(self.history_capacity, self.history_samples + samples)
 
     def replace(self, samples: NDArray) -> None:
         """Replace the full window with equally sized, already positioned samples."""
         if len(samples) != self.capacity:
             raise ValueError("replacement audio must match window capacity")
-        self._array = samples
+        self._array[:] = 0
+        self.window_audio()[:] = samples
+        self.history_samples = 0
 
 
 @dataclass
@@ -304,7 +311,12 @@ class State:
         }
 
         window_size = self.config.sampling_rate * self.config.window_duration  # Total samples in 30 seconds
-        self.rolling_window = RollingWindow(window_size=window_size, dtype=np.float32)  # Initialize empty rolling window
+        history_size = 30 * self.config.sampling_rate
+        self.rolling_window = RollingWindow(window_size=window_size, dtype=np.float32, history_size=history_size)
+
+    @property
+    def retained_start_ts(self) -> int:
+        return self.window_ts - self.rolling_window.history_samples
 
     def active_audio(self) -> NDArray:
         return self.rolling_window.active_audio(self.audio_ts - self.window_ts)
