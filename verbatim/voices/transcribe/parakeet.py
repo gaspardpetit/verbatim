@@ -8,6 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from verbatim.model_cache import is_local_model_reference, resolve_hf_file_path
+from verbatim_audio.settings import AUDIO_PARAMS
 from verbatim_transcript import TranscriberCapabilities
 
 from ...transcript.words import Word
@@ -76,6 +77,8 @@ class ParakeetTranscriber(Transcriber):
         whisper_temperatures: Optional[List[float]] = None,
     ) -> List[Word]:
         _ = prompt, prefix, whisper_beam_size, whisper_best_of, whisper_patience, whisper_temperatures
+        if AUDIO_PARAMS.sample_rate != SAMPLE_RATE:
+            raise RuntimeError(f"Parakeet requires a {SAMPLE_RATE} Hz Verbatim sample rate; configured rate is {AUDIO_PARAMS.sample_rate} Hz.")
         if lang is not None:
             raise RuntimeError("Parakeet does not accept language hints.")
         if audio.ndim != 1:
@@ -84,7 +87,7 @@ class ParakeetTranscriber(Transcriber):
             return []
 
         signal = np.ascontiguousarray(audio, dtype=np.float32)
-        hypothesis = self._model.transcribe([signal], batch_size=1, timestamps=True)[0]
+        hypothesis = self._model.transcribe([signal], batch_size=1, timestamps=True, verbose=False)[0]
         timestamps = hypothesis.timestamp.get("word", [])
         words: List[Word] = []
         for stamp in timestamps:

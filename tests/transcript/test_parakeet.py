@@ -3,7 +3,7 @@
 
 import unittest
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 
@@ -41,6 +41,24 @@ class TestParakeetTranscriber(unittest.TestCase):
         model.transcribe.assert_called_once()
         self.assertEqual(16000, len(model.transcribe.call_args.args[0][0]))
         self.assertTrue(model.transcribe.call_args.kwargs["timestamps"])
+        self.assertFalse(model.transcribe.call_args.kwargs["verbose"])
+
+    def test_rejects_non_16khz_audio_configuration(self):
+        transcriber = ParakeetTranscriber.__new__(ParakeetTranscriber)
+        transcriber._model = Mock()
+
+        with patch("verbatim.voices.transcribe.parakeet.AUDIO_PARAMS", SimpleNamespace(sample_rate=8000)):
+            with self.assertRaisesRegex(RuntimeError, "requires a 16000 Hz Verbatim sample rate"):
+                transcriber.transcribe(
+                    audio=np.zeros(8000, dtype=np.float32),
+                    lang=None,
+                    prompt="",
+                    prefix="",
+                    window_ts=0,
+                    audio_ts=8000,
+                )
+
+        transcriber._model.transcribe.assert_not_called()
 
     def test_capabilities_reject_language_hints(self):
         transcriber = ParakeetTranscriber.__new__(ParakeetTranscriber)
