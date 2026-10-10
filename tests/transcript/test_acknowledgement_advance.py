@@ -52,6 +52,10 @@ class StubVerbatim(Verbatim):
     def transcribe_window(self):
         return list(self._confirmed_words), list(self._unconfirmed_words)
 
+    def gap_language_mismatch(self, *, start_ts, end_ts, expected_lang, min_gap_samples=4000):
+        _ = start_ts, end_ts, expected_lang, min_gap_samples
+        return False
+
 
 def make_word(start_ts: int, end_ts: int, text: str) -> Word:
     return Word(start_ts=start_ts, end_ts=end_ts, word=text, probability=1.0, lang="en")

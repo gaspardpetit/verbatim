@@ -37,7 +37,6 @@ from verbatim_files.format.writer import (
 from verbatim_transcript import (
     LanguageDetectionRequest,
     LanguageDetectionResult,
-    TranscriberCapabilities,
     TranscriberProtocol,
     TranscriptionWindowResult,
     VadFn,
@@ -765,14 +764,6 @@ class Verbatim:
         result: LanguageDetectionResult = detect_language(request=request, guess_fn=self.language_identifier.guess_language)
         return (result.language, result.probability, result.samples_used)
 
-    def _transcriber_capabilities(self) -> TranscriberCapabilities:
-        """Keep injected legacy transcribers working while adapters adopt the contract."""
-        transcriber = getattr(self.models, "transcriber", None)
-        get_capabilities = getattr(transcriber, "get_capabilities", None)
-        if get_capabilities is not None:
-            return get_capabilities()
-        return TranscriberCapabilities(True, True, False, True, True)
-
     def transcribe_window(self) -> Tuple[List[Word], List[Word]]:
         LOG.debug("Starting transcription of audio chunk.")
         LOG.debug("Window Start Time: %s", samples_to_seconds(self.state.window_ts))
@@ -781,7 +772,7 @@ class Verbatim:
         LOG.debug("Valid audio range: 0.0 - %s", samples_to_seconds(self.state.audio_ts - self.state.window_ts))
 
         acknowledged_words_in_window = WhisperHistory.advance_transcript(timestamp=self.state.window_ts, transcript=self.state.acknowledged_words)
-        capabilities = self._transcriber_capabilities()
+        capabilities = self.models.transcriber.get_capabilities()
         lang: Optional[str] = None
         used_samples_for_language = 0
         detect_ms = 0.0
@@ -926,7 +917,7 @@ class Verbatim:
         return confirmed_words, unconfirmed_words
 
     def gap_language_mismatch(self, *, start_ts: int, end_ts: int, expected_lang: str, min_gap_samples: int = 4000) -> bool:
-        if not self._transcriber_capabilities().accepts_language_hint:
+        if not self.models.transcriber.get_capabilities().accepts_language_hint:
             return False
         if not expected_lang or end_ts <= start_ts:
             return False
@@ -1457,7 +1448,7 @@ class Verbatim:
 
         self.state.audio_ts = self.state.window_ts + len(full_audio)
 
-        capabilities = self._transcriber_capabilities()
+        capabilities = self.models.transcriber.get_capabilities()
         lang: Optional[str] = None
         detect_ms = 0.0
         if capabilities.accepts_language_hint:
