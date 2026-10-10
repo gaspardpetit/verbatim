@@ -159,6 +159,14 @@ Batch transcription including Olympus dictation files
 verbatim-batch --batch-dir ./audio --match "*.wav" "*.mp3" "*.dss" "*.ds2" --recursive --skip-existing --txt
 ```
 
+Live transcription over stdin/stdout
+```bash
+pip install 'verbatim[senko,faster_whisper]'
+ffmpeg -i input.wav -f s16le -ac 1 -ar 16000 - | verbastream > transcript.events
+```
+
+`verbastream` reads signed little-endian PCM16 mono audio at 16 kHz. It emits one `data: {JSON}` line per event. `status` events describe startup and progress; each `snapshot` replaces the full transcript view, including pending utterances and `unconfirmed_words`; `error` reports failures. Speaker labels are revised as Senko receives more audio. Logs go to stderr. A native client should drain both stdout and stderr, wait for `ready`, then send PCM to stdin. Use `--backend parakeet --model nvidia/parakeet-tdt-0.6b-v3` with `verbatim[senko,nemo]` for Parakeet. The default mode starts with 3-second audio blocks; `--mode quality` waits for 30 seconds initially. At EOF, a shorter final block is processed.
+
 Backend selection examples
 ```bash
 # Run Qwen ASR explicitly

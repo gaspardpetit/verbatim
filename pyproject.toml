@@ -119,13 +119,14 @@ Homepage = "https://github.com/gaspardpetit/verbatim"
 [project.scripts]
 verbatim = "verbatim.main:main"
 verbatim-batch = "verbatim_batch.main:main"
+verbastream = "verbatim_stream.main:main"
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
-include = ["verbatim/**/*", "verbatim_audio/**/*", "verbatim_cli/**/*", "verbatim_batch/**/*", "verbatim_transcript/**/*", "verbatim_files/**/*", "verbatim_diarization/**/*"]
+include = ["verbatim/**/*", "verbatim_audio/**/*", "verbatim_cli/**/*", "verbatim_batch/**/*", "verbatim_stream/**/*", "verbatim_transcript/**/*", "verbatim_files/**/*", "verbatim_diarization/**/*"]
 
 [tool.hatch.version]
 source = "vcs"

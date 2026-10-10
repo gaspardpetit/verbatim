@@ -132,6 +132,8 @@ The selected transcriber exposes `get_capabilities()` through `TranscriberProtoc
 
 Parakeet uses NeMo with a configurable `.nemo` checkpoint (default `nvidia/parakeet-tdt-0.6b-v3`). It consumes in-memory mono 16 kHz audio and returns timestamped words in the original sample timeline. Parakeet chooses the transcription language itself and does not return per-word language labels, so its words are labeled `und`. The orchestrator therefore does not request a language hint or perform language-specific retries for this backend.
 
+`verbastream` is a process adapter for live audio. A reader thread queues raw PCM16 mono audio from stdin while the pipeline consumes available samples through `AudioStream`. Senko's streaming session updates speaker segments after each consumed block; transcript snapshots reproject all visible words and utterances onto the latest segments. Stdout carries one `data: {JSON}` event per line, with `status`, `snapshot`, and `error` event types; diagnostic output uses stderr. When the input queue accumulates at least 30 seconds, the adapter asks for a larger block up to the free space in the 30-second transcription window.
+
 ## Conclusion
 
 In short, multilingual support is achieved by:
