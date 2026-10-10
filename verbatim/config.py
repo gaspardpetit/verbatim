@@ -186,6 +186,7 @@ class Config:
     voxtral_dtype: str = "auto"
     voxtral_max_new_tokens: int = 256
     qwen_asr_model_size: str = "Qwen/Qwen3-ASR-1.7B"
+    parakeet_model_size: str = "nvidia/parakeet-tdt-0.6b-v3"
     qwen_aligner_model_size: str = "Qwen/Qwen3-ForcedAligner-0.6B"
     qwen_dtype: str = "auto"
     qwen_max_inference_batch_size: int = 1

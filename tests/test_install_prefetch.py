@@ -47,6 +47,15 @@ class TestInstallRequirements(unittest.TestCase):
         self.assertTrue(requirements.include_mms_language_model)
         self.assertTrue(requirements.include_sat)
 
+    def test_parakeet_install_selects_nemo_checkpoint(self):
+        config = Config(device="cpu")
+        config.transcriber_backend = "parakeet"
+
+        requirements = collect_install_requirements(config=config, source_config=SourceConfig())
+
+        self.assertTrue(requirements.include_parakeet)
+        self.assertFalse(requirements.include_faster_whisper)
+
     def test_diarize_policy_adds_pyannote_and_separation(self):
         config = Config(device="cpu")
         source_config = SourceConfig(diarize_strategy="1,2=energy;3=pyannote;*=separate")

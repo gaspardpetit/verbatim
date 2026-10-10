@@ -234,6 +234,8 @@ def make_config(args) -> Config:
             config.qwen_asr_model_size = asr_model
         elif normalized_backend == "voxtral":
             config.voxtral_model_size = asr_model
+        elif normalized_backend == "parakeet":
+            config.parakeet_model_size = asr_model
         else:
             config.whisper_model_size = asr_model
     if getattr(args, "voxtral_max_new_tokens", None) is not None:

@@ -130,6 +130,8 @@ The selected transcriber exposes `get_capabilities()` through `TranscriberProtoc
 
 `reports_language` means the adapter supplies a language determined from the transcription result. A word labeled with the language hint that Verbatim supplied does not count as reporting language. `supports_prompt` and `supports_prefix` describe distinct inputs; a backend may use them differently.
 
+Parakeet uses NeMo with a configurable `.nemo` checkpoint (default `nvidia/parakeet-tdt-0.6b-v3`). It consumes in-memory mono 16 kHz audio and returns timestamped words in the original sample timeline. Parakeet chooses the transcription language itself and does not return per-word language labels, so its words are labeled `und`. The orchestrator therefore does not request a language hint or perform language-specific retries for this backend.
+
 ## Conclusion
 
 In short, multilingual support is achieved by:

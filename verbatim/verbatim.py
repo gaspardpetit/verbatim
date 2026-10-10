@@ -353,6 +353,7 @@ class Verbatim:
                 transcriber=transcriber,
                 transcriber_backend=config.transcriber_backend,
                 qwen_asr_model_size=config.qwen_asr_model_size,
+                parakeet_model_size=config.parakeet_model_size,
                 qwen_aligner_model_size=config.qwen_aligner_model_size,
                 qwen_dtype=config.qwen_dtype,
                 qwen_max_inference_batch_size=config.qwen_max_inference_batch_size,
