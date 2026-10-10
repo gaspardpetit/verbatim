@@ -16,6 +16,18 @@ class _FakeFasterWhisperTranscriber:
 
 
 class TestModels(unittest.TestCase):
+    def test_parakeet_backend_uses_selected_checkpoint(self):
+        models = Models.__new__(Models)
+        models._config_transcriber_backend = "parakeet"
+        models._parakeet_model_size = "nvidia/parakeet-tdt-0.6b-v2"
+        models._device = "cuda"
+
+        with patch("verbatim.voices.transcribe.parakeet.ParakeetTranscriber") as transcriber_class:
+            transcriber = models._build_transcriber()
+
+        transcriber_class.assert_called_once_with(model_size_or_path="nvidia/parakeet-tdt-0.6b-v2", device="cuda")
+        self.assertIs(transcriber, transcriber_class.return_value)
+
     def test_missing_default_backend_has_install_hint(self):
         models = Models.__new__(Models)
         models._config_transcriber_backend = "auto"

@@ -164,6 +164,10 @@ Backend selection examples
 # Run Qwen ASR explicitly
 verbatim audio_file.wav --asr-backend qwen --languages en fr
 
+# Install the NeMo extra, then run Parakeet v3 (or select v2 for English-only audio)
+pip install 'verbatim[nemo]'
+verbatim audio_file.wav --asr-backend parakeet --asr-model nvidia/parakeet-tdt-0.6b-v3
+
 # Run Qwen ASR with MMS language identification
 verbatim audio_file.wav --asr-backend qwen --language-backend mms --language-model facebook/mms-lid-126 --languages en fr
 

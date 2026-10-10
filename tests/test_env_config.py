@@ -64,6 +64,15 @@ class TestEnvConfig(unittest.TestCase):
         self.assertEqual(config.transcriber_backend, "voxtral")
         self.assertEqual(config.voxtral_model_size, "mistralai/Voxtral-Mini-3B-2507")
 
+    def test_asr_model_targets_parakeet_when_selected(self):
+        _parser, _base_defaults, args = self._build_args(
+            ["input.wav", "--asr-backend", "parakeet", "--asr-model", "nvidia/parakeet-tdt-0.6b-v2"]
+        )
+        config = make_config(args)
+
+        self.assertEqual("parakeet", config.transcriber_backend)
+        self.assertEqual("nvidia/parakeet-tdt-0.6b-v2", config.parakeet_model_size)
+
     def test_config_file_beats_env_backends(self):
         _parser, base_defaults, user_args = self._build_args(["input.wav"])
         config_path = self._write_config(

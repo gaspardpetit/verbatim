@@ -32,6 +32,7 @@ class Models:
         transcriber: Optional[TranscriberProtocol] = None,
         transcriber_backend: str = "auto",
         qwen_asr_model_size: str = "Qwen/Qwen3-ASR-1.7B",
+        parakeet_model_size: str = "nvidia/parakeet-tdt-0.6b-v3",
         qwen_aligner_model_size: str = "Qwen/Qwen3-ForcedAligner-0.6B",
         qwen_dtype: str = "auto",
         qwen_max_inference_batch_size: int = 1,
@@ -45,6 +46,7 @@ class Models:
         self._voxtral_max_new_tokens = voxtral_max_new_tokens
         self._config_transcriber_backend = transcriber_backend
         self._qwen_asr_model_size = qwen_asr_model_size
+        self._parakeet_model_size = parakeet_model_size
         self._qwen_aligner_model_size = qwen_aligner_model_size
         self._qwen_dtype = qwen_dtype
         self._qwen_max_inference_batch_size = qwen_max_inference_batch_size
@@ -91,6 +93,11 @@ class Models:
     def _build_transcriber(self) -> TranscriberProtocol:
         # pylint: disable=import-outside-toplevel
         backend = (getattr(self, "_config_transcriber_backend", "auto") or "auto").lower()
+        if backend == "parakeet":
+            STATUS_LOG.info("Using Parakeet transcriber.")
+            from .voices.transcribe.parakeet import ParakeetTranscriber  # pylint: disable=import-outside-toplevel
+
+            return ParakeetTranscriber(model_size_or_path=self._parakeet_model_size, device=self._device)
         if backend in ("qwen", "qwen-asr"):
             STATUS_LOG.info("Using Qwen3-ASR transcriber.")
             from .voices.transcribe.qwen_asr import QwenAsrTranscriber  # pylint: disable=import-outside-toplevel

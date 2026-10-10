@@ -92,6 +92,7 @@ def _install_target_key(config, source_config) -> tuple:
         config.transcriber_backend,
         config.whisper_model_size,
         config.qwen_asr_model_size,
+        config.parakeet_model_size,
         config.qwen_aligner_model_size,
         config.voxtral_model_size,
         config.language_identifier_backend,
