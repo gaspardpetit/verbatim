@@ -1,10 +1,11 @@
+import importlib.util
+import sys
 import unittest
 from dataclasses import FrozenInstanceError
 
 from verbatim.voices.transcribe.faster_whisper import FasterWhisperTranscriber
 from verbatim.voices.transcribe.qwen_asr import QwenAsrTranscriber
 from verbatim.voices.transcribe.voxtral import VoxtralTranscriber
-from verbatim.voices.transcribe.whispermlx import WhisperMlxTranscriber
 from verbatim_transcript import TranscriberCapabilities
 
 
@@ -12,10 +13,13 @@ class TestTranscriberCapabilities(unittest.TestCase):
     def test_existing_backends_expose_their_language_and_context_contracts(self):
         expected = {
             FasterWhisperTranscriber: (True, True, False, True, True),
-            WhisperMlxTranscriber: (True, True, False, True, False),
             QwenAsrTranscriber: (True, True, False, True, True),
             VoxtralTranscriber: (True, False, False, False, False),
         }
+        if sys.platform != "darwin" or importlib.util.find_spec("mlx_whisper") is not None:
+            from verbatim.voices.transcribe.whispermlx import WhisperMlxTranscriber  # pylint: disable=import-outside-toplevel
+
+            expected[WhisperMlxTranscriber] = (True, True, False, True, False)
         for backend, flags in expected.items():
             with self.subTest(backend=backend.__name__):
                 capabilities = backend.__new__(backend).get_capabilities()
