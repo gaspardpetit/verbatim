@@ -63,7 +63,7 @@ uv pip install ".[faster_whisper]" --group dev
 # or if you will be working on the project:
 # uv pip install -e ".[faster_whisper]" --group dev
 # or if you also want to pull pyannote diarization support:
-# uv pip install -e ".[diarization]" --group dev
+# uv pip install -e ".[faster_whisper,diarization]" --group dev
 ```
 This will resolve dependencies, including those with custom indices or conditional markers.
 
@@ -126,15 +126,15 @@ uv lock --upgrade
 # Regenerating the requirements.txt files
 
 ```
-uv export --no-hashes --extra diarization > ./requirements.txt
-uv export --no-hashes --extra diarization --extra cuda_gpu > ./requirements-gpu.txt
+uv export --no-hashes --extra faster_whisper --extra diarization > ./requirements.txt
+uv export --no-hashes --extra faster_whisper --extra diarization --extra cuda_gpu > ./requirements-gpu.txt
 ```
 
 On windows, make sure the output is in utf-8, not utf-16 is it would be by default:
 
 ```{powershell}
-uv export --no-hashes --extra diarization | Out-File -FilePath .\requirements.txt -Encoding utf8
-uv export --no-hashes --extra diarization --extra cuda_gpu | Out-File -FilePath .\requirements-gpu.txt -Encoding utf8
+uv export --no-hashes --extra faster_whisper --extra diarization | Out-File -FilePath .\requirements.txt -Encoding utf8
+uv export --no-hashes --extra faster_whisper --extra diarization --extra cuda_gpu | Out-File -FilePath .\requirements-gpu.txt -Encoding utf8
 ```
 
 You can add `--no-dev` to `uv export` to ignore the dev dependencies.
