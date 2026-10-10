@@ -163,12 +163,11 @@ class SnapshotPublisher:
         confirmed = final_utterances if final_utterances is not None else state.acknowledged_utterances
         visible_utterances = confirmed + ([] if final else state.unacknowledged_utterances)
         current_words = state.unconfirmed_words
-        if current_words:
-            window_start = getattr(state, "window_ts", 0)
-            self.provisional_words = [word for word in self.provisional_words if word.end_ts <= window_start]
-            for word in current_words:
-                if word not in self.provisional_words:
-                    self.provisional_words.append(word)
+        window_start = state.window_ts
+        self.provisional_words = [word for word in self.provisional_words if word.end_ts <= window_start]
+        for word in current_words:
+            if word not in self.provisional_words:
+                self.provisional_words.append(word)
         for utterance in visible_utterances:
             self.provisional_words = [
                 word for word in self.provisional_words
@@ -195,20 +194,21 @@ class StreamingVerbatim(Verbatim):
     def __init__(self, config: Config, publisher: SnapshotPublisher, *, quality: bool = False, transcriber: Any = None):
         super().__init__(config, transcriber=transcriber)
         self.publisher = publisher
-        self.quality_initial_window = quality
+        self.quality = quality
+        self.raise_on_transcription_error = True
 
     def capture_audio(self, audio_source: AudioStream):
-        if isinstance(audio_source, QueuedAudioStream) and audio_source.buffered_seconds() >= QUALITY_WINDOW_SECONDS:
+        if self.quality:
+            occupied_seconds = (self.state.audio_ts - self.state.window_ts) / self.config.sampling_rate
+            available_seconds = max(1, self.config.window_duration - occupied_seconds)
+            self.config.chunk_table = [(0, available_seconds / self.config.window_duration)]
+        elif isinstance(audio_source, QueuedAudioStream) and audio_source.buffered_seconds() >= QUALITY_WINDOW_SECONDS:
             occupied_seconds = (self.state.audio_ts - self.state.window_ts) / self.config.sampling_rate
             available_seconds = max(1, self.config.window_duration - occupied_seconds)
             self.config.chunk_table = [(0, min(QUALITY_WINDOW_SECONDS, available_seconds) / self.config.window_duration)]
-        elif not self.quality_initial_window:
+        else:
             self.config.chunk_table = [(0, LOW_LATENCY_BLOCK_SECONDS / self.config.window_duration)]
-        captured = super().capture_audio(audio_source)
-        if captured and self.quality_initial_window:
-            self.quality_initial_window = False
-            self.config.chunk_table = [(0, LOW_LATENCY_BLOCK_SECONDS / self.config.window_duration)]
-        return captured
+        return super().capture_audio(audio_source)
 
     def process_audio_window(self, audio_stream: AudioStream) -> Iterator[tuple[Utterance, list[Utterance], list[Word]]]:
         yield from super().process_audio_window(audio_stream)
@@ -236,7 +236,7 @@ def run(source: BinaryIO, output: TextIO, *, device: str = "auto", model: str = 
     else:
         config.whisper_model_size = model
     config.configure_languages(languages or ["en", "fr"])
-    # Quality mode starts with a full window, then revises it as new audio arrives.
+    # Quality mode waits for a full rolling window; low latency mode commits every three seconds.
     block_seconds = LOW_LATENCY_BLOCK_SECONDS
     if mode == "quality":
         config.window_duration = QUALITY_WINDOW_SECONDS
@@ -264,8 +264,7 @@ def run(source: BinaryIO, output: TextIO, *, device: str = "auto", model: str = 
     selected_model = config.parakeet_model_size if backend == "parakeet" else (config.qwen_asr_model_size if backend == "qwen" else model)
     write_status(output, "loading_transcriber", backend=backend, model=selected_model)
     transcriber = StreamingVerbatim(config, publisher, quality=mode == "quality")
-    # Load the ASR model while the desktop app is preparing playback, before
-    # the first three seconds of audio are ready to transcribe.
+    # Load the ASR model before the app starts sending audio after `ready`.
     _ = transcriber.models.transcriber
     write_status(output, "ready")
     producer_error: list[BaseException] = []

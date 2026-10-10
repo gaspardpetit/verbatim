@@ -53,7 +53,7 @@ class StreamTests(unittest.TestCase):
         word = Word(start_ts=0, end_ts=16000, word="hello", probability=0.9, lang="en")
         unconfirmed = Word(start_ts=16000, end_ts=32000, word="there", probability=0.8, lang="en")
         utterance = Utterance.from_words("u1", [word])
-        state = types.SimpleNamespace(acknowledged_utterances=[utterance], unacknowledged_utterances=[], unconfirmed_words=[unconfirmed])
+        state = types.SimpleNamespace(window_ts=0, acknowledged_utterances=[utterance], unacknowledged_utterances=[], unconfirmed_words=[unconfirmed])
         publisher.publish(cast(Verbatim, types.SimpleNamespace(state=state)))
         payload = json.loads(output.getvalue().removeprefix("data: "))
         self.assertEqual(payload["utterances"][0]["speaker"], "SPEAKER_01")
@@ -79,6 +79,19 @@ class StreamTests(unittest.TestCase):
         self.assertEqual([word["text"] for word in snapshots[2]["unconfirmed_words"]], ["first", "second"])
         self.assertEqual([word["text"] for word in snapshots[3]["unconfirmed_words"]], ["first", "second"])
 
+    def test_snapshot_removes_retracted_current_window_word(self):
+        output = io.StringIO()
+        publisher = SnapshotPublisher(output)
+        word = Word(start_ts=16000, end_ts=32000, word="withdrawn", probability=0.8, lang="en")
+        state = types.SimpleNamespace(window_ts=0, acknowledged_utterances=[], unacknowledged_utterances=[], unconfirmed_words=[word])
+        transcriber = cast(Verbatim, types.SimpleNamespace(state=state))
+        publisher.publish(transcriber)
+        state.unconfirmed_words = []
+        publisher.publish(transcriber)
+        snapshots = [json.loads(line.removeprefix("data: ")) for line in output.getvalue().splitlines()]
+        self.assertEqual([item["text"] for item in snapshots[0]["unconfirmed_words"]], ["withdrawn"])
+        self.assertEqual(snapshots[1]["unconfirmed_words"], [])
+
     def test_sample_wav_drives_full_block_scheduler(self):
         sample = Path(__file__).resolve().parents[1] / "ext/samples/audio/1ch_2spk_en-fr_AirFrance_00h03m54s.wav"
         if not sample.exists():
@@ -99,9 +112,11 @@ class StreamTests(unittest.TestCase):
                     raise AssertionError("verbastream must accept English and French")
                 if _config.transcriber_backend != "whisper":
                     raise AssertionError("Whisper should remain the default model")
+                if not _config.stream or _config.whisper_beam_size != 3 or _config.whisper_best_of != 3:
+                    raise AssertionError("Low latency mode must use streaming transcription settings")
                 self.publisher = publisher
                 self.models = types.SimpleNamespace(transcriber=object())
-                self.state = types.SimpleNamespace(acknowledged_utterances=[], unacknowledged_utterances=[], unconfirmed_words=[])
+                self.state = types.SimpleNamespace(window_ts=0, acknowledged_utterances=[], unacknowledged_utterances=[], unconfirmed_words=[])
 
             def transcribe(self, stream):
                 while stream.has_more():
@@ -130,7 +145,7 @@ class StreamTests(unittest.TestCase):
                         messages.index(snapshots[0]))
         self.assertEqual(messages[-1]["stage"], "complete")
 
-    def test_quality_mode_starts_with_full_window_then_updates_every_three_seconds(self):
+    def test_quality_mode_requests_full_window_then_waits_for_remaining_audio(self):
         seen = []
 
         class FakeVerbatim:
@@ -140,14 +155,12 @@ class StreamTests(unittest.TestCase):
                              config.chunk_table, config.whisper_beam_size))
                 self.publisher = publisher
                 self.models = types.SimpleNamespace(transcriber=object())
-                self.state = types.SimpleNamespace(acknowledged_utterances=[], unacknowledged_utterances=[], unconfirmed_words=[])
+                self.state = types.SimpleNamespace(window_ts=0, acknowledged_utterances=[], unacknowledged_utterances=[], unconfirmed_words=[])
 
             def transcribe(self, stream):
-                requested = 30
                 while stream.has_more():
-                    stream.next_chunk(requested)
+                    stream.next_chunk(30)
                     self.publisher.publish(self)
-                    requested = 3
                 yield from ()
 
         fake_senko = types.SimpleNamespace(Diarizer=lambda **_kwargs: object(),
@@ -159,7 +172,7 @@ class StreamTests(unittest.TestCase):
                 languages=["fr"], mode="quality", backend="qwen")
         messages = [json.loads(line.removeprefix("data: ")) for line in output.getvalue().splitlines()]
         self.assertEqual([message["audio_seconds"] for message in messages if message["type"] == "snapshot"],
-                         [30.0, 33.0, 36.0, 37.0, 37.0])
+                         [30.0, 37.0, 37.0])
         self.assertEqual(seen, [(["fr"], "qwen", False, 30, [(0, 1.0)], 9)])
 
     def test_quality_mode_releases_short_recording_at_eof(self):
@@ -216,14 +229,41 @@ class StreamTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "stopped before consuming all input"):
                 run(io.BytesIO(b"\x00\x00" * (105 * 16000)), io.StringIO(), device="cpu")
 
-    def test_quality_mode_switches_to_incremental_capture_after_first_window(self):
+    def test_streaming_transcriber_propagates_error_after_input_eof(self):
         transcriber = object.__new__(StreamingVerbatim)
-        transcriber.config = cast(Config, types.SimpleNamespace(window_duration=30, chunk_table=[(0, 1.0)]))
-        transcriber.quality_initial_window = True
+        transcriber.config = Config(device="cpu")
+        transcriber.raise_on_transcription_error = True
+        transcriber.status_hook = None
+        blocks = queue.Queue()
+        read_blocks(io.BytesIO(b"\x00\x00" * 16000), blocks)
+        stream = QueuedAudioStream(blocks, lambda _audio: None)
+
+        def fail_after_eof(audio_source):
+            self.assertIs(audio_source, stream)
+            stream.next_chunk()
+            raise RuntimeError("backend failed on final partial block")
+
+        with patch.object(StreamingVerbatim, "capture_audio", side_effect=fail_after_eof):
+            with self.assertRaisesRegex(RuntimeError, "backend failed on final partial block"):
+                list(transcriber.transcribe(stream))
+        self.assertTrue(stream.ended)
+
+    def test_quality_mode_refills_the_rolling_window(self):
+        transcriber = object.__new__(StreamingVerbatim)
+        transcriber.config = cast(Config, types.SimpleNamespace(sampling_rate=16000, window_duration=30, chunk_table=[(0, 1.0)]))
+        transcriber.state = types.SimpleNamespace(window_ts=0, audio_ts=0)
+        transcriber.quality = True
         with patch.object(Verbatim, "capture_audio", return_value=True):
             self.assertTrue(transcriber.capture_audio(cast(AudioStream, None)))
-        self.assertFalse(transcriber.quality_initial_window)
-        self.assertEqual(transcriber.config.chunk_table, [(0, 0.1)])
+        self.assertEqual(transcriber.get_next_number_of_chunks(), 30)
+        transcriber.state.audio_ts = 10 * 16000
+        with patch.object(Verbatim, "capture_audio", return_value=True):
+            self.assertTrue(transcriber.capture_audio(cast(AudioStream, None)))
+        self.assertEqual(transcriber.get_next_number_of_chunks(), 20)
+        transcriber.state.audio_ts = 30 * 16000
+        with patch.object(Verbatim, "capture_audio", return_value=True):
+            self.assertTrue(transcriber.capture_audio(cast(AudioStream, None)))
+        self.assertEqual(transcriber.get_next_number_of_chunks(), 1)
 
     def test_backlog_uses_free_space_in_attention_window(self):
         blocks = queue.Queue()
@@ -233,7 +273,7 @@ class StreamTests(unittest.TestCase):
         transcriber = object.__new__(StreamingVerbatim)
         transcriber.config = cast(Config, types.SimpleNamespace(sampling_rate=16000, window_duration=30, chunk_table=[(0, 0.1)]))
         transcriber.state = types.SimpleNamespace(window_ts=0, audio_ts=6 * 16000)
-        transcriber.quality_initial_window = False
+        transcriber.quality = False
 
         with patch.object(Verbatim, "capture_audio", return_value=True):
             self.assertTrue(transcriber.capture_audio(audio_stream))
@@ -249,7 +289,7 @@ class StreamTests(unittest.TestCase):
                 selected.append((config.transcriber_backend, config.parakeet_model_size))
                 self.publisher = publisher
                 self.models = types.SimpleNamespace(transcriber=object())
-                self.state = types.SimpleNamespace(acknowledged_utterances=[], unacknowledged_utterances=[], unconfirmed_words=[])
+                self.state = types.SimpleNamespace(window_ts=0, acknowledged_utterances=[], unacknowledged_utterances=[], unconfirmed_words=[])
 
             def transcribe(self, stream):
                 while stream.has_more():
