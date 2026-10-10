@@ -1,7 +1,5 @@
 import unittest
 
-import numpy as np
-
 from verbatim.config import Config
 from verbatim.transcript.words import Utterance, Word
 from verbatim.verbatim import Verbatim, WhisperHistory
@@ -92,7 +90,7 @@ class TestConfirmationBranches(unittest.TestCase):
         verbatim = TestVerbatim(config=self.config, models=DummyModels(transcriber), guess_language_fn=guess_language_fn)
         verbatim.state.audio_ts = 16000
         verbatim.state.window_ts = 0
-        verbatim.state.rolling_window.array = np.zeros(len(verbatim.state.rolling_window.array), dtype=np.float32)
+        verbatim.state.rolling_window.reset()
 
         words = [
             make_word(0, 10, " hello", lang="en"),
@@ -125,7 +123,7 @@ class TestConfirmationBranches(unittest.TestCase):
         verbatim = TestVerbatim(config=config, models=DummyModels(transcriber), guess_language_fn=guess_language_fn)
         verbatim.state.audio_ts = 20000
         verbatim.state.window_ts = 0
-        verbatim.state.rolling_window.array = np.zeros(len(verbatim.state.rolling_window.array), dtype=np.float32)
+        verbatim.state.rolling_window.reset()
 
         confirmed, unconfirmed = verbatim.transcribe_window()
 
@@ -145,7 +143,7 @@ class TestConfirmationBranches(unittest.TestCase):
         verbatim = TestVerbatim(config=config, models=DummyModels(transcriber), guess_language_fn=guess_language_fn)
         verbatim.state.audio_ts = 20000
         verbatim.state.window_ts = 0
-        verbatim.state.rolling_window.array = np.zeros(len(verbatim.state.rolling_window.array), dtype=np.float32)
+        verbatim.state.rolling_window.reset()
 
         verbatim.transcribe_window()
 

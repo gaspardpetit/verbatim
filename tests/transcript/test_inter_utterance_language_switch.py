@@ -110,7 +110,7 @@ class TestInterUtteranceLanguageSwitch(unittest.TestCase):
         verbatim.state.window_ts = 0
         verbatim.state.audio_ts = 50000
         verbatim.state.skip_silences = False
-        verbatim.state.rolling_window.array = np.zeros(len(verbatim.state.rolling_window.array), dtype=np.float32)
+        verbatim.state.rolling_window.reset()
 
         # Audio shape being modeled:
         #   FR1 EN2 EN3 EN4 EN5
@@ -153,7 +153,7 @@ class TestInterUtteranceLanguageSwitch(unittest.TestCase):
         verbatim.state.window_ts = 0
         verbatim.state.audio_ts = 50000
         verbatim.state.skip_silences = False
-        verbatim.state.rolling_window.array = np.zeros(len(verbatim.state.rolling_window.array), dtype=np.float32)
+        verbatim.state.rolling_window.reset()
 
         # Seed confirmation history so the first pass can acknowledge both English utterances.
         # This simulates the case where the ASR, forced to English for the whole window, never
@@ -196,7 +196,7 @@ class TestInterUtteranceLanguageSwitch(unittest.TestCase):
         verbatim.state.acknowledged_ts = 7000
         verbatim.state.audio_ts = 50000
         verbatim.state.skip_silences = False
-        verbatim.state.rolling_window.array = np.zeros(len(verbatim.state.rolling_window.array), dtype=np.float32)
+        verbatim.state.rolling_window.reset()
 
         # Simulate a prior overflow/advance that already moved us near the end of FR1.
         # The next French-only transcription pass surfaces FR3 and FR4, but EN2 remains missing.
@@ -233,7 +233,7 @@ class TestInterUtteranceLanguageSwitch(unittest.TestCase):
         verbatim.state.window_ts = 0
         verbatim.state.audio_ts = 50000
         verbatim.state.skip_silences = False
-        verbatim.state.rolling_window.array = np.zeros(len(verbatim.state.rolling_window.array), dtype=np.float32)
+        verbatim.state.rolling_window.reset()
         verbatim.state.transcript_candidate_history.add([first_en, trailing_en])
 
         emitted = list(verbatim.process_audio_window(audio_stream=DummyAudioStream()))
@@ -268,7 +268,7 @@ class TestInterUtteranceLanguageSwitch(unittest.TestCase):
         verbatim.state.window_ts = 0
         verbatim.state.audio_ts = 50000
         verbatim.state.skip_silences = False
-        verbatim.state.rolling_window.array = np.zeros(len(verbatim.state.rolling_window.array), dtype=np.float32)
+        verbatim.state.rolling_window.reset()
 
         # The French ASR sees FR1 plus an incomplete FR3 tail, but still misses EN2 in the middle.
         # Current logic acknowledges FR1 and advances into the missing EN2 span because the pending

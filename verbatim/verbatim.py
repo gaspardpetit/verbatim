@@ -198,17 +198,54 @@ class SkipResult:
 
 
 class RollingWindow:
-    array: NDArray
+    _array: NDArray
 
     def __init__(self, window_size, dtype=np.float32):
         self.reset(window_size=window_size, dtype=dtype)
 
     def reset(self, window_size=-1, dtype=None):
         if window_size == -1:
-            window_size = len(self.array)
+            window_size = len(self._array)
         if dtype is None:
-            dtype = self.array.dtype
-        self.array = np.zeros(window_size, dtype=dtype)
+            dtype = self._array.dtype
+        self._array = np.zeros(window_size, dtype=dtype)
+
+    @property
+    def capacity(self) -> int:
+        return len(self._array)
+
+    def window_audio(self) -> NDArray:
+        """Return the full window, including zero padding required by language detection."""
+        return self._array
+
+    def active_audio(self, valid_samples: int) -> NDArray:
+        """Return ingested audio beginning at the active window start."""
+        if not 0 <= valid_samples <= self.capacity:
+            raise ValueError("active audio exceeds window capacity")
+        return self._array[:valid_samples]
+
+    def audio_between(self, start_ts: int, end_ts: int, window_ts: int, audio_ts: int) -> NDArray:
+        """Return an absolute-time range currently held in the window."""
+        if not window_ts <= start_ts <= end_ts <= audio_ts:
+            raise ValueError("audio range is outside the active window")
+        return self._array[start_ts - window_ts : end_ts - window_ts]
+
+    def write(self, offset: int, samples: NDArray) -> None:
+        if not 0 <= offset <= offset + len(samples) <= self.capacity:
+            raise ValueError("audio write exceeds window capacity")
+        self._array[offset : offset + len(samples)] = samples
+
+    def advance(self, samples: int) -> None:
+        if not 0 < samples <= self.capacity:
+            raise ValueError("audio advance exceeds window capacity")
+        self._array = np.roll(self._array, -samples)
+        self._array[-samples:] = 0
+
+    def replace(self, samples: NDArray) -> None:
+        """Replace the full window with equally sized, already positioned samples."""
+        if len(samples) != self.capacity:
+            raise ValueError("replacement audio must match window capacity")
+        self._array = samples
 
 
 @dataclass
@@ -269,6 +306,15 @@ class State:
         window_size = self.config.sampling_rate * self.config.window_duration  # Total samples in 30 seconds
         self.rolling_window = RollingWindow(window_size=window_size, dtype=np.float32)  # Initialize empty rolling window
 
+    def active_audio(self) -> NDArray:
+        return self.rolling_window.active_audio(self.audio_ts - self.window_ts)
+
+    def audio_between(self, start_ts: int, end_ts: int) -> NDArray:
+        return self.rolling_window.audio_between(start_ts, end_ts, self.window_ts, self.audio_ts)
+
+    def window_audio(self) -> NDArray:
+        return self.rolling_window.window_audio()
+
     def advance_audio_window(self, offset: int):
         if offset <= 0:
             return
@@ -287,8 +333,7 @@ class State:
             f"Window now has {samples_to_seconds(self.audio_ts - self.window_ts)} seconds of audio."
         )
 
-        self.rolling_window.array = np.roll(self.rolling_window.array, -offset)
-        self.rolling_window.array[-offset:] = 0
+        self.rolling_window.advance(offset)
         self.window_ts += offset
 
         LOG.debug("Window now has %s seconds of audio.", samples_to_seconds(self.audio_ts - self.window_ts))
@@ -305,20 +350,19 @@ class State:
         LOG.debug(f"Audio chunk shape after mono conversion: {audio_chunk.shape}")
 
         chunk_size = len(audio_chunk)
-        window_size = len(self.rolling_window.array)
+        window_size = self.rolling_window.capacity
         # Guard against a temporarily inconsistent state where window_ts > audio_ts
         insertion_start = max(0, self.audio_ts - self.window_ts)
-        insertion_end = insertion_start + chunk_size
         if self.audio_ts + chunk_size <= self.window_ts + window_size:
             # Append to the current rolling window
-            self.rolling_window.array[insertion_start:insertion_end] = audio_chunk
+            self.rolling_window.write(insertion_start, audio_chunk)
         else:
             # Shift the window and append new audio
             shift_amount = self.audio_ts + chunk_size - (self.window_ts + window_size)
             LOG.warning(f"failed to acknowledge transcription within audio buffer of {samples_to_seconds(window_size)} seconds")
             self.advance_audio_window(shift_amount)
             self.skip_silences = True
-            self.rolling_window.array[-chunk_size:] = audio_chunk
+            self.rolling_window.write(window_size - chunk_size, audio_chunk)
 
         self.audio_ts += chunk_size
 
@@ -570,8 +614,7 @@ class Verbatim:
 
         min_speech_duration_ms = 750
         min_speech_duration_samples = 16000 * min_speech_duration_ms // 1000
-        audio_samples = self.state.audio_ts - self.state.window_ts
-        voice_segments = self.vad_callback(self.state.rolling_window.array[0:audio_samples], min_speech_duration_ms, 100)
+        voice_segments = self.vad_callback(self.state.active_audio(), min_speech_duration_ms, 100)
         LOG.debug(f"Voice segments: {voice_segments}")
         if len(voice_segments) == 0:
             # preserve a bit of audio at the end that may have been too short just because it is truncated
@@ -588,7 +631,7 @@ class Verbatim:
             marker = self._build_skip_marker(
                 start_ts=self.state.window_ts,
                 end_ts=self.state.window_ts + advance_to,
-                samples=self.state.rolling_window.array[0:advance_to],
+                samples=self.state.audio_between(self.state.window_ts, self.state.window_ts + advance_to),
             )
             self.state.advance_audio_window(advance_to)
             return SkipResult(next_ts=self.state.audio_ts, marker=marker)
@@ -610,7 +653,7 @@ class Verbatim:
             marker = self._build_skip_marker(
                 start_ts=self.state.window_ts,
                 end_ts=self.state.window_ts + advance_to,
-                samples=self.state.rolling_window.array[0:advance_to],
+                samples=self.state.audio_between(self.state.window_ts, self.state.window_ts + advance_to),
             )
             self.state.advance_audio_window(advance_to)
             return SkipResult(next_ts=voice_length + self.state.window_ts, marker=marker)
@@ -618,7 +661,7 @@ class Verbatim:
         return SkipResult(next_ts=voice_length + self.state.window_ts)
 
     def dump_window_to_file(self, filename: str = "debug_window.wav"):
-        window = self.state.rolling_window.array
+        window = self.state.window_audio()
         LOG.debug("Dumping current window to file for debugging.")
         # pylint: disable=no-member
         with wave.open(filename, "wb") as wf:
@@ -754,7 +797,7 @@ class Verbatim:
 
     def guess_language(self, timestamp: int) -> Tuple[str, float, int]:
         request = LanguageDetectionRequest(
-            audio=self.state.rolling_window.array,
+            audio=self.state.window_audio(),
             lang=self.config.lang,
             timestamp=timestamp,
             window_ts=self.state.window_ts,
@@ -794,7 +837,7 @@ class Verbatim:
         try:
             transcribe_start = perf_counter()
             transcript_words = self.models.transcriber.transcribe(
-                audio=self.state.rolling_window.array[0 : self.state.audio_ts - self.state.window_ts],
+                audio=self.state.active_audio(),
                 lang=lang,
                 prompt=whisper_prompt,
                 prefix=prefix_text,
@@ -853,7 +896,7 @@ class Verbatim:
                         )
                         alt_transcribe_start = perf_counter()
                         alt_transcript_words = self.models.transcriber.transcribe(
-                            audio=self.state.rolling_window.array[0 : self.state.audio_ts - self.state.window_ts],
+                            audio=self.state.active_audio(),
                             lang=test_lang,
                             prompt=alt_whisper_prompt,
                             prefix=alt_prefix_text,
