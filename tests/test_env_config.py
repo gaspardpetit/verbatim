@@ -13,6 +13,14 @@ from verbatim_cli.configure import apply_env_defaults, make_config, make_source_
 
 
 class TestEnvConfig(unittest.TestCase):
+    def test_rejects_invalid_language_gap_durations(self):
+        for duration in (-0.1, math.inf, math.nan):
+            with self.subTest(duration=duration):
+                with self.assertRaisesRegex(ValueError, "language_gap_min_duration must be finite and non-negative"):
+                    Config(device="cpu", language_gap_min_duration=duration)
+                with self.assertRaisesRegex(ValueError, "language_mismatch_skip_duration must be finite and non-negative"):
+                    Config(device="cpu", language_mismatch_skip_duration=duration)
+
     def test_rejects_invalid_post_acknowledgement_skip_duration(self):
         for duration in (-0.1, math.inf, math.nan):
             with self.subTest(duration=duration):

@@ -970,12 +970,14 @@ class Verbatim:
         }
         return confirmed_words, unconfirmed_words
 
-    def gap_language_mismatch(self, *, start_ts: int, end_ts: int, expected_lang: str, min_gap_samples: int = 4000) -> bool:
+    def gap_language_mismatch(self, *, start_ts: int, end_ts: int, expected_lang: str) -> bool:
+        if round(self.config.language_mismatch_skip_duration * self.config.sampling_rate) == 0:
+            return False
         if not self.models.transcriber.get_capabilities().accepts_language_hint:
             return False
         if not expected_lang or end_ts <= start_ts:
             return False
-        if end_ts - start_ts < min_gap_samples:
+        if end_ts - start_ts < round(self.config.language_gap_min_duration * self.config.sampling_rate):
             return False
 
         probe_ts = start_ts + (end_ts - start_ts) // 2
@@ -1241,7 +1243,7 @@ class Verbatim:
                         end_ts=first_candidate.start_ts,
                         expected_lang=self.state.last_transcribe_lang,
                     ):
-                        conservative_skip_samples = 100 * 16000 // 1000
+                        conservative_skip_samples = round(self.config.language_mismatch_skip_duration * self.config.sampling_rate)
                         previous_pending = list(self.state.unacknowledged_utterances)
                         self.state.unacknowledged_utterances = deferred_acknowledged + confirmed_utterances
                         if conservative_skip_samples > 0:
