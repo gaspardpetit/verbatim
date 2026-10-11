@@ -131,25 +131,30 @@ class WhisperHistory:
                 LOG.debug("Advanced transcript history at %d: %s", timestamp, " | ".join(changes))
 
     @staticmethod
+    def skipped_prefix_length(words: List[Word], prefix: List[Word], after_ts: int) -> int:
+        index = 0
+        while index < len(words):
+            matches_acknowledged_word = (
+                index < len(prefix)
+                and prefix[index].word == words[index].word
+                and words[index].start_ts <= prefix[index].end_ts
+                and words[index].end_ts >= prefix[index].start_ts
+            )
+            if matches_acknowledged_word or words[index].start_ts <= after_ts:
+                index += 1
+            else:
+                break
+        return index
+
+    @staticmethod
     def confirm_transcript(
         current_words: List[Word],
         transcript: List[Word],
         prefix: List[Word],
         after_ts: int,
     ) -> List[Word]:
-        c_index = 0
-        while c_index < len(current_words):
-            if (c_index < len(prefix) and prefix[c_index].word == current_words[c_index].word) or (current_words[c_index].start_ts <= after_ts):
-                c_index = c_index + 1
-            else:
-                break
-
-        p_index = 0
-        while p_index < len(transcript):
-            if (p_index < len(prefix) and prefix[p_index].word == transcript[p_index].word) or (transcript[p_index].start_ts <= after_ts):
-                p_index = p_index + 1
-            else:
-                break
+        c_index = WhisperHistory.skipped_prefix_length(current_words, prefix, after_ts)
+        p_index = WhisperHistory.skipped_prefix_length(transcript, prefix, after_ts)
 
         confirmed_words = []
 
@@ -962,7 +967,14 @@ class Verbatim:
             )
         confirm_ms = (perf_counter() - confirm_start) * 1000.0
 
-        unconfirmed_words = [transcript_words[i] for i in range(len(confirmed_words), len(transcript_words))]
+        skipped_prefix = WhisperHistory.skipped_prefix_length(transcript_words, acknowledged_words_in_window, self.state.acknowledged_ts - 1)
+        unconfirmed_words = transcript_words[skipped_prefix + len(confirmed_words) :]
+        if skipped_prefix:
+            LOG.debug(
+                "Excluded %d already acknowledged words from provisional suffix at acknowledged_ts=%d",
+                skipped_prefix,
+                self.state.acknowledged_ts,
+            )
         self.state.last_transcribe_metrics_ms = {
             "detect_ms": detect_ms,
             "transcribe_ms": transcribe_ms,
@@ -1444,6 +1456,7 @@ class Verbatim:
             utterance = self.state.unacknowledged_utterances.pop(0)
             utterance.speaker = self.assign_speaker(utterance, diarization)
             self.state.acknowledged_words += utterance.words
+            self.state.acknowledged_ts = max(self.state.acknowledged_ts, utterance.end_ts)
             result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                 utterance=utterance,
                 unacknowledged=self.state.unacknowledged_utterances,
@@ -1459,6 +1472,7 @@ class Verbatim:
                 utterance = self.state.unacknowledged_utterances.pop(0)
                 utterance.speaker = self.assign_speaker(utterance, diarization)
                 self.state.acknowledged_words += utterance.words
+                self.state.acknowledged_ts = max(self.state.acknowledged_ts, utterance.end_ts)
                 result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                     utterance=utterance,
                     unacknowledged=self.state.unacknowledged_utterances,
@@ -1480,6 +1494,7 @@ class Verbatim:
             utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
             utterance.speaker = self.assign_speaker(utterance, diarization)
             self.state.acknowledged_words += flushed_utterances_words
+            self.state.acknowledged_ts = max(self.state.acknowledged_ts, utterance.end_ts)
             result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                 utterance=utterance,
                 unacknowledged=self.state.unacknowledged_utterances,
