@@ -96,7 +96,7 @@ class TestAcknowledgementAdvance(unittest.TestCase):
 
     def test_language_mismatch_skip_uses_session_duration(self):
         hello = make_word(16000, 32000, " hello.")
-        for seconds, expected_ts in [(0.0, 0), (0.1, 1600), (0.25, 4000)]:
+        for seconds, expected_ts in [(0.1, 1600), (0.25, 4000)]:
             with self.subTest(seconds=seconds):
                 verbatim = self._make_verbatim(sentences=[" hello."], confirmed_words=[hello], unconfirmed_words=[])
                 verbatim.config.language_mismatch_skip_duration = seconds

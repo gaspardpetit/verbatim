@@ -971,6 +971,8 @@ class Verbatim:
         return confirmed_words, unconfirmed_words
 
     def gap_language_mismatch(self, *, start_ts: int, end_ts: int, expected_lang: str) -> bool:
+        if round(self.config.language_mismatch_skip_duration * self.config.sampling_rate) == 0:
+            return False
         if not self.models.transcriber.get_capabilities().accepts_language_hint:
             return False
         if not expected_lang or end_ts <= start_ts:

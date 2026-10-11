@@ -208,6 +208,12 @@ class Config:
     source_stream: Optional[AudioSource] = None
 
     def __post_init__(self):
+        for name, duration in (
+            ("language_gap_min_duration", self.language_gap_min_duration),
+            ("language_mismatch_skip_duration", self.language_mismatch_skip_duration),
+        ):
+            if not math.isfinite(duration) or duration < 0:
+                raise ValueError(f"{name} must be finite and non-negative")
         if not math.isfinite(self.post_acknowledgement_skip_duration) or self.post_acknowledgement_skip_duration < 0:
             raise ValueError("post_acknowledgement_skip_duration must be finite and non-negative")
         if self.sampling_rate != AUDIO_PARAMS.sample_rate:

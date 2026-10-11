@@ -25,6 +25,7 @@ The post-acknowledgement advance uses `Config.post_acknowledgement_skip_duration
 The duration must be finite and non-negative; zero disables this extra advance.
 
 The gap-language check requires at least `Config.language_gap_min_duration` seconds between the current anchor and a candidate utterance (0.25 seconds by default). When a language mismatch blocks the candidate, `Config.language_mismatch_skip_duration` controls the advance before retrying (0.1 seconds by default). Both durations belong to the session and are converted using its sample rate.
+Both durations must be finite and non-negative. A mismatch skip that rounds to zero samples disables the gap-language mismatch check, allowing acknowledgement to proceed without a blocked retry.
 
 ## Dynamic Adjustment of Language Detection Boundaries
 

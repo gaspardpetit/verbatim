@@ -97,6 +97,16 @@ class TestConfirmationBranches(unittest.TestCase):
         self.assertTrue(verbatim.gap_language_mismatch(start_ts=0, end_ts=8000, expected_lang="en"))
         self.assertEqual([4000], calls)
 
+    def test_zero_mismatch_skip_disables_gap_probe(self):
+        def unexpected_detection(_timestamp):
+            self.fail("Language detection should not run when mismatch handling is disabled")
+
+        verbatim = TestVerbatim(self.config, DummyModels(DummyTranscriber({})), unexpected_detection)
+        for duration in (0.0, 0.00001):
+            with self.subTest(duration=duration):
+                self.config.language_mismatch_skip_duration = duration
+                self.assertFalse(verbatim.gap_language_mismatch(start_ts=0, end_ts=8000, expected_lang="en"))
+
     def test_prefix_text_stops_on_language_change(self):
         transcriber = DummyTranscriber(outputs_by_lang={"en": []})
 
