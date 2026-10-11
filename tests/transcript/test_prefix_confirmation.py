@@ -81,3 +81,20 @@ class TestPrefixConfirmation(unittest.TestCase):
             [repeated],
             WhisperHistory.confirm_transcript([repeated], [repeated], [acknowledged], after_ts=4),
         )
+
+    def test_zero_duration_acknowledged_word_at_same_timestamp_is_skipped(self):
+        acknowledged = make_word(5, 5, " you")
+        repeated = make_word(5, 5, " you")
+        next_word = make_word(5, 10, " go")
+
+        self.assertEqual(1, WhisperHistory.skipped_prefix_length([repeated, next_word], [acknowledged], after_ts=4))
+        self.assertEqual(
+            [next_word],
+            WhisperHistory.confirm_transcript([repeated, next_word], [repeated, next_word], [acknowledged], after_ts=4),
+        )
+
+    def test_zero_duration_word_with_different_text_is_not_skipped(self):
+        acknowledged = make_word(5, 5, " you")
+        next_word = make_word(5, 5, " go")
+
+        self.assertEqual(0, WhisperHistory.skipped_prefix_length([next_word], [acknowledged], after_ts=4))
