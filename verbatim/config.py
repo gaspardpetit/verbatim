@@ -157,6 +157,8 @@ class Config:
     window_duration: int = 30  # seconds
     backward_window_duration: float = 30.0  # seconds of audio retained before the active window
     post_acknowledgement_skip_duration: float = 0.1  # seconds; limited by pending words and available audio
+    language_gap_min_duration: float = 0.25  # seconds required before probing a gap for a language mismatch
+    language_mismatch_skip_duration: float = 0.1  # seconds to advance after rejecting an acknowledgement candidate
     device: str = "auto"
     stream: bool = False
     debug: bool = False

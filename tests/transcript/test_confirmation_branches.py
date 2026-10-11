@@ -81,6 +81,22 @@ class TestConfirmationBranches(unittest.TestCase):
         self.assertEqual([word], unconfirmed)
         self.assertFalse(verbatim.gap_language_mismatch(start_ts=0, end_ts=8000, expected_lang="en"))
 
+    def test_language_gap_minimum_uses_session_duration(self):
+        calls = []
+
+        def detect(timestamp):
+            calls.append(timestamp)
+            return "fr", 1.0, 0
+
+        verbatim = TestVerbatim(self.config, DummyModels(DummyTranscriber({})), detect)
+        verbatim.state.audio_ts = 16000
+        self.config.language_gap_min_duration = 0.5
+
+        self.assertFalse(verbatim.gap_language_mismatch(start_ts=0, end_ts=7999, expected_lang="en"))
+        self.assertEqual([], calls)
+        self.assertTrue(verbatim.gap_language_mismatch(start_ts=0, end_ts=8000, expected_lang="en"))
+        self.assertEqual([4000], calls)
+
     def test_prefix_text_stops_on_language_change(self):
         transcriber = DummyTranscriber(outputs_by_lang={"en": []})
 
