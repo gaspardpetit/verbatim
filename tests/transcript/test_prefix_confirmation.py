@@ -65,3 +65,9 @@ class TestPrefixConfirmation(unittest.TestCase):
         advanced = WhisperHistory.advance_transcript(timestamp=10, transcript=[w1, w2])
 
         self.assertEqual([w1, w2], advanced)
+
+    def test_same_word_later_in_audio_is_not_skipped_as_prefix(self):
+        acknowledged = make_word(0, 5, " you")
+        repeated = make_word(20, 25, " you")
+
+        self.assertEqual(0, WhisperHistory.skipped_prefix_length([repeated], [acknowledged], after_ts=5))
