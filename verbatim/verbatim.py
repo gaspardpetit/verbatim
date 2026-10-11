@@ -134,17 +134,11 @@ class WhisperHistory:
     def skipped_prefix_length(words: List[Word], prefix: List[Word], after_ts: int) -> int:
         index = 0
         while index < len(words):
-            same_zero_duration_word = (
-                index < len(prefix)
-                and prefix[index].start_ts == prefix[index].end_ts == words[index].start_ts == words[index].end_ts
-            )
             matches_acknowledged_word = (
                 index < len(prefix)
                 and prefix[index].word == words[index].word
-                and (
-                    same_zero_duration_word
-                    or (words[index].start_ts < prefix[index].end_ts and words[index].end_ts > prefix[index].start_ts)
-                )
+                and prefix[index].start_ts == words[index].start_ts
+                and prefix[index].end_ts == words[index].end_ts
             )
             if matches_acknowledged_word or words[index].start_ts <= after_ts:
                 index += 1

@@ -82,6 +82,16 @@ class TestPrefixConfirmation(unittest.TestCase):
             WhisperHistory.confirm_transcript([repeated], [repeated], [acknowledged], after_ts=4),
         )
 
+    def test_same_word_overlapping_acknowledged_boundary_is_not_skipped(self):
+        acknowledged = make_word(40, 60, " you")
+        repeated = make_word(55, 70, " you")
+
+        self.assertEqual(0, WhisperHistory.skipped_prefix_length([repeated], [acknowledged], after_ts=54))
+        self.assertEqual(
+            [repeated],
+            WhisperHistory.confirm_transcript([repeated], [repeated], [acknowledged], after_ts=54),
+        )
+
     def test_zero_duration_acknowledged_word_at_same_timestamp_is_skipped(self):
         acknowledged = make_word(5, 5, " you")
         repeated = make_word(5, 5, " you")
