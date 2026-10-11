@@ -154,6 +154,7 @@ class Config:
     transcribe_latency: int = 16000
     frames_per_buffer: int = 1000
     window_duration: int = 30  # seconds
+    backward_window_duration: float = 30.0  # seconds of audio retained before the active window
     device: str = "auto"
     stream: bool = False
     debug: bool = False

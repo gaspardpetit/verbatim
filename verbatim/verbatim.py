@@ -311,7 +311,7 @@ class State:
         }
 
         window_size = self.config.sampling_rate * self.config.window_duration  # Total samples in 30 seconds
-        history_size = 30 * self.config.sampling_rate
+        history_size = round(self.config.backward_window_duration * self.config.sampling_rate)
         self.rolling_window = RollingWindow(window_size=window_size, dtype=np.float32, history_size=history_size)
 
     @property
