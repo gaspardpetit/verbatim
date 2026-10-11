@@ -17,6 +17,8 @@ By combining these techniques, Verbatim turns Whisper into a robust multilingual
 
 The rolling audio buffer exposes `active_audio()` for ingested samples in the current window, `window_audio()` for consumers that require the padded window, and `audio_between(start_ts, end_ts)` for an absolute sample range. `State` keeps the active start and audio end timestamps; appending and advancing use the buffer's write and advance methods. The buffer retains up to `Config.backward_window_duration` seconds (30 by default) before the active start, available from `retained_start_ts` through `audio_between()`. This backward duration is independent of the active transcription window. The active attention window and the audio supplied to transcription and language detection remain unchanged. This retained range makes a later second-opinion transcription possible without changing acknowledgement behavior here.
 
+The backward duration must be finite and non-negative; zero disables retained history.
+
 Session creation rejects a `Config.sampling_rate` that differs from the runtime `VERBATIM_SAMPLE_RATE` (`AUDIO_PARAMS.sample_rate`). This ensures that the retained history and active window represent their configured durations in the audio stream.
 
 ## Dynamic Adjustment of Language Detection Boundaries

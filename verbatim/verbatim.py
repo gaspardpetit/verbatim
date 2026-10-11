@@ -310,6 +310,9 @@ class State:
             "confirm_ms": 0.0,
         }
 
+        if not math.isfinite(self.config.backward_window_duration) or self.config.backward_window_duration < 0:
+            raise ValueError("backward_window_duration must be finite and non-negative")
+
         window_size = self.config.sampling_rate * self.config.window_duration  # Total samples in 30 seconds
         history_size = round(self.config.backward_window_duration * self.config.sampling_rate)
         self.rolling_window = RollingWindow(window_size=window_size, dtype=np.float32, history_size=history_size)

@@ -1,4 +1,5 @@
 import importlib
+import math
 import pathlib
 import sys
 import unittest
@@ -26,6 +27,12 @@ class DummyConfig:
 
 
 class TestAdvanceAudioWindow(unittest.TestCase):
+    def test_rejects_invalid_backward_window_duration(self):
+        for duration in (-0.1, math.inf, math.nan):
+            with self.subTest(duration=duration):
+                with self.assertRaisesRegex(ValueError, "backward_window_duration must be finite and non-negative"):
+                    verbatim_local.State(DummyConfig(backward_window_duration=duration))
+
     def setUp(self):
         # Small window for faster tests
         self.config = DummyConfig(sampling_rate=16000, window_duration=1)
