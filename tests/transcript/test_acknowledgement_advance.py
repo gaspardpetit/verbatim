@@ -76,7 +76,7 @@ class TestAcknowledgementAdvance(unittest.TestCase):
         verbatim.state.window_ts = 0
         verbatim.state.audio_ts = audio_ts
         verbatim.state.skip_silences = False
-        verbatim.state.rolling_window.array = np.zeros(len(verbatim.state.rolling_window.array), dtype=np.float32)
+        verbatim.state.rolling_window.reset()
         return verbatim
 
     def test_advance_clamps_to_next_unacknowledged_utterance(self):

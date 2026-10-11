@@ -37,17 +37,17 @@ class TestAdvanceAudioWindow(unittest.TestCase):
 
         prev_window_ts = self.state.window_ts
         prev_audio_ts = self.state.audio_ts
-        prev_array = self.state.rolling_window.array.copy()
+        prev_array = self.state.rolling_window.window_audio().copy()
 
         self.state.advance_audio_window(0)
         self.assertEqual(self.state.window_ts, prev_window_ts)
         self.assertEqual(self.state.audio_ts, prev_audio_ts)
-        self.assertTrue(np.array_equal(self.state.rolling_window.array, prev_array))
+        self.assertTrue(np.array_equal(self.state.rolling_window.window_audio(), prev_array))
 
         self.state.advance_audio_window(-10)
         self.assertEqual(self.state.window_ts, prev_window_ts)
         self.assertEqual(self.state.audio_ts, prev_audio_ts)
-        self.assertTrue(np.array_equal(self.state.rolling_window.array, prev_array))
+        self.assertTrue(np.array_equal(self.state.rolling_window.window_audio(), prev_array))
 
     def test_clamp_when_offset_exceeds_available_audio(self):
         # Fill with a known pattern
@@ -60,7 +60,7 @@ class TestAdvanceAudioWindow(unittest.TestCase):
         # Window should not advance beyond audio_ts
         self.assertEqual(self.state.window_ts, self.state.audio_ts)
         # After clamped advance, no residual audio remains in the window
-        self.assertEqual(float(self.state.rolling_window.array.sum()), 0.0)
+        self.assertEqual(float(self.state.rolling_window.window_audio().sum()), 0.0)
         # Invariant: non-negative remaining window audio
         self.assertGreaterEqual(self.state.audio_ts - self.state.window_ts, 0)
 
@@ -71,7 +71,7 @@ class TestAdvanceAudioWindow(unittest.TestCase):
 
         self.state.advance_audio_window(200)
         # Expect positions [0:800] to contain 200..999, rest zeros
-        arr = self.state.rolling_window.array
+        arr = self.state.rolling_window.window_audio()
         self.assertTrue(np.array_equal(arr[0:800], np.arange(200, 1000, dtype=np.float32)))
         self.assertTrue(np.all(arr[800:] == 0))
         self.assertEqual(self.state.window_ts, 200)
@@ -88,9 +88,26 @@ class TestAdvanceAudioWindow(unittest.TestCase):
         self.state.append_audio_to_window(new_chunk)
 
         # Check insertion at the beginning
-        self.assertTrue(np.array_equal(self.state.rolling_window.array[0:100], new_chunk))
+        self.assertTrue(np.array_equal(self.state.rolling_window.window_audio()[0:100], new_chunk))
         # Window now contains exactly the new chunk
         self.assertEqual(self.state.audio_ts - self.state.window_ts, 100)
+
+    def test_absolute_range_tracks_active_start(self):
+        self.state.append_audio_to_window(np.arange(10, dtype=np.float32))
+        self.state.advance_audio_window(3)
+        self.assertTrue(np.array_equal(self.state.active_audio(), np.arange(3, 10, dtype=np.float32)))
+        self.assertTrue(np.array_equal(self.state.audio_between(5, 8), np.arange(5, 8, dtype=np.float32)))
+        with self.assertRaisesRegex(ValueError, "outside the active window"):
+            self.state.audio_between(2, 8)
+        with self.assertRaisesRegex(ValueError, "outside the active window"):
+            self.state.audio_between(5, 11)
+
+    def test_window_rejects_out_of_capacity_access(self):
+        window = self.state.rolling_window
+        with self.assertRaisesRegex(ValueError, "exceeds window capacity"):
+            window.active_audio(window.capacity + 1)
+        with self.assertRaisesRegex(ValueError, "exceeds window capacity"):
+            window.write(window.capacity, np.ones(1, dtype=np.float32))
 
 
 if __name__ == "__main__":

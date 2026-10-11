@@ -11,6 +11,23 @@ class DummyModels:
 
 
 class TestSkipLeadingSilence(unittest.TestCase):
+    def test_short_silent_chunk_remains_available(self):
+        config = Config(device="cpu")
+        verbatim = Verbatim(
+            config=config,
+            models=DummyModels(),
+            vad_callback=lambda audio, min_speech_duration_ms, min_silence_duration_ms: [],
+        )
+        verbatim.state.append_audio_to_window(np.zeros(8000, dtype=np.float32))
+
+        result = verbatim.skip_leading_silence(max_skip=8000)
+
+        self.assertEqual(0, verbatim.state.window_ts)
+        self.assertEqual(8000, verbatim.state.audio_ts)
+        self.assertEqual(8000, result.next_ts)
+        self.assertIsNone(result.marker)
+        self.assertEqual(8000, len(verbatim.state.active_audio()))
+
     def test_no_voice_segments_respects_max_skip(self):
         config = Config(device="cpu")
         verbatim = Verbatim(
@@ -20,7 +37,7 @@ class TestSkipLeadingSilence(unittest.TestCase):
         )
         verbatim.state.window_ts = 0
         verbatim.state.audio_ts = 32000
-        verbatim.state.rolling_window.array = np.zeros(len(verbatim.state.rolling_window.array), dtype=np.float32)
+        verbatim.state.rolling_window.reset()
 
         result = verbatim.skip_leading_silence(max_skip=8000)
 
@@ -38,7 +55,7 @@ class TestSkipLeadingSilence(unittest.TestCase):
         )
         verbatim.state.window_ts = 0
         verbatim.state.audio_ts = 100000
-        verbatim.state.rolling_window.array = np.zeros(len(verbatim.state.rolling_window.array), dtype=np.float32)
+        verbatim.state.rolling_window.reset()
 
         result = verbatim.skip_leading_silence(max_skip=100000)
 
@@ -60,7 +77,7 @@ class TestSkipLeadingSilence(unittest.TestCase):
         )
         verbatim.state.window_ts = 0
         verbatim.state.audio_ts = 100000
-        verbatim.state.rolling_window.array = np.full(len(verbatim.state.rolling_window.array), 0.05, dtype=np.float32)
+        verbatim.state.rolling_window.replace(np.full(verbatim.state.rolling_window.capacity, 0.05, dtype=np.float32))
 
         result = verbatim.skip_leading_silence(max_skip=100000)
 

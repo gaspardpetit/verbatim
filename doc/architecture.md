@@ -15,6 +15,8 @@ Achieving true multilingual transcription is a complex challenge that goes beyon
 
 By combining these techniques, Verbatim turns Whisper into a robust multilingual transcription system.
 
+The rolling audio buffer exposes `active_audio()` for ingested samples in the current window, `window_audio()` for consumers that require the padded window, and `audio_between(start_ts, end_ts)` for an absolute sample range. `State` keeps the active start and audio end timestamps; appending and advancing use the buffer's write and advance methods. The buffer still holds only the configured attention window. These accessors prepare for retaining past audio without changing current transcription input.
+
 ## Dynamic Adjustment of Language Detection Boundaries
 
 Most Whisper-based transcription projects rely on a fixed-length language detection window—typically 30 seconds—to determine the transcription language. While this works well for monolingual recordings, it fails in multilingual conversations where speakers rapidly switch languages mid-sentence.
@@ -35,7 +37,7 @@ lang_samples_size = min(2 * 16000, available_samples)  # Start with 2 seconds of
 
 while True:
     lang, prob = self._guess_language(
-        audio=self.state.rolling_window.array,
+        audio=self.state.window_audio(),
         sample_offset=lang_sample_start,
         sample_duration=lang_samples_size,
         lang=self.config.lang,
