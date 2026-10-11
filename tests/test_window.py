@@ -137,6 +137,25 @@ class TestAdvanceAudioWindow(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "outside the retained window"):
             state.audio_between(349, 400)
 
+    def test_zero_retained_audio_keeps_only_active_samples(self):
+        state = verbatim_local.State(DummyConfig(sampling_rate=10, window_duration=30, backward_window_duration=0.0))
+        state.append_audio_to_window(np.arange(300, dtype=np.float32))
+        state.advance_audio_window(200)
+
+        self.assertEqual(0, state.rolling_window.history_capacity)
+        self.assertEqual(state.window_ts, state.retained_start_ts)
+        self.assertTrue(np.array_equal(state.active_audio(), np.arange(200, 300, dtype=np.float32)))
+        with self.assertRaisesRegex(ValueError, "outside the retained window"):
+            state.audio_between(199, 200)
+
+        state.append_audio_to_window(np.arange(300, 500, dtype=np.float32))
+        self.assertTrue(np.array_equal(state.active_audio(), np.arange(200, 500, dtype=np.float32)))
+        state.append_audio_to_window(np.arange(500, 550, dtype=np.float32))
+        self.assertEqual(250, state.retained_start_ts)
+        self.assertTrue(np.array_equal(state.active_audio(), np.arange(250, 550, dtype=np.float32)))
+        with self.assertRaisesRegex(ValueError, "outside the retained window"):
+            state.audio_between(249, 250)
+
     def test_long_silence_keeps_only_recent_audio(self):
         state = verbatim_local.State(DummyConfig(sampling_rate=10, window_duration=30))
         state.append_audio_to_window(np.ones(300, dtype=np.float32))
