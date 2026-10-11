@@ -155,6 +155,7 @@ class Config:
     frames_per_buffer: int = 1000
     window_duration: int = 30  # seconds
     backward_window_duration: float = 30.0  # seconds of audio retained before the active window
+    post_acknowledgement_skip_duration: float = 0.1  # seconds; limited by pending words and available audio
     device: str = "auto"
     stream: bool = False
     debug: bool = False

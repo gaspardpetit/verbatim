@@ -79,6 +79,20 @@ class TestAcknowledgementAdvance(unittest.TestCase):
         verbatim.state.rolling_window.reset()
         return verbatim
 
+    def test_post_acknowledgement_skip_uses_session_duration(self):
+        hello = make_word(0, 16000, " hello.")
+        for seconds, expected_ts in [(0.0, 16000), (0.1, 17600), (0.25, 20000)]:
+            with self.subTest(seconds=seconds):
+                verbatim = self._make_verbatim(
+                    sentences=[" hello."], confirmed_words=[hello], unconfirmed_words=[],
+                )
+                verbatim.config.post_acknowledgement_skip_duration = seconds
+
+                list(verbatim.process_audio_window(audio_stream=self.audio_stream))
+
+                self.assertEqual(expected_ts, verbatim.state.acknowledged_ts)
+                self.assertEqual(expected_ts, verbatim.state.window_ts)
+
     def test_advance_clamps_to_next_unacknowledged_utterance(self):
         hello = make_word(0, 16000, " hello.")
         next_word = make_word(17000, 33000, " next.")

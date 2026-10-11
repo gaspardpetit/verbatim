@@ -1287,10 +1287,8 @@ class Verbatim:
 
                     # utterances are split at short pauses, advance a bit to avoid repeating the last word
                     # but not too much as to skip the first word of the next utterance
-                    utterance_padding_ms = 100
-                    utterance_padding_samples = utterance_padding_ms * 16000 // 1000
                     accepted_end_ts = acknowledged_to_commit[-1].end_ts
-                    skip_to = accepted_end_ts + utterance_padding_samples
+                    skip_to = accepted_end_ts + round(self.config.post_acknowledgement_skip_duration * self.config.sampling_rate)
 
                     next_visible_ts = None
                     if len(self.state.unacknowledged_utterances) > 0:
