@@ -2,6 +2,7 @@
 import logging
 import math
 import os
+import re
 import sys
 import traceback
 import wave
@@ -195,6 +196,139 @@ class WhisperHistory:
 class SkipResult:
     next_ts: int
     marker: Optional[Utterance] = None
+
+
+@dataclass
+class SecondOpinionResolution:
+    status: str
+    model_gap_words: List[Word]
+    redundant_provisional_words: List[Word]
+
+
+@dataclass
+class SecondOpinionProbe:
+    start_ts: int
+    end_ts: int
+    target_start_ts: int
+    target_end_ts: int
+    language: Optional[str]
+    acknowledged: Utterance
+    following: Optional[Utterance]
+    uncertain_words: List[Word]
+    model_words: List[Word]
+    target_words: List[Word]
+    boundary_words: List[Word]
+    resolution: Optional[SecondOpinionResolution] = None
+
+
+def _normalized_word(word: Word) -> str:
+    return re.sub(r"^\W+|\W+$", "", word.word).casefold()
+
+
+def reconcile_second_opinion(probe: SecondOpinionProbe, timestamp_tolerance: int = 8000) -> SecondOpinionResolution:
+    """Align both acknowledged anchors before interpreting model words between them."""
+    if probe.following is None:
+        return SecondOpinionResolution("inconclusive", [], [])
+    previous_suffix = probe.acknowledged.words[-3:]
+    following_prefix = probe.following.words[:3]
+    if not previous_suffix or not following_prefix:
+        return SecondOpinionResolution("inconclusive", [], [])
+    model_tokens = [_normalized_word(word) for word in probe.model_words]
+
+    def matches(anchor: List[Word]) -> List[int]:
+        tokens = [_normalized_word(word) for word in anchor]
+        length = len(tokens)
+        return [
+            i for i in range(len(model_tokens) - length + 1)
+            if model_tokens[i : i + length] == tokens
+            and abs(probe.model_words[i].start_ts - anchor[0].start_ts) <= timestamp_tolerance
+            and abs(probe.model_words[i + length - 1].end_ts - anchor[-1].end_ts) <= timestamp_tolerance
+        ]
+
+    previous_matches = matches(previous_suffix)
+    following_matches = matches(following_prefix)
+    if len(previous_matches) != 1 or len(following_matches) != 1:
+        return SecondOpinionResolution("inconclusive", [], [])
+    gap_start = previous_matches[0] + len(previous_suffix)
+    gap_end = following_matches[0]
+    if gap_start > gap_end:
+        return SecondOpinionResolution("inconclusive", [], [])
+    model_gap_words = probe.model_words[gap_start:gap_end]
+    following_start = following_matches[0]
+    redundant_words = []
+    for uncertain in probe.uncertain_words:
+        uncertain_token = _normalized_word(uncertain)
+        if not uncertain_token:
+            continue
+        uncertain_midpoint = (uncertain.start_ts + uncertain.end_ts) // 2
+        candidates = [
+            (abs(uncertain_midpoint - (word.start_ts + word.end_ts) // 2), index)
+            for index, word in enumerate(probe.model_words)
+            if _normalized_word(word) == uncertain_token
+        ]
+        if not candidates:
+            continue
+        distance, closest_index = min(candidates)
+        if distance > timestamp_tolerance // 2:
+            continue
+        closest_word = probe.model_words[closest_index]
+        overlap = max(0, min(uncertain.end_ts, closest_word.end_ts) - max(uncertain.start_ts, closest_word.start_ts))
+        span = max(uncertain.end_ts, closest_word.end_ts) - min(uncertain.start_ts, closest_word.start_ts)
+        if span == 0 or overlap * 2 < span:
+            continue
+        if any(
+            _normalized_word(word) == uncertain_token
+            and abs(uncertain_midpoint - (word.start_ts + word.end_ts) // 2) <= timestamp_tolerance
+            for word in model_gap_words
+        ):
+            continue
+        following_index = closest_index - following_start
+        if 0 <= following_index < len(following_prefix) and following_index < len(probe.following.words):
+            if _normalized_word(probe.following.words[following_index]) == uncertain_token:
+                redundant_words.append(uncertain)
+    status = "redundant_provisional" if redundant_words else "additional_speech" if model_gap_words else "inconclusive"
+    return SecondOpinionResolution(status, model_gap_words, redundant_words)
+
+
+def find_superseded_provisional_words(
+    candidates: List[Word], histories: List[List[Word]], confirmed_words: List[Word],
+    min_matching_words: int = 4, timestamp_tolerance: int = 4800,
+) -> List[Word]:
+    """Find old provisional words whose following model sequence became confirmed."""
+    superseded: List[Word] = []
+    for candidate in candidates:
+        if candidate in superseded:
+            continue
+        for history in histories:
+            for previous_index, previous in enumerate(history):
+                if previous != candidate:
+                    continue
+                for confirmed_index, confirmed in enumerate(confirmed_words):
+                    if (
+                        _normalized_word(previous) != _normalized_word(confirmed)
+                        or abs(previous.start_ts - confirmed.start_ts) > timestamp_tolerance
+                        or abs(previous.end_ts - confirmed.end_ts) > timestamp_tolerance
+                    ):
+                        continue
+                    matching = 0
+                    while previous_index + matching < len(history) and confirmed_index + matching < len(confirmed_words):
+                        older = history[previous_index + matching]
+                        newer = confirmed_words[confirmed_index + matching]
+                        if (
+                            _normalized_word(older) != _normalized_word(newer)
+                            or abs(older.start_ts - newer.start_ts) > timestamp_tolerance
+                            or abs(older.end_ts - newer.end_ts) > timestamp_tolerance
+                        ):
+                            break
+                        matching += 1
+                    if matching >= min_matching_words:
+                        superseded.append(candidate)
+                        break
+                if candidate in superseded:
+                    break
+            if candidate in superseded:
+                break
+    return superseded
 
 
 class RollingWindow:
@@ -401,6 +535,10 @@ class Verbatim:
         self.state = State(config)
         self.raise_on_transcription_error = False
         self.status_hook = status_hook
+        self.experimental_second_opinion = False
+        self.second_opinion_probes: List[SecondOpinionProbe] = []
+        self._observed_unconfirmed_words: List[Word] = []
+        self.superseded_provisional_words: List[Word] = []
         self._non_speech_classifier = None
         if models is None:
             models = Models(
@@ -999,6 +1137,82 @@ class Verbatim:
         )
         return mismatch
 
+    def probe_second_opinion(self, acknowledged: Utterance, proposed_ack_ts: int) -> None:
+        """Observe a second ASR result for provisional speech at an acknowledgement boundary."""
+        previous = self.state.acknowledged_utterances[-2] if len(self.state.acknowledged_utterances) >= 2 else None
+        gap_words = (
+            [
+                word for word in self._observed_unconfirmed_words + self.state.unconfirmed_words
+                if previous.end_ts <= word.start_ts and word.end_ts <= acknowledged.start_ts
+                and word not in self.superseded_provisional_words
+            ]
+            if previous is not None else []
+        )
+        anchor: Utterance = acknowledged
+        following: Optional[Utterance] = None
+        if previous is not None and gap_words:
+            anchor = previous
+            following = acknowledged
+            uncertain = gap_words
+            end_ts = acknowledged.end_ts
+            target_start_ts = previous.end_ts
+            target_end_ts = acknowledged.start_ts
+        else:
+            uncertain = [
+                word for utterance in self.state.unacknowledged_utterances for word in utterance.words
+                if acknowledged.end_ts <= word.start_ts < proposed_ack_ts
+                and word not in self.superseded_provisional_words
+            ]
+            uncertain.extend(
+                word for word in self.state.unconfirmed_words
+                if acknowledged.end_ts <= word.start_ts < proposed_ack_ts
+                and word not in self.superseded_provisional_words
+            )
+            end_ts = min(self.state.audio_ts, max((word.end_ts for word in uncertain), default=0))
+            target_start_ts = acknowledged.end_ts
+            target_end_ts = end_ts
+        if not uncertain:
+            return
+        start_ts = max(anchor.start_ts, end_ts - 30 * self.config.sampling_rate)
+        if start_ts < self.state.retained_start_ts:
+            LOG.info("Second opinion unavailable: acknowledged utterance starts before retained audio")
+            return
+        capabilities = self.models.transcriber.get_capabilities()
+        language = next((word.lang for word in reversed(anchor.words) if word.lang != "und"), None)
+        if not capabilities.accepts_language_hint:
+            language = None
+        model_words = self.models.transcriber.transcribe(
+            audio=self.state.audio_between(start_ts, end_ts),
+            lang=language,
+            prompt="",
+            prefix="",
+            window_ts=start_ts,
+            audio_ts=end_ts,
+            whisper_beam_size=self.config.whisper_beam_size,
+            whisper_best_of=self.config.whisper_best_of,
+            whisper_patience=self.config.whisper_patience,
+            whisper_temperatures=self.config.whisper_temperatures,
+        )
+        target_words = [word for word in model_words if target_start_ts <= word.start_ts and word.end_ts <= target_end_ts]
+        boundary_words = [
+            word for word in model_words
+            if word.start_ts < target_end_ts and word.end_ts > target_start_ts and word not in target_words
+        ]
+        probe = SecondOpinionProbe(
+            start_ts, end_ts, target_start_ts, target_end_ts, language, anchor, following,
+            uncertain, model_words, target_words, boundary_words,
+        )
+        probe.resolution = reconcile_second_opinion(probe)
+        self.second_opinion_probes.append(probe)
+        LOG.info(
+            "Second opinion range=%d-%d target=%d-%d lang=%s acknowledged=%s following=%s "
+            "uncertain=%s target_words=%s boundary_words=%s resolution=%s",
+            start_ts, end_ts, target_start_ts, target_end_ts, language, self._summarize_utterance(anchor),
+            self._summarize_utterance(following) if following is not None else None,
+            self._summarize_words(uncertain), self._summarize_words(target_words), self._summarize_words(boundary_words),
+            probe.resolution.status,
+        )
+
     def get_next_number_of_chunks(self) -> int:
         available_chunks = self.config.window_duration - float(self.state.audio_ts - self.state.window_ts) / self.config.sampling_rate
 
@@ -1208,6 +1422,23 @@ class Verbatim:
 
             confirmed_words, unconfirmed_words = self.transcribe_window()
             pass_metrics.update(self.state.last_transcribe_metrics_ms)
+            if self.experimental_second_opinion:
+                history = self.state.transcript_candidate_history.transcript_history[:-1]
+                superseded = find_superseded_provisional_words(
+                    self._observed_unconfirmed_words + self.state.unconfirmed_words,
+                    history,
+                    confirmed_words,
+                )
+                for word in superseded:
+                    if word not in self.superseded_provisional_words:
+                        self.superseded_provisional_words.append(word)
+                self._observed_unconfirmed_words = [
+                    word for word in self._observed_unconfirmed_words
+                    if word.end_ts >= self.state.retained_start_ts
+                ]
+                for word in self.state.unconfirmed_words:
+                    if word not in self._observed_unconfirmed_words:
+                        self._observed_unconfirmed_words.append(word)
             self.state.unconfirmed_words = unconfirmed_words
             if len(confirmed_words) > 0:
                 sentence_start = perf_counter()
@@ -1312,6 +1543,9 @@ class Verbatim:
                             self._summarize_utterance(acknowledged_to_commit[-1]),
                             next_visible_ts,
                         )
+
+                    if self.experimental_second_opinion:
+                        self.probe_second_opinion(acknowledged_to_commit[-1], skip_to)
 
                     # try to skip ahead, but don't skip beyond the next detected word
                     if len(self.state.unacknowledged_utterances) > 0 and skip_to > self.state.unacknowledged_utterances[0].start_ts:
