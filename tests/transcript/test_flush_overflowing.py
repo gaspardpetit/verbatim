@@ -2,7 +2,7 @@ import unittest
 
 from verbatim.config import Config
 from verbatim.transcript.words import Utterance, Word
-from verbatim.verbatim import Verbatim
+from verbatim.verbatim import Verbatim, WhisperHistory
 
 
 class DummyModels:
@@ -32,6 +32,7 @@ class TestFlushOverflowing(unittest.TestCase):
         self.assertEqual([w1, w2], flushed_utterance.words)
         self.assertEqual([w3], self.verbatim.state.unconfirmed_words)
         self.assertEqual([w1, w2], self.verbatim.state.acknowledged_words)
+        self.assertEqual(w2.end_ts, self.verbatim.state.acknowledged_ts)
 
     def test_flush_crossing_utterance_acknowledges_whole_utterance(self):
         w1 = make_word(0, 10, " a")
@@ -47,6 +48,7 @@ class TestFlushOverflowing(unittest.TestCase):
         self.assertEqual([w1, w2], flushed_utterance.words)
         self.assertEqual([w1, w2], self.verbatim.state.acknowledged_words)
         self.assertEqual([], self.verbatim.state.unacknowledged_utterances)
+        self.assertEqual(w2.end_ts, self.verbatim.state.acknowledged_ts)
 
     def test_flush_crossing_single_word_utterance_removes_empty(self):
         w1 = make_word(0, 10, " a")
@@ -93,3 +95,32 @@ class TestFlushOverflowing(unittest.TestCase):
         self.assertEqual([following], remaining_unack)
         self.assertEqual([following], self.verbatim.state.unacknowledged_utterances)
         self.assertEqual([w1, w2], self.verbatim.state.acknowledged_words)
+
+    def test_crossing_flush_preserves_overlapping_provisional_word(self):
+        acknowledged = make_word(40, 60, " a")
+        provisional = make_word(55, 70, " b")
+        self.verbatim.state.window_ts = 50
+        self.verbatim.state.unacknowledged_utterances = [Utterance.from_words(utterance_id="utt0", words=[acknowledged])]
+        self.verbatim.state.unconfirmed_words = [provisional]
+
+        list(self.verbatim.flush_overflowing_utterances(diarization=None))
+
+        self.assertEqual(55, self.verbatim.state.acknowledged_ts)
+        self.assertEqual([provisional], self.verbatim.state.unconfirmed_words)
+        self.assertEqual(
+            0,
+            WhisperHistory.skipped_prefix_length(
+                [provisional], self.verbatim.state.acknowledged_words, self.verbatim.state.acknowledged_ts - 1
+            ),
+        )
+
+    def test_unconfirmed_flush_preserves_overlapping_next_word(self):
+        flushed = make_word(0, 40, " a")
+        provisional = make_word(35, 60, " b")
+        self.verbatim.state.window_ts = 50
+        self.verbatim.state.unconfirmed_words = [flushed, provisional]
+
+        list(self.verbatim.flush_overflowing_utterances(diarization=None))
+
+        self.assertEqual(35, self.verbatim.state.acknowledged_ts)
+        self.assertEqual([provisional], self.verbatim.state.unconfirmed_words)

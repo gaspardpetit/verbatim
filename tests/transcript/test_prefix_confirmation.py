@@ -65,3 +65,46 @@ class TestPrefixConfirmation(unittest.TestCase):
         advanced = WhisperHistory.advance_transcript(timestamp=10, transcript=[w1, w2])
 
         self.assertEqual([w1, w2], advanced)
+
+    def test_same_word_later_in_audio_is_not_skipped_as_prefix(self):
+        acknowledged = make_word(0, 5, " you")
+        repeated = make_word(20, 25, " you")
+
+        self.assertEqual(0, WhisperHistory.skipped_prefix_length([repeated], [acknowledged], after_ts=5))
+
+    def test_same_word_touching_acknowledged_boundary_is_not_skipped(self):
+        acknowledged = make_word(0, 5, " you")
+        repeated = make_word(5, 10, " you")
+
+        self.assertEqual(0, WhisperHistory.skipped_prefix_length([repeated], [acknowledged], after_ts=4))
+        self.assertEqual(
+            [repeated],
+            WhisperHistory.confirm_transcript([repeated], [repeated], [acknowledged], after_ts=4),
+        )
+
+    def test_same_word_overlapping_acknowledged_boundary_is_not_skipped(self):
+        acknowledged = make_word(40, 60, " you")
+        repeated = make_word(55, 70, " you")
+
+        self.assertEqual(0, WhisperHistory.skipped_prefix_length([repeated], [acknowledged], after_ts=54))
+        self.assertEqual(
+            [repeated],
+            WhisperHistory.confirm_transcript([repeated], [repeated], [acknowledged], after_ts=54),
+        )
+
+    def test_zero_duration_acknowledged_word_at_same_timestamp_is_skipped(self):
+        acknowledged = make_word(5, 5, " you")
+        repeated = make_word(5, 5, " you")
+        next_word = make_word(5, 10, " go")
+
+        self.assertEqual(1, WhisperHistory.skipped_prefix_length([repeated, next_word], [acknowledged], after_ts=4))
+        self.assertEqual(
+            [next_word],
+            WhisperHistory.confirm_transcript([repeated, next_word], [repeated, next_word], [acknowledged], after_ts=4),
+        )
+
+    def test_zero_duration_word_with_different_text_is_not_skipped(self):
+        acknowledged = make_word(5, 5, " you")
+        next_word = make_word(5, 5, " go")
+
+        self.assertEqual(0, WhisperHistory.skipped_prefix_length([next_word], [acknowledged], after_ts=4))
