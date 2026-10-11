@@ -5,12 +5,19 @@ from pathlib import Path
 from unittest.mock import patch
 
 from verbatim.config import Config
+from verbatim_audio.settings import AudioParams
 from verbatim_cli.args import build_parser
 from verbatim_cli.config_file import load_config_file, merge_args, select_profile
 from verbatim_cli.configure import apply_env_defaults, make_config, make_source_config, resolve_log_level, resolve_status_verbose
 
 
 class TestEnvConfig(unittest.TestCase):
+    def test_session_rate_must_match_runtime_audio_rate(self):
+        with patch.dict(Config.__post_init__.__globals__, {"AUDIO_PARAMS": AudioParams(sample_rate=8000)}):
+            with self.assertRaisesRegex(ValueError, "Session sampling rate .* must match runtime audio rate"):
+                Config(device="cpu")
+            self.assertEqual(8000, Config(device="cpu", sampling_rate=8000).sampling_rate)
+
     @staticmethod
     def _build_args(argv):
         parser = build_parser(prog="verbatim")

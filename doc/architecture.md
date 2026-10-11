@@ -15,7 +15,9 @@ Achieving true multilingual transcription is a complex challenge that goes beyon
 
 By combining these techniques, Verbatim turns Whisper into a robust multilingual transcription system.
 
-The rolling audio buffer exposes `active_audio()` for ingested samples in the current window, `window_audio()` for consumers that require the padded window, and `audio_between(start_ts, end_ts)` for an absolute sample range. `State` keeps the active start and audio end timestamps; appending and advancing use the buffer's write and advance methods. The buffer still holds only the configured attention window. These accessors prepare for retaining past audio without changing current transcription input.
+The rolling audio buffer exposes `active_audio()` for ingested samples in the current window, `window_audio()` for consumers that require the padded window, and `audio_between(start_ts, end_ts)` for an absolute sample range. `State` keeps the active start and audio end timestamps; appending and advancing use the buffer's write and advance methods. The buffer retains up to 30 seconds before the active start, available from `retained_start_ts` through `audio_between()`. The active attention window and the audio supplied to transcription and language detection remain unchanged. This retained range makes a later second-opinion transcription possible without changing acknowledgement behavior here.
+
+Session creation rejects a `Config.sampling_rate` that differs from the runtime `VERBATIM_SAMPLE_RATE` (`AUDIO_PARAMS.sample_rate`). This ensures that the retained history and active window represent their configured durations in the audio stream.
 
 ## Dynamic Adjustment of Language Detection Boundaries
 
