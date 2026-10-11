@@ -1447,6 +1447,14 @@ class Verbatim:
         # all utterances and words; When they fall behind, the best we can do
         # is return them as acknowledge.
 
+        def advance_acknowledged_ts(end_ts: int) -> None:
+            next_visible_ts = end_ts
+            if self.state.unacknowledged_utterances:
+                next_visible_ts = min(next_visible_ts, self.state.unacknowledged_utterances[0].start_ts)
+            if self.state.unconfirmed_words:
+                next_visible_ts = min(next_visible_ts, self.state.unconfirmed_words[0].start_ts)
+            self.state.acknowledged_ts = max(self.state.acknowledged_ts, next_visible_ts)
+
         # First, try to acknowledge "full" utterances that may not have been acknowledged
         while len(self.state.unacknowledged_utterances) > 0:
             # Stop when we reached the window_ts
@@ -1456,7 +1464,7 @@ class Verbatim:
             utterance = self.state.unacknowledged_utterances.pop(0)
             utterance.speaker = self.assign_speaker(utterance, diarization)
             self.state.acknowledged_words += utterance.words
-            self.state.acknowledged_ts = max(self.state.acknowledged_ts, utterance.end_ts)
+            advance_acknowledged_ts(utterance.end_ts)
             result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                 utterance=utterance,
                 unacknowledged=self.state.unacknowledged_utterances,
@@ -1472,7 +1480,7 @@ class Verbatim:
                 utterance = self.state.unacknowledged_utterances.pop(0)
                 utterance.speaker = self.assign_speaker(utterance, diarization)
                 self.state.acknowledged_words += utterance.words
-                self.state.acknowledged_ts = max(self.state.acknowledged_ts, utterance.end_ts)
+                advance_acknowledged_ts(utterance.end_ts)
                 result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                     utterance=utterance,
                     unacknowledged=self.state.unacknowledged_utterances,
@@ -1494,7 +1502,7 @@ class Verbatim:
             utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
             utterance.speaker = self.assign_speaker(utterance, diarization)
             self.state.acknowledged_words += flushed_utterances_words
-            self.state.acknowledged_ts = max(self.state.acknowledged_ts, utterance.end_ts)
+            advance_acknowledged_ts(utterance.end_ts)
             result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                 utterance=utterance,
                 unacknowledged=self.state.unacknowledged_utterances,
