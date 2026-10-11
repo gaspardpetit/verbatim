@@ -154,7 +154,7 @@ class Config:
     sampling_rate: int = 16000
     transcribe_latency: int = 16000
     frames_per_buffer: int = 1000
-    window_duration: int = 30  # seconds
+    window_duration: float = 30.0  # seconds; replaced by the selected transcriber's capability at session start
     backward_window_duration: float = 30.0  # seconds of audio retained before the active window
     post_acknowledgement_skip_duration: float = 0.1  # seconds; limited by pending words and available audio
     language_gap_min_duration: float = 0.25  # seconds required before probing a gap for a language mismatch

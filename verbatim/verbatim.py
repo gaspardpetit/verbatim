@@ -43,12 +43,12 @@ from verbatim_transcript import (
     detect_language,
 )
 
-from .config import Config
+from .config import DEFAULT_LOWLATENCY_CHUNKTABLE, Config
 from .language_id import create_language_identifier
 from .models import Models
 from .status_types import StatusHook, StatusProgress, StatusUpdate
 from .transcript.idprovider import CounterIdProvider, IdProvider
-from .transcript.sentences import BoundedSentenceTokenizer, SentenceTokenizer
+from .transcript.sentences import BoundedSentenceTokenizer, SentenceTokenizer, SilenceSentenceTokenizer
 from .transcript.words import Utterance, Word
 
 # pylint: disable=unused-import
@@ -313,7 +313,7 @@ class State:
         if not math.isfinite(self.config.backward_window_duration) or self.config.backward_window_duration < 0:
             raise ValueError("backward_window_duration must be finite and non-negative")
 
-        window_size = self.config.sampling_rate * self.config.window_duration  # Total samples in 30 seconds
+        window_size = round(self.config.sampling_rate * self.config.window_duration)
         history_size = round(self.config.backward_window_duration * self.config.sampling_rate)
         self.rolling_window = RollingWindow(window_size=window_size, dtype=np.float32, history_size=history_size)
 
@@ -429,6 +429,15 @@ class Verbatim:
         else:
             self.vad_callback = None
 
+    def _configure_backend_window(self) -> None:
+        """Resolve the active window before a session consumes any audio."""
+        duration = self.models.transcriber.get_capabilities().window_duration
+        if not math.isfinite(duration) or duration < 1.0:
+            raise ValueError("transcriber window_duration must be finite and at least one second")
+        self.config.window_duration = duration
+        if self.config.stream and self.config.chunk_table == DEFAULT_LOWLATENCY_CHUNKTABLE:
+            self.config.chunk_table = [(0.0, 1.0 / duration)]
+
     def _emit_status(self, update: StatusUpdate) -> None:
         if self.status_hook is None:
             return
@@ -511,7 +520,7 @@ class Verbatim:
 
     def _read_full_audio(self, audio_stream: AudioStream) -> NDArray:
         chunks: List[NDArray] = []
-        chunk_length = max(1, self.config.window_duration)
+        chunk_length = max(1, math.ceil(self.config.window_duration))
         while audio_stream.has_more():
             chunk = audio_stream.next_chunk(chunk_length=chunk_length)
             if chunk.size == 0:
@@ -1212,7 +1221,11 @@ class Verbatim:
             if len(confirmed_words) > 0:
                 sentence_start = perf_counter()
                 utterances = self.words_to_sentences(
-                    word_tokenizer=BoundedSentenceTokenizer(other_tokenizer=self.models.sentence_tokenizer),
+                    word_tokenizer=BoundedSentenceTokenizer(
+                        other_tokenizer=self.models.sentence_tokenizer,
+                        bounding_tokenizer=SilenceSentenceTokenizer(duration_scale=self.config.window_duration / 30.0),
+                        max_duration=25.0 * self.config.window_duration / 30.0,
+                    ),
                     window_words=confirmed_words,
                     id_provider=self.state.utterance_id,
                 )
@@ -1569,6 +1582,7 @@ class Verbatim:
     def transcribe(
         self, audio_stream: AudioStream, working_prefix_no_ext: str = "out"
     ) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
+        self._configure_backend_window()
         self.state = State(self.config, working_prefix_no_ext=working_prefix_no_ext)
         try:
             if not self.config.code_switching:
