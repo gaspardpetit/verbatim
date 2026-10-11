@@ -137,8 +137,8 @@ class WhisperHistory:
             matches_acknowledged_word = (
                 index < len(prefix)
                 and prefix[index].word == words[index].word
-                and words[index].start_ts <= prefix[index].end_ts
-                and words[index].end_ts >= prefix[index].start_ts
+                and words[index].start_ts < prefix[index].end_ts
+                and words[index].end_ts > prefix[index].start_ts
             )
             if matches_acknowledged_word or words[index].start_ts <= after_ts:
                 index += 1

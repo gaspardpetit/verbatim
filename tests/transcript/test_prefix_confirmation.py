@@ -71,3 +71,13 @@ class TestPrefixConfirmation(unittest.TestCase):
         repeated = make_word(20, 25, " you")
 
         self.assertEqual(0, WhisperHistory.skipped_prefix_length([repeated], [acknowledged], after_ts=5))
+
+    def test_same_word_touching_acknowledged_boundary_is_not_skipped(self):
+        acknowledged = make_word(0, 5, " you")
+        repeated = make_word(5, 10, " you")
+
+        self.assertEqual(0, WhisperHistory.skipped_prefix_length([repeated], [acknowledged], after_ts=4))
+        self.assertEqual(
+            [repeated],
+            WhisperHistory.confirm_transcript([repeated], [repeated], [acknowledged], after_ts=4),
+        )
