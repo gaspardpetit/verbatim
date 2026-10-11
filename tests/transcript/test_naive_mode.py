@@ -14,7 +14,7 @@ class DummyTranscriber:
     def __init__(self, words, guessed_lang="en", capabilities=None):
         self.words = words
         self.guessed_lang = guessed_lang
-        self.capabilities = capabilities or TranscriberCapabilities(True, True, False, True, True)
+        self.capabilities = capabilities or TranscriberCapabilities(True, True, False, True, True, 30.0)
         self.calls = []
         self.guess_calls = []
 
@@ -114,7 +114,7 @@ class TestNaiveMode(unittest.TestCase):
         config = Config(device="cpu")
         config.code_switching = False
         word = Word(start_ts=0, end_ts=8000, word="Hello. ", probability=1.0, lang="und")
-        transcriber = DummyTranscriber(words=[word], capabilities=TranscriberCapabilities(False, False, False, False, False))
+        transcriber = DummyTranscriber(words=[word], capabilities=TranscriberCapabilities(False, False, False, False, False, 30.0))
         verbatim = Verbatim(config=config, models=SingleSentenceModels(transcriber))
 
         emitted = list(verbatim.transcribe(DummyAudioStream(chunks=[np.zeros(16000, dtype=np.float32)])))

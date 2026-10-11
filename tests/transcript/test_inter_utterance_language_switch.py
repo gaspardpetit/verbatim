@@ -41,7 +41,7 @@ class DummyTranscriber:
         self.calls = []
 
     def get_capabilities(self):
-        return TranscriberCapabilities(True, True, False, True, True)
+        return TranscriberCapabilities(True, True, False, True, True, 30.0)
 
     def transcribe(
         self,

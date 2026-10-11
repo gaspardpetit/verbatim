@@ -28,6 +28,7 @@ class TestTranscriberCapabilities(unittest.TestCase):
             with self.subTest(backend=backend.__name__):
                 capabilities = backend.__new__(backend).get_capabilities()
                 self.assertIsInstance(capabilities, TranscriberCapabilities)
+                self.assertEqual(30.0, capabilities.window_duration)
                 self.assertEqual(
                     flags,
                     (
@@ -43,6 +44,8 @@ class TestTranscriberCapabilities(unittest.TestCase):
         capabilities = FasterWhisperTranscriber.__new__(FasterWhisperTranscriber).get_capabilities()
         with self.assertRaises(FrozenInstanceError):
             setattr(capabilities, "accepts_language_hint", False)
+        with self.assertRaises(FrozenInstanceError):
+            setattr(capabilities, "window_duration", 60.0)
 
 
 if __name__ == "__main__":

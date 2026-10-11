@@ -42,6 +42,7 @@ class ParakeetTranscriber(Transcriber):
         reports_language=False,
         supports_prompt=False,
         supports_prefix=False,
+        window_duration=30.0,
     )
 
     def __init__(self, *, model_size_or_path: str, device: str):

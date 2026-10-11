@@ -22,6 +22,7 @@ class FasterWhisperTranscriber(Transcriber):
         reports_language=False,
         supports_prompt=True,
         supports_prefix=True,
+        window_duration=30.0,
     )
 
     def __init__(

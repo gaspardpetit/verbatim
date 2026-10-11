@@ -62,6 +62,7 @@ class WhisperMlxTranscriber(Transcriber):
         reports_language=False,
         supports_prompt=True,
         supports_prefix=False,
+        window_duration=30.0,
     )
 
     model_path: str

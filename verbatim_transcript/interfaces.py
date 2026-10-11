@@ -30,6 +30,7 @@ class TranscriberCapabilities:
     reports_language: bool
     supports_prompt: bool
     supports_prefix: bool
+    window_duration: float
 
 
 class TranscriberProtocol(Protocol):
