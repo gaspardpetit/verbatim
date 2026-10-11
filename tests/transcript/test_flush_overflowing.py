@@ -32,6 +32,7 @@ class TestFlushOverflowing(unittest.TestCase):
         self.assertEqual([w1, w2], flushed_utterance.words)
         self.assertEqual([w3], self.verbatim.state.unconfirmed_words)
         self.assertEqual([w1, w2], self.verbatim.state.acknowledged_words)
+        self.assertEqual(w2.end_ts, self.verbatim.state.acknowledged_ts)
 
     def test_flush_crossing_utterance_acknowledges_whole_utterance(self):
         w1 = make_word(0, 10, " a")
@@ -47,6 +48,7 @@ class TestFlushOverflowing(unittest.TestCase):
         self.assertEqual([w1, w2], flushed_utterance.words)
         self.assertEqual([w1, w2], self.verbatim.state.acknowledged_words)
         self.assertEqual([], self.verbatim.state.unacknowledged_utterances)
+        self.assertEqual(w2.end_ts, self.verbatim.state.acknowledged_ts)
 
     def test_flush_crossing_single_word_utterance_removes_empty(self):
         w1 = make_word(0, 10, " a")
