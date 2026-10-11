@@ -7,6 +7,7 @@ from typing import List, Mapping, Optional, Tuple
 
 from verbatim.cache import ArtifactCache
 from verbatim.logging_utils import get_status_logger
+from verbatim_audio.settings import AUDIO_PARAMS
 from verbatim_audio.sources.audiosource import AudioSource
 
 LOG = logging.getLogger(__name__)
@@ -202,6 +203,11 @@ class Config:
     source_stream: Optional[AudioSource] = None
 
     def __post_init__(self):
+        if self.sampling_rate != AUDIO_PARAMS.sample_rate:
+            raise ValueError(
+                f"Session sampling rate ({self.sampling_rate} Hz) must match runtime audio rate "
+                f"({AUDIO_PARAMS.sample_rate} Hz; VERBATIM_SAMPLE_RATE)."
+            )
         self.configure_device(device=self.device)
 
         self.configure_latency(stream=self.stream)
