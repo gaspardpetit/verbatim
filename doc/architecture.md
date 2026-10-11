@@ -21,6 +21,9 @@ The backward duration must be finite and non-negative; zero disables retained hi
 
 Session creation rejects a `Config.sampling_rate` that differs from the runtime `VERBATIM_SAMPLE_RATE` (`AUDIO_PARAMS.sample_rate`). This ensures that the retained history and active window represent their configured durations in the audio stream.
 
+The post-acknowledgement advance uses `Config.post_acknowledgement_skip_duration` (0.1 seconds by default). The actual advance is capped at the next pending or unconfirmed word and at the end of available audio.
+The duration must be finite and non-negative; zero disables this extra advance.
+
 ## Dynamic Adjustment of Language Detection Boundaries
 
 Most Whisper-based transcription projects rely on a fixed-length language detection window—typically 30 seconds—to determine the transcription language. While this works well for monolingual recordings, it fails in multilingual conversations where speakers rapidly switch languages mid-sentence.

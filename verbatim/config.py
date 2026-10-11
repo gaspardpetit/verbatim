@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 import platform
 from dataclasses import dataclass, field
@@ -155,6 +156,7 @@ class Config:
     frames_per_buffer: int = 1000
     window_duration: int = 30  # seconds
     backward_window_duration: float = 30.0  # seconds of audio retained before the active window
+    post_acknowledgement_skip_duration: float = 0.1  # seconds; limited by pending words and available audio
     device: str = "auto"
     stream: bool = False
     debug: bool = False
@@ -204,6 +206,8 @@ class Config:
     source_stream: Optional[AudioSource] = None
 
     def __post_init__(self):
+        if not math.isfinite(self.post_acknowledgement_skip_duration) or self.post_acknowledgement_skip_duration < 0:
+            raise ValueError("post_acknowledgement_skip_duration must be finite and non-negative")
         if self.sampling_rate != AUDIO_PARAMS.sample_rate:
             raise ValueError(
                 f"Session sampling rate ({self.sampling_rate} Hz) must match runtime audio rate "
