@@ -9,7 +9,7 @@ from verbatim_transcript import TranscriberCapabilities
 class DummyTranscriber:
     def __init__(self, outputs_by_lang, capabilities=None):
         self.outputs_by_lang = outputs_by_lang
-        self.capabilities = capabilities or TranscriberCapabilities(True, True, False, True, True)
+        self.capabilities = capabilities or TranscriberCapabilities(True, True, False, True, True, 30.0)
         self.calls = []
 
     def get_capabilities(self):
@@ -65,7 +65,7 @@ class TestConfirmationBranches(unittest.TestCase):
 
     def test_backend_without_language_hints_skips_detection_and_retry(self):
         word = make_word(12000, 13000, " hello", lang="und")
-        transcriber = DummyTranscriber(outputs_by_lang={None: [word]}, capabilities=TranscriberCapabilities(False, False, False, False, False))
+        transcriber = DummyTranscriber(outputs_by_lang={None: [word]}, capabilities=TranscriberCapabilities(False, False, False, False, False, 30.0))
 
         def unexpected_detection(_timestamp):
             self.fail("Language detection should not run without language hints")
