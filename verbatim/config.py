@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 import platform
 from dataclasses import dataclass, field
@@ -205,6 +206,8 @@ class Config:
     source_stream: Optional[AudioSource] = None
 
     def __post_init__(self):
+        if not math.isfinite(self.post_acknowledgement_skip_duration) or self.post_acknowledgement_skip_duration < 0:
+            raise ValueError("post_acknowledgement_skip_duration must be finite and non-negative")
         if self.sampling_rate != AUDIO_PARAMS.sample_rate:
             raise ValueError(
                 f"Session sampling rate ({self.sampling_rate} Hz) must match runtime audio rate "
