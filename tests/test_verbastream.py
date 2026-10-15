@@ -175,6 +175,29 @@ class StreamTests(unittest.TestCase):
                          [30.0, 37.0, 37.0])
         self.assertEqual(seen, [(["fr"], "qwen", False, 30, [(0, 1.0)], 9)])
 
+    def test_openvino_uses_prepared_model_directory_offline(self):
+        seen = []
+
+        class FakeVerbatim:
+            def __init__(self, config, _publisher, *, quality=False):
+                _ = quality
+                seen.append((config.model_cache_dir, config.offline, config.working_dir, config.transcriber_backend))
+                self.models = types.SimpleNamespace(transcriber=object())
+                self.state = types.SimpleNamespace(window_ts=0, acknowledged_utterances=[], unacknowledged_utterances=[], unconfirmed_words=[])
+
+            def transcribe(self, stream):
+                while stream.has_more():
+                    stream.next_chunk()
+                yield from ()
+
+        fake_senko = types.SimpleNamespace(Diarizer=lambda **_kwargs: object(),
+                                           DiarizationSession=lambda _diarizer: types.SimpleNamespace(
+                                               add_samples=lambda audio, sample_rate: {"merged_segments": []}))
+        with patch.dict(sys.modules, {"senko": fake_senko}), patch("verbatim_stream.main.StreamingVerbatim", FakeVerbatim), \
+                patch("verbatim_stream.main.Config.configure_cache"), patch("verbatim_stream.main.Config.is_device_supported", return_value=True):
+            run(io.BytesIO(), io.StringIO(), device="cpu", backend="parakeet-openvino", modeldir="C:/models")
+        self.assertEqual(seen, [("C:/models", True, None, "parakeet-openvino")])
+
     def test_quality_mode_releases_short_recording_at_eof(self):
         blocks = queue.Queue()
         read_blocks(io.BytesIO(b"\x00\x00" * (7 * 16000)), blocks)

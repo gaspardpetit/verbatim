@@ -97,7 +97,7 @@ def add_shared_arguments(parser: argparse.ArgumentParser, *, include_input: bool
     )
     parser.add_argument(
         "--asr-backend",
-        choices=["auto", "qwen", "qwen-asr", "voxtral", "parakeet"],
+        choices=["auto", "qwen", "qwen-asr", "voxtral", "parakeet", "parakeet-openvino"],
         default=None,
         help="ASR backend to use. Defaults to the standard Whisper backend when unset.",
     )

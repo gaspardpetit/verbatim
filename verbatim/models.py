@@ -98,6 +98,11 @@ class Models:
             from .voices.transcribe.parakeet import ParakeetTranscriber  # pylint: disable=import-outside-toplevel
 
             return ParakeetTranscriber(model_size_or_path=self._parakeet_model_size, device=self._device)
+        if backend == "parakeet-openvino":
+            STATUS_LOG.info("Using Parakeet on Intel NPU through OpenVINO.")
+            from .voices.transcribe.parakeet_openvino import ParakeetOpenVinoTranscriber  # pylint: disable=import-outside-toplevel
+
+            return ParakeetOpenVinoTranscriber(model_size_or_path=self._parakeet_model_size, device=self._device)
         if backend in ("qwen", "qwen-asr"):
             STATUS_LOG.info("Using Qwen3-ASR transcriber.")
             from .voices.transcribe.qwen_asr import QwenAsrTranscriber  # pylint: disable=import-outside-toplevel

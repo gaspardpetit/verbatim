@@ -216,7 +216,8 @@ class StreamingVerbatim(Verbatim):
 
 
 def run(source: BinaryIO, output: TextIO, *, device: str = "auto", model: str = "large-v3",
-        languages: Optional[list[str]] = None, mode: str = "low-latency", backend: str = "whisper") -> None:
+        languages: Optional[list[str]] = None, mode: str = "low-latency", backend: str = "whisper",
+        modeldir: Optional[str] = None) -> None:
     write_status(output, "initializing")
     if AUDIO_PARAMS.sample_rate != SAMPLE_RATE:
         raise RuntimeError(f"verbastream requires VERBATIM_SAMPLE_RATE={SAMPLE_RATE}; configured rate is {AUDIO_PARAMS.sample_rate} Hz")
@@ -225,10 +226,11 @@ def run(source: BinaryIO, output: TextIO, *, device: str = "auto", model: str = 
     except ImportError as exc:
         raise RuntimeError('Install the Senko backend with `uv pip install ".[senko]"`') from exc
 
-    config = Config(device=device, stream=mode != "quality", working_dir=None, transcriber_backend=backend)
+    config = Config(device=device, stream=mode != "quality", working_dir=None, transcriber_backend=backend,
+                    model_cache_dir=modeldir, offline=backend == "parakeet-openvino")
     config.configure_device(device)
     config.configure_latency(mode != "quality")
-    if backend == "parakeet":
+    if backend in ("parakeet", "parakeet-openvino"):
         config.parakeet_model_size = model if model != "large-v3" else "nvidia/parakeet-tdt-0.6b-v3"
     elif backend == "qwen":
         if model != "large-v3":
@@ -261,7 +263,9 @@ def run(source: BinaryIO, output: TextIO, *, device: str = "auto", model: str = 
         publisher.set_diarization(audio, session)
 
     stream = QueuedAudioStream(blocks, on_audio, QUALITY_WINDOW_SECONDS if mode == "quality" else block_seconds)
-    selected_model = config.parakeet_model_size if backend == "parakeet" else (config.qwen_asr_model_size if backend == "qwen" else model)
+    selected_model = config.parakeet_model_size if backend in ("parakeet", "parakeet-openvino") else (
+        config.qwen_asr_model_size if backend == "qwen" else model
+    )
     write_status(output, "loading_transcriber", backend=backend, model=selected_model)
     transcriber = StreamingVerbatim(config, publisher, quality=mode == "quality")
     # Load the ASR model before the app starts sending audio after `ready`.
@@ -297,7 +301,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Stream raw 16 kHz mono signed 16-bit little-endian PCM to JSON transcript snapshots")
     parser.add_argument("--device", default="auto", choices=("auto", "cpu", "cuda", "mps"))
     parser.add_argument("--model", default="large-v3")
-    parser.add_argument("--backend", choices=("whisper", "qwen", "parakeet"), default="whisper")
+    parser.add_argument("--backend", choices=("whisper", "qwen", "parakeet", "parakeet-openvino"), default="whisper")
+    parser.add_argument("--modeldir", help="Directory containing prepared models and NPU blobs")
     parser.add_argument("--language", action="append", choices=("en", "fr"), dest="languages")
     parser.add_argument("--mode", choices=("low-latency", "quality"), default="low-latency")
     args = parser.parse_args()
@@ -306,7 +311,7 @@ def main() -> None:
         protocol_stdout = sys.stdout
         with contextlib.redirect_stdout(sys.stderr):
             run(sys.stdin.buffer, protocol_stdout, device=args.device, model=args.model,
-                languages=args.languages, mode=args.mode, backend=args.backend)
+                languages=args.languages, mode=args.mode, backend=args.backend, modeldir=args.modeldir)
     except Exception as exc:  # pylint: disable=broad-exception-caught
         write_event(protocol_stdout, {"type": "error", "message": str(exc)})
         LOG.exception("verbastream failed")
