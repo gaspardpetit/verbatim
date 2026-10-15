@@ -16,6 +16,18 @@ class _FakeFasterWhisperTranscriber:
 
 
 class TestModels(unittest.TestCase):
+    def test_parakeet_openvino_backend_uses_selected_model(self):
+        models = Models.__new__(Models)
+        models._config_transcriber_backend = "parakeet-openvino"
+        models._parakeet_model_size = "istupakov/parakeet-tdt-0.6b-v3-onnx"
+        models._device = "cpu"
+
+        with patch("verbatim.voices.transcribe.parakeet_openvino.ParakeetOpenVinoTranscriber") as transcriber_class:
+            transcriber = models._build_transcriber()
+
+        transcriber_class.assert_called_once_with(model_size_or_path=models._parakeet_model_size, device="cpu")
+        self.assertIs(transcriber, transcriber_class.return_value)
+
     def test_parakeet_backend_uses_selected_checkpoint(self):
         models = Models.__new__(Models)
         models._config_transcriber_backend = "parakeet"
