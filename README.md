@@ -18,9 +18,15 @@ For a broader side-by-side benchmark on the Air France bilingual sample, includi
 - [Python](https://www.python.org/) version 3.10 to 3.12
 - [Astral UV](https://github.com/astral-sh/uv) for development
 
-### Portaudio
+### Microphone input
 
-Portaudio is used on macOS and Linux for accessing the microphone when doing live transcription. To install:
+File and stdin transcription do not require PortAudio. To use live microphone input, install the optional Python dependencies:
+
+```bash
+pip install "verbatim[microphone]"
+```
+
+PortAudio is also required by PyAudio. Install it on Linux or macOS before installing the extra:
 
 Install on Linux:
 ```bash
@@ -52,6 +58,9 @@ pip install "verbatim[faster_whisper]"
 # Qwen ASR backend
 pip install "verbatim[qwen]"
 
+# NeMo Parakeet backend
+pip install "verbatim[nemo]"
+
 # Voxtral backend with Qwen word alignment
 pip install "verbatim[voxtral]"
 
@@ -64,6 +73,9 @@ pip install "verbatim[qwen,mms_lid]"
 # MLX Whisper backend on Apple Silicon
 pip install "verbatim[mlx]"
 
+# Live microphone input (also requires the PortAudio system library)
+pip install "verbatim[microphone]"
+
 # Pyannote diarization / separation
 pip install "verbatim[diarization]"
 
@@ -73,6 +85,8 @@ pip install "verbatim[dss]"
 # AST-backed non-speech classification for long skipped regions
 pip install "verbatim[mms_lid]"
 ```
+
+The `nemo` and `diarization` extras cannot currently be installed together because pyannote's separation dependencies require legacy PyTorch Lightning while NeMo requires modern Lightning. Use `verbatim[nemo,senko]` when combining Parakeet transcription with diarization.
 
 With `uv` against the local project environment:
 ```bash

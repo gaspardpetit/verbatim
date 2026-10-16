@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import platform
 import sys
+from importlib import import_module
 from time import perf_counter
 from typing import TYPE_CHECKING, Optional
 
@@ -138,10 +139,10 @@ class Models:
 
         STATUS_LOG.info("Using 'faster-whisper' transcriber.")
         try:
-            from .voices.transcribe.faster_whisper import FasterWhisperTranscriber  # pylint: disable=import-outside-toplevel
+            faster_whisper_module = import_module(".voices.transcribe.faster_whisper", package=__package__)
         except ModuleNotFoundError as exc:
             if exc.name != "faster_whisper":
                 raise
             raise RuntimeError('Faster Whisper requires its optional dependencies. Install `verbatim[faster_whisper]`.') from exc
 
-        return FasterWhisperTranscriber(model_size_or_path=self._whisper_model_size, device=self._device)
+        return faster_whisper_module.FasterWhisperTranscriber(model_size_or_path=self._whisper_model_size, device=self._device)

@@ -52,11 +52,9 @@ dependencies = [
     "langcodes>=3.5.0",
     "numpy>=2.2.2,<3",
     "onnxruntime>=1.16.0,<1.20",
-    "pyaudio>=0.2.14",
     "pydub>=0.25.1",
     "python-docx>=1.1.2",
     "silero-vad>=5.1.2",
-    "sounddevice>=0.5.1",
     "soundfile>=0.13.0",
     "torch>=2.4.1",
     "torchaudio>=2.4.1",
@@ -78,6 +76,10 @@ dev = [
 ]
 
 [project.optional-dependencies]
+microphone = [
+    "pyaudio>=0.2.14",
+    "sounddevice>=0.5.1",
+]
 faster_whisper = [
     "faster-whisper>=1.1.1",
 ]
@@ -100,6 +102,7 @@ qwen = [
 ]
 nemo = [
     "nemo_toolkit[asr]>=2.4.0",
+    "pytorch-lightning>2.2.1,<=2.4.0",
 ]
 mms_lid = [
     "transformers>=4.51.3",
@@ -175,6 +178,14 @@ reportCallIssue = "warning"
 reportIndexIssue = "warning"
 reportOptionalSubscript = "warning"
 reportOptionalCall = "warning"
+
+[tool.uv]
+conflicts = [
+    [
+        { extra = "diarization" },
+        { extra = "nemo" },
+    ],
+]
 
 #[tool.uv.sources]
 #torch = [

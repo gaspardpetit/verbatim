@@ -4,7 +4,7 @@ import sys
 import types
 import unittest
 from typing import Any, cast
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from verbatim.models import Models
 
@@ -34,16 +34,11 @@ class TestModels(unittest.TestCase):
         models._whisper_model_size = "large-v3"
         models._device = "cpu"
 
-        original_import = builtins.__import__
-
-        def missing_faster_whisper(name, globals_=None, locals_=None, fromlist=(), level=0):
-            if name.endswith("faster_whisper"):
-                raise ModuleNotFoundError("No module named 'faster_whisper'", name="faster_whisper")
-            return original_import(name, globals_, locals_, fromlist, level)
-
-        with patch("builtins.__import__", side_effect=missing_faster_whisper):
-            with self.assertRaisesRegex(RuntimeError, "verbatim\\[faster_whisper\\]"):
-                models._build_transcriber()
+        missing_dependency = ModuleNotFoundError("No module named 'faster_whisper'", name="faster_whisper")
+        with patch("sys.platform", "linux"):
+            with patch.dict(Models._build_transcriber.__globals__, {"import_module": MagicMock(side_effect=missing_dependency)}):
+                with self.assertRaisesRegex(RuntimeError, "verbatim\\[faster_whisper\\]"):
+                    models._build_transcriber()
 
     def test_build_transcriber_falls_back_when_mlx_is_unavailable(self):
         models = Models.__new__(Models)
