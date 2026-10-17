@@ -448,7 +448,14 @@ def create_audio_sources(
         ]
 
     elif input_source is None or input_source == ">":
-        from .micaudiosource import MicAudioSourcePyAudio as MicAudioSource
+        try:
+            from .micaudiosource import MicAudioSourcePyAudio as MicAudioSource
+        except ImportError as exc:
+            if exc.name not in ("pyaudio", "sounddevice"):
+                raise
+            raise RuntimeError(
+                "Microphone input requires optional dependencies. Install `verbatim[microphone]` and the PortAudio system library."
+            ) from exc
 
         return [MicAudioSource()]
 

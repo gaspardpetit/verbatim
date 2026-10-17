@@ -35,7 +35,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip uv
-          uv sync --frozen --dev --all-extras
+          # NeMo and pyannote separation require incompatible PyTorch Lightning versions.
+          # Keep NeMo installed to type-check Parakeet; pyannote imports remain warning-only.
+          uv sync --frozen --dev --all-extras --no-extra diarization --no-extra cuda_gpu
 
       - name: Install Pyright
         run: python -m pip install --upgrade pip pyright
