@@ -337,7 +337,7 @@ class Config:
         - Sets environment variables that major libs honor:
           HF_HOME/HUGGINGFACE_HUB_CACHE for Hugging Face, and a project-specific
           VERBATIM_MODELDIR and VERBATIM_OFFLINE.
-        - Creates directories if they do not exist.
+        - Creates directories during setup; offline processing uses an existing cache without creating directories.
         """
         # Offline toggle
         if offline:
@@ -355,15 +355,20 @@ class Config:
 
         if model_cache_dir:
             created_ok = True
-            try:
-                os.makedirs(model_cache_dir, exist_ok=True)
-            except OSError:
-                # If we cannot create the cache directory, log and continue with defaults
-                LOG.warning(f"Could not create model cache dir: {model_cache_dir}")
-                created_ok = False
+            if offline:
+                if not os.path.isdir(model_cache_dir):
+                    LOG.warning("Offline model cache dir does not exist: %s", model_cache_dir)
+                    created_ok = False
+            else:
+                try:
+                    os.makedirs(model_cache_dir, exist_ok=True)
+                except OSError:
+                    # If we cannot create the cache directory, log and continue with defaults
+                    LOG.warning(f"Could not create model cache dir: {model_cache_dir}")
+                    created_ok = False
 
             # If exists but not writable, also degrade gracefully
-            if created_ok and (not os.access(model_cache_dir, os.W_OK)):
+            if created_ok and not offline and (not os.access(model_cache_dir, os.W_OK)):
                 LOG.warning(f"Model cache dir not writable: {model_cache_dir}")
                 created_ok = False
 
@@ -377,7 +382,8 @@ class Config:
             # XDG cache root influences many libs (incl. whisper default cache path)
             try:
                 xdg_cache = os.path.join(model_cache_dir, "xdg")
-                os.makedirs(xdg_cache, exist_ok=True)
+                if not offline:
+                    os.makedirs(xdg_cache, exist_ok=True)
                 os.environ.setdefault("XDG_CACHE_HOME", xdg_cache)
             except OSError:
                 LOG.warning(f"Could not prepare XDG cache under {model_cache_dir}")
@@ -385,7 +391,8 @@ class Config:
             # Hugging Face cache
             try:
                 hf_home = os.path.join(model_cache_dir, "hf")
-                os.makedirs(hf_home, exist_ok=True)
+                if not offline:
+                    os.makedirs(hf_home, exist_ok=True)
                 os.environ.setdefault("HF_HOME", hf_home)
                 os.environ.setdefault("HUGGINGFACE_HUB_CACHE", os.path.join(hf_home, "hub"))
             except OSError:
@@ -393,7 +400,8 @@ class Config:
 
             try:
                 pyannote_cache = os.path.join(model_cache_dir, "pyannote")
-                os.makedirs(pyannote_cache, exist_ok=True)
+                if not offline:
+                    os.makedirs(pyannote_cache, exist_ok=True)
                 os.environ["PYANNOTE_CACHE"] = pyannote_cache
             except OSError:
                 LOG.warning(f"Could not prepare pyannote cache under {model_cache_dir}")

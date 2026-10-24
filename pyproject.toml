@@ -107,6 +107,10 @@ nemo = [
     "nemo_toolkit[asr]>=2.4.0",
     "pytorch-lightning>2.2.1,<=2.4.0",
 ]
+parakeet_openvino = [
+    "onnx-asr[cpu,hub]>=0.12.0",
+    "openvino>=2025.4",
+]
 mms_lid = [
     "transformers>=4.51.3",
 ]

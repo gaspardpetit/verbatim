@@ -234,7 +234,7 @@ def make_config(args) -> Config:
             config.qwen_asr_model_size = asr_model
         elif normalized_backend == "voxtral":
             config.voxtral_model_size = asr_model
-        elif normalized_backend == "parakeet":
+        elif normalized_backend in ("parakeet", "parakeet-openvino"):
             config.parakeet_model_size = asr_model
         else:
             config.whisper_model_size = asr_model

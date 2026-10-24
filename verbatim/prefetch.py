@@ -25,6 +25,7 @@ class InstallRequirements:
     include_qwen_asr: bool = False
     include_voxtral: bool = False
     include_parakeet: bool = False
+    include_parakeet_openvino: bool = False
     include_pyannote_diarization: bool = False
     include_pyannote_separation: bool = False
     include_isolation: bool = False
@@ -170,6 +171,8 @@ def collect_install_requirements(*, config: Config, source_config: SourceConfig)
         requirements.include_voxtral = True
     elif asr_backend == "parakeet":
         requirements.include_parakeet = True
+    elif asr_backend == "parakeet-openvino":
+        requirements.include_parakeet_openvino = True
     else:
         requirements.include_faster_whisper = True
         requirements.include_mlx_whisper = sys.platform == "darwin" and platform.machine().lower() in ("arm64", "aarch64")
@@ -301,6 +304,11 @@ def prefetch(*, config: Config, source_config: SourceConfig) -> None:
         from verbatim.voices.transcribe.parakeet import prefetch_parakeet_model  # pylint: disable=import-outside-toplevel
 
         prefetch_parakeet_model(config.parakeet_model_size)
+
+    if requirements.include_parakeet_openvino:
+        from verbatim.voices.transcribe.parakeet_openvino import prefetch_parakeet_openvino_model  # pylint: disable=import-outside-toplevel
+
+        prefetch_parakeet_openvino_model(config.parakeet_model_size)
 
     if requirements.include_faster_whisper:
         prefetch_faster_whisper_model(

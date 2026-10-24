@@ -1,4 +1,5 @@
 import os
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -55,6 +56,31 @@ class TestInstallRequirements(unittest.TestCase):
 
         self.assertTrue(requirements.include_parakeet)
         self.assertFalse(requirements.include_faster_whisper)
+
+    def test_parakeet_openvino_install_selects_prepared_npu_blobs(self):
+        with patch.object(Config, "is_device_supported", return_value=True):
+            config = Config(device="cpu")
+        config.transcriber_backend = "parakeet-openvino"
+
+        requirements = collect_install_requirements(config=config, source_config=SourceConfig())
+
+        self.assertTrue(requirements.include_parakeet_openvino)
+        self.assertFalse(requirements.include_parakeet)
+        self.assertFalse(requirements.include_faster_whisper)
+
+    def test_offline_config_accepts_prepared_read_only_model_cache(self):
+        with tempfile.TemporaryDirectory() as model_dir:
+            with patch.object(Config, "is_device_supported", return_value=True):
+                with patch("verbatim.config.os.makedirs", side_effect=AssertionError("unexpected model-cache write")):
+                    with patch("verbatim.config.os.access", return_value=False):
+                        with patch.dict(os.environ, {}, clear=True):
+                            config = Config(
+                                device="cpu", offline=True, model_cache_dir=model_dir,
+                                working_dir=None, output_dir=model_dir,
+                            )
+                            self.assertEqual(model_dir, os.environ["VERBATIM_MODELDIR"])
+                            self.assertEqual("1", os.environ["HF_HUB_OFFLINE"])
+                            self.assertIsNone(config.working_dir)
 
     def test_diarize_policy_adds_pyannote_and_separation(self):
         config = Config(device="cpu")

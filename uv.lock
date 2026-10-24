@@ -3720,6 +3720,29 @@ wheels = [
 ]
 
 [[package]]
+name = "onnx-asr"
+version = "0.12.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-8-verbatim-diarization' and extra == 'extra-8-verbatim-nemo')" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'extra-8-verbatim-diarization' and extra == 'extra-8-verbatim-nemo')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'extra-8-verbatim-diarization' and extra == 'extra-8-verbatim-nemo')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4c/11/136f556cda02ecc172674dcea79232e9e84e74b951bbcd2e2722117f633b/onnx_asr-0.12.0.tar.gz", hash = "sha256:c1fcacddbced392f9f769ed5c6223f4ce739a6e4549346de33b9b520d4ead713", size = 45991, upload-time = "2026-07-15T00:09:58.852Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6a/60/2fa469a2ee674c35ab48821a1039762ae7b9d0b88188ac1012e779477f76/onnx_asr-0.12.0-py3-none-any.whl", hash = "sha256:5e7ceca454609819ea7833f61e2302e0c8f6ece4f8a78b66c5daba53cb51de4a", size = 3980006, upload-time = "2026-07-15T00:09:57.322Z" },
+]
+
+[package.optional-dependencies]
+cpu = [
+    { name = "onnxruntime", version = "1.19.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13' or (extra == 'extra-8-verbatim-diarization' and extra == 'extra-8-verbatim-nemo')" },
+    { name = "onnxruntime", version = "1.20.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13' or (extra == 'extra-8-verbatim-diarization' and extra == 'extra-8-verbatim-nemo')" },
+]
+hub = [
+    { name = "huggingface-hub" },
+]
+
+[[package]]
 name = "onnx-weekly"
 version = "1.24.0.dev20260928"
 source = { registry = "https://pypi.org/simple" }
@@ -4131,6 +4154,43 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/42/ef/4ad54e3ecb1e89f7f7bdb4c7b751e43754e892d3c32a8550e5d0882565df/openunmix-1.3.0.tar.gz", hash = "sha256:cc9245ce728700f5d0b72c67f01be4162777e617cdc47f9b035963afac180fc8", size = 45889, upload-time = "2024-04-16T11:10:47.121Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/43/37/320afd9458abb186f09a5183f36e48829df7151821bf887f272a63b2584d/openunmix-1.3.0-py3-none-any.whl", hash = "sha256:e893ae22c5b8001a6107022499c2587b70d5c2e4777cc7c9ed6272b68a69534e", size = 40047, upload-time = "2024-04-16T11:10:45.107Z" },
+]
+
+[[package]]
+name = "openvino"
+version = "2026.4.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-8-verbatim-diarization' and extra == 'extra-8-verbatim-nemo')" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'extra-8-verbatim-diarization' and extra == 'extra-8-verbatim-nemo')" },
+    { name = "openvino-telemetry" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3e/d2/745eb23be29c24a0f57635019c3f0879f8d08eff43d41560c585fd677bd0/openvino-2026.4.1-22982-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:6c6ad38aefc3b0a7d1dbc7189c2be92bb876853f4681e1b1b9fbe1a382d5876f", size = 33293649, upload-time = "2026-10-01T09:58:16.529Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/57/b2d53cfb56be03449a95df18a76fe443ae94b16b3ae15128ca65e08dcd91/openvino-2026.4.1-22982-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:47dcccbab40a23aed1dc4af7c43a9c813cc61f684d66498e1627d407d5f2770b", size = 59122954, upload-time = "2026-10-01T09:58:20.659Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/07/16113c677dfc391dd606b8b537fa1198fee0277a9b0d3c4c4394677399fd/openvino-2026.4.1-22982-cp310-cp310-manylinux_2_35_aarch64.whl", hash = "sha256:c9fed6c278b3f0314a53b4366fe8811bd784f24a60335b318dff1e3ae3bbb5c0", size = 30339241, upload-time = "2026-10-01T09:58:24.193Z" },
+    { url = "https://files.pythonhosted.org/packages/71/e1/0be67369907ced8a68129e5edfe89a6bedbb4e78fc7aa93ff49157905edb/openvino-2026.4.1-22982-cp310-cp310-win_amd64.whl", hash = "sha256:45ad6947f404049cb54807638ad35a67c66c0c90d1e89ee6cc45f92021cb6c45", size = 84952044, upload-time = "2026-10-01T09:58:28.676Z" },
+    { url = "https://files.pythonhosted.org/packages/39/42/0faa4f36f07768af0128c531459d4d604c5354c75bb1f2bc0eaad0f8d274/openvino-2026.4.1-22982-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:d3740853691ae4a9003bc3417a4625d848e2cc3251af4b815c59199b38be252a", size = 33302114, upload-time = "2026-10-01T09:58:31.973Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/12/dcfe1316704aa47767352001b7351df90b71592bc1ee76a9852bf9850219/openvino-2026.4.1-22982-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:2d22b1da03f7caf74df30e9f6417d0ab2f637e4a38e08e1dcd294d2c37407aaf", size = 59130756, upload-time = "2026-10-01T09:58:35.747Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/82/704955b0134d2be51dd8d476dc60c55c08107d5a404b1a90bd3d8b7227a5/openvino-2026.4.1-22982-cp311-cp311-manylinux_2_35_aarch64.whl", hash = "sha256:bea1eb3733c34ef331adc945da0ccda5937865031139073663be84c517ffda22", size = 30348540, upload-time = "2026-10-01T09:58:39.205Z" },
+    { url = "https://files.pythonhosted.org/packages/da/86/4bbb3566e7b8385b6727164a75ad75f3b3a08026d1760a7bf0c55bd50a10/openvino-2026.4.1-22982-cp311-cp311-win_amd64.whl", hash = "sha256:bfddae6d6d3ad240157b946f180c33d0ddfaaae7487995d929a4e6b4bc12b283", size = 84956545, upload-time = "2026-10-01T09:58:44.223Z" },
+    { url = "https://files.pythonhosted.org/packages/b3/4e/865889882a3be23beaf9808f93069c05e2eb8c8ff4e9b913568fc0383ce4/openvino-2026.4.1-22982-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:726ac547b8474a5e7b145bc1ae5a8bb6fbcbb60b79bd9a611c67eec2c74b7a5f", size = 33341733, upload-time = "2026-10-01T09:58:47.515Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/3a/2a173ac1ad749ff0b041788eefc1ade0d410231fedfc43f77474f3b806cc/openvino-2026.4.1-22982-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:6b4375c17ddcac83a5180349e2e2bb811185c261066e2a920659892d58ef0e3b", size = 59144434, upload-time = "2026-10-01T09:58:51.34Z" },
+    { url = "https://files.pythonhosted.org/packages/b2/d7/390c0ec5b81b6e089b012aaba6a2dc14f3ac7c52bfd78d10f074e72616ab/openvino-2026.4.1-22982-cp312-cp312-manylinux_2_35_aarch64.whl", hash = "sha256:82efccb2f9f1bdc7e5a1996e05a3b719ebff9232dd54b44150d6d2e983a86b7d", size = 30332437, upload-time = "2026-10-01T09:58:54.385Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/44/66a61b7cfccea1dfa20e95a04b4157f07a0e4dc3f7e894b22a92abb8822b/openvino-2026.4.1-22982-cp312-cp312-win_amd64.whl", hash = "sha256:4e04316abff1b99e29b8cbd38deaef9bde4739eba216d982d4b3981e456ecd87", size = 84964415, upload-time = "2026-10-01T09:58:59.18Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/75/66fc1f74a4c9cdc7bf2d4773dd7e199589ec87884d10b9e58b4eca1e3a50/openvino-2026.4.1-22982-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:60496e3153122913c8a2fa69d86b3a77ccc4e2469db87d76eb8acb49a5d22d63", size = 33341974, upload-time = "2026-10-01T09:59:03.149Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/8b/d2fb2611cd8160cb4c0e5401b9d87312961d77891eade431381e396a8d83/openvino-2026.4.1-22982-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:a9b637846c579d7b81b17b6585e0c7b1947574e8d13cf83d7307ce50cd2c352e", size = 59142703, upload-time = "2026-10-01T09:59:06.972Z" },
+    { url = "https://files.pythonhosted.org/packages/4f/2b/e3b9cb3870cfeb0f9b2ad0f9adba18e06e0168e0c72ed14a11adb66982e1/openvino-2026.4.1-22982-cp313-cp313-manylinux_2_35_aarch64.whl", hash = "sha256:fc45339ff7d539de76e6d7b04135c120504c797cfc8c2a0dde3d2d616b30c758", size = 30333747, upload-time = "2026-10-01T09:59:10.03Z" },
+    { url = "https://files.pythonhosted.org/packages/35/e2/917952cd8d21351d10bf0ce694421de92a2b14a6269f0ba13d2504fcf6a9/openvino-2026.4.1-22982-cp313-cp313-win_amd64.whl", hash = "sha256:37c270c99d6de23439965e97cb5106389d3c8985f3b8bb90909a6ea0270db3f2", size = 84964362, upload-time = "2026-10-01T09:59:15.467Z" },
+]
+
+[[package]]
+name = "openvino-telemetry"
+version = "2025.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/71/8a/89d82f1a9d913fb266c2e6dc2f6030935db24b7152963a8db6c4f039787f/openvino_telemetry-2025.2.0.tar.gz", hash = "sha256:8bf8127218e51e99547bf38b8fb85a8b31c9bf96e6f3a82eb0b3b6a34155977c", size = 18894, upload-time = "2025-07-07T10:29:51.159Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3b/ac/5ab0ca0aa269ad3c73f7bfc3801b10e5f56f75a31bf68c1ae8bd51cf70a4/openvino_telemetry-2025.2.0-py3-none-any.whl", hash = "sha256:bcb667e83a44f202ecf4cfa49281715c6d7e21499daec04ff853b7f964833599", size = 25227, upload-time = "2025-07-07T10:29:50.189Z" },
 ]
 
 [[package]]
@@ -7155,6 +7215,10 @@ nemo = [
     { name = "nemo-toolkit", extra = ["asr"], marker = "extra == 'extra-8-verbatim-nemo'" },
     { name = "pytorch-lightning", version = "2.4.0", source = { registry = "https://pypi.org/simple" } },
 ]
+parakeet-openvino = [
+    { name = "onnx-asr", extra = ["cpu", "hub"] },
+    { name = "openvino" },
+]
 qwen = [
     { name = "qwen-asr" },
 ]
@@ -7190,10 +7254,12 @@ requires-dist = [
     { name = "nemo-toolkit", extras = ["asr"], marker = "extra == 'nemo'", specifier = ">=2.4.0" },
     { name = "numba", specifier = ">=0.61" },
     { name = "numpy", specifier = ">=2.2.2,<3" },
+    { name = "onnx-asr", extras = ["cpu", "hub"], marker = "extra == 'parakeet-openvino'", specifier = ">=0.12.0" },
     { name = "onnxruntime", marker = "python_full_version < '3.13'", specifier = ">=1.16.0,<1.20" },
     { name = "onnxruntime", marker = "python_full_version >= '3.13'", specifier = ">=1.20,<1.21" },
     { name = "onnxruntime-gpu", marker = "python_full_version >= '3.13' and extra == 'cuda-gpu'", specifier = ">=1.20,<1.21" },
     { name = "onnxruntime-gpu", marker = "python_full_version < '3.13' and extra == 'cuda-gpu'", specifier = ">=1.16.0,<1.20" },
+    { name = "openvino", marker = "extra == 'parakeet-openvino'", specifier = ">=2025.4" },
     { name = "pillow", specifier = "==10.4.0" },
     { name = "pyannote-audio", extras = ["separation"], marker = "extra == 'diarization'", specifier = ">=4.0.2" },
     { name = "pyannote-core", marker = "extra == 'diarization'", specifier = "==6.0.1" },
@@ -7219,7 +7285,7 @@ requires-dist = [
     { name = "word-levenshtein", specifier = ">=0.0.3" },
     { name = "wtpsplit", specifier = ">=2.1.2" },
 ]
-provides-extras = ["cuda-gpu", "diarization", "dss", "faster-whisper", "microphone", "mlx", "mms-lid", "nemo", "qwen", "senko", "voxtral"]
+provides-extras = ["cuda-gpu", "diarization", "dss", "faster-whisper", "microphone", "mlx", "mms-lid", "nemo", "parakeet-openvino", "qwen", "senko", "voxtral"]
 
 [package.metadata.requires-dev]
 dev = [
