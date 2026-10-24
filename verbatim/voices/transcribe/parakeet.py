@@ -47,6 +47,7 @@ class ParakeetTranscriber(Transcriber):
 
     def __init__(self, *, model_size_or_path: str, device: str):
         try:
+            import torch  # pylint: disable=import-outside-toplevel
             from nemo.collections.asr.models import ASRModel  # pylint: disable=import-outside-toplevel
         except ImportError as exc:
             raise RuntimeError("Parakeet requires NeMo. Install `verbatim[nemo]`.") from exc
@@ -55,9 +56,10 @@ class ParakeetTranscriber(Transcriber):
         if not os.path.isfile(model_path):
             raise RuntimeError(f"Parakeet model must be a .nemo checkpoint: {model_path}")
 
-        self._model: Any = ASRModel.restore_from(restore_path=model_path, map_location=device)
+        torch_device = torch.device(device)
+        self._model: Any = ASRModel.restore_from(restore_path=model_path, map_location=torch_device)
         self._model.eval()
-        self._model.to(device)
+        self._model.to(torch_device)
 
     def guess_language(self, audio: NDArray, lang: List[str]) -> Tuple[str, float]:
         _ = audio, lang
