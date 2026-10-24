@@ -190,6 +190,12 @@ verbatim audio_file.wav --asr-backend qwen --languages en fr
 pip install 'verbatim[nemo]'
 verbatim audio_file.wav --asr-backend parakeet --asr-model nvidia/parakeet-tdt-0.6b-v3
 
+# Intel Core Ultra NPU for ASR; --device cpu applies to the other pipeline stages
+# Prepare downloads the ONNX export and compiles all NPU shapes into --modeldir
+pip install 'verbatim[parakeet_openvino]'
+verbatim --asr-backend parakeet-openvino --device cpu --modeldir .verbatim --install
+verbatim audio_file.wav --asr-backend parakeet-openvino --device cpu --modeldir .verbatim --offline
+
 # Run Qwen ASR with MMS language identification
 verbatim audio_file.wav --asr-backend qwen --language-backend mms --language-model facebook/mms-lid-126 --languages en fr
 
@@ -680,9 +686,11 @@ A direct use of whisper on an audio clip like this one results in many errors. S
 
 Verbatim can prefetch and reuse models from a deterministic cache directory, and can run 100% offline once the cache is warmed.
 
-- `--modeldir <dir>`: sets a shared model/cache directory used by Hugging Face and faster-whisper.
+- `--modeldir <dir>`: sets a shared model/cache directory used by Hugging Face, faster-whisper, and prepared Parakeet OpenVINO NPU blobs.
 - `--offline`: prevents any network access and model downloads. All models must already be present in the cache; otherwise a clear error is raised.
-- `--install`: prefetches the models required by the current effective configuration into the selected cache and exits.
+- `--install`: prefetches the models required by the current effective configuration into the selected cache and exits. For Parakeet OpenVINO, this also compiles the NPU blobs.
+
+With Parakeet OpenVINO, use the same `--modeldir` for preparation and processing. Processing reads the prepared blobs without writing to the model cache. The default CLI artifact cache is in memory when `--workdir` is omitted; requested transcript output may still be written to `-o`.
 
 Examples
 
