@@ -48,7 +48,7 @@ cached-property==2.0.1
     # via
     #   pb-bss-eval
     #   wtpsplit
-certifi==2026.1.4
+certifi==2026.10.19
     # via requests
 cffi==2.0.0
     # via
@@ -491,7 +491,7 @@ pb-bss-eval==0.0.2
     # via asteroid
 pesq==0.0.4
     # via pb-bss-eval
-pillow==10.4.0
+pillow==12.3.0
     # via
     #   matplotlib
     #   tensorboard
@@ -656,7 +656,7 @@ scipy==1.17.0 ; python_full_version >= '3.11'
     #   pystoi
     #   scikit-learn
     #   skops
-setuptools==80.10.2
+setuptools==84.1.0
     # via
     #   ctranslate2
     #   lightning-utilities
