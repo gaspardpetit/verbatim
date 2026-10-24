@@ -40,6 +40,14 @@ class TestParakeetOpenVino(unittest.TestCase):
         self.assertEqual(2, len(words))
         self.assertEqual(16000, words[-1].end_ts)
 
+    def test_words_with_matching_onsets_are_preserved(self):
+        result = SimpleNamespace(tokens=[" I", " am", " here"], timestamps=[0.08, 0.08, 0.24])
+
+        words = _word_results(result, window_ts=0, audio_ts=16000)
+
+        self.assertEqual(["I", " am", " here"], [word.word for word in words])
+        self.assertEqual((1280, 1281), (words[0].start_ts, words[0].end_ts))
+
     def test_session_casts_decoder_inputs_and_maps_named_outputs(self):
         outputs = {
             Mock(any_name="joint"): np.zeros((1, 1, 1, 4), dtype=np.float32),
@@ -148,3 +156,20 @@ class TestParakeetOpenVino(unittest.TestCase):
 
         self.assertEqual([], words)
         transcriber._model.recognize.assert_not_called()
+
+    def test_long_single_pass_audio_uses_bounded_windows_with_offsets(self):
+        transcriber = ParakeetOpenVinoTranscriber.__new__(ParakeetOpenVinoTranscriber)
+        transcriber._model = Mock()
+        transcriber._model.recognize.side_effect = [
+            SimpleNamespace(tokens=[" first"], timestamps=[0.1]),
+            SimpleNamespace(tokens=[" second"], timestamps=[0.2]),
+        ]
+        audio = np.zeros(31 * 16000, dtype=np.float32)
+
+        words = transcriber.transcribe(
+            audio=audio, lang=None, prompt="", prefix="", window_ts=16000, audio_ts=32 * 16000,
+        )
+
+        self.assertEqual(["first", "second"], [word.word for word in words])
+        self.assertEqual([30 * 16000, 16000], [call.args[0].size for call in transcriber._model.recognize.call_args_list])
+        self.assertEqual((31 * 16000 + 3200, 31 * 16000 + 11200), (words[1].start_ts, words[1].end_ts))

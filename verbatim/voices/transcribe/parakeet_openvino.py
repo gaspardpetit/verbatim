@@ -194,8 +194,9 @@ def _word_results(result: Any, window_ts: int, audio_ts: int) -> List[Word]:
             end = float(stamp)
             first = max(window_ts, min(window_ts + round(start * SAMPLE_RATE), audio_ts))
             last = max(first, min(window_ts + round(end * SAMPLE_RATE), audio_ts))
-            if last > first:
-                words.append(Word(start_ts=first, end_ts=last, word=current, probability=1.0, lang="und"))
+            # TDT can emit several words at one encoder timestep.
+            last = min(audio_ts, max(last, first + 1))
+            words.append(Word(start_ts=first, end_ts=last, word=current, probability=1.0, lang="und"))
             current = ""
         if not current:
             start = float(stamp)
@@ -204,8 +205,8 @@ def _word_results(result: Any, window_ts: int, audio_ts: int) -> List[Word]:
             first = max(window_ts, min(window_ts + round(start * SAMPLE_RATE), audio_ts))
             # Token timestamps are onsets; the final token has no following onset to use as its end.
             last = max(first, min(window_ts + round((float(stamp) + FINAL_TOKEN_TAIL_SECONDS) * SAMPLE_RATE), audio_ts))
-            if last > first:
-                words.append(Word(start_ts=first, end_ts=last, word=current, probability=1.0, lang="und"))
+            last = min(audio_ts, max(last, first + 1))
+            words.append(Word(start_ts=first, end_ts=last, word=current, probability=1.0, lang="und"))
     return words
 
 
@@ -271,7 +272,12 @@ class ParakeetOpenVinoTranscriber(Transcriber):
             raise ValueError("Parakeet requires mono audio")
         if not audio.size:
             return []
-        if audio.size > 30 * SAMPLE_RATE:
-            raise ValueError("Parakeet NPU accepts at most 30 seconds per window")
-        result = self._model.recognize(np.ascontiguousarray(audio, dtype=np.float32), sample_rate=SAMPLE_RATE)
-        return _word_results(result, window_ts, audio_ts)
+        words: List[Word] = []
+        window_samples = 30 * SAMPLE_RATE
+        for offset in range(0, audio.size, window_samples):
+            chunk = np.ascontiguousarray(audio[offset : offset + window_samples], dtype=np.float32)
+            chunk_ts = window_ts + offset
+            chunk_end_ts = min(audio_ts, chunk_ts + chunk.size)
+            result = self._model.recognize(chunk, sample_rate=SAMPLE_RATE)
+            words.extend(_word_results(result, chunk_ts, chunk_end_ts))
+        return words
