@@ -15,7 +15,7 @@ For a broader side-by-side benchmark on the Air France bilingual sample, includi
 # Installation
 
 ## Prerequisites
-- [Python](https://www.python.org/) version 3.10 to 3.12
+- [Python](https://www.python.org/) version 3.10 to 3.13
 - [Astral UV](https://github.com/astral-sh/uv) for development
 
 ### Microphone input

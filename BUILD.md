@@ -1,7 +1,7 @@
 # Build Instructions
 
 ## Supported Python Versions
-This project supports **Python 3.10**, **3.11**, and **3.12**. Ensure you have one of these versions installed on your system before proceeding.
+This project supports **Python 3.10**, **3.11**, **3.12**, and **3.13**. Ensure you have one of these versions installed on your system before proceeding.
 
 ## Setting Up the Environment
 

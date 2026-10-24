@@ -3,7 +3,7 @@ name = "verbatim"
 dynamic = ["version"]
 description = "high quality multi-lingual speech to text"
 readme = "README.md"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.10,<3.14"
 license = "MIT"
 authors = [{ name = "Gaspard Petit", email = "gaspardpetit@gmail.com" }]
 keywords = [
@@ -42,6 +42,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
     "audio-separator>=0.40.0",
@@ -51,7 +52,8 @@ dependencies = [
     "demucs>=4.0.1",
     "langcodes>=3.5.0",
     "numpy>=2.2.2,<3",
-    "onnxruntime>=1.16.0,<1.20",
+    "onnxruntime>=1.16.0,<1.20; python_version < '3.13'",
+    "onnxruntime>=1.20,<1.21; python_version >= '3.13'",
     "pydub>=0.25.1",
     "python-docx>=1.1.2",
     "silero-vad>=5.1.2",
@@ -84,7 +86,8 @@ faster_whisper = [
     "faster-whisper>=1.1.1",
 ]
 cuda_gpu = [
-    "onnxruntime-gpu>=1.16.0,<1.20",
+    "onnxruntime-gpu>=1.16.0,<1.20; python_version < '3.13'",
+    "onnxruntime-gpu>=1.20,<1.21; python_version >= '3.13'",
 ]
 diarization = [
     "pyannote-audio[separation]>=4.0.2",
