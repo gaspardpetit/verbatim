@@ -15,6 +15,7 @@ import numpy as np
 
 from verbatim.voices.transcribe.parakeet_openvino import (
     BUCKET_FRAMES,
+    MODEL_NAME,
     ParakeetOpenVinoTranscriber,
     _compiled_dir,
     _OpenVinoSession,
@@ -133,6 +134,7 @@ class TestParakeetOpenVino(unittest.TestCase):
                         transcriber._model.asr._encoder._load(BUCKET_FRAMES[1])
         core.compile_model.assert_not_called()
         self.assertEqual(3, core.import_model.call_count)
+        onnx_asr.load_model.assert_called_once_with(MODEL_NAME, path=str(model_dir), providers=["CPUExecutionProvider"])
 
     def test_runtime_requires_all_prepared_shapes(self):
         core = Mock(available_devices=["NPU"])

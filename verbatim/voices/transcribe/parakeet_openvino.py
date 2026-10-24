@@ -248,7 +248,7 @@ class ParakeetOpenVinoTranscriber(Transcriber):
                 "Parakeet NPU is not prepared; run `verbatim --asr-backend parakeet-openvino --install` "
                 "with the same --modeldir before processing."
             )
-        self._model: Any = onnx_asr.load_model(MODEL_NAME, path=str(model_dir), quantization="int8", providers=["CPUExecutionProvider"])
+        self._model: Any = onnx_asr.load_model(MODEL_NAME, path=str(model_dir), providers=["CPUExecutionProvider"])
         self._model.asr._encoder = _BucketedEncoder(core, compiled_dir)  # pylint: disable=protected-access
         decoder_blob = _blob_path(compiled_dir).read_bytes()
         self._model.asr._decoder_joint = _OpenVinoSession(core.import_model(decoder_blob, "NPU"))  # pylint: disable=protected-access
