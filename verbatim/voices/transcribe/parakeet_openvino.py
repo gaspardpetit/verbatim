@@ -2,7 +2,6 @@
 
 import hashlib
 import io
-import json
 import logging
 import os
 import shutil
@@ -25,6 +24,7 @@ MODEL_NAME = "nemo-parakeet-tdt-0.6b-v3"
 MODEL_REPO = "istupakov/parakeet-tdt-0.6b-v3-onnx"
 SAMPLE_RATE = 16000
 BUCKET_FRAMES = (500, 1000, 2000, 3200)
+FINAL_TOKEN_TAIL_SECONDS = 0.5
 
 
 def _model_dir(reference: str) -> str:
@@ -38,12 +38,14 @@ def _model_dir(reference: str) -> str:
 def _compiled_dir(model_dir: Path, openvino_version: str) -> Path:
     root = get_model_cache_dir() or os.path.join(os.getcwd(), ".verbatim")
     files = ("encoder-model.onnx", "encoder-model.onnx.data", "decoder_joint-model.onnx")
-    identity = {
-        "model": str(model_dir.resolve()),
-        "openvino": openvino_version,
-        "files": [(name, (model_dir / name).stat().st_size, (model_dir / name).stat().st_mtime_ns) for name in files],
-    }
-    digest = hashlib.sha256(json.dumps(identity, sort_keys=True).encode("utf-8")).hexdigest()[:16]
+    # Content identifies the model even when the prepared cache moves to another machine.
+    identity = hashlib.sha256(openvino_version.encode("utf-8"))
+    for name in files:
+        identity.update(name.encode("utf-8"))
+        with (model_dir / name).open("rb") as stream:
+            while chunk := stream.read(1024 * 1024):
+                identity.update(chunk)
+    digest = identity.hexdigest()[:16]
     return Path(root) / "parakeet-openvino" / digest
 
 
@@ -200,8 +202,10 @@ def _word_results(result: Any, window_ts: int, audio_ts: int) -> List[Word]:
         current += token
         if index == len(tokens) - 1 and current.strip():
             first = max(window_ts, min(window_ts + round(start * SAMPLE_RATE), audio_ts))
-            if audio_ts > first:
-                words.append(Word(start_ts=first, end_ts=audio_ts, word=current, probability=1.0, lang="und"))
+            # Token timestamps are onsets; the final token has no following onset to use as its end.
+            last = max(first, min(window_ts + round((float(stamp) + FINAL_TOKEN_TAIL_SECONDS) * SAMPLE_RATE), audio_ts))
+            if last > first:
+                words.append(Word(start_ts=first, end_ts=last, word=current, probability=1.0, lang="und"))
     return words
 
 

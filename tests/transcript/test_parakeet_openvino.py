@@ -1,5 +1,8 @@
 """Parakeet OpenVINO conversion and session behavior without a model download."""
 
+# Tests inspect prepared sessions directly to verify NPU blob handling.
+# pylint: disable=protected-access
+
 import io
 import sys
 import tempfile
@@ -29,6 +32,14 @@ class TestParakeetOpenVino(unittest.TestCase):
         self.assertEqual("Hello there!", "".join(word.word for word in words))
         self.assertEqual([(33600, 40000), (40000, 48000)], [(word.start_ts, word.end_ts) for word in words])
 
+    def test_final_word_does_not_extend_through_trailing_silence(self):
+        result = SimpleNamespace(tokens=[" Hello", " there"], timestamps=[0.1, 0.5])
+
+        words = _word_results(result, window_ts=0, audio_ts=30 * 16000)
+
+        self.assertEqual(2, len(words))
+        self.assertEqual(16000, words[-1].end_ts)
+
     def test_session_casts_decoder_inputs_and_maps_named_outputs(self):
         outputs = {
             Mock(any_name="joint"): np.zeros((1, 1, 1, 4), dtype=np.float32),
@@ -57,6 +68,8 @@ class TestParakeetOpenVino(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             model_dir = Path(root) / "model"
             model_dir.mkdir()
+            for name in ("encoder-model.onnx", "encoder-model.onnx.data", "decoder_joint-model.onnx"):
+                (model_dir / name).write_bytes(b"model")
             compiled_dir = Path(root) / "configured-cache" / "parakeet-openvino"
             with patch.dict(sys.modules, {"openvino": openvino}):
                 with patch("verbatim.voices.transcribe.parakeet_openvino._compiled_dir", return_value=compiled_dir):
@@ -77,6 +90,17 @@ class TestParakeetOpenVino(unittest.TestCase):
             with patch.dict("os.environ", {"VERBATIM_MODELDIR": str(cache_dir)}):
                 compiled_dir = _compiled_dir(model_dir, "test-version")
             self.assertEqual(cache_dir / "parakeet-openvino", compiled_dir.parent)
+
+    def test_prepared_blobs_survive_model_cache_relocation(self):
+        with tempfile.TemporaryDirectory() as root:
+            first = Path(root) / "first"
+            second = Path(root) / "second"
+            first.mkdir()
+            second.mkdir()
+            for name in ("encoder-model.onnx", "encoder-model.onnx.data", "decoder_joint-model.onnx"):
+                (first / name).write_bytes(name.encode("utf-8"))
+                (second / name).write_bytes(name.encode("utf-8"))
+            self.assertEqual(_compiled_dir(first, "test"), _compiled_dir(second, "test"))
 
     def test_runtime_imports_prepared_blobs_without_compilation_or_writes(self):
         core = Mock(available_devices=["NPU"])
