@@ -170,6 +170,7 @@ class TestParakeetOpenVino(unittest.TestCase):
             audio=audio, lang=None, prompt="", prefix="", window_ts=16000, audio_ts=32 * 16000,
         )
 
-        self.assertEqual(["first", "second"], [word.word for word in words])
+        self.assertEqual(["first", " second"], [word.word for word in words])
+        self.assertEqual("first second", "".join(word.word for word in words))
         self.assertEqual([30 * 16000, 16000], [call.args[0].size for call in transcriber._model.recognize.call_args_list])
         self.assertEqual((31 * 16000 + 3200, 31 * 16000 + 11200), (words[1].start_ts, words[1].end_ts))

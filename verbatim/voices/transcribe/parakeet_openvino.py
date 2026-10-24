@@ -279,5 +279,8 @@ class ParakeetOpenVinoTranscriber(Transcriber):
             chunk_ts = window_ts + offset
             chunk_end_ts = min(audio_ts, chunk_ts + chunk.size)
             result = self._model.recognize(chunk, sample_rate=SAMPLE_RATE)
-            words.extend(_word_results(result, chunk_ts, chunk_end_ts))
+            chunk_words = _word_results(result, chunk_ts, chunk_end_ts)
+            if words and chunk_words and not chunk_words[0].word.startswith(" "):
+                chunk_words[0].word = " " + chunk_words[0].word
+            words.extend(chunk_words)
         return words
