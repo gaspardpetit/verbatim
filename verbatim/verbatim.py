@@ -43,12 +43,12 @@ from verbatim_transcript import (
     detect_language,
 )
 
-from .config import Config
+from .config import DEFAULT_LOWLATENCY_CHUNKTABLE, Config
 from .language_id import create_language_identifier
 from .models import Models
 from .status_types import StatusHook, StatusProgress, StatusUpdate
 from .transcript.idprovider import CounterIdProvider, IdProvider
-from .transcript.sentences import BoundedSentenceTokenizer, SentenceTokenizer
+from .transcript.sentences import BoundedSentenceTokenizer, SentenceTokenizer, SilenceSentenceTokenizer
 from .transcript.words import Utterance, Word
 
 # pylint: disable=unused-import
@@ -131,25 +131,30 @@ class WhisperHistory:
                 LOG.debug("Advanced transcript history at %d: %s", timestamp, " | ".join(changes))
 
     @staticmethod
+    def skipped_prefix_length(words: List[Word], prefix: List[Word], after_ts: int) -> int:
+        index = 0
+        while index < len(words):
+            matches_acknowledged_word = (
+                index < len(prefix)
+                and prefix[index].word == words[index].word
+                and words[index].start_ts <= prefix[index].end_ts
+                and words[index].end_ts >= prefix[index].start_ts
+            )
+            if matches_acknowledged_word or words[index].start_ts <= after_ts:
+                index += 1
+            else:
+                break
+        return index
+
+    @staticmethod
     def confirm_transcript(
         current_words: List[Word],
         transcript: List[Word],
         prefix: List[Word],
         after_ts: int,
     ) -> List[Word]:
-        c_index = 0
-        while c_index < len(current_words):
-            if (c_index < len(prefix) and prefix[c_index].word == current_words[c_index].word) or (current_words[c_index].start_ts <= after_ts):
-                c_index = c_index + 1
-            else:
-                break
-
-        p_index = 0
-        while p_index < len(transcript):
-            if (p_index < len(prefix) and prefix[p_index].word == transcript[p_index].word) or (transcript[p_index].start_ts <= after_ts):
-                p_index = p_index + 1
-            else:
-                break
+        c_index = WhisperHistory.skipped_prefix_length(current_words, prefix, after_ts)
+        p_index = WhisperHistory.skipped_prefix_length(transcript, prefix, after_ts)
 
         confirmed_words = []
 
@@ -313,7 +318,7 @@ class State:
         if not math.isfinite(self.config.backward_window_duration) or self.config.backward_window_duration < 0:
             raise ValueError("backward_window_duration must be finite and non-negative")
 
-        window_size = self.config.sampling_rate * self.config.window_duration  # Total samples in 30 seconds
+        window_size = round(self.config.sampling_rate * self.config.window_duration)
         history_size = round(self.config.backward_window_duration * self.config.sampling_rate)
         self.rolling_window = RollingWindow(window_size=window_size, dtype=np.float32, history_size=history_size)
 
@@ -429,6 +434,15 @@ class Verbatim:
         else:
             self.vad_callback = None
 
+    def _configure_backend_window(self) -> None:
+        """Resolve the active window before a session consumes any audio."""
+        duration = self.models.transcriber.get_capabilities().window_duration
+        if not math.isfinite(duration) or duration < 1.0:
+            raise ValueError("transcriber window_duration must be finite and at least one second")
+        self.config.window_duration = duration
+        if self.config.stream and self.config.chunk_table == DEFAULT_LOWLATENCY_CHUNKTABLE:
+            self.config.chunk_table = [(0.0, 1.0 / duration)]
+
     def _emit_status(self, update: StatusUpdate) -> None:
         if self.status_hook is None:
             return
@@ -511,7 +525,7 @@ class Verbatim:
 
     def _read_full_audio(self, audio_stream: AudioStream) -> NDArray:
         chunks: List[NDArray] = []
-        chunk_length = max(1, self.config.window_duration)
+        chunk_length = max(1, math.ceil(self.config.window_duration))
         while audio_stream.has_more():
             chunk = audio_stream.next_chunk(chunk_length=chunk_length)
             if chunk.size == 0:
@@ -962,7 +976,14 @@ class Verbatim:
             )
         confirm_ms = (perf_counter() - confirm_start) * 1000.0
 
-        unconfirmed_words = [transcript_words[i] for i in range(len(confirmed_words), len(transcript_words))]
+        skipped_prefix = WhisperHistory.skipped_prefix_length(transcript_words, acknowledged_words_in_window, self.state.acknowledged_ts - 1)
+        unconfirmed_words = transcript_words[skipped_prefix + len(confirmed_words) :]
+        if skipped_prefix:
+            LOG.debug(
+                "Excluded %d already acknowledged words from provisional suffix at acknowledged_ts=%d",
+                skipped_prefix,
+                self.state.acknowledged_ts,
+            )
         self.state.last_transcribe_metrics_ms = {
             "detect_ms": detect_ms,
             "transcribe_ms": transcribe_ms,
@@ -1212,7 +1233,11 @@ class Verbatim:
             if len(confirmed_words) > 0:
                 sentence_start = perf_counter()
                 utterances = self.words_to_sentences(
-                    word_tokenizer=BoundedSentenceTokenizer(other_tokenizer=self.models.sentence_tokenizer),
+                    word_tokenizer=BoundedSentenceTokenizer(
+                        other_tokenizer=self.models.sentence_tokenizer,
+                        bounding_tokenizer=SilenceSentenceTokenizer(duration_scale=self.config.window_duration / 30.0),
+                        max_duration=25.0 * self.config.window_duration / 30.0,
+                    ),
                     window_words=confirmed_words,
                     id_provider=self.state.utterance_id,
                 )
@@ -1444,6 +1469,7 @@ class Verbatim:
             utterance = self.state.unacknowledged_utterances.pop(0)
             utterance.speaker = self.assign_speaker(utterance, diarization)
             self.state.acknowledged_words += utterance.words
+            self.state.acknowledged_ts = max(self.state.acknowledged_ts, utterance.end_ts)
             result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                 utterance=utterance,
                 unacknowledged=self.state.unacknowledged_utterances,
@@ -1459,6 +1485,7 @@ class Verbatim:
                 utterance = self.state.unacknowledged_utterances.pop(0)
                 utterance.speaker = self.assign_speaker(utterance, diarization)
                 self.state.acknowledged_words += utterance.words
+                self.state.acknowledged_ts = max(self.state.acknowledged_ts, utterance.end_ts)
                 result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                     utterance=utterance,
                     unacknowledged=self.state.unacknowledged_utterances,
@@ -1480,6 +1507,7 @@ class Verbatim:
             utterance = Utterance.from_words(utterance_id=self.state.utterance_id.next(), words=flushed_utterances_words)
             utterance.speaker = self.assign_speaker(utterance, diarization)
             self.state.acknowledged_words += flushed_utterances_words
+            self.state.acknowledged_ts = max(self.state.acknowledged_ts, utterance.end_ts)
             result: TranscriptionWindowResult[Utterance, Word] = TranscriptionWindowResult(
                 utterance=utterance,
                 unacknowledged=self.state.unacknowledged_utterances,
@@ -1569,6 +1597,7 @@ class Verbatim:
     def transcribe(
         self, audio_stream: AudioStream, working_prefix_no_ext: str = "out"
     ) -> Generator[Tuple[Utterance, List[Utterance], List[Word]], None, None]:
+        self._configure_backend_window()
         self.state = State(self.config, working_prefix_no_ext=working_prefix_no_ext)
         try:
             if not self.config.code_switching:

@@ -110,6 +110,50 @@ class DummyAudioStream(AudioStream):
 
 
 class TestNaiveMode(unittest.TestCase):
+    def test_backend_window_sizes_session_before_reading_audio(self):
+        for duration, expected_read in ((10.0, 2), (60.0, 12)):
+            with self.subTest(duration=duration):
+                config = Config(device="cpu")
+                transcriber = DummyTranscriber(words=[], capabilities=TranscriberCapabilities(True, True, False, True, True, duration))
+                verbatim = Verbatim(config=config, models=SingleSentenceModels(transcriber))
+
+                self.assertEqual([], list(verbatim.transcribe(DummyAudioStream(chunks=[]))))
+
+                self.assertEqual(duration, config.window_duration)
+                self.assertEqual(round(duration * config.sampling_rate), verbatim.state.rolling_window.capacity)
+                self.assertEqual(round(config.backward_window_duration * config.sampling_rate), verbatim.state.rolling_window.history_capacity)
+                self.assertEqual(expected_read, verbatim.get_next_number_of_chunks())
+
+    def test_low_latency_default_read_stays_one_second(self):
+        config = Config(device="cpu", stream=True)
+        transcriber = DummyTranscriber(words=[], capabilities=TranscriberCapabilities(True, True, False, True, True, 60.0))
+        verbatim = Verbatim(config=config, models=SingleSentenceModels(transcriber))
+
+        self.assertEqual([], list(verbatim.transcribe(DummyAudioStream(chunks=[]))))
+
+        self.assertEqual(1, verbatim.get_next_number_of_chunks())
+
+    def test_rolling_transcription_accepts_audio_beyond_thirty_seconds(self):
+        config = Config(device="cpu")
+        transcriber = DummyTranscriber(words=[], capabilities=TranscriberCapabilities(False, False, False, False, False, 60.0))
+        verbatim = Verbatim(config=config, models=SingleSentenceModels(transcriber))
+        audio = np.zeros(40 * config.sampling_rate, dtype=np.float32)
+
+        self.assertEqual([], list(verbatim.transcribe(DummyAudioStream(chunks=[audio]))))
+
+        self.assertEqual(0, verbatim.state.window_ts)
+        self.assertEqual(len(audio), verbatim.state.audio_ts)
+        self.assertEqual(len(audio), transcriber.calls[0]["samples"])
+
+    def test_rejects_invalid_backend_window_duration(self):
+        for duration in (0.0, float("inf"), float("nan")):
+            with self.subTest(duration=duration):
+                config = Config(device="cpu")
+                transcriber = DummyTranscriber(words=[], capabilities=TranscriberCapabilities(True, True, False, True, True, duration))
+                verbatim = Verbatim(config=config, models=SingleSentenceModels(transcriber))
+                with self.assertRaisesRegex(ValueError, "transcriber window_duration must be finite"):
+                    list(verbatim.transcribe(DummyAudioStream(chunks=[])))
+
     def test_no_hint_backend_transcribes_without_language_detection(self):
         config = Config(device="cpu")
         config.code_switching = False

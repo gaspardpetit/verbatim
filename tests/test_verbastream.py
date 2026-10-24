@@ -232,6 +232,9 @@ class StreamTests(unittest.TestCase):
     def test_streaming_transcriber_propagates_error_after_input_eof(self):
         transcriber = object.__new__(StreamingVerbatim)
         transcriber.config = Config(device="cpu")
+        transcriber.models = types.SimpleNamespace(
+            transcriber=types.SimpleNamespace(get_capabilities=lambda: types.SimpleNamespace(window_duration=30.0))
+        )
         transcriber.raise_on_transcription_error = True
         transcriber.status_hook = None
         blocks = queue.Queue()

@@ -83,11 +83,11 @@ class SaTSentenceTokenizer(SentenceTokenizer):
 
 
 class SilenceSentenceTokenizer(SentenceTokenizer):
-    def __init__(self):
+    def __init__(self, duration_scale: float = 1.0):
         # parameters can be tuned as needed
-        self.target_duration = 10.0  # target sentence length in seconds
-        self.min_duration = 2.0  # below this, the penalty is huge
-        self.max_duration = 25.0  # above this, also huge penalty
+        self.target_duration = 10.0 * duration_scale  # target sentence length in seconds
+        self.min_duration = 2.0 * duration_scale  # below this, the penalty is huge
+        self.max_duration = 25.0 * duration_scale  # above this, also huge penalty
         # Weight for how much a silence gap improves the candidate break.
         self.gap_weight = 1.0
         self.distance_weight = 1.0

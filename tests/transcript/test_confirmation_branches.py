@@ -190,3 +190,22 @@ class TestConfirmationBranches(unittest.TestCase):
         )
 
         self.assertEqual([w1], confirmed)
+
+    def test_provisional_suffix_excludes_skipped_acknowledged_words(self):
+        old = make_word(0, 4000, " old")
+        first = make_word(5000, 8000, " first")
+        tail = make_word(9000, 12000, " tail")
+        transcriber = DummyTranscriber(
+            outputs_by_lang={None: [old, first, tail]},
+            capabilities=TranscriberCapabilities(False, False, False, False, False, 30.0),
+        )
+        verbatim = TestVerbatim(self.config, DummyModels(transcriber), lambda _: self.fail("Unexpected language detection"))
+        verbatim.state.audio_ts = 16000
+        verbatim.state.acknowledged_ts = 4000
+        verbatim.state.acknowledged_words = [old]
+        verbatim.state.transcript_candidate_history.add([old, first])
+
+        confirmed, unconfirmed = verbatim.transcribe_window()
+
+        self.assertEqual([first], confirmed)
+        self.assertEqual([tail], unconfirmed)
